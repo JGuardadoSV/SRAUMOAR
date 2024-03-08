@@ -1,0 +1,56 @@
+﻿@page
+@model SRAUMOAR.Pages.alumno.IndexModel
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>listado de alumnos</h1>
+
+<p>
+    <a asp-page="Create" class="btn btn-primary">Registrar nuevo</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Alumno[0].Nombres)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Alumno[0].Apellidos)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Alumno[0].FechaDeNacimiento)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Alumno[0].Email)
+            </th>
+          
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model.Alumno) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Nombres)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Apellidos)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FechaDeNacimiento)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Email)
+            </td>
+           
+            <td>
+                <a asp-page="./Edit" asp-route-id="@item.AlumnoId" class="btn btn-danger">Editar</a> |
+                <a asp-page="./Details" asp-route-id="@item.AlumnoId">Details</a> |
+                <a asp-page="./Delete" asp-route-id="@item.AlumnoId">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
