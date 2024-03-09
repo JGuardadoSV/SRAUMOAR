@@ -16,6 +16,10 @@ namespace SRAUMOAR.Modelos
         public DbSet<Departamento> Departamentos { get; set; } = null!;
         public DbSet<Distrito> Distritos { get; set; } = null!;
         public DbSet<Municipio> Municipios { get; set; } = null!;
+        public DbSet<Facultad> Facultades { get; set; } = null!;
+        public DbSet<Carrera> Carreras { get; set; } = null!;
+        public DbSet<Profesion> Profesiones { get; set; } = null!;
+
 
 
 

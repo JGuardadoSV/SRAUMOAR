@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SRAUMOAR.Modelos;
 
@@ -11,9 +12,11 @@ using SRAUMOAR.Modelos;
 namespace SRAUMOAR.Migrations
 {
     [DbContext(typeof(Contexto))]
-    partial class ContextoModelSnapshot : ModelSnapshot
+    [Migration("20240309221820_carreras")]
+    partial class Carreras
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -73,7 +76,7 @@ namespace SRAUMOAR.Migrations
 
                     b.HasKey("AlumnoId");
 
-                    b.ToTable("Alumno", (string)null);
+                    b.ToTable("Alumno");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Generales.Carrera", b =>
@@ -108,7 +111,7 @@ namespace SRAUMOAR.Migrations
 
                     b.HasIndex("FacultadId");
 
-                    b.ToTable("Carreras", (string)null);
+                    b.ToTable("Carreras");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Generales.Departamento", b =>
@@ -125,7 +128,7 @@ namespace SRAUMOAR.Migrations
 
                     b.HasKey("DepartamentoId");
 
-                    b.ToTable("Departamentos", (string)null);
+                    b.ToTable("Departamentos");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Generales.Distrito", b =>
@@ -147,7 +150,7 @@ namespace SRAUMOAR.Migrations
 
                     b.HasIndex("DepartamentoId");
 
-                    b.ToTable("Distritos", (string)null);
+                    b.ToTable("Distritos");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Generales.Facultad", b =>
@@ -166,7 +169,7 @@ namespace SRAUMOAR.Migrations
 
                     b.HasKey("FacultadId");
 
-                    b.ToTable("Facultades", (string)null);
+                    b.ToTable("Facultades");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Generales.Municipio", b =>
@@ -188,7 +191,7 @@ namespace SRAUMOAR.Migrations
 
                     b.HasIndex("DistritoId");
 
-                    b.ToTable("Municipios", (string)null);
+                    b.ToTable("Municipios");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Generales.Profesion", b =>
@@ -205,7 +208,7 @@ namespace SRAUMOAR.Migrations
 
                     b.HasKey("ProfesionId");
 
-                    b.ToTable("Profesiones", (string)null);
+                    b.ToTable("Profesiones");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Generales.Carrera", b =>

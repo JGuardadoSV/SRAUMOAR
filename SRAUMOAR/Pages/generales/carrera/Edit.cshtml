@@ -1,0 +1,60 @@
+﻿@page
+@model SRAUMOAR.Pages.generales.carrera.EditModel
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>Edit</h1>
+
+<h4>Carrera</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Carrera.CarreraId" />
+            <div class="form-group">
+                <label asp-for="Carrera.NombreCarrera" class="control-label"></label>
+                <input asp-for="Carrera.NombreCarrera" class="form-control" />
+                <span asp-validation-for="Carrera.NombreCarrera" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Carrera.CodigoCarrera" class="control-label"></label>
+                <input asp-for="Carrera.CodigoCarrera" class="form-control" />
+                <span asp-validation-for="Carrera.CodigoCarrera" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Carrera.Duracion" class="control-label"></label>
+                <input asp-for="Carrera.Duracion" class="form-control" />
+                <span asp-validation-for="Carrera.Duracion" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Carrera.Ciclos" class="control-label"></label>
+                <input asp-for="Carrera.Ciclos" class="form-control" />
+                <span asp-validation-for="Carrera.Ciclos" class="text-danger"></span>
+            </div>
+            <div class="form-group form-check">
+                <label class="form-check-label">
+                    <input class="form-check-input" asp-for="Carrera.Activa" /> @Html.DisplayNameFor(model => model.Carrera.Activa)
+                </label>
+            </div>
+            <div class="form-group">
+                <label asp-for="Carrera.FacultadId" class="control-label"></label>
+                <select asp-for="Carrera.FacultadId" class="form-control" asp-items="ViewBag.FacultadId"></select>
+                <span asp-validation-for="Carrera.FacultadId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-page="./Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
