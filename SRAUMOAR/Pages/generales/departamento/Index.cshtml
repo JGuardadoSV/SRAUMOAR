@@ -1,0 +1,36 @@
+﻿@page
+@model SRAUMOAR.Pages.generales.departamento.IndexModel
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-page="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Departamento[0].NombreDepartamento)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model.Departamento) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.NombreDepartamento)
+            </td>
+            <td>
+                <a asp-page="./Edit" asp-route-id="@item.DepartamentoId">Edit</a> |
+                <a asp-page="./Details" asp-route-id="@item.DepartamentoId">Details</a> |
+                <a asp-page="./Delete" asp-route-id="@item.DepartamentoId">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

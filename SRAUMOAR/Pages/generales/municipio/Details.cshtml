@@ -1,0 +1,31 @@
+﻿@page
+@model SRAUMOAR.Pages.generales.municipio.DetailsModel
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h1>Details</h1>
+
+<div>
+    <h4>Municipio</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Municipio.NombreMunicipio)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Municipio.NombreMunicipio)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Municipio.Distrito)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Municipio.Distrito.NombreDistrito)
+        </dd>
+    </dl>
+</div>
+<div>
+    <a asp-page="./Edit" asp-route-id="@Model.Municipio.MunicipioId">Edit</a> |
+    <a asp-page="./Index">Back to List</a>
+</div>

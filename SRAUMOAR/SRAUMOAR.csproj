@@ -10,7 +10,6 @@
     <Folder Include="Entidades\Docentes\" />
     <Folder Include="Entidades\Materias\" />
     <Folder Include="Entidades\Colecturia\" />
-    <Folder Include="Entidades\Generales\" />
     <Folder Include="Entidades\Procesos\" />
   </ItemGroup>
 
