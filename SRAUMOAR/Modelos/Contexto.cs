@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using SRAUMOAR.Entidades.Alumnos;
 using SRAUMOAR.Entidades.Generales;
+using SRAUMOAR.Entidades.Materias;
 using System.Collections.Generic;
 
 namespace SRAUMOAR.Modelos
@@ -20,6 +21,26 @@ namespace SRAUMOAR.Modelos
         public DbSet<Carrera> Carreras { get; set; } = null!;
         public DbSet<Profesion> Profesiones { get; set; } = null!;
 
+
+        public DbSet<Materia> Materias { get; set; } 
+        public DbSet<MateriaPrerequisito> MateriasPrerrequisitos { get; set; } 
+        public DbSet<Pensum> Pensums { get; set; }
+
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Materia>()
+                .HasMany(m => m.Prerrequisitos)
+                .WithOne(mp => mp.Materia)
+                .HasForeignKey(mp => mp.MateriaId)
+                .OnDelete(DeleteBehavior.Restrict); // O la acción deseada en caso de eliminar una materia
+
+            modelBuilder.Entity<MateriaPrerequisito>()
+                .HasOne(mp => mp.PrerrequisoMateria)
+                .WithMany()
+                .HasForeignKey(mp => mp.PrerrequisoMateriaId)
+                .OnDelete(DeleteBehavior.Restrict); // O la acción deseada en caso de eliminar una materia
+        }
 
 
 

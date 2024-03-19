@@ -56,21 +56,13 @@ namespace SRAUMOAR.Entidades.Alumnos
         [Required(ErrorMessage = "El campo Dirección de residencia es obligatorio")]
         [Display(Name = "Dirección de residencia")]
         public string? DireccionDeResidencia { get; set; }
+
+        public int Estado { get; set; } = 1; // 1 activo 2 inactivo
+
+        public Boolean IngresoPorEquivalencias { get; set; } = false;
+
+        public string? Fotografia { get; set; }
     }
 
-    public class Alumno2
-    {
-        public int Alumno2Id { get; set; }
-        public string? Nombres { get; set; }
-        public string? Apellidos { get; set; }
-        public DateTime FechaDeNacimiento { get; set; }
-        public DateTime FechaDeRegistro { get; set; } = DateTime.Now;
-        public string? Email { get; set; }
-        public string? TelefonoPrimario { get; set; }
-        public string? Whatsapp { get; set; }
-        public string? TelefonoSecundario { get; set; }
-        public string? ContactoDeEmergencia { get; set; }
-        public string? NumeroDeEmergencia { get; set; }
-        public string? DireccionDeResidencia { get; set; }
-    }
+   
 }

@@ -12,8 +12,8 @@ using SRAUMOAR.Modelos;
 namespace SRAUMOAR.Migrations
 {
     [DbContext(typeof(Contexto))]
-    [Migration("20240309221820_carreras")]
-    partial class Carreras
+    [Migration("20240319233733_fase1")]
+    partial class fase1
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -49,11 +49,20 @@ namespace SRAUMOAR.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("Estado")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("FechaDeNacimiento")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime>("FechaDeRegistro")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("Fotografia")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IngresoPorEquivalencias")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Nombres")
                         .IsRequired()
@@ -211,6 +220,87 @@ namespace SRAUMOAR.Migrations
                     b.ToTable("Profesiones");
                 });
 
+            modelBuilder.Entity("SRAUMOAR.Entidades.Materias.Materia", b =>
+                {
+                    b.Property<int>("MateriaId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MateriaId"));
+
+                    b.Property<string>("CodigoMateria")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NombreMateria")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("PensumId")
+                        .HasColumnType("int");
+
+                    b.HasKey("MateriaId");
+
+                    b.HasIndex("PensumId");
+
+                    b.ToTable("Materias");
+                });
+
+            modelBuilder.Entity("SRAUMOAR.Entidades.Materias.MateriaPrerequisito", b =>
+                {
+                    b.Property<int>("MateriaPrerequisitoId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MateriaPrerequisitoId"));
+
+                    b.Property<int>("MateriaId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PrerrequisoMateriaId")
+                        .HasColumnType("int");
+
+                    b.HasKey("MateriaPrerequisitoId");
+
+                    b.HasIndex("MateriaId");
+
+                    b.HasIndex("PrerrequisoMateriaId");
+
+                    b.ToTable("MateriaPrerequisitos");
+                });
+
+            modelBuilder.Entity("SRAUMOAR.Entidades.Materias.Pensum", b =>
+                {
+                    b.Property<int>("PensumId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PensumId"));
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Anio")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CarreraId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CodigoPensum")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NombrePensum")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("PensumId");
+
+                    b.HasIndex("CarreraId");
+
+                    b.ToTable("Pensum");
+                });
+
             modelBuilder.Entity("SRAUMOAR.Entidades.Generales.Carrera", b =>
                 {
                     b.HasOne("SRAUMOAR.Entidades.Generales.Facultad", "Facultad")
@@ -244,6 +334,52 @@ namespace SRAUMOAR.Migrations
                     b.Navigation("Distrito");
                 });
 
+            modelBuilder.Entity("SRAUMOAR.Entidades.Materias.Materia", b =>
+                {
+                    b.HasOne("SRAUMOAR.Entidades.Materias.Pensum", "Pensum")
+                        .WithMany("Materias")
+                        .HasForeignKey("PensumId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Pensum");
+                });
+
+            modelBuilder.Entity("SRAUMOAR.Entidades.Materias.MateriaPrerequisito", b =>
+                {
+                    b.HasOne("SRAUMOAR.Entidades.Materias.Materia", "Materia")
+                        .WithMany("Prerrequisitos")
+                        .HasForeignKey("MateriaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SRAUMOAR.Entidades.Materias.Materia", "PrerrequisoMateria")
+                        .WithMany()
+                        .HasForeignKey("PrerrequisoMateriaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Materia");
+
+                    b.Navigation("PrerrequisoMateria");
+                });
+
+            modelBuilder.Entity("SRAUMOAR.Entidades.Materias.Pensum", b =>
+                {
+                    b.HasOne("SRAUMOAR.Entidades.Generales.Carrera", "Carrera")
+                        .WithMany("Pensums")
+                        .HasForeignKey("CarreraId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Carrera");
+                });
+
+            modelBuilder.Entity("SRAUMOAR.Entidades.Generales.Carrera", b =>
+                {
+                    b.Navigation("Pensums");
+                });
+
             modelBuilder.Entity("SRAUMOAR.Entidades.Generales.Departamento", b =>
                 {
                     b.Navigation("Distritos");
@@ -257,6 +393,16 @@ namespace SRAUMOAR.Migrations
             modelBuilder.Entity("SRAUMOAR.Entidades.Generales.Facultad", b =>
                 {
                     b.Navigation("Carreras");
+                });
+
+            modelBuilder.Entity("SRAUMOAR.Entidades.Materias.Materia", b =>
+                {
+                    b.Navigation("Prerrequisitos");
+                });
+
+            modelBuilder.Entity("SRAUMOAR.Entidades.Materias.Pensum", b =>
+                {
+                    b.Navigation("Materias");
                 });
 #pragma warning restore 612, 618
         }

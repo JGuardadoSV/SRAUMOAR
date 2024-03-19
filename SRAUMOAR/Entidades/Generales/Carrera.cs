@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using SRAUMOAR.Entidades.Materias;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SRAUMOAR.Entidades.Generales
@@ -33,6 +34,9 @@ namespace SRAUMOAR.Entidades.Generales
         [Display(Name = "Facultad")]
         public int FacultadId { get; set; } // Llave foránea
         public virtual Facultad? Facultad { get; set; } // Propiedad de navegación
+
+
+        public virtual ICollection<Pensum>? Pensums { get; set; } // Propiedad de navegación
 
     }
 }

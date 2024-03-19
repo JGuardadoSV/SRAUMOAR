@@ -8,9 +8,9 @@
 
   <ItemGroup>
     <Folder Include="Entidades\Docentes\" />
-    <Folder Include="Entidades\Materias\" />
     <Folder Include="Entidades\Colecturia\" />
     <Folder Include="Entidades\Procesos\" />
+    <Folder Include="Migrations\" />
   </ItemGroup>
 
   <ItemGroup>
