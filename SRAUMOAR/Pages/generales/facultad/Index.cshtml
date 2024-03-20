@@ -5,8 +5,8 @@
     ViewData["Title"] = "Index";
 }
 
-<h1>Index</h1>
-<p class="alert alert-danger">Botón para ir a las carreras de la facultad</p>
+<h1>Facultades</h1>
+
 <p>
     <a asp-page="Create">Create New</a>
 </p>
@@ -32,6 +32,7 @@
                 @Html.DisplayFor(modelItem => item.Activa)
             </td>
             <td>
+                <a asp-page="/generales/carrera/Index" asp-route-id="@item.FacultadId">Carreras</a> |
                 <a asp-page="./Edit" asp-route-id="@item.FacultadId">Edit</a> |
                 <a asp-page="./Details" asp-route-id="@item.FacultadId">Details</a> |
                 <a asp-page="./Delete" asp-route-id="@item.FacultadId">Delete</a>

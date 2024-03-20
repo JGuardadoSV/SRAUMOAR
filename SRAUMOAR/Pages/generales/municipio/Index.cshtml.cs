@@ -21,10 +21,19 @@ namespace SRAUMOAR.Pages.generales.municipio
 
         public IList<Municipio> Municipio { get;set; } = default!;
 
-        public async Task OnGetAsync()
+        public async Task OnGetAsync(int? id)
         {
-            Municipio = await _context.Municipios
-                .Include(m => m.Distrito).ToListAsync();
+            if (id.HasValue && id > 0)
+            {
+                Municipio = await _context.Municipios
+                    .Include(m => m.Distrito).Where(x=>x.DistritoId==id).ToListAsync();
+            }
+            else
+            {
+                Municipio = await _context.Municipios
+                    .Include(m => m.Distrito).ToListAsync();
+            }
+           
         }
     }
 }

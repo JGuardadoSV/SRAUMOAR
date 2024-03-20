@@ -21,10 +21,19 @@ namespace SRAUMOAR.Pages.generales.distrito
 
         public IList<Distrito> Distrito { get;set; } = default!;
 
-        public async Task OnGetAsync()
+        public async Task OnGetAsync(int? id)
         {
-            Distrito = await _context.Distritos
-                .Include(d => d.Departamento).ToListAsync();
+            if (id.HasValue && id>0)
+            {
+                Distrito = await _context.Distritos
+                    .Include(d => d.Departamento).Where(x=>x.DepartamentoId==id).ToListAsync();
+            }
+            else
+            {
+                Distrito = await _context.Distritos
+                    .Include(d => d.Departamento).ToListAsync();
+            }
+           
         }
     }
 }

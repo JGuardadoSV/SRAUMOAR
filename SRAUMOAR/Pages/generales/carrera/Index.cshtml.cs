@@ -21,10 +21,19 @@ namespace SRAUMOAR.Pages.generales.carrera
 
         public IList<Carrera> Carrera { get;set; } = default!;
 
-        public async Task OnGetAsync()
+        public async Task OnGetAsync(int? id)
         {
-            Carrera = await _context.Carreras
-                .Include(c => c.Facultad).ToListAsync();
+            if (id.HasValue && id.Value > 0)
+            {
+                Carrera = await _context.Carreras
+                    .Include(c => c.Facultad).Where(x => x.FacultadId == id).ToListAsync();
+
+            }
+            else
+            {
+                Carrera = await _context.Carreras
+                    .Include(c => c.Facultad).ToListAsync();
+            }
         }
     }
 }
