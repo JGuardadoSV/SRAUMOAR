@@ -1,0 +1,53 @@
+﻿@page
+@model SRAUMOAR.Pages.generales.pensum.CreateModel
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Create</h1>
+
+<h4>Pensum</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Pensum.NombrePensum" class="control-label"></label>
+                <input asp-for="Pensum.NombrePensum" class="form-control" />
+                <span asp-validation-for="Pensum.NombrePensum" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Pensum.CodigoPensum" class="control-label"></label>
+                <input asp-for="Pensum.CodigoPensum" class="form-control" />
+                <span asp-validation-for="Pensum.CodigoPensum" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Pensum.Anio" class="control-label"></label>
+                <input asp-for="Pensum.Anio" class="form-control" />
+                <span asp-validation-for="Pensum.Anio" class="text-danger"></span>
+            </div>
+            <div class="form-group form-check">
+                <label class="form-check-label">
+                    <input class="form-check-input" asp-for="Pensum.Activo" /> @Html.DisplayNameFor(model => model.Pensum.Activo)
+                </label>
+            </div>
+            <div class="form-group">
+                <label asp-for="Pensum.CarreraId" class="control-label"></label>
+                <select asp-for="Pensum.CarreraId" class ="form-control" asp-items="ViewBag.CarreraId"></select>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-page="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using SRAUMOAR.Entidades.Generales;
+using SRAUMOAR.Entidades.Materias;
 using SRAUMOAR.Modelos;
 
-namespace SRAUMOAR.Pages.generales.carrera
+namespace SRAUMOAR.Pages.generales.materias
 {
     public class DeleteModel : PageModel
     {
@@ -20,7 +20,7 @@ namespace SRAUMOAR.Pages.generales.carrera
         }
 
         [BindProperty]
-        public Carrera Carrera { get; set; } = default!;
+        public Materia Materia { get; set; } = default!;
 
         public async Task<IActionResult> OnGetAsync(int? id)
         {
@@ -29,15 +29,15 @@ namespace SRAUMOAR.Pages.generales.carrera
                 return NotFound();
             }
 
-            var carrera = await _context.Carreras.FirstOrDefaultAsync(m => m.CarreraId == id);
+            var materia = await _context.Materias.FirstOrDefaultAsync(m => m.MateriaId == id);
 
-            if (carrera == null)
+            if (materia == null)
             {
                 return NotFound();
             }
             else
             {
-                Carrera = carrera;
+                Materia = materia;
             }
             return Page();
         }
@@ -49,11 +49,11 @@ namespace SRAUMOAR.Pages.generales.carrera
                 return NotFound();
             }
 
-            var carrera = await _context.Carreras.FindAsync(id);
-            if (carrera != null)
+            var materia = await _context.Materias.FindAsync(id);
+            if (materia != null)
             {
-                Carrera = carrera;
-                _context.Carreras.Remove(Carrera);
+                Materia = materia;
+                _context.Materias.Remove(Materia);
                 await _context.SaveChangesAsync();
             }
 

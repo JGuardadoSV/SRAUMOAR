@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using SRAUMOAR.Entidades.Generales;
+using SRAUMOAR.Entidades.Materias;
 using SRAUMOAR.Modelos;
 
-namespace SRAUMOAR.Pages.generales.carrera
+namespace SRAUMOAR.Pages.generales.pensum
 {
     public class DeleteModel : PageModel
     {
@@ -20,7 +20,7 @@ namespace SRAUMOAR.Pages.generales.carrera
         }
 
         [BindProperty]
-        public Carrera Carrera { get; set; } = default!;
+        public Pensum Pensum { get; set; } = default!;
 
         public async Task<IActionResult> OnGetAsync(int? id)
         {
@@ -29,15 +29,15 @@ namespace SRAUMOAR.Pages.generales.carrera
                 return NotFound();
             }
 
-            var carrera = await _context.Carreras.FirstOrDefaultAsync(m => m.CarreraId == id);
+            var pensum = await _context.Pensums.FirstOrDefaultAsync(m => m.PensumId == id);
 
-            if (carrera == null)
+            if (pensum == null)
             {
                 return NotFound();
             }
             else
             {
-                Carrera = carrera;
+                Pensum = pensum;
             }
             return Page();
         }
@@ -49,11 +49,11 @@ namespace SRAUMOAR.Pages.generales.carrera
                 return NotFound();
             }
 
-            var carrera = await _context.Carreras.FindAsync(id);
-            if (carrera != null)
+            var pensum = await _context.Pensums.FindAsync(id);
+            if (pensum != null)
             {
-                Carrera = carrera;
-                _context.Carreras.Remove(Carrera);
+                Pensum = pensum;
+                _context.Pensums.Remove(Pensum);
                 await _context.SaveChangesAsync();
             }
 

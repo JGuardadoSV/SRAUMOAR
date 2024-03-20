@@ -1,0 +1,60 @@
+﻿@page
+@model SRAUMOAR.Pages.generales.pensum.IndexModel
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+<p class="alert alert-danger">Botón para ir a las materias</p>
+<p>
+    <a asp-page="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Pensum[0].NombrePensum)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Pensum[0].CodigoPensum)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Pensum[0].Anio)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Pensum[0].Activo)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Pensum[0].Carrera)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model.Pensum) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.NombrePensum)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CodigoPensum)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Anio)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Activo)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Carrera.CodigoCarrera)
+            </td>
+            <td>
+                <a asp-page="./Edit" asp-route-id="@item.PensumId">Edit</a> |
+                <a asp-page="./Details" asp-route-id="@item.PensumId">Details</a> |
+                <a asp-page="./Delete" asp-route-id="@item.PensumId">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

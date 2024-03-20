@@ -1,0 +1,43 @@
+﻿@page
+@model SRAUMOAR.Pages.generales.materias.IndexModel
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Materias - Selección de carreras</h1>
+
+<p>
+    <a asp-page="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Carrera[0].NombreCarrera)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Carrera[0].CodigoCarrera)
+            </th>
+           
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model.Carrera) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.NombreCarrera)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CodigoCarrera)
+            </td>
+           
+            <td>
+                <a asp-page="./Materias" asp-route-id="@item.CarreraId">Ver materias</a> |
+               
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

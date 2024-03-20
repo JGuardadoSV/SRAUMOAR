@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using SRAUMOAR.Entidades.Generales;
+using SRAUMOAR.Entidades.Materias;
 using SRAUMOAR.Modelos;
 
-namespace SRAUMOAR.Pages.generales.carrera
+namespace SRAUMOAR.Pages.generales.pensum
 {
     public class DetailsModel : PageModel
     {
@@ -19,7 +19,7 @@ namespace SRAUMOAR.Pages.generales.carrera
             _context = context;
         }
 
-        public Carrera Carrera { get; set; } = default!;
+        public Pensum Pensum { get; set; } = default!;
 
         public async Task<IActionResult> OnGetAsync(int? id)
         {
@@ -28,14 +28,14 @@ namespace SRAUMOAR.Pages.generales.carrera
                 return NotFound();
             }
 
-            var carrera = await _context.Carreras.FirstOrDefaultAsync(m => m.CarreraId == id);
-            if (carrera == null)
+            var pensum = await _context.Pensums.FirstOrDefaultAsync(m => m.PensumId == id);
+            if (pensum == null)
             {
                 return NotFound();
             }
             else
             {
-                Carrera = carrera;
+                Pensum = pensum;
             }
             return Page();
         }
