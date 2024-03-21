@@ -4,6 +4,7 @@ using SRAUMOAR.Entidades.Alumnos;
 using SRAUMOAR.Entidades.Generales;
 using SRAUMOAR.Entidades.Materias;
 using System.Collections.Generic;
+using SRAUMOAR.Entidades.Docentes;
 
 namespace SRAUMOAR.Modelos
 {
@@ -25,6 +26,8 @@ namespace SRAUMOAR.Modelos
         public DbSet<Materia> Materias { get; set; } 
         public DbSet<MateriaPrerequisito> MateriasPrerrequisitos { get; set; } 
         public DbSet<Pensum> Pensums { get; set; }
+
+        public DbSet<Docente> Docentes { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SRAUMOAR.Modelos;
 
@@ -11,9 +12,11 @@ using SRAUMOAR.Modelos;
 namespace SRAUMOAR.Migrations
 {
     [DbContext(typeof(Contexto))]
-    partial class ContextoModelSnapshot : ModelSnapshot
+    [Migration("20240321014048_correccionmateria")]
+    partial class correccionmateria
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -83,50 +86,6 @@ namespace SRAUMOAR.Migrations
                     b.HasKey("AlumnoId");
 
                     b.ToTable("Alumno");
-                });
-
-            modelBuilder.Entity("SRAUMOAR.Entidades.Docentes.Docente", b =>
-                {
-                    b.Property<int>("DocenteId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DocenteId"));
-
-                    b.Property<string>("Apellidos")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Direccion")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Dui")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("FechaDeNacimiento")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("FechaDeRegistro")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Nombres")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ProfesionId")
-                        .HasColumnType("int");
-
-                    b.HasKey("DocenteId");
-
-                    b.HasIndex("ProfesionId");
-
-                    b.ToTable("Docentes");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Generales.Carrera", b =>
@@ -347,17 +306,6 @@ namespace SRAUMOAR.Migrations
                     b.HasIndex("CarreraId");
 
                     b.ToTable("Pensum");
-                });
-
-            modelBuilder.Entity("SRAUMOAR.Entidades.Docentes.Docente", b =>
-                {
-                    b.HasOne("SRAUMOAR.Entidades.Generales.Profesion", "Profesion")
-                        .WithMany()
-                        .HasForeignKey("ProfesionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Profesion");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Generales.Carrera", b =>

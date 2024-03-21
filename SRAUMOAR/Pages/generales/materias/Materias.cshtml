@@ -20,6 +20,12 @@
                 @Html.DisplayNameFor(model => model.Materia[0].CodigoMateria)
             </th>
             <th>
+                @Html.DisplayNameFor(model => model.Materia[0].Ciclo)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Materia[0].Correlativo)
+            </th>
+            <th>
                 @Html.DisplayNameFor(model => model.Materia[0].Pensum)
             </th>
             <th></th>
@@ -35,7 +41,13 @@
                 @Html.DisplayFor(modelItem => item.CodigoMateria)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Pensum.CodigoPensum)
+                @Html.DisplayFor(modelItem => item.Ciclo)
+            </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Correlativo)
+                </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Pensum!.CodigoPensum)
             </td>
             <td>
                 <a asp-page="./Edit" asp-route-id="@item.MateriaId">Edit</a> |

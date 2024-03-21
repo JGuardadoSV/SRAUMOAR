@@ -56,7 +56,7 @@
                 @Html.DisplayFor(modelItem => item.Facultad.NombreFacultad)
             </td>
             <td>
-                <a asp-page="./Materias" asp-route-id="@item.CarreraId">Ver materias</a> |
+                <a asp-page="/generales/materias/materias" asp-route-id="@item.CarreraId">Ver materias</a> |
                 <a asp-page="./Edit" asp-route-id="@item.CarreraId">Edit</a> |
                 <a asp-page="./Details" asp-route-id="@item.CarreraId">Details</a> |
                 <a asp-page="./Delete" asp-route-id="@item.CarreraId">Delete</a>

@@ -17,6 +17,14 @@ namespace SRAUMOAR.Entidades.Materias
         [Display(Name = "Código de la materia")]
         public string? CodigoMateria { get; set; }
 
+        [Required(ErrorMessage = "El campo correlativo es obligatorio")]
+        [Display(Name = "Correlativo en pensum")]
+        public int Correlativo { get; set; }
+
+        [Required(ErrorMessage = "El campo ciclo es obligatorio")]
+        [Display(Name = "Ciclo en el que se imparte")]
+        public int Ciclo { get; set; }
+
         [Required(ErrorMessage = "El campo pensum es obligatorio")]
         [Display(Name = "Pensum al que pertenece")]
         public int PensumId { get; set; }

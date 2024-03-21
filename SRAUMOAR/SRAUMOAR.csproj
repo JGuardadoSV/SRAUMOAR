@@ -7,7 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Entidades\Docentes\" />
     <Folder Include="Entidades\Colecturia\" />
     <Folder Include="Entidades\Procesos\" />
     <Folder Include="Migrations\" />
