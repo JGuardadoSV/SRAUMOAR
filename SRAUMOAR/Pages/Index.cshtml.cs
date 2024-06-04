@@ -5,16 +5,12 @@ namespace SRAUMOAR.Pages
 {
     public class IndexModel : PageModel
     {
-        private readonly ILogger<IndexModel> _logger;
-
-        public IndexModel(ILogger<IndexModel> logger)
+        public IActionResult OnPost()
         {
-            _logger = logger;
-        }
+            // Lógica para procesar el formulario
 
-        public void OnGet()
-        {
-
+            // Redirigir a la página Index
+            return RedirectToPage("/Home");
         }
     }
 }
