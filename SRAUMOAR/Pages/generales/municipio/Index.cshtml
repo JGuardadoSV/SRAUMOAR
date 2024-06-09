@@ -36,28 +36,7 @@
                     <a asp-page="./Details" asp-route-id="@item.MunicipioId" class="btn btn-info">Detalles <i class="bi bi-info-circle"></i> </a> |
                     <a asp-page="./Delete" asp-route-id="@item.MunicipioId" class="btn btn-danger">Eliminar <i class="bi bi-trash"></i></a>
                     
-                    <div class="dropdown">
-                        <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-                            Acciones
-                        </button>
-                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                            <li>
-                                <a class="dropdown-item" asp-page="./Edit" asp-route-id="@item.MunicipioId">
-                                    Editar <i class="bi bi-pencil-square"></i>
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" asp-page="./Details" asp-route-id="@item.MunicipioId">
-                                    Detalles <i class="bi bi-info-circle"></i>
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" asp-page="./Delete" asp-route-id="@item.MunicipioId">
-                                    Eliminar <i class="bi bi-trash"></i>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
+                   
 
             </td>
         </tr>

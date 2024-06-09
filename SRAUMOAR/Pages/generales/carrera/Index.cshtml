@@ -56,10 +56,18 @@
                 @Html.DisplayFor(modelItem => item.Facultad.NombreFacultad)
             </td>
             <td>
-                <a asp-page="/generales/materias/materias" asp-route-id="@item.CarreraId">Ver materias</a> |
-                <a asp-page="./Edit" asp-route-id="@item.CarreraId">Edit</a> |
-                <a asp-page="./Details" asp-route-id="@item.CarreraId">Details</a> |
-                <a asp-page="./Delete" asp-route-id="@item.CarreraId">Delete</a>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        Acciones
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" asp-page="/generales/materias/materias" asp-route-id="@item.CarreraId">Ver materias <i class="bi bi-eye"></i></a></li>
+                        <li><a class="dropdown-item" asp-page="./Edit" asp-route-id="@item.CarreraId">Editar <i class="bi bi-pencil"></i></a></li>
+                        <li><a class="dropdown-item" asp-page="./Details" asp-route-id="@item.CarreraId">Detalles <i class="bi bi-info"></i></a></li>
+                        <li><a class="dropdown-item" asp-page="./Delete" asp-route-id="@item.CarreraId">Eliminar <i class="bi bi-trash"></i></a></li>
+                    </ul>
+                </div>
+
             </td>
         </tr>
 }
