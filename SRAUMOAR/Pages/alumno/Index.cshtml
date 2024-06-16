@@ -29,7 +29,7 @@
             <th></th>
         </tr>
     </thead>
-    <tbody>
+    <tbody> 
 @foreach (var item in Model.Alumno) {
         <tr>
             <td>
@@ -44,7 +44,6 @@
             <td>
                 @Html.DisplayFor(modelItem => item.Email)
             </td>
-           
             <td>
                 <a asp-page="./Edit" asp-route-id="@item.AlumnoId" class="btn btn-danger">Editar</a> |
                 <a asp-page="./Details" asp-route-id="@item.AlumnoId">Details</a> |
