@@ -5,6 +5,7 @@ using SRAUMOAR.Entidades.Generales;
 using SRAUMOAR.Entidades.Materias;
 using System.Collections.Generic;
 using SRAUMOAR.Entidades.Docentes;
+using SRAUMOAR.Entidades.Accesos;
 
 namespace SRAUMOAR.Modelos
 {
@@ -28,6 +29,8 @@ namespace SRAUMOAR.Modelos
         public DbSet<Pensum> Pensums { get; set; }
 
         public DbSet<Docente> Docentes { get; set; }
+        public DbSet<NivelAcceso> NivelesAcceso { get; set; }
+        public DbSet<Usuario> Usuarios { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -44,6 +47,7 @@ namespace SRAUMOAR.Modelos
                 .HasForeignKey(mp => mp.PrerrequisoMateriaId)
                 .OnDelete(DeleteBehavior.Restrict); // O la acción deseada en caso de eliminar una materia
         }
+        public DbSet<SRAUMOAR.Entidades.Accesos.NivelAcceso> NivelAcceso { get; set; } = default!;
 
 
 

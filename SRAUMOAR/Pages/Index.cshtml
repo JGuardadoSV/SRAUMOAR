@@ -33,13 +33,15 @@
             <div class="card-body login-card-body">
                 
                 <p class="login-box-msg">Por favor ingrese sus credenciales</p>
+                <div asp-validation-summary="All" class="text-danger"></div>
+
                 <form method="post">
                     <div class="input-group mb-1">
-                        <div class="form-floating"> <input  required="true" id="loginEmail" type="email" class="form-control" value="" placeholder=""> <label for="loginEmail">Usuario</label> </div>
+                        <div class="form-floating"> <input name="NombreUsuario" required="true" id="loginEmail" type="email" class="form-control" value="" placeholder=""> <label for="loginEmail">Usuario</label> </div>
                         <div class="input-group-text"> <span class="bi bi-envelope"></span> </div>
                     </div>
                     <div class="input-group mb-1">
-                        <div class="form-floating"> <input required="true" id="loginPassword" type="password" class="form-control" placeholder=""> <label for="loginPassword">Contraseña</label> </div>
+                        <div class="form-floating"> <input name="Clave" required="true" id="loginPassword" type="password" class="form-control" placeholder=""> <label for="loginPassword">Contraseña</label> </div>
                         <div class="input-group-text"> <span class="bi bi-lock-fill"></span> </div>
                     </div> <!--begin::Row-->
                     <div class="row">
@@ -51,6 +53,11 @@
             </div> <!-- /.login-card-body -->
         </div>
     </div> <!-- /.login-box --> <!--begin::Third Party Plugin(OverlayScrollbars)-->
+    @section Scripts {
+        @{
+            await Html.RenderPartialAsync("_ValidationScriptsPartial");
+        }
+    }
     <script src="~/js/overlayscrollbars.browser.es6.min.js" integrity="sha256-H2VM7BKda+v2Z4+DRy69uknwxjyDRhszjXFhsL4gD3w=" crossorigin="anonymous"></script> <!--end::Third Party Plugin(OverlayScrollbars)-->
     <!--begin::Required Plugin(popperjs for Bootstrap 5)-->
     <script src="~/js/popper.min.js" integrity="sha256-whL0tQWoY1Ku1iskqPFvmZ+CHsvmRWx/PIoEvIeWh4I=" crossorigin="anonymous"></script> <!--end::Required Plugin(popperjs for Bootstrap 5)-->
