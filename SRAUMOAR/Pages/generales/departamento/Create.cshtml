@@ -2,40 +2,62 @@
 @model SRAUMOAR.Pages.generales.departamento.CreateModel
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Nuevo";
 }
 
-<header class="bg-primary text-white text-center py-3 mb-4">
-    <h1>Nuevo Departamento</h1>
-</header>
-<hr />
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-body">
-                    <form method="post">
-                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
-                        <div class="mb-3">
-                            <label asp-for="Departamento.NombreDepartamento" class="form-label"></label>
-                            <input asp-for="Departamento.NombreDepartamento" class="form-control" placeholder="Ingrese el nombre del departamento" />
-                            <span asp-validation-for="Departamento.NombreDepartamento" class="text-danger"></span>
-                        </div>
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary btn-lg">Crear</button>
-                        </div>
-                    </form>
-                </div>
+<!DOCTYPE html>
+<html lang="es">
+<body>
+    <header class="bg-primary text-white text-center py-3 mb-4">
+        <h1>Nuevo Departamento</h1>
+    </header>
+    <hr />
+    <div class="container mt-5">
+        <div class="card shadow-lg">
+            <div class="card-header bg-dark text-white text-center">
+                <h4 class="fs-4 fw-semibold text-white formal-text">Departamento</h4>
             </div>
-            <div class="text-center mt-3">
-                <a asp-page="Index" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-left"></i> Volver a la lista
-                </a>
+            <div class="container mt-1">
+                <div class="row justify-content-center">
+                    <div class="col-md-5">
+                        <div class="card-body">
+                            <form method="post">
+                                <div asp-validation-summary="ModelOnly" class="alert alert-danger d-flex align-items-center" role="alert"></div>
+                                <div class="mb-3">
+                                    <label asp-for="Departamento.NombreDepartamento" class="form-label fs-4 fw-semibold text-dark formal-text">Nombre del Departamento</label>
+                                    <br>
+                                    <br>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-map"></i></span>
+                                        <input asp-for="Departamento.NombreDepartamento" class="form-control" placeholder="Ingrese el nombre del departamento" />
+                                    </div>
+                                    <br>
+                                    <span asp-validation-for="Departamento.NombreDepartamento" class="text-danger"></span>
+                                </div>
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="bi bi-plus-circle"></i> Crear
+                                    </button>
+                                </div>
+                                <br>
+                            </form>
+                        </div>
+                        <br>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
+    <div class="text-center mt-3">
+        <a asp-page="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver a la lista
+        </a>
+    </div>
+    @section Scripts {
+        @{
+            await Html.RenderPartialAsync("_ValidationScriptsPartial");
+        }
+    }
+</body>
+</html>
 
-@section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}
