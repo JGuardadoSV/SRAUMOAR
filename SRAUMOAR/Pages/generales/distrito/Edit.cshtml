@@ -2,39 +2,69 @@
 @model SRAUMOAR.Pages.generales.distrito.EditModel
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Editar";
 }
 
-<h1>Edit</h1>
-
-<h4>Distrito</h4>
+<header class="bg-primary text-white text-center py-3 mb-4">
+    <h1> Edición Distrito</h1>
+</header>
 <hr />
-<div class="row">
-    <div class="col-md-4">
-        <form method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Distrito.DistritoId" />
-            <div class="form-group">
-                <label asp-for="Distrito.NombreDistrito" class="control-label"></label>
-                <input asp-for="Distrito.NombreDistrito" class="form-control" />
-                <span asp-validation-for="Distrito.NombreDistrito" class="text-danger"></span>
+<div class="container mt-5">
+    <div class="card shadow-lg">
+        <div class="card-header bg-dark text-white text-center">
+            <h4 class="fs-4 fw-semibold text-white formal-text">Distrito</h4>
+        </div>
+        <div class="container mt-1">
+            <div class="row justify-content-center">
+                <div class="col-md-5">
+                    <div class="card-body">
+                        <form method="post">
+                            <div asp-validation-summary="ModelOnly" class="alert alert-danger d-flex align-items-center" role="alert"></div>
+                            <input type="hidden" asp-for="Distrito.DistritoId" />
+                            <div class="mb-3">
+                                <label asp-for="Distrito.NombreDistrito" class="form-label fs-4 fw-semibold text-dark formal-text">Distrito</label>
+                                <br>
+                                <br>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-map-fill"></i></span>
+                                    <input asp-for="Distrito.NombreDistrito" class="form-control" placeholder="Ingrese el nombre del Distrito"/>
+                                </div>
+                                <br>
+                                <span asp-validation-for="Distrito.NombreDistrito" class="text-danger"></span>
+                            </div>
+                            <div class="mb-3">
+                                <label asp-for="Distrito.DepartamentoId" class="form-label fs-4 fw-semibold text-dark formal-text">Departamento</label>
+                                <br>
+                                <br>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-map"></i></span>
+                                    <select asp-for="Distrito.DepartamentoId" class="form-control" asp-items="ViewBag.DepartamentoId"></select>
+                                </div>
+                                <br>
+                                <span asp-validation-for="Distrito.DepartamentoId" class="text-danger"></span>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-arrow-clockwise"></i> Actualizar
+                                </button>
+                            </div>
+                            <br>
+                        </form>
+                    </div>
+                    <br>
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="Distrito.DepartamentoId" class="control-label"></label>
-                <select asp-for="Distrito.DepartamentoId" class="form-control" asp-items="ViewBag.DepartamentoId"></select>
-                <span asp-validation-for="Distrito.DepartamentoId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
+        </div>
     </div>
 </div>
-
-<div>
-    <a asp-page="./Index">Back to List</a>
+<br>
+<div class="text-center mt-3">
+    <a asp-page="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Volver a la lista
+    </a>
 </div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

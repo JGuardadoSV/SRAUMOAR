@@ -2,37 +2,73 @@
 @model SRAUMOAR.Pages.generales.municipio.CreateModel
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Nuevo";
 }
 
-<h1>Create</h1>
-
-<h4>Municipio</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Municipio.NombreMunicipio" class="control-label"></label>
-                <input asp-for="Municipio.NombreMunicipio" class="form-control" />
-                <span asp-validation-for="Municipio.NombreMunicipio" class="text-danger"></span>
+<!DOCTYPE html>
+<html lang="es">
+<body>
+    <header class="bg-primary text-white text-center py-3 mb-4">
+        <h1>Nuevo Municipio</h1>
+    </header>
+    <hr />
+    <div class="container mt-5">
+        <div class="card shadow-lg">
+            <div class="card-header bg-dark text-white text-center">
+                <h4 class="fs-4 fw-semibold text-white formal-text">Municipio</h4>
             </div>
-            <div class="form-group">
-                <label asp-for="Municipio.DistritoId" class="control-label"></label>
-                <select asp-for="Municipio.DistritoId" class ="form-control" asp-items="ViewBag.DistritoId"></select>
+            <div class="container mt-1">
+                <div class="row justify-content-center">
+                    <div class="col-md-5">
+                        <div class="card-body">
+                            <form method="post">
+                                <div asp-validation-summary="ModelOnly" class="alert alert-danger d-flex align-items-center" role="alert"></div>
+                                <div class="mb-3">
+                                    <label asp-for="Municipio.NombreMunicipio" class="form-label fs-4 fw-semibold text-dark formal-text">Nombre del Municipio</label>
+                                    <br>
+                                    <br>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-building"></i></span>
+                                        <input asp-for="Municipio.NombreMunicipio" class="form-control" placeholder="Ingrese el nombre del Municipio
+" />
+                                    </div>
+                                    <br>
+                                    <span asp-validation-for="Municipio.NombreMunicipio" class="text-danger"></span>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="Municipio.MunicipioId" class="form-label fs-4 fw-semibold text-dark formal-text">Distrito</label>
+                                    <br>
+                                    <br>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-map-fill"></i></span>
+                                        <select asp-for="Municipio.DistritoId" class="form-control" asp-items="ViewBag.DistritoId"></select>
+                                    </div>
+                                    <br>
+                                    <span asp-validation-for="Municipio.DistritoId" class="text-danger"></span>
+                                </div>
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="bi bi-plus-circle"></i> Crear
+                                    </button>
+                                </div>
+                                <br>
+                            </form>
+                        </div>
+                        <br>
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
-        </form>
+        </div>
     </div>
-</div>
-
-<div>
-    <a asp-page="Index">Back to List</a>
-</div>
-
-@section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}
+    <div class="text-center mt-3">
+        <a asp-page="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver a la lista
+        </a>
+    </div>
+    @section Scripts {
+        @{
+            await Html.RenderPartialAsync("_ValidationScriptsPartial");
+        }
+    }
+</body>
+</html>

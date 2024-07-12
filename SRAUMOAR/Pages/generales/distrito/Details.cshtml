@@ -2,30 +2,49 @@
 @model SRAUMOAR.Pages.generales.distrito.DetailsModel
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Detalles";
 }
 
-<h1>Details</h1>
-
-<div>
-    <h4>Distrito</h4>
-    <hr />
-    <dl class="row">
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Distrito.NombreDistrito)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Distrito.NombreDistrito)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Distrito.Departamento)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Distrito.Departamento.NombreDepartamento)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-page="./Edit" asp-route-id="@Model.Distrito.DistritoId">Edit</a> |
-    <a asp-page="./Index">Back to List</a>
-</div>
+<!DOCTYPE html>
+<html lang="es">
+<body>
+    <header class="bg-primary text-white text-center py-4">
+        <h1>Detalles del Distrito</h1>
+    </header>
+    <div class="container mt-5">
+        <div class="card shadow-lg">
+            <div class="card-header bg-dark text-white text-center">
+                <h4 class="fs-4 fw-semibold text-white formal-text">Distrito</h4>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-map-fill">
+                        @Html.DisplayNameFor(model => model.Distrito.NombreDistrito)
+                    </dt>
+                    <dd class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-info-circle">
+                        @Html.DisplayFor(model => model.Distrito.NombreDistrito)
+                    </dd>
+                </dl>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-map">
+                        @Html.DisplayNameFor(model => model.Distrito.Departamento)
+                    </dt>
+                    <dd class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-info-circle">
+                        @Html.DisplayFor(model => model.Distrito.Departamento.NombreDepartamento)   @*REVISAR*@
+                    </dd>
+                </dl>
+            </div>
+            <div class="card-footer text-end">
+                <a asp-page="./Edit" asp-route-id="@Model.Distrito.DistritoId" class="btn btn-primary">
+                    <i class="bi bi-pencil-square"></i> Editar
+                </a>
+                <a asp-page="./Index" class="btn btn-secondary ms-2">
+                    <i class="bi bi-arrow-left"></i> Volver a la lista
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
