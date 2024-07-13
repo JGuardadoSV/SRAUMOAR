@@ -2,62 +2,114 @@
 @model SRAUMOAR.Pages.generales.docentes.CreateModel
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Nuevo";
 }
 
-<h1>Create</h1>
-
-<h4>Docente</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Docente.Nombres" class="control-label"></label>
-                <input asp-for="Docente.Nombres" class="form-control" />
-                <span asp-validation-for="Docente.Nombres" class="text-danger"></span>
+<!DOCTYPE html>
+<html lang="es">
+<body>
+    <header class="bg-primary text-white text-center py-3 mb-4">
+        <h1>Nuevo Docente</h1>
+    </header>
+    <hr />
+    <div class="container mt-5">
+        <div class="card shadow-lg">
+            <div class="card-header bg-dark text-white text-center">
+                <h4 class="fs-4 fw-semibold text-white formal-text">Docente</h4>
             </div>
-            <div class="form-group">
-                <label asp-for="Docente.Apellidos" class="control-label"></label>
-                <input asp-for="Docente.Apellidos" class="form-control" />
-                <span asp-validation-for="Docente.Apellidos" class="text-danger"></span>
+            <div class="container mt-1">
+                <div class="row justify-content-center">
+                    <div class="col-md-5">
+                        <div class="card-body">
+                            <form method="post">
+                                <div asp-validation-summary="ModelOnly" class="alert alert-danger d-flex align-items-center" role="alert"></div>
+                                <div class="mb-3">
+                                    <label asp-for="Docente.Nombres" class="form-label fs-4 fw-semibold text-dark formal-text">Nombres</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-book"></i></span>
+                                        <input asp-for="Docente.Nombres" class="form-control" placeholder="Ingrese los nombres del Docente" />
+                                    </div>
+                                    <br>
+                                    <span asp-validation-for="Docente.Nombres" class="text-danger"></span>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="Docente.Apellidos" class="form-label fs-4 fw-semibold text-dark formal-text">Apellidos</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-book"></i></span>
+                                        <input asp-for="Docente.Apellidos" class="form-control" placeholder="Ingrese Apellidos del Docente" />
+                                    </div>
+                                    <br>
+                                    <span asp-validation-for="Docente.Apellidos" class="text-danger"></span>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="Docente.Dui" class="form-label fs-4 fw-semibold text-dark formal-text">Dui</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-book"></i></span>
+                                        <input asp-for="Docente.Dui" class="form-control" placeholder="Ingrese Dui del Docente" />
+                                    </div>
+                                    <br>
+                                    <span asp-validation-for="Docente.Dui" class="text-danger"></span>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="Docente.FechaDeNacimiento" class="form-label fs-4 fw-semibold text-dark formal-text">Fecha de Nacimiento</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-book"></i></span>
+                                        <input asp-for="Docente.FechaDeNacimiento" class="form-control" placeholder="Fecha de Nacimiento" />
+                                    </div>
+                                    <br>
+                                    <span asp-validation-for="Docente.FechaDeNacimiento" class="text-danger"></span>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="Docente.Direccion" class="form-label fs-4 fw-semibold text-dark formal-text">Dirección</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-book"></i></span>
+                                        <input asp-for="Docente.Direccion" class="form-control" placeholder="Ingrese Dirección" />
+                                    </div>
+                                    <br>
+                                    <span asp-validation-for="Docente.Direccion" class="text-danger"></span>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="Docente.Email" class="form-label fs-4 fw-semibold text-dark formal-text">Correo Electronico</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-book"></i></span>
+                                        <input asp-for="Docente.Email" class="form-control" placeholder="Ingrese Correo Electronico" />
+                                    </div>
+                                    <br>
+                                    <span asp-validation-for="Docente.Email" class="text-danger"></span>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="Docente.ProfesionId" class="form-label fs-4 fw-semibold text-dark formal-text">Profesión</label>
+                                    <br>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-briefcase"></i></span>
+                                        <select asp-for="Docente.ProfesionId" class="form-control" asp-items="ViewBag.ProfesionId"></select>
+                                    </div>
+                                    <br>
+                                </div>
+                                <br>
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="bi bi-plus-circle"></i> Crear
+                                    </button>
+                                </div>
+                                <br>
+                            </form>
+                        </div>
+                        <br>
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="Docente.Dui" class="control-label"></label>
-                <input asp-for="Docente.Dui" class="form-control" />
-                <span asp-validation-for="Docente.Dui" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Docente.FechaDeNacimiento" class="control-label"></label>
-                <input asp-for="Docente.FechaDeNacimiento" class="form-control" />
-                <span asp-validation-for="Docente.FechaDeNacimiento" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Docente.Direccion" class="control-label"></label>
-                <input asp-for="Docente.Direccion" class="form-control" />
-                <span asp-validation-for="Docente.Direccion" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Docente.Email" class="control-label"></label>
-                <input asp-for="Docente.Email" class="form-control" />
-                <span asp-validation-for="Docente.Email" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Docente.ProfesionId" class="control-label"></label>
-                <select asp-for="Docente.ProfesionId" class ="form-control" asp-items="ViewBag.ProfesionId"></select>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
-        </form>
+        </div>
     </div>
-</div>
-
-<div>
-    <a asp-page="Index">Back to List</a>
-</div>
-
-@section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}
+    <div class="text-center mt-3">
+        <a asp-page="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver a la lista
+        </a>
+    </div>
+    @section Scripts {
+        @{
+            await Html.RenderPartialAsync("_ValidationScriptsPartial");
+        }
+    }
+</body>
+</html>

@@ -2,80 +2,72 @@
 @model SRAUMOAR.Pages.generales.docentes.IndexModel
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Docentes";
 }
 
-<h1>Index</h1>
-
-<p>
-    <a asp-page="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Docente[0].Nombres)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Docente[0].Apellidos)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Docente[0].Dui)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Docente[0].FechaDeNacimiento)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Docente[0].Direccion)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Docente[0].Email)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Docente[0].Profesion)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model.Docente) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Nombres)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Apellidos)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Dui)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FechaDeNacimiento)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Direccion)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Email)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Profesion.NombreProfesion)
-            </td>
-            <td>
-                <div class="btn-group">
-                    <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                        Acciones
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" asp-page="./Edit" asp-route-id="@item.DocenteId">Editar <i class="bi bi-pencil-square"></i></a></li>
-                        <li><a class="dropdown-item" asp-page="./Details" asp-route-id="@item.DocenteId">Detalles <i class="bi bi-info-circle"></i></a></li>
-                        <li><a class="dropdown-item" asp-page="./Delete" asp-route-id="@item.DocenteId">Eliminar <i class="bi bi-trash"></i></a></li>
-                    </ul>
-                </div>
-
-
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+</head>
+<body>
+    <header class="bg-primary text-white text-center py-3 mb-4">
+        <h1>Listado de Docentes</h1>
+    </header>
+    <div class="container-fluid mt-4">
+        <a asp-page="./Create" class="btn btn-primary btn-custom">
+            <i class="bi bi-plus-circle btn-icon"></i>
+            Nuevo
+        </a>
+    </div>
+    <div class="container-fluid mt-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>@Html.DisplayNameFor(model => model.Docente[0].Nombres)</th>
+                            <th>@Html.DisplayNameFor(model => model.Docente[0].Apellidos)</th>
+                            <th>@Html.DisplayNameFor(model => model.Docente[0].Dui)</th>
+                            <th>@Html.DisplayNameFor(model => model.Docente[0].FechaDeNacimiento)</th>
+                            <th>@Html.DisplayNameFor(model => model.Docente[0].Direccion)</th>
+                            <th>@Html.DisplayNameFor(model => model.Docente[0].Email)</th>
+                            <th>@Html.DisplayNameFor(model => model.Docente[0].Profesion)</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Docente)
+                        {
+                            <tr>
+                                <td>@Html.DisplayFor(modelItem => item.Nombres)</td>
+                                <td>@Html.DisplayFor(modelItem => item.Apellidos)</td>
+                                <td>@Html.DisplayFor(modelItem => item.Dui)</td>
+                                <td>@Html.DisplayFor(modelItem => item.FechaDeNacimiento)</td>
+                                <td>@Html.DisplayFor(modelItem => item.Direccion)</td>
+                                <td>@Html.DisplayFor(modelItem => item.Email)</td>
+                                <td>@Html.DisplayFor(modelItem => item.Profesion.NombreProfesion)</td>
+                                <td class="text-center">
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                            Acciones
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" asp-page="./Create">Nuevo <i class="bi bi-plus-circle"></i></a></li>
+                                            <li><a class="dropdown-item" asp-page="./Edit" asp-route-id="@item.DocenteId">Editar <i class="bi bi-pencil-square"></i></a></li>
+                                            <li><a class="dropdown-item" asp-page="./Details" asp-route-id="@item.DocenteId">Detalles <i class="bi bi-info-circle"></i></a></li>
+                                            <!-- <li><a class="dropdown-item" asp-page="./Delete" asp-route-id="@item.DocenteId">Eliminar <i class="bi bi-trash"></i></a></li>//-->
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

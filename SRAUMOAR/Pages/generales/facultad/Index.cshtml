@@ -2,42 +2,61 @@
 @model SRAUMOAR.Pages.generales.facultad.IndexModel
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Facultades";
 }
-
-<h1>Facultades</h1>
-
-<p>
-    <a asp-page="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Facultad[0].NombreFacultad)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Facultad[0].Activa)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model.Facultad) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.NombreFacultad)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Activa)
-            </td>
-            <td>
-                <a asp-page="/generales/carrera/Index" asp-route-id="@item.FacultadId">Carreras</a> |
-                <a asp-page="./Edit" asp-route-id="@item.FacultadId">Edit</a> |
-                <a asp-page="./Details" asp-route-id="@item.FacultadId">Details</a> |
-                <a asp-page="./Delete" asp-route-id="@item.FacultadId">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+</head>
+<body>
+    <header class="bg-primary text-white text-center py-3 mb-4">
+        <h1>Listado de Facultades</h1>
+    </header>
+    <div class="container-fluid mt-4">
+        <a asp-page="./Create" class="btn btn-primary btn-custom">
+            <i class="bi bi-plus-circle btn-icon"></i>
+            Nuevo
+        </a>
+    </div>
+    <div class="container-fluid mt-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>@Html.DisplayNameFor(model => model.Facultad[0].NombreFacultad)</th>
+                            <th>@Html.DisplayNameFor(model => model.Facultad[0].Activa)</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Facultad)
+                        {
+                            <tr>
+                                <td>@Html.DisplayFor(modelItem => item.NombreFacultad)</td>
+                                <td>@Html.DisplayFor(modelItem => item.Activa)</td>
+                                <td class="text-center">
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                            Acciones
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" asp-page="./Create">Nuevo <i class="bi bi-plus-circle"></i></a></li>
+                                            <li><a class="dropdown-item" asp-page="./Edit" asp-route-id="@item.FacultadId">Editar <i class="bi bi-pencil-square"></i></a></li>
+                                            <li><a class="dropdown-item" asp-page="./Details" asp-route-id="@item.FacultadId">Detalles <i class="bi bi-info-circle"></i></a></li>
+                                            <!-- <li><a class="dropdown-item" asp-page="./Delete" asp-route-id="@item.FacultadId">Eliminar <i class="bi bi-trash"></i></a></li>//-->
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
