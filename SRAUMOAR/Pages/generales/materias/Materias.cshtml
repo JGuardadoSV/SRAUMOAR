@@ -2,59 +2,68 @@
 @model SRAUMOAR.Pages.generales.materias.MateriasModel
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Materias";
 }
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+</head>
+<body>
+    <header class="bg-primary text-white text-center py-3 mb-4">
+        <h1>Listado de Materias</h1>
+    </header>
+    <div class="container-fluid mt-4">
+        <a asp-page="./Create" class="btn btn-primary btn-custom">
+            <i class="bi bi-plus-circle btn-icon"></i>
+            Nuevo
+        </a>
+    </div>
+    <div class="container-fluid mt-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>@Html.DisplayNameFor(model => model.Materia[0].NombreMateria)</th>
+                            <th>@Html.DisplayNameFor(model => model.Materia[0].CodigoMateria)</th>
+                            <th>@Html.DisplayNameFor(model => model.Materia[0].Ciclo)</th>
+                            <th>@Html.DisplayNameFor(model => model.Materia[0].Correlativo)</th>
+                            <th>@Html.DisplayNameFor(model => model.Materia[0].Pensum)</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Materia)
+                        {
+                            <tr>
+                                <td>@Html.DisplayFor(modelItem => item.NombreMateria)</td>
+                                <td>@Html.DisplayFor(modelItem => item.CodigoMateria)</td>
+                                <td>@Html.DisplayFor(modelItem => item.Ciclo)</td>
+                                <td>@Html.DisplayFor(modelItem => item.Correlativo)</td>
+                                <td>@Html.DisplayFor(modelItem => item.Pensum!.CodigoPensum)</td>
+                                <td class="text-center">
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                            Acciones
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" asp-page="./Create">Nuevo <i class="bi bi-plus-circle"></i></a></li>
+                                            <li><a class="dropdown-item" asp-page="./Edit" asp-route-id="@item.MateriaId">Editar <i class="bi bi-pencil-square"></i></a></li>
+                                            <li><a class="dropdown-item" asp-page="./Details" asp-route-id="@item.MateriaId">Detalles <i class="bi bi-info-circle"></i></a></li>
+                                            <!-- <li><a class="dropdown-item" asp-page="./Delete" asp-route-id="@item.MateriaId">Eliminar <i class="bi bi-trash"></i></a></li>//-->
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
 
-<h1>Index</h1>
-
-<p>
-    <a asp-page="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Materia[0].NombreMateria)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Materia[0].CodigoMateria)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Materia[0].Ciclo)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Materia[0].Correlativo)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Materia[0].Pensum)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model.Materia) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.NombreMateria)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CodigoMateria)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Ciclo)
-            </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Correlativo)
-                </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Pensum!.CodigoPensum)
-            </td>
-            <td>
-                <a asp-page="./Edit" asp-route-id="@item.MateriaId">Edit</a> |
-                <a asp-page="./Details" asp-route-id="@item.MateriaId">Details</a> |
-                <a asp-page="./Delete" asp-route-id="@item.MateriaId">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>

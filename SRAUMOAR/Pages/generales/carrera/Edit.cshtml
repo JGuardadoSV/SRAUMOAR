@@ -2,59 +2,109 @@
 @model SRAUMOAR.Pages.generales.carrera.EditModel
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Editar";
 }
-
-<h1>Edit</h1>
-
-<h4>Carrera</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Carrera.CarreraId" />
-            <div class="form-group">
-                <label asp-for="Carrera.NombreCarrera" class="control-label"></label>
-                <input asp-for="Carrera.NombreCarrera" class="form-control" />
-                <span asp-validation-for="Carrera.NombreCarrera" class="text-danger"></span>
+<!DOCTYPE html>
+<html lang="es">
+<body>
+    <header class="bg-primary text-white text-center py-3 mb-4">
+        <h1>Edición Carrera</h1>
+    </header>
+    <hr />
+    <div class="container mt-5">
+        <div class="card shadow-lg">
+            <div class="card-header bg-dark text-white text-center">
+                <h4 class="fs-4 fw-semibold text-white formal-text">Carrera</h4>
             </div>
-            <div class="form-group">
-                <label asp-for="Carrera.CodigoCarrera" class="control-label"></label>
-                <input asp-for="Carrera.CodigoCarrera" class="form-control" />
-                <span asp-validation-for="Carrera.CodigoCarrera" class="text-danger"></span>
+            <div class="container mt-1">
+                <div class="row justify-content-center">
+                    <div class="col-md-5">
+                        <div class="card-body">
+                            <form method="post">
+                                <div asp-validation-summary="ModelOnly" class="alert alert-danger d-flex align-items-center" role="alert"></div>
+                                <input type="hidden" asp-for="Carrera.CarreraId" />
+                                <div class="mb-3">
+                                    <label asp-for="Carrera.NombreCarrera" class="form-label fs-4 fw-semibold text-dark formal-text">Nombre de la Carrera</label>
+                                    <br>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-journal"></i></span>
+                                        <input asp-for="Carrera.NombreCarrera" class="form-control" placeholder="Ingrese el nombre de la Carrera" />
+                                    </div>
+                                    <br>
+                                    <span asp-validation-for="Carrera.NombreCarrera" class="text-danger"></span>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="Carrera.CodigoCarrera" class="form-label fs-4 fw-semibold text-dark formal-text">Codigo de la Carrera</label>
+                                    <br>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-journal"></i></span>
+                                        <input asp-for="Carrera.CodigoCarrera" class="form-control" placeholder="Ingrese codigo de la Carrera" />
+                                    </div>
+                                    <br>
+                                    <span asp-validation-for="Carrera.CodigoCarrera" class="text-danger"></span>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="Carrera.Duracion" class="form-label fs-4 fw-semibold text-dark formal-text">Duración</label>
+                                    <br>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-journal"></i></span>
+                                        <input asp-for="Carrera.Duracion" class="form-control" placeholder="Ingrese duracion de la carrera" />
+                                    </div>
+                                    <br>
+                                    <span asp-validation-for="Carrera.Duracion" class="text-danger"></span>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="Carrera.Ciclos" class="form-label fs-4 fw-semibold text-dark formal-text">Ciclos</label>
+                                    <br>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-journal"></i></span>
+                                        <input asp-for="Carrera.Ciclos" class="form-control" placeholder="Ingrese ciclos" />
+                                    </div>
+                                    <br>
+                                    <span asp-validation-for="Carrera.Ciclos" class="text-danger"></span>
+                                </div>
+                                <div class="input-group">
+                                    <label class="form-check-label fs-4 fw-semibold text-dark formal-text">
+                                        <input class="form-check-input " asp-for="Carrera.Activa" />
+                                        <i class="bi bi-journal"></i> @Html.DisplayNameFor(model => model.Carrera.Activa)
+                                    </label>
+                                </div>
+                                <br>
+                                <br>
+                                <div class="mb-3">
+                                    <label asp-for="Carrera.FacultadId" class="form-label fs-4 fw-semibold text-dark formal-text">Nombre de la Facultad</label>
+                                    <br>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-mortarboard"></i></span>
+                                        <select asp-for="Carrera.FacultadId" class="form-control" asp-items="ViewBag.FacultadId"></select>
+                                    </div>
+                                    <br>
+                                    <span asp-validation-for="Carrera.FacultadId" class="text-danger"></span>
+                                </div>
+                                <br>
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="bi bi-arrow-clockwise"></i> Actualizar
+                                    </button>
+                                </div>
+                                <br>
+                            </form>
+                        </div>
+                        <br>
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="Carrera.Duracion" class="control-label"></label>
-                <input asp-for="Carrera.Duracion" class="form-control" />
-                <span asp-validation-for="Carrera.Duracion" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Carrera.Ciclos" class="control-label"></label>
-                <input asp-for="Carrera.Ciclos" class="form-control" />
-                <span asp-validation-for="Carrera.Ciclos" class="text-danger"></span>
-            </div>
-            <div class="form-group form-check">
-                <label class="form-check-label">
-                    <input class="form-check-input" asp-for="Carrera.Activa" /> @Html.DisplayNameFor(model => model.Carrera.Activa)
-                </label>
-            </div>
-            <div class="form-group">
-                <label asp-for="Carrera.FacultadId" class="control-label"></label>
-                <select asp-for="Carrera.FacultadId" class="form-control" asp-items="ViewBag.FacultadId"></select>
-                <span asp-validation-for="Carrera.FacultadId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
+        </div>
     </div>
-</div>
-
-<div>
-    <a asp-page="./Index">Back to List</a>
-</div>
-
-@section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}
+    <div class="text-center mt-3">
+        <a asp-page="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver a la lista
+        </a>
+    </div>
+    @section Scripts {
+        @{
+            await Html.RenderPartialAsync("_ValidationScriptsPartial");
+        }
+    }
+</body>
+</html>

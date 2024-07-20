@@ -2,52 +2,100 @@
 @model SRAUMOAR.Pages.generales.materias.CreateModel
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Nuevo";
 }
-
-<h1>Create</h1>
-
-<h4>Materia</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Materia.NombreMateria" class="control-label"></label>
-                <input asp-for="Materia.NombreMateria" class="form-control" />
-                <span asp-validation-for="Materia.NombreMateria" class="text-danger"></span>
+<!DOCTYPE html>
+<html lang="es">
+<body>
+    <header class="bg-primary text-white text-center py-3 mb-4">
+        <h1>Nueva Materia</h1>
+    </header>
+    <hr />
+    <div class="container mt-5">
+        <div class="card shadow-lg">
+            <div class="card-header bg-dark text-white text-center">
+                <h4 class="fs-4 fw-semibold text-white formal-text">Materia</h4>
             </div>
-            <div class="form-group">
-                <label asp-for="Materia.CodigoMateria" class="control-label"></label>
-                <input asp-for="Materia.CodigoMateria" class="form-control" />
-                <span asp-validation-for="Materia.CodigoMateria" class="text-danger"></span>
+            <div class="container mt-1">
+                <div class="row justify-content-center">
+                    <div class="col-md-5">
+                        <div class="card-body">
+                            <form method="post">
+                                <div asp-validation-summary="ModelOnly" class="alert alert-danger d-flex align-items-center" role="alert"></div>
+                                <div class="mb-3">
+                                    <label asp-for="Materia.NombreMateria" class="form-label fs-4 fw-semibold text-dark formal-text">Nombre de la Materia</label>
+                                    <br>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-journal"></i></span>
+                                        <input asp-for="Materia.NombreMateria" class="form-control" placeholder="Ingrese el nombre de la Materia" />
+                                    </div>
+                                    <br>
+                                    <span asp-validation-for="Materia.NombreMateria" class="text-danger"></span>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="Materia.CodigoMateria" class="form-label fs-4 fw-semibold text-dark formal-text">Codigo de la Materia</label>
+                                    <br>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-journal"></i></span>
+                                        <input asp-for="Materia.CodigoMateria" class="form-control" placeholder="Ingrese codigo de la Carrera" />
+                                    </div>
+                                    <br>
+                                    <span asp-validation-for="Materia.CodigoMateria" class="text-danger"></span>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="Materia.Ciclo" class="form-label fs-4 fw-semibold text-dark formal-text">Ciclo</label>
+                                    <br>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-journal"></i></span>
+                                        <input asp-for="Materia.Ciclo" class="form-control" placeholder="Ingrese el ciclo" />
+                                    </div>
+                                    <br>
+                                    <span asp-validation-for="Materia.Ciclo" class="text-danger"></span>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="Materia.Correlativo" class="form-label fs-4 fw-semibold text-dark formal-text">Correlativo</label>
+                                    <br>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-journal"></i></span>
+                                        <input asp-for="Materia.Correlativo" class="form-control" placeholder="Ingrese Correlativo" />
+                                    </div>
+                                    <br>
+                                    <span asp-validation-for="Materia.Correlativo" class="text-danger"></span>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="Materia.PensumId" class="form-label fs-4 fw-semibold text-dark formal-text">Pensum</label>
+                                    <br>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-mortarboard"></i></span>
+                                        <select asp-for="Materia.PensumId" class="form-control" asp-items="ViewBag.PensumId"></select>
+                                    </div>
+                                    <br>
+                                    <span asp-validation-for="Materia.PensumId" class="text-danger"></span>
+                                </div>
+                                <br>
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="bi bi-plus-circle"></i> Crear
+                                    </button>
+                                </div>
+                                <br>
+                            </form>
+                        </div>
+                        <br>
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="Materia.Ciclo" class="control-label"></label>
-                <input asp-for="Materia.Ciclo" class="form-control" />
-                <span asp-validation-for="Materia.Ciclo" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Materia.Correlativo" class="control-label"></label>
-                <input asp-for="Materia.Correlativo" class="form-control" />
-                <span asp-validation-for="Materia.Correlativo" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Materia.PensumId" class="control-label"></label>
-                <select asp-for="Materia.PensumId" class ="form-control" asp-items="ViewBag.PensumId"></select>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
-        </form>
+        </div>
     </div>
-</div>
-
-<div>
-    <a asp-page="Index">Back to List</a>
-</div>
-
-@section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}
+    <div class="text-center mt-3">
+        <a asp-page="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver a la lista
+        </a>
+    </div>
+    @section Scripts {
+        @{
+            await Html.RenderPartialAsync("_ValidationScriptsPartial");
+        }
+    }
+</body>
+</html>

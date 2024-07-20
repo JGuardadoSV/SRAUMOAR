@@ -2,74 +2,71 @@
 @model SRAUMOAR.Pages.generales.carrera.IndexModel
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Carreras";
 }
 
-<h1>Index</h1>
-
-<p>
-    <a asp-page="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Carrera[0].NombreCarrera)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Carrera[0].CodigoCarrera)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Carrera[0].Duracion)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Carrera[0].Ciclos)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Carrera[0].Activa)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Carrera[0].Facultad)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model.Carrera) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.NombreCarrera)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CodigoCarrera)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Duracion)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Ciclos)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Activa)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Facultad.NombreFacultad)
-            </td>
-            <td>
-                <div class="btn-group">
-                    <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                        Acciones
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" asp-page="/generales/materias/materias" asp-route-id="@item.CarreraId">Ver materias <i class="bi bi-eye"></i></a></li>
-                        <li><a class="dropdown-item" asp-page="./Edit" asp-route-id="@item.CarreraId">Editar <i class="bi bi-pencil"></i></a></li>
-                        <li><a class="dropdown-item" asp-page="./Details" asp-route-id="@item.CarreraId">Detalles <i class="bi bi-info"></i></a></li>
-                        <li><a class="dropdown-item" asp-page="./Delete" asp-route-id="@item.CarreraId">Eliminar <i class="bi bi-trash"></i></a></li>
-                    </ul>
-                </div>
-
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+</head>
+<body>
+    <header class="bg-primary text-white text-center py-3 mb-4">
+        <h1>Listado de Carreras</h1>
+    </header>
+    <div class="container-fluid mt-4">
+        <a asp-page="./Create" class="btn btn-primary btn-custom">
+            <i class="bi bi-plus-circle btn-icon"></i>
+            Nuevo
+        </a>
+    </div>
+    <div class="container-fluid mt-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>@Html.DisplayNameFor(model => model.Carrera[0].NombreCarrera)</th>
+                            <th>@Html.DisplayNameFor(model => model.Carrera[0].CodigoCarrera)</th>
+                            <th>@Html.DisplayNameFor(model => model.Carrera[0].Duracion)</th>
+                            <th>@Html.DisplayNameFor(model => model.Carrera[0].Ciclos)</th>
+                            <th>@Html.DisplayNameFor(model => model.Carrera[0].Activa)</th>
+                            <th>@Html.DisplayNameFor(model => model.Carrera[0].Facultad)</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Carrera)
+                        {
+                            <tr>
+                                <td>@Html.DisplayFor(modelItem => item.NombreCarrera)</td>
+                                <td>@Html.DisplayFor(modelItem => item.CodigoCarrera)</td>
+                                <td>@Html.DisplayFor(modelItem => item.Duracion)</td>
+                                <td>@Html.DisplayFor(modelItem => item.Ciclos)</td>
+                                <td>@Html.DisplayFor(modelItem => item.Activa)</td>
+                                <td>@Html.DisplayFor(modelItem => item.Facultad.NombreFacultad)</td>
+                                <td class="text-center">
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                            Acciones
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" asp-page="/generales/materias/materias" asp-route-id="@item.CarreraId">Materias<i class="bi bi-eye"></i></a></li>
+                                            <li><a class="dropdown-item" asp-page="./Create">Nuevo <i class="bi bi-plus-circle"></i></a></li>
+                                            <li><a class="dropdown-item" asp-page="./Edit" asp-route-id="@item.CarreraId">Editar <i class="bi bi-pencil-square"></i></a></li>
+                                            <li><a class="dropdown-item" asp-page="./Details" asp-route-id="@item.CarreraId">Detalles <i class="bi bi-info-circle"></i></a></li>
+                                            <!-- <li><a class="dropdown-item" asp-page="./Delete" asp-route-id="@item.CarreraId">Eliminar <i class="bi bi-trash"></i></a></li>//-->
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
