@@ -22,7 +22,7 @@ namespace SRAUMOAR.Pages
             
         }
         [BindProperty]
-        public LoginModel LoginData { get; set; }
+        public LoginModel? LoginData { get; set; }
         public async Task<IActionResult> OnPostAsync()
         {
             if (ModelState.IsValid)
@@ -32,7 +32,7 @@ namespace SRAUMOAR.Pages
                 {
                     var claims = new List<Claim>
                 {
-                    new Claim(ClaimTypes.Name, usuario.NombreUsuario),
+                    new Claim(ClaimTypes.Name, value: usuario.NombreUsuario),
                     new Claim(ClaimTypes.Role, usuario.NivelAcceso.Nombre.ToString()),
                     new Claim(ClaimTypes.Email, usuario.NombreUsuario),
                     new Claim("FullName", "Josue Guardado"),

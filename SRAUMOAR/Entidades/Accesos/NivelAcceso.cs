@@ -10,7 +10,7 @@ namespace SRAUMOAR.Entidades.Accesos
 
         [Required(ErrorMessage = "El nombre del nivel de acceso es requerido")]
         [StringLength(50)]
-        public string Nombre { get; set; }
+        public string? Nombre { get; set; }
 
         public virtual ICollection<Usuario>? Usuarios { get; set; }
     }
