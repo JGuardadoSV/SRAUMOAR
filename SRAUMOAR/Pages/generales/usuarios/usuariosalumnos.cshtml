@@ -1,0 +1,52 @@
+﻿@page
+@model SRAUMOAR.Pages.generales.usuarios.usuariosalumnosModel
+
+@{
+    ViewData["Title"] = "Usuarios del sistema";
+}
+
+<h1>Administración de usuarios</h1>
+
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Usuario[0].NombreUsuario)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Usuario[0].Clave)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Usuario[0].Email)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Usuario[0].NivelAcceso)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model.Usuario) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.NombreUsuario)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Clave)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Email)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.NivelAcceso.Nombre)
+            </td>
+            <td>
+                <a asp-page="./Edit" asp-route-id="@item.IdUsuario">Desactivar</a> |
+                <a asp-page="./Details" asp-route-id="@item.IdUsuario">Activar</a> 
+                
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
