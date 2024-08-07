@@ -12,16 +12,10 @@
     <thead>
         <tr>
             <th>
-                @Html.DisplayNameFor(model => model.Usuario[0].NombreUsuario)
+                Usuario
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Usuario[0].Clave)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Usuario[0].Email)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Usuario[0].NivelAcceso)
+                Rol
             </th>
             <th></th>
         </tr>
@@ -33,17 +27,12 @@
                 @Html.DisplayFor(modelItem => item.NombreUsuario)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Clave)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Email)
-            </td>
-            <td>
                 @Html.DisplayFor(modelItem => item.NivelAcceso.Nombre)
             </td>
             <td>
-                <a asp-page="./Edit" asp-route-id="@item.IdUsuario">Desactivar</a> |
-                <a asp-page="./Details" asp-route-id="@item.IdUsuario">Activar</a> 
+                    @Html.Raw(item.Activo.Value==true
+                             ? $"<a href='autenticacion/desactivarusuario/{item.IdUsuario}' class='btn btn-danger'>Desactivar</a>"
+                             : $"<a href='autenticacion/activarusuario/{item.IdUsuario}' class='btn btn-success'>Activar</a>")
                 
             </td>
         </tr>

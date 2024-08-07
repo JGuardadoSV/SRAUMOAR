@@ -24,7 +24,7 @@ namespace SRAUMOAR.Pages.generales.usuarios
         public async Task OnGetAsync()
         {
             Usuario = await _context.Usuarios
-                .Include(u => u.NivelAcceso).ToListAsync();
+                .Include(u => u.NivelAcceso).Where(x=>x.IdUsuario>1).ToListAsync();
         }
     }
 }

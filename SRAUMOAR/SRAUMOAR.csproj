@@ -8,7 +8,6 @@
 
   <ItemGroup>
     <Folder Include="Entidades\Colecturia\" />
-    <Folder Include="Entidades\Procesos\" />
     <Folder Include="Migrations\" />
   </ItemGroup>
 

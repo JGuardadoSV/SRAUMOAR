@@ -49,7 +49,7 @@ namespace SRAUMOAR.Pages.Autenticacion
             {
                 return Page();
             }
-
+            Usuario.Activo = true;
             _context.Usuarios.Add(Usuario);
             await _context.SaveChangesAsync();
 

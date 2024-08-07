@@ -6,6 +6,7 @@ using SRAUMOAR.Entidades.Materias;
 using System.Collections.Generic;
 using SRAUMOAR.Entidades.Docentes;
 using SRAUMOAR.Entidades.Accesos;
+using SRAUMOAR.Entidades.Procesos;
 
 namespace SRAUMOAR.Modelos
 {
@@ -31,6 +32,8 @@ namespace SRAUMOAR.Modelos
         public DbSet<Docente> Docentes { get; set; }
         public DbSet<NivelAcceso> NivelesAcceso { get; set; }
         public DbSet<Usuario> Usuarios { get; set; }
+
+        public DbSet<Ciclo> Ciclos { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel;
 
 namespace SRAUMOAR.Entidades.Accesos
 {
@@ -23,6 +24,9 @@ namespace SRAUMOAR.Entidades.Accesos
 
         [Required(ErrorMessage = "El nivel de acceso es requerido")]
         public int NivelAccesoId { get; set; }
+
+        [DefaultValue(true)]
+        public Boolean? Activo { get; set; } = true;
 
         [ForeignKey("NivelAccesoId")]
         public virtual NivelAcceso?  NivelAcceso { get; set; }
