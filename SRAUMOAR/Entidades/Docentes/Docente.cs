@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel;
+using SRAUMOAR.Entidades.Accesos;
 
 namespace SRAUMOAR.Entidades.Docentes
 {
@@ -48,5 +49,11 @@ namespace SRAUMOAR.Entidades.Docentes
         [ForeignKey("ProfesionId")]
         [DisplayName("Profesión")]
         public virtual Profesion? Profesion { get; set; }
+
+
+        // Relación con Usuario
+        public int? UsuarioId { get; set; }
+        [ForeignKey("UsuarioId")]
+        public virtual Usuario? Usuario { get; set; }
     }
 }

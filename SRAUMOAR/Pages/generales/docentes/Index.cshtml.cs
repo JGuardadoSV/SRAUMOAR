@@ -24,6 +24,7 @@ namespace SRAUMOAR.Pages.generales.docentes
         public async Task OnGetAsync()
         {
             Docente = await _context.Docentes
+                .Include(u=>u.Usuario)
                 .Include(d => d.Profesion).ToListAsync();
         }
     }

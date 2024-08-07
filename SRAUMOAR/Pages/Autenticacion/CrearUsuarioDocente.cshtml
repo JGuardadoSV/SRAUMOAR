@@ -1,0 +1,49 @@
+﻿@page "/autenticacion/crearusuariodocente/{DocenteId:int}"
+
+@model SRAUMOAR.Pages.Autenticacion.CrearUsuarioDocenteModel
+
+@{
+    ViewData["Title"] = "Crear Usuario Docente";
+}
+
+<h1>Creación de usuario para docente</h1>
+
+<h4>Docente: @Model.nombre</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Usuario.NombreUsuario" class="control-label">Nombre de usuario</label>
+                <input asp-for="Usuario.NombreUsuario" class="form-control" readonly value="@Model.email"/>
+                <span asp-validation-for="Usuario.NombreUsuario" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Usuario.Clave" class="control-label"></label>
+                <input asp-for="Usuario.Clave" class="form-control" min="6" />
+                <span asp-validation-for="Usuario.Clave" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Usuario.Email" class="control-label"></label>
+                <input asp-for="Usuario.Email" class="form-control" readonly value="@Model.email" />
+                <span asp-validation-for="Usuario.Email" class="text-danger" ></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Usuario.NivelAccesoId" class="control-label">Nivel de acceso</label>
+                <select asp-for="Usuario.NivelAccesoId" class ="form-control" asp-items="ViewBag.NivelAccesoId"></select>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-page="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -10,20 +10,21 @@ using SRAUMOAR.Modelos;
 
 namespace SRAUMOAR.Pages.alumno
 {
-    public class IndexModel : PageModel
+    public class BusquedaModel : PageModel
     {
         private readonly SRAUMOAR.Modelos.Contexto _context;
 
-        public IndexModel(SRAUMOAR.Modelos.Contexto context)
+        public BusquedaModel(SRAUMOAR.Modelos.Contexto context)
         {
             _context = context;
         }
 
-        public IList<Alumno> Alumno { get;set; } = default!;
-        public string busqueda { get; set; }
+        public IList<Alumno> Alumno { get; set; } = default!;
+        public string busqueda;
         public async Task OnGetAsync()
         {
-            Alumno = await _context.Alumno.Include(x=>x.Usuario).ToListAsync();
+            this.busqueda = Request.Query["buscar"];
+            Alumno = await _context.Alumno.Where(a => a.Nombres.Contains(busqueda) || a.Apellidos.Contains(busqueda) || a.TelefonoPrimario.Contains(busqueda)).ToListAsync();
         }
     }
 }

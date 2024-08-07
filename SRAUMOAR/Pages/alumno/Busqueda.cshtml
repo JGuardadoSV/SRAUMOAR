@@ -1,8 +1,8 @@
 ﻿@page
-@model SRAUMOAR.Pages.alumno.IndexModel
+@model SRAUMOAR.Pages.alumno.BusquedaModel
 
 @{
-    ViewData["Title"] = "Alumnos";
+    ViewData["Title"] = "Busqueda de alumno";
 }
 
 <!DOCTYPE html>
@@ -14,19 +14,20 @@
 </head>
 <body>
     <header class="bg-primary text-white text-center py-3 mb-4">
-        <h1>Listado de Alumnos</h1>
+        <h1>Resultado búsqueda de alumnos</h1>
     </header>
     <div class="container-fluid mt-4">
-        <a asp-page="./Create" class="btn btn-primary btn-custom">
-            <i class="bi bi-plus-circle btn-icon"></i>
-            Nuevo
+        <a asp-page="./Index" class="btn btn-primary btn-custom">
+            <i class="bi bi-arrow-left-circle btn-icon"></i>
+
+            Volver
         </a>
     </div>
     <div class="container-fluid mt-4">
         <div class="card shadow-sm">
             <div class="card-body">
 
-                <form method="get" action="alumno/Busqueda">
+                <form method="get">
                     <div class="input-group mb-3">
                         <input type="text" class="form-control" placeholder="Buscar por nombre o apellido" name="buscar" value="@Model.busqueda" />
                         <button class="btn btn-outline-secondary" type="submit">Buscar</button>
@@ -40,7 +41,6 @@
                             <th>@Html.DisplayNameFor(model => model.Alumno[0].Apellidos)</th>
                             <th>@Html.DisplayNameFor(model => model.Alumno[0].FechaDeNacimiento)</th>
                             <th>@Html.DisplayNameFor(model => model.Alumno[0].Email)</th>
-                            <th>Usuario</th>
                             <th class="text-center">Acciones</th>
                         </tr>
                     </thead>
@@ -52,12 +52,6 @@
                                 <td>@Html.DisplayFor(modelItem => item.Apellidos)</td>
                                 <td>@Html.DisplayFor(modelItem => item.FechaDeNacimiento)</td>
                                 <td>@Html.DisplayFor(modelItem => item.Email)</td>
-                                <td>
-                                    @Html.Raw(item.Usuario?.ToString().Length > 0
-                                             ? $"<a href='autenticacion/administrarusuarioalumno/{item.AlumnoId}' class='btn btn-link'>Administrar</a>"
-                                             : $"<a href='autenticacion/crearusuarioalumno/{item.AlumnoId}/{item.Usuario?.IdUsuario}' class='btn btn-link'>Crear</a>")
-
-                                </td>
                                 <td class="text-center">
                                     <div class="btn-group">
                                         <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">

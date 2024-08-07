@@ -30,12 +30,31 @@ namespace SRAUMOAR.Pages
                 var usuario = await _context.Usuarios.Where(x=>x.NombreUsuario==LoginData.NombreUsuario && x.Clave==LoginData.Clave).Include(x=>x.NivelAcceso).FirstOrDefaultAsync();
                 if (usuario != null)
                 {
+                    string nombre;
+                    try
+                    {
+                        if (usuario.NivelAcceso.Nombre == "Estudiantes")
+                        {
+                            nombre = _context.Alumno.Where(x => x.UsuarioId == usuario.IdUsuario).First().Nombres;
+                        }
+                        else
+                        {
+                            nombre = _context.Docentes.Where(x => x.UsuarioId == usuario.IdUsuario).First().Nombres;
+                        }
+                    }
+                    catch (Exception)
+                    {
+
+                        nombre = "NOMBRE_USUARIO";
+                    }
+                    
+
                     var claims = new List<Claim>
                 {
                     new Claim(ClaimTypes.Name, value: usuario.NombreUsuario),
                     new Claim(ClaimTypes.Role, usuario.NivelAcceso.Nombre.ToString()),
                     new Claim(ClaimTypes.Email, usuario.NombreUsuario),
-                    new Claim("FullName", "Josue Guardado"),
+                    new Claim("NombreCompleto", nombre),
                     new Claim("UserId", usuario.IdUsuario.ToString())
                 };
 

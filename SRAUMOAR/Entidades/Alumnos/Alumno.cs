@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using SRAUMOAR.Entidades.Accesos;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SRAUMOAR.Entidades.Alumnos
 {
@@ -62,6 +64,12 @@ namespace SRAUMOAR.Entidades.Alumnos
         public Boolean IngresoPorEquivalencias { get; set; } = false;
 
         public string? Fotografia { get; set; }
+
+
+        // Relación con Usuario
+        public int? UsuarioId { get; set; }
+        [ForeignKey("UsuarioId")]
+        public virtual Usuario? Usuario { get; set; }
     }
 
    
