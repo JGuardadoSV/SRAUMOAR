@@ -72,6 +72,11 @@
                                     <br>
                                     <span asp-validation-for="Materia.PensumId" class="text-danger"></span>
                                 </div>
+                                <div class="form-group form-check">
+                                    <label class="form-check-label">
+                                        <input class="form-check-input" asp-for="Materia.RequisitoBachillerato" /> @Html.DisplayNameFor(model => model.Materia.RequisitoBachillerato)
+                                    </label>
+                                </div>
                                 <br>
                                 <div class="d-grid gap-2">
                                     <button type="submit" class="btn btn-primary btn-lg">

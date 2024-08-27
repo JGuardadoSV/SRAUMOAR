@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SRAUMOAR.Modelos;
 
@@ -11,9 +12,11 @@ using SRAUMOAR.Modelos;
 namespace SRAUMOAR.Migrations
 {
     [DbContext(typeof(Contexto))]
-    partial class ContextoModelSnapshot : ModelSnapshot
+    [Migration("20240827200940_ciclos_update")]
+    partial class ciclos_update
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -86,9 +89,6 @@ namespace SRAUMOAR.Migrations
 
                     b.Property<string>("Apellidos")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Carnet")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ContactoDeEmergencia")
@@ -354,9 +354,6 @@ namespace SRAUMOAR.Migrations
                     b.Property<int>("PensumId")
                         .HasColumnType("int");
 
-                    b.Property<bool>("RequisitoBachillerato")
-                        .HasColumnType("bit");
-
                     b.HasKey("MateriaId");
 
                     b.HasIndex("PensumId");
@@ -451,40 +448,6 @@ namespace SRAUMOAR.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Ciclos");
-                });
-
-            modelBuilder.Entity("SRAUMOAR.Entidades.Procesos.Inscripcion", b =>
-                {
-                    b.Property<int>("InscripcionId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("InscripcionId"));
-
-                    b.Property<bool>("Activa")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("AlumnoId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("CarreraId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("CicloId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("Fecha")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("InscripcionId");
-
-                    b.HasIndex("AlumnoId");
-
-                    b.HasIndex("CarreraId");
-
-                    b.HasIndex("CicloId");
-
-                    b.ToTable("Inscripciones");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Accesos.Usuario", b =>
@@ -596,33 +559,6 @@ namespace SRAUMOAR.Migrations
                         .IsRequired();
 
                     b.Navigation("Carrera");
-                });
-
-            modelBuilder.Entity("SRAUMOAR.Entidades.Procesos.Inscripcion", b =>
-                {
-                    b.HasOne("SRAUMOAR.Entidades.Alumnos.Alumno", "Alumno")
-                        .WithMany()
-                        .HasForeignKey("AlumnoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SRAUMOAR.Entidades.Generales.Carrera", "Carrera")
-                        .WithMany()
-                        .HasForeignKey("CarreraId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SRAUMOAR.Entidades.Procesos.Ciclo", "Ciclo")
-                        .WithMany()
-                        .HasForeignKey("CicloId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Alumno");
-
-                    b.Navigation("Carrera");
-
-                    b.Navigation("Ciclo");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Accesos.NivelAcceso", b =>

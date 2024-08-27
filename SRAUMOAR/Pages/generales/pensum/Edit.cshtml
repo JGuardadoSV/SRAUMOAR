@@ -2,12 +2,12 @@
 @model SRAUMOAR.Pages.generales.pensum.EditModel
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Edición de pensum";
 }
 
-<h1>Edit</h1>
+<h1>Edición de pensum</h1>
 
-<h4>Pensum</h4>
+<h4>Datos del pensum</h4>
 <hr />
 <div class="row">
     <div class="col-md-4">
@@ -39,15 +39,22 @@
                 <select asp-for="Pensum.CarreraId" class="form-control" asp-items="ViewBag.CarreraId"></select>
                 <span asp-validation-for="Pensum.CarreraId" class="text-danger"></span>
             </div>
+            <br />
             <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save"></i> Guardar
+                </button>
+                | <a asp-page="./Index" class="btn btn-success">
+                    <i class="bi bi-arrow-left-circle"></i> Volver
+                </a>
+
             </div>
         </form>
     </div>
 </div>
 
 <div>
-    <a asp-page="./Index">Back to List</a>
+    
 </div>
 
 @section Scripts {

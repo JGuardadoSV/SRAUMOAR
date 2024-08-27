@@ -2,13 +2,13 @@
 @model SRAUMOAR.Pages.generales.pensum.IndexModel
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Administracion de pensums";
 }
 
-<h1>Index</h1>
-<p class="alert alert-danger">Botón para ir a las materias</p>
+<h1>Administracion de pensums</h1>
+
 <p>
-    <a asp-page="Create">Create New</a>
+    <a asp-page="Create" class="btn btn-primary">Registrar nuevo pensum <i class="bi bi-plus-circle-fill"></i></a>
 </p>
 <table class="table">
     <thead>
@@ -50,10 +50,14 @@
                 @Html.DisplayFor(modelItem => item.Carrera.CodigoCarrera)
             </td>
             <td>
-                <a asp-page="/generales/materias/materias" asp-route-id="@item.CarreraId">Ver materias</a> |
-                <a asp-page="./Edit" asp-route-id="@item.PensumId">Edit</a> |
+                    <a asp-page="/generales/materias/materias" asp-route-id="@item.CarreraId" class="btn btn-primary">Ver materias <i class="bi bi-journal"></i></a> |
+                    <a asp-page="./Edit" asp-route-id="@item.PensumId" class="btn btn-success">Editar <i class="bi bi-pencil-fill"></i></a> |
+                    <a href="~/descargas/pensum/pensumpdf.pdf" target="_blank" class="btn btn-info">PDF <i class="bi bi-filetype-pdf"></i></a>
+                    <!-- 
+                     |
                 <a asp-page="./Details" asp-route-id="@item.PensumId">Details</a> |
-                <a asp-page="./Delete" asp-route-id="@item.PensumId">Delete</a>
+                    <a asp-page="./Delete" asp-route-id="@item.PensumId">Delete</a>
+                 -->
             </td>
         </tr>
 }

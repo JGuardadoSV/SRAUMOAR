@@ -1,0 +1,80 @@
+﻿@page
+@model SRAUMOAR.Pages.generales.ciclos.CreateModel
+
+@{
+    ViewData["Title"] = "Registrar ciclo";
+}
+
+<h1>Registro de nuevo ciclo</h1>
+
+
+<hr />
+
+@if (Model.sePuedeRegistrar)
+{
+    <div class="row">
+        <div class="col-md-4">
+            <h4>Datos del nuevo ciclo</h4>
+            <form method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <!--<div class="form-group form-check">
+                    <label class="form-check-label">
+                        <input class="form-check-input" asp-for="Ciclo.Activo" /> @Html.DisplayNameFor(model => model.Ciclo.Activo)
+                    </label>
+                </div>
+                -->
+                <div class="form-group">
+                    <label asp-for="Ciclo.NCiclo" class="control-label"></label>
+                    <input asp-for="Ciclo.NCiclo" class="form-control" />
+                    <span asp-validation-for="Ciclo.NCiclo" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Ciclo.anio" class="control-label"></label>
+                    <input asp-for="Ciclo.anio" class="form-control" />
+                    <span asp-validation-for="Ciclo.anio" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Ciclo.FechaInicio" class="control-label"></label>
+                    <input asp-for="Ciclo.FechaInicio" class="form-control" />
+                    <span asp-validation-for="Ciclo.FechaInicio" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Ciclo.FechaFin" class="control-label"></label>
+                    <input asp-for="Ciclo.FechaFin" class="form-control" />
+                    <span asp-validation-for="Ciclo.FechaFin" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Ciclo.CorrelativoCarnet" class="control-label"></label>
+                    <input asp-for="Ciclo.CorrelativoCarnet" class="form-control" />
+                    <span asp-validation-for="Ciclo.CorrelativoCarnet" class="text-danger"></span>
+                </div>
+                <br />
+                <div class="form-group">
+                    <input type="submit" value="Registrar nuevo ciclo" class="btn btn-primary" /> | 
+                        <a asp-page="Index" class="btn btn-success">Volver</a>
+                  
+                </div>
+            </form>
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-danger" role="alert">
+        Existe un ciclo activo, no se puede registrar otro.
+    </div>
+
+    <div>
+        <a asp-page="Index" class="btn btn-success">Volver</a>
+    </div>
+}
+
+
+
+
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

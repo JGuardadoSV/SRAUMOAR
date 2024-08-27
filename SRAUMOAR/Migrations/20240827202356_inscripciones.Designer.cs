@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SRAUMOAR.Modelos;
 
@@ -11,9 +12,11 @@ using SRAUMOAR.Modelos;
 namespace SRAUMOAR.Migrations
 {
     [DbContext(typeof(Contexto))]
-    partial class ContextoModelSnapshot : ModelSnapshot
+    [Migration("20240827202356_inscripciones")]
+    partial class inscripciones
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -86,9 +89,6 @@ namespace SRAUMOAR.Migrations
 
                     b.Property<string>("Apellidos")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Carnet")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ContactoDeEmergencia")
@@ -353,9 +353,6 @@ namespace SRAUMOAR.Migrations
 
                     b.Property<int>("PensumId")
                         .HasColumnType("int");
-
-                    b.Property<bool>("RequisitoBachillerato")
-                        .HasColumnType("bit");
 
                     b.HasKey("MateriaId");
 

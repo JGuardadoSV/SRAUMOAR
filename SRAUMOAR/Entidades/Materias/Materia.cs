@@ -28,6 +28,12 @@ namespace SRAUMOAR.Entidades.Materias
         [Required(ErrorMessage = "El campo pensum es obligatorio")]
         [Display(Name = "Pensum al que pertenece")]
         public int PensumId { get; set; }
+
+        
+        [Display(Name = "Es requisito bachillerato")]
+        public Boolean RequisitoBachillerato { get; set; }
+
+
         public virtual Pensum? Pensum { get; set; }
 
         public ICollection<MateriaPrerequisito>? Prerrequisitos { get; set; }

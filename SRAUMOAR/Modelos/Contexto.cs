@@ -34,6 +34,7 @@ namespace SRAUMOAR.Modelos
         public DbSet<Usuario> Usuarios { get; set; }
 
         public DbSet<Ciclo> Ciclos { get; set; }
+        public DbSet<Inscripcion> Inscripciones { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

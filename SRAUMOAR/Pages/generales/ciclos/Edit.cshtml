@@ -1,0 +1,44 @@
+﻿@page
+@model SRAUMOAR.Pages.generales.ciclos.EditModel
+
+@{
+    ViewData["Title"] = "Finalizar Ciclo";
+}
+
+<h1>Finalizar Ciclo</h1>
+
+
+<hr />
+<div class="row">
+    <div class="col-md-6">
+        <form method="post" style="font-size:20px">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Ciclo.Id" />
+            <div class="alert alert-primary" role="alert">
+                <i class="bi bi-info-circle-fill"></i> Para finalizar el ciclo, quite la marca de la casilla y de clic en el boton de Finalizar ciclo.
+            </div>
+            <div class="form-group form-check">
+                <label class="form-check-label">
+                    <input class="form-check-input" asp-for="Ciclo.Activo" /> @Html.DisplayNameFor(model => model.Ciclo.Activo)
+                </label>
+            </div>
+            <input type="hidden" asp-for="Ciclo.NCiclo" />
+            <input type="hidden" asp-for="Ciclo.anio" />
+            <input type="hidden" asp-for="Ciclo.FechaInicio" />
+            <input type="hidden" asp-for="Ciclo.FechaFin" />
+            <input type="hidden" asp-for="Ciclo.CorrelativoCarnet" />
+            <br />
+            <div class="form-group">
+                <input type="submit" value="Finalizar Ciclo" class="btn btn-primary" /> |  <a asp-page="./Index" class="btn btn-danger">Volver</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+   
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -2,12 +2,12 @@
 @model SRAUMOAR.Pages.generales.pensum.CreateModel
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Creación de nuevo pensum";
 }
 
-<h1>Create</h1>
+<h1>Creación de nuevo pensum</h1>
 
-<h4>Pensum</h4>
+
 <hr />
 <div class="row">
     <div class="col-md-4">
@@ -35,19 +35,27 @@
             </div>
             <div class="form-group">
                 <label asp-for="Pensum.CarreraId" class="control-label"></label>
-                <select asp-for="Pensum.CarreraId" class ="form-control" asp-items="ViewBag.CarreraId"></select>
+                <select asp-for="Pensum.CarreraId" class="form-control" asp-items="ViewBag.CarreraId"></select>
             </div>
+            <br />
             <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-person-plus"></i> Registrar
+                </button>
+                | <a asp-page="Index" class="btn btn-success">
+                    <i class="bi bi-arrow-left-circle"></i> Volver
+                </a>
+
             </div>
         </form>
     </div>
 </div>
 
 <div>
-    <a asp-page="Index">Back to List</a>
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }
