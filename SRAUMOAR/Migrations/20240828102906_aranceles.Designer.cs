@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SRAUMOAR.Modelos;
 
@@ -11,9 +12,11 @@ using SRAUMOAR.Modelos;
 namespace SRAUMOAR.Migrations
 {
     [DbContext(typeof(Contexto))]
-    partial class ContextoModelSnapshot : ModelSnapshot
+    [Migration("20240828102906_aranceles")]
+    partial class aranceles
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -489,43 +492,6 @@ namespace SRAUMOAR.Migrations
                     b.ToTable("Ciclos");
                 });
 
-            modelBuilder.Entity("SRAUMOAR.Entidades.Procesos.Grupo", b =>
-                {
-                    b.Property<int>("GrupoId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("GrupoId"));
-
-                    b.Property<bool>("Activo")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("CarreraId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("CicloId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("DocenteId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Limite")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Nombre")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("GrupoId");
-
-                    b.HasIndex("CarreraId");
-
-                    b.HasIndex("CicloId");
-
-                    b.HasIndex("DocenteId");
-
-                    b.ToTable("grupos");
-                });
-
             modelBuilder.Entity("SRAUMOAR.Entidades.Procesos.Inscripcion", b =>
                 {
                     b.Property<int>("InscripcionId")
@@ -680,33 +646,6 @@ namespace SRAUMOAR.Migrations
                         .IsRequired();
 
                     b.Navigation("Ciclo");
-                });
-
-            modelBuilder.Entity("SRAUMOAR.Entidades.Procesos.Grupo", b =>
-                {
-                    b.HasOne("SRAUMOAR.Entidades.Generales.Carrera", "Carrera")
-                        .WithMany()
-                        .HasForeignKey("CarreraId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SRAUMOAR.Entidades.Procesos.Ciclo", "Ciclo")
-                        .WithMany()
-                        .HasForeignKey("CicloId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SRAUMOAR.Entidades.Docentes.Docente", "Docente")
-                        .WithMany()
-                        .HasForeignKey("DocenteId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Carrera");
-
-                    b.Navigation("Ciclo");
-
-                    b.Navigation("Docente");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Procesos.Inscripcion", b =>

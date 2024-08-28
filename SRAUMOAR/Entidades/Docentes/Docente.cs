@@ -54,6 +54,6 @@ namespace SRAUMOAR.Entidades.Docentes
         // Relación con Usuario
         public int? UsuarioId { get; set; }
         [ForeignKey("UsuarioId")]
-        public virtual Usuario? Usuario { get; set; }
+        public virtual Usuario? Usuario { get; set; }   
     }
 }

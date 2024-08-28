@@ -1,0 +1,88 @@
+﻿@page
+@model SRAUMOAR.Pages.grupos.IndexModel
+
+@{
+    ViewData["Title"] = "Administracion de grupos";
+}
+
+@if (User.IsInRole("Docentes"))
+{
+    <h1>Mis grupos para el ciclo actual</h1>
+}
+else
+{
+    <h1>Grupos para el ciclo actual</h1>
+}
+@if (User.IsInRole("Administrador"))
+{
+
+    <p>
+        <a asp-page="Create" class="btn btn-primary">Registrar nuevo grupo</a>
+    </p>
+}
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Grupo[0].Nombre)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Grupo[0].Limite)
+            </th>
+
+            <th>
+                @Html.DisplayNameFor(model => model.Grupo[0].Activo)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Grupo[0].Carrera)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Grupo[0].Ciclo)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Grupo[0].Docente)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.Grupo)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Nombre)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Limite)
+                </td>
+
+                <td>
+                    @Html.DisplayFor(modelItem => item.Activo)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Carrera.NombreCarrera)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Ciclo.NCiclo)-@Html.DisplayFor(modelItem => item.Ciclo.anio)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Docente.Nombres) @Html.DisplayFor(modelItem => item.Docente.Apellidos)
+                </td>
+                <td>
+                    @if (User.IsInRole("Administrador"))
+                    {
+                        <a asp-page="./Edit" asp-route-id="@item.GrupoId" class="btn btn-primary">Editar</a>
+                    }
+                    else
+                    {
+                        <a asp-page="./Edit" asp-route-id="@item.GrupoId" class="btn btn-primary">Administrar</a>
+                    }
+                    <!--|
+                    <a asp-page="./Details" asp-route-id="@item.GrupoId">Details</a> |
+                    <a asp-page="./Delete" asp-route-id="@item.GrupoId">Delete</a>
+                    -->
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

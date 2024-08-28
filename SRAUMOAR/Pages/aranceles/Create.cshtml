@@ -1,0 +1,61 @@
+﻿@page
+@model SRAUMOAR.Pages.aranceles.CreateModel
+
+@{
+    ViewData["Title"] = "Registro de nuevo arancel";
+}
+
+<h1>Registro de arancel</h1>
+<div class="alert alert-info" role="alert">
+    <strong>Información:</strong> Este arancel se va a registrar vinculado al ciclo actual.
+</div>
+
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Arancel.Nombre" class="control-label"></label>
+                <input asp-for="Arancel.Nombre" class="form-control" />
+                <span asp-validation-for="Arancel.Nombre" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Arancel.Costo" class="control-label"></label>
+                <input asp-for="Arancel.Costo" class="form-control" />
+                <span asp-validation-for="Arancel.Costo" class="text-danger"></span>
+            </div>
+            <div class="form-group form-check">
+                <label class="form-check-label">
+                    <input class="form-check-input" asp-for="Arancel.Activo" /> @Html.DisplayNameFor(model => model.Arancel.Activo)
+                </label>
+            </div>
+            <div class="form-group">
+                <label asp-for="Arancel.FechaInicio" class="control-label"></label>
+                <input asp-for="Arancel.FechaInicio" class="form-control" />
+                <span asp-validation-for="Arancel.FechaInicio" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Arancel.FechaFin" class="control-label"></label>
+                <input asp-for="Arancel.FechaFin" class="form-control" />
+                <span asp-validation-for="Arancel.FechaFin" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Arancel.CicloId" class="control-label"></label>
+                <select asp-for="Arancel.CicloId" class ="form-control" asp-items="ViewBag.CicloId"></select>
+            </div>
+            <br />
+            <div class="form-group">
+                <input type="submit" value="Registrar" class="btn btn-primary" /> | <a asp-page="Index" class="btn btn-success">Volver</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -63,6 +63,16 @@
                                     <span asp-validation-for="Materia.Correlativo" class="text-danger"></span>
                                 </div>
                                 <div class="mb-3">
+                                    <label asp-for="Materia.uv" class="form-label fs-4 fw-semibold text-dark formal-text">UV</label>
+                                    <br>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-journal"></i></span>
+                                        <input asp-for="Materia.uv" class="form-control" placeholder="Unidades Valorativas" />
+                                    </div>
+                                    <br>
+                                    <span asp-validation-for="Materia.uv" class="text-danger"></span>
+                                </div>
+                                <div class="mb-3">
                                     <label asp-for="Materia.PensumId" class="form-label fs-4 fw-semibold text-dark formal-text">Pensum</label>
                                     <br>
                                     <div class="input-group">

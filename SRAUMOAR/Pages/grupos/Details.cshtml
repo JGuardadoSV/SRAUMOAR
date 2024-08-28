@@ -1,0 +1,55 @@
+﻿@page
+@model SRAUMOAR.Pages.grupos.DetailsModel
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h1>Details</h1>
+
+<div>
+    <h4>Grupo</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Grupo.Limite)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Grupo.Limite)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Grupo.Nombre)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Grupo.Nombre)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Grupo.Activo)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Grupo.Activo)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Grupo.Carrera)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Grupo.Carrera.CodigoCarrera)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Grupo.Ciclo)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Grupo.Ciclo.Id)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Grupo.Docente)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Grupo.Docente.Apellidos)
+        </dd>
+    </dl>
+</div>
+<div>
+    <a asp-page="./Edit" asp-route-id="@Model.Grupo.GrupoId">Edit</a> |
+    <a asp-page="./Index">Back to List</a>
+</div>

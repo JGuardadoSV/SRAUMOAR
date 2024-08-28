@@ -1,0 +1,72 @@
+﻿@page
+@model SRAUMOAR.Pages.aranceles.IndexModel
+
+@{
+    ViewData["Title"] = "Aranceles del ciclo";
+}
+
+<h1>Administracion de aranceles del ciclo actual</h1>
+<div class="alert alert-info" role="alert">
+    <strong>Información:</strong> Solo se muestran aranceles vinculados al ciclo actual.
+</div>
+<p>
+    <a asp-page="Create" class="btn btn-primary">Registrar nuevo</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Arancel[0].Nombre)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Arancel[0].Costo)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Arancel[0].Activo)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Arancel[0].FechaInicio)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Arancel[0].FechaFin)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Arancel[0].Ciclo)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model.Arancel) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Nombre)
+            </td>
+            <td>
+               $ @Html.DisplayFor(modelItem => item.Costo)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Activo)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FechaInicio)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FechaFin)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Ciclo.NCiclo) /
+                    @Html.DisplayFor(modelItem => item.Ciclo.anio)
+            </td>
+            <td>
+                <a asp-page="./Edit" asp-route-id="@item.ArancelId" class="btn btn-primary">Editar</a> 
+                <!--
+                |
+                <a asp-page="./Details" asp-route-id="@item.ArancelId">Details</a> |
+                <a asp-page="./Delete" asp-route-id="@item.ArancelId">Delete</a>
+                    -->
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
