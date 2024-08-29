@@ -1,0 +1,50 @@
+﻿@page
+@model SRAUMOAR.Pages.materiasGrupo.EditModel
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>Edit</h1>
+
+<h4>MateriasGrupo</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="MateriasGrupo.MateriasGrupoId" />
+            <div class="form-group">
+                <label asp-for="MateriasGrupo.Aula" class="control-label"></label>
+                <input asp-for="MateriasGrupo.Aula" class="form-control" />
+                <span asp-validation-for="MateriasGrupo.Aula" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="MateriasGrupo.Horario" class="control-label"></label>
+                <input asp-for="MateriasGrupo.Horario" class="form-control" />
+                <span asp-validation-for="MateriasGrupo.Horario" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="MateriasGrupo.MateriaId" class="control-label"></label>
+                <select asp-for="MateriasGrupo.MateriaId" class="form-control" asp-items="ViewBag.MateriaId"></select>
+                <span asp-validation-for="MateriasGrupo.MateriaId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="MateriasGrupo.GrupoId" class="control-label"></label>
+                <select asp-for="MateriasGrupo.GrupoId" class="form-control" asp-items="ViewBag.GrupoId"></select>
+                <span asp-validation-for="MateriasGrupo.GrupoId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-page="./Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

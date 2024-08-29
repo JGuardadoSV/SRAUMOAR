@@ -11,6 +11,7 @@ using SRAUMOAR.Modelos;
 
 namespace SRAUMOAR.Pages.grupos
 {
+   
     public class IndexModel : PageModel
     {
         private readonly SRAUMOAR.Modelos.Contexto _context;

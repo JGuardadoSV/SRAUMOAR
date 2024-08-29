@@ -1,0 +1,56 @@
+﻿@page
+@model SRAUMOAR.Pages.materiasGrupo.IndexModel
+
+@{
+    ViewData["Title"] = "Materias del grupo";
+}
+
+<h1>Materias del grupo</h1>
+
+<p>
+    <a asp-page="Create" asp-route-id="@Model.idgrupo" class="btn btn-success">Registrar nueva</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.MateriasGrupo[0].Aula)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.MateriasGrupo[0].Horario)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.MateriasGrupo[0].Materia)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.MateriasGrupo[0].Grupo)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model.MateriasGrupo) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Aula)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Horario)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Materia.CodigoMateria)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Grupo.GrupoId)
+            </td>
+            <td>
+                <!--
+                <a asp-page="./Edit" asp-route-id="@item.MateriasGrupoId">Edit</a> |
+                <a asp-page="./Details" asp-route-id="@item.MateriasGrupoId">Details</a> |
+                <a asp-page="./Delete" asp-route-id="@item.MateriasGrupoId">Delete</a>
+                    -->
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using SRAUMOAR.Entidades.Generales;
+using SRAUMOAR.Entidades.Procesos;
 using SRAUMOAR.Modelos;
 
-namespace SRAUMOAR.Pages.generales.distrito
+namespace SRAUMOAR.Pages.materiasGrupo
 {
     public class DetailsModel : PageModel
     {
@@ -19,7 +19,7 @@ namespace SRAUMOAR.Pages.generales.distrito
             _context = context;
         }
 
-        public Distrito Distrito { get; set; } = default!;
+        public MateriasGrupo MateriasGrupo { get; set; } = default!;
 
         public async Task<IActionResult> OnGetAsync(int? id)
         {
@@ -28,14 +28,14 @@ namespace SRAUMOAR.Pages.generales.distrito
                 return NotFound();
             }
 
-            var distrito = await _context.Distritos.Include(x=>x.Departamento).FirstOrDefaultAsync(m => m.DistritoId == id);
-            if (distrito == null)
+            var materiasgrupo = await _context.MateriasGrupo.FirstOrDefaultAsync(m => m.MateriasGrupoId == id);
+            if (materiasgrupo == null)
             {
                 return NotFound();
             }
             else
             {
-                Distrito = distrito;
+                MateriasGrupo = materiasgrupo;
             }
             return Page();
         }

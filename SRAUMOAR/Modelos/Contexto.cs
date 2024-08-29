@@ -38,7 +38,7 @@ namespace SRAUMOAR.Modelos
         public DbSet<Arancel> Aranceles { get; set; }
 
         public DbSet<Grupo> Grupo { get; set; }
-
+        public DbSet<MateriasGrupo> MateriasGrupo { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
