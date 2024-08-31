@@ -38,6 +38,7 @@
                         <tr>
                             <th>@Html.DisplayNameFor(model => model.Alumno[0].Nombres)</th>
                             <th>@Html.DisplayNameFor(model => model.Alumno[0].Apellidos)</th>
+                            <th>@Html.DisplayNameFor(model => model.Alumno[0].Genero)</th>
                             <th>@Html.DisplayNameFor(model => model.Alumno[0].FechaDeNacimiento)</th>
                             <th>@Html.DisplayNameFor(model => model.Alumno[0].Email)</th>
                             <th>Usuario</th>
@@ -50,6 +51,16 @@
                             <tr>
                                 <td>@Html.DisplayFor(modelItem => item.Nombres)</td>
                                 <td>@Html.DisplayFor(modelItem => item.Apellidos)</td>
+                                <td>
+                                    @if (item.Genero == 0)
+                                    {
+                                        @:M
+                                    }
+                                    else if (item.Genero == 1)
+                                    {
+                                        @:F
+                                    }
+                                </td>
                                 <td>@Html.DisplayFor(modelItem => item.FechaDeNacimiento)</td>
                                 <td>@Html.DisplayFor(modelItem => item.Email)</td>
                                 <td>

@@ -30,7 +30,11 @@
             </div>
             <div class="form-group">
                 <label asp-for="Grupo.CarreraId" class="control-label"></label>
-                <select asp-for="Grupo.CarreraId" class ="form-control" asp-items="ViewBag.CarreraId"></select>
+                <select id="carreraSelect" asp-for="Grupo.CarreraId" class="form-control" asp-items="ViewBag.CarreraId"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="Grupo.PensumId" class="control-label"></label>
+                <select id="pensumSelect"  asp-for="Grupo.PensumId" class="form-control"></select>
             </div>
             <div class="form-group">
                 <label asp-for="Grupo.CicloId" class="control-label"></label>
@@ -54,3 +58,27 @@
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }
+
+
+<script>
+    document.getElementById("carreraSelect").addEventListener("change", function () {
+        var carreraId = this.value;
+        var pensumSelect = document.getElementById("pensumSelect");
+
+        // Limpiar el combo de pensum
+        pensumSelect.innerHTML = '<option value="">Seleccione un pensum</option>';
+
+        if (carreraId) {
+            fetch(`/vistasParciales/cboPensums?handler=PensumsByCarrera&carreraId=` + carreraId)
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(pensum => {
+                        var option = document.createElement("option");
+                        option.value = pensum.pensumId;
+                        option.text = pensum.nombrePensum;
+                        pensumSelect.add(option);
+                    });
+                });
+        }
+    });
+</script>

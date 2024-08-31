@@ -32,6 +32,7 @@ namespace SRAUMOAR.Pages.grupos
             {
                 Grupo = await _context.Grupo
                    .Where(x => x.Ciclo.Activo == true)
+                   .Include(g => g.Pensum)
                    .Include(g => g.Carrera)
                    .Include(g => g.Ciclo)
                    .Include(g => g.Docente).ToListAsync();
@@ -42,6 +43,7 @@ namespace SRAUMOAR.Pages.grupos
                 //extraer los grupos del docente unicamente
                 Grupo = await _context.Grupo
                .Where(x => x.Ciclo.Activo == true && x.Docente.DocenteId==IdDocente)
+               .Include (g => g.Pensum)
                .Include(g => g.Carrera)
                .Include(g => g.Ciclo)
                .Include(g => g.Docente).ToListAsync();

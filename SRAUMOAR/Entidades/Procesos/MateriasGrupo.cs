@@ -19,6 +19,7 @@ namespace SRAUMOAR.Entidades.Procesos
 
         [Required(ErrorMessage = "El grupo es requerido")]
         [Display(Name = "Grupo")]
+        
         public int GrupoId { get; set; } // Llave foránea
         public virtual Grupo? Grupo { get; set; } // Propiedad de navegación
     }

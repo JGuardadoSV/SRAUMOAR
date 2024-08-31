@@ -42,6 +42,10 @@ namespace SRAUMOAR.Modelos
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<Arancel>()
+           .Property(a => a.Costo)
+           .HasPrecision(18, 2); // O .HasColumnType("decimal(18,2)")
+
             modelBuilder.Entity<Materia>()
                 .HasMany(m => m.Prerrequisitos)
                 .WithOne(mp => mp.Materia)

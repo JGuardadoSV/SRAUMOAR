@@ -1,5 +1,6 @@
 ﻿using SRAUMOAR.Entidades.Docentes;
 using SRAUMOAR.Entidades.Generales;
+using SRAUMOAR.Entidades.Materias;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -27,5 +28,12 @@ namespace SRAUMOAR.Entidades.Procesos
         [Display(Name = "Docente encargado")]
         public int DocenteId { get; set; } // Llave foránea
         public virtual Docente? Docente { get; set; } // Propiedad de navegación
+
+        [Required(ErrorMessage = "El pensum es requerido")]
+        [Display(Name = "Pensum")]
+        [ForeignKey("GruPensum")]
+        [Column("PensumIdG_FK")]
+        public int? PensumId { get; set; } // Llave foránea
+        public virtual Pensum? Pensum { get; set; } // Propiedad de navegación
     }
 }

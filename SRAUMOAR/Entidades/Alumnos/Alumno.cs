@@ -66,6 +66,10 @@ namespace SRAUMOAR.Entidades.Alumnos
         public string? Fotografia { get; set; }
 
         public string? Carnet { get; set; }
+        
+        [Required(ErrorMessage = "El campo género  es obligatorio")]
+        [Display(Name = "Género")]
+        public int Genero { get; set; }
 
         // Relación con Usuario
         public int? UsuarioId { get; set; }

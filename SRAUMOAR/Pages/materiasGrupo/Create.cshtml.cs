@@ -23,13 +23,13 @@ namespace SRAUMOAR.Pages.materiasGrupo
         public IActionResult OnGet(int? id)
         {
             idgrupo = id.Value;
-            var carrera =_context.Grupo.Include(x=>x.Carrera).Where(x=>x.GrupoId==id).FirstOrDefault().Carrera.CarreraId;
+            //var carrera =_context.Grupo.Include(x=>x.Carrera).Where(x=>x.GrupoId==id).FirstOrDefault().Carrera.CarreraId;
         ViewData["GrupoId"] = new SelectList(_context.Grupo.Where(x=>x.GrupoId==id), "GrupoId", "Nombre");
         ViewData["MateriaId"] = new SelectList(
             _context.Materias
             .Include(x => x.Pensum)
             .ThenInclude(x=>x.Carrera)
-            .Where(x=>x.Pensum.CarreraId==carrera && x.Pensum.Activo)
+            .Where(x=>x.Pensum.PensumId==id)
             , "MateriaId", "NombreMateria");
             return Page();
         }

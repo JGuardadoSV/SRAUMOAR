@@ -50,6 +50,9 @@ namespace SRAUMOAR.Entidades.Docentes
         [DisplayName("Profesión")]
         public virtual Profesion? Profesion { get; set; }
 
+        [Required(ErrorMessage = "El campo género  es obligatorio")]
+        [Display(Name = "Género")]
+        public int Genero { get; set; }
 
         // Relación con Usuario
         public int? UsuarioId { get; set; }
