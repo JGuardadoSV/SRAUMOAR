@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +13,7 @@ using SRAUMOAR.Modelos;
 
 namespace SRAUMOAR.Pages.grupos
 {
-   
+    [Authorize(Roles = "Administrador,Administracion,Docente")]
     public class IndexModel : PageModel
     {
         private readonly SRAUMOAR.Modelos.Contexto _context;

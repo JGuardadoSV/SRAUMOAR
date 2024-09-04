@@ -5,6 +5,10 @@ using SRAUMOAR.Modelos;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
+
+
+
 // Add services to the container.
 builder.Services.AddDbContext<Contexto>(
         options => options.UseSqlServer(
@@ -20,6 +24,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         {
             options.LoginPath = "/Index";
             options.AccessDeniedPath = "/AccessDenied";
+            options.LogoutPath = "/salir";
         });
 
     builder.Services.AddAuthorization(options =>
@@ -33,6 +38,11 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     // ...
 
 var app = builder.Build();
+
+
+//qué otras configuraciones hacen falta
+
+
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

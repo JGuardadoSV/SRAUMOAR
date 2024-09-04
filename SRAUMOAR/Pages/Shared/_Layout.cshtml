@@ -29,17 +29,17 @@
                             <i class="nav-icon bi bi-house"></i>
                         </a>
                     </li>
-                    
+
                 </ul> <!--end::Start Navbar Links--> <!--begin::End Navbar Links-->
                 <ul class="navbar-nav ms-auto">
                     <!--begin::Navbar Search-->
                     <li class="nav-item"> <a class="nav-link" data-widget="navbar-search" href="#" role="button"> <i class="bi bi-search"></i> </a> </li> <!--end::Navbar Search--> <!--begin::Messages Dropdown Menu-->
-                    
-                    
+
+
                     <li class="nav-item"> <a class="nav-link" href="#" data-lte-toggle="fullscreen"> <i data-lte-icon="maximize" class="bi bi-arrows-fullscreen"></i> <i data-lte-icon="minimize" class="bi bi-fullscreen-exit" style="display: none;"></i> </a> </li> <!--end::Fullscreen Toggle--> <!--begin::User Menu Dropdown-->
                     <li class="nav-item dropdown user-menu">
                         <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-                            <img src="~/assets/img/user2-160x160.jpg" class="user-image rounded-circle shadow" alt="User Image"> 
+                            <img src="~/assets/img/user2-160x160.jpg" class="user-image rounded-circle shadow" alt="User Image">
                             <span class="d-none d-md-inline">
                                 @if (User.Identity.IsAuthenticated)
                                 {
@@ -65,7 +65,7 @@
                                     {
                                         <text>Usuario no autenticado</text>
                                     }
-                                    
+
                                 </p>
                             </li> <!--end::User Image--> <!--begin::Menu Body-->
                             <li class="user-body">
@@ -76,7 +76,8 @@
                                     <div class="col-4 text-center"> <a href="#">Friends</a> </div>
                                 </div> end::Row-->
                             </li> <!--end::Menu Body--> <!--begin::Menu Footer-->
-                            <li class="user-footer"> <a href="#" class="btn btn-default btn-flat">Mis datos</a>
+                            <li class="user-footer">
+                                <a href="#" class="btn btn-default btn-flat">Mis datos</a>
                                 <a asp-area="" asp-page="/salir" class="nav-link">
                                     <i class="nav-icon bi bi-building"></i>
                                     Salir
@@ -94,84 +95,92 @@
                 <nav class="mt-2">
                     <!--begin::Sidebar Menu-->
                     <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu" data-accordion="false">
-                        <li class="nav-item">
-                            <a href="#" class="nav-link">
-                                <i class="nav-icon bi bi-speedometer"></i>
-                                <p>
-                                    Tablas generales
-                                    <i class="nav-arrow bi bi-chevron-right"></i>
-                                </p>
-                            </a>
-                            <ul class="nav nav-treeview">
-                                
-                                <li class="nav-item">
-                                    <a asp-area="" asp-page="/generales/departamento/Index" class="nav-link">
-                                        <i class="nav-icon bi bi-building"></i>
-                                        <p>Departamentos</p>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a asp-area="" asp-page="/generales/distrito/Index" class="nav-link">
-                                        <i class="nav-icon bi bi-map"></i>
-                                        <p>Distritos</p>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a asp-area="" asp-page="/generales/municipio/Index" class="nav-link">
-                                        <i class="nav-icon bi bi-house"></i>
-                                        <p>Municipios</p>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a asp-area="" asp-page="/alumno/Index" class="nav-link">
-                                        <i class="nav-icon bi bi-person-fill"></i>
-                                        <p>Alumno</p>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a asp-area="" asp-page="/generales/facultad/Index" class="nav-link">
-                                        <i class="nav-icon bi bi-building"></i>
-                                        <p>Facultades</p>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a asp-area="" asp-page="/generales/profesiones/Index" class="nav-link">
-                                        <i class="nav-icon bi bi-briefcase"></i>
-                                        <p>Profesiones</p>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a asp-area="" asp-page="/generales/docentes/Index" class="nav-link">
-                                        <i class="nav-icon bi bi-person-video2"></i>
-                                        <p>Docentes</p>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a asp-area="" asp-page="/generales/carrera/Index" class="nav-link">
-                                        <i class="nav-icon bi bi-award"></i>
-                                        <p>Carreras</p>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a asp-area="" asp-page="/generales/pensum/Index" class="nav-link">
-                                        <i class="nav-icon bi bi-list-task"></i>
-                                        <p>Pensum</p>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a asp-area="" asp-page="/generales/materias/Index" class="nav-link">
-                                        <i class="nav-icon bi bi-book"></i>
-                                        <p>Materias</p>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a asp-area="" asp-page="/generales/usuarios/usuariosalumnos" class="nav-link">
-                                        <i class="nav-icon bi bi-person-fill"></i>
-                                        <p>Usuarios alumnos</p>
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
+                        @if (User.IsInRole("Administrador") || User.IsInRole("Administracion"))
+                        {
+                            <!-- INICIA MENU TABLAS GENERALES  -->
+                            <li class="nav-item">
+                                <a href="#" class="nav-link">
+                                    <i class="nav-icon bi bi-speedometer"></i>
+                                    <p>
+                                        Tablas generales
+                                        <i class="nav-arrow bi bi-chevron-right"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+
+                                    
+                                        <li class="nav-item">
+                                            <a asp-area="" asp-page="/generales/departamento/Index" class="nav-link">
+                                                <i class="nav-icon bi bi-building"></i>
+                                                <p>Departamentos</p>
+                                            </a>
+                                        </li>
+                                    
+
+                                    <li class="nav-item">
+                                        <a asp-area="" asp-page="/generales/distrito/Index" class="nav-link">
+                                            <i class="nav-icon bi bi-map"></i>
+                                            <p>Distritos</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a asp-area="" asp-page="/generales/municipio/Index" class="nav-link">
+                                            <i class="nav-icon bi bi-house"></i>
+                                            <p>Municipios</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a asp-area="" asp-page="/alumno/Index" class="nav-link">
+                                            <i class="nav-icon bi bi-person-fill"></i>
+                                            <p>Alumno</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a asp-area="" asp-page="/generales/facultad/Index" class="nav-link">
+                                            <i class="nav-icon bi bi-building"></i>
+                                            <p>Facultades</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a asp-area="" asp-page="/generales/profesiones/Index" class="nav-link">
+                                            <i class="nav-icon bi bi-briefcase"></i>
+                                            <p>Profesiones</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a asp-area="" asp-page="/generales/docentes/Index" class="nav-link">
+                                            <i class="nav-icon bi bi-person-video2"></i>
+                                            <p>Docentes</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a asp-area="" asp-page="/generales/carrera/Index" class="nav-link">
+                                            <i class="nav-icon bi bi-award"></i>
+                                            <p>Carreras</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a asp-area="" asp-page="/generales/pensum/Index" class="nav-link">
+                                            <i class="nav-icon bi bi-list-task"></i>
+                                            <p>Pensum</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a asp-area="" asp-page="/generales/materias/Index" class="nav-link">
+                                            <i class="nav-icon bi bi-book"></i>
+                                            <p>Materias</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a asp-area="" asp-page="/generales/usuarios/usuariosalumnos" class="nav-link">
+                                            <i class="nav-icon bi bi-person-fill"></i>
+                                            <p>Usuarios alumnos</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                            <!-- FIN MENU TABLAS GENERALES  -->
+                        }
                         <li class="nav-item">
                             <a href="#" class="nav-link">
                                 <i class="nav-icon bi bi-speedometer"></i>
@@ -199,7 +208,7 @@
                                         <p>Grupos</p>
                                     </a>
                                 </li>
-                               
+
                             </ul>
                         </li>
 
@@ -218,19 +227,19 @@
                                         <p>Datos del ciclo</p>
                                     </a>
                                 </li>
-                                
+
                             </ul>
                         </li>
-                        
-                       
-                       
-                        
+
+
+
+
                     </ul> <!--end::Sidebar Menu-->
                 </nav>
             </div> <!--end::Sidebar Wrapper-->
         </aside> <!--end::Sidebar--> <!--begin::App Main-->
         <main class="app-main">
-           
+
             <div class="app-content">
                 <!--begin::Container-->
                 <div class="container-fluid">
@@ -241,7 +250,7 @@
                                 @RenderBody()
                             </main>
                         </div>
-                        
+
                     </div> <!-- /.row (main row) -->
                 </div> <!--end::Container-->
             </div> <!--end::App Content-->
@@ -252,7 +261,7 @@
                 Copyright &copy; 2024&nbsp;
                 <a href="https://umoar.edu.sv" class="text-decoration-none">Universidad Monseñor Romero</a>.
             </strong>
-            
+
             <!--end::Copyright-->
         </footer> <!--end::Footer-->
     </div> <!--end::App Wrapper--> <!--begin::Script--> <!--begin::Third Party Plugin(OverlayScrollbars)-->
