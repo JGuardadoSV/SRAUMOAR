@@ -28,6 +28,16 @@
             </div>
             <div class="card-body">
                 <dl class="row mb-0">
+                    <dt class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-mortarboard">
+                        @Html.DisplayNameFor(model => model.Facultad.CodigoFacultad)
+                    </dt>
+                    <dd class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-info-circle">
+                        @Html.DisplayFor(model => model.Facultad.CodigoFacultad)
+                    </dd>
+                </dl>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
                     <dt class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-toggle-on">
                         @Html.DisplayNameFor(model => model.Facultad.Activa)
                     </dt>

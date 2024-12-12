@@ -1,4 +1,5 @@
 ﻿using SRAUMOAR.Entidades.Accesos;
+using SRAUMOAR.Entidades.Generales;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -75,6 +76,11 @@ namespace SRAUMOAR.Entidades.Alumnos
         public int? UsuarioId { get; set; }
         [ForeignKey("UsuarioId")]
         public virtual Usuario? Usuario { get; set; }
+
+        [Display(Name = "Municipio")]
+        public int? MunicipioId { get; set; }
+
+        public virtual Municipio? Municipio { get; set; }
     }
 
    

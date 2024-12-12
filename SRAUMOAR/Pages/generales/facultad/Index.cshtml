@@ -28,6 +28,7 @@
                     <thead class="table-dark">
                         <tr>
                             <th>@Html.DisplayNameFor(model => model.Facultad[0].NombreFacultad)</th>
+                            <th>Código</th>
                             <th>@Html.DisplayNameFor(model => model.Facultad[0].Activa)</th>
                             <th class="text-center">Acciones</th>
                         </tr>
@@ -37,6 +38,7 @@
                         {
                             <tr>
                                 <td>@Html.DisplayFor(modelItem => item.NombreFacultad)</td>
+                                <td>@Html.DisplayFor(modelItem => item.CodigoFacultad)</td>
                                 <td>@Html.DisplayFor(modelItem => item.Activa)</td>
                                 <td class="text-center">
                                     <div class="btn-group">

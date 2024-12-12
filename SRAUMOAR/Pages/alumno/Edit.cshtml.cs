@@ -31,7 +31,7 @@ namespace SRAUMOAR.Pages.alumno
             {
                 return NotFound();
             }
-
+            ViewData["MunicipioId"] = new SelectList(_context.Municipios, "MunicipioId", "NombreMunicipio");
             var alumno =  await _context.Alumno.FirstOrDefaultAsync(m => m.AlumnoId == id);
             if (alumno == null)
             {

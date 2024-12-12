@@ -112,6 +112,20 @@
                                     <br>
                                     <span asp-validation-for="Alumno.DireccionDeResidencia" class="text-danger"></span>
                                 </div>
+                                <div class="mb-3">
+                                    <label asp-for="Alumno.MunicipioId" class="form-label fs-4 fw-semibold text-dark formal-text">Municipio de residencia</label>
+                                    <br>
+                                    <br>
+                                    <div class="input-group">
+                                        
+                                        <span class="input-group-text"><i class="bi bi-map-fill"></i></span>
+                                        <select asp-for="Alumno.MunicipioId" class="form-control" asp-items="ViewBag.MunicipioId">
+                                            <option value="">Seleccione un municipio</option>
+                                        </select>
+                                    </div>
+                                    <br>
+                                    <span asp-validation-for="Alumno.MunicipioId" class="text-danger"></span>
+                                </div>
                                 <div class="d-grid gap-2">
                                     <button type="submit" class="btn btn-primary btn-lg">
                                         <i class="bi bi-arrow-clockwise"></i> Actualizar

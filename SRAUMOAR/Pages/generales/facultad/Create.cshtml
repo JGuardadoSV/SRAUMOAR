@@ -24,7 +24,7 @@
                             <form method="post">
                                 <div asp-validation-summary="ModelOnly" class="alert alert-danger d-flex align-items-center" role="alert"></div>
                                 <div class="mb-3">
-                                    <label asp-for="Facultad.NombreFacultad" class="form-label fs-4 fw-semibold text-dark formal-text">Nombre de la Factudad</label>
+                                    <label asp-for="Facultad.NombreFacultad" class="form-label fs-4 fw-semibold text-dark formal-text">Nombre de la facultad</label>
                                     <br>
                                     <br>
                                     <div class="input-group">
@@ -33,6 +33,17 @@
                                     </div>
                                     <br>
                                     <span asp-validation-for="Facultad.NombreFacultad" class="text-danger"></span>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="Facultad.CodigoFacultad" class="form-label fs-4 fw-semibold text-dark formal-text">Código de la facultad</label>
+                                    <br>
+                                    <br>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-mortarboard"></i></span>
+                                        <input asp-for="Facultad.CodigoFacultad" class="form-control" placeholder="Ingrese el código de la facultad" />
+                                    </div>
+                                    <br>
+                                    <span asp-validation-for="Facultad.CodigoFacultad" class="text-danger"></span>
                                 </div>
                                 <div class="input-group">
                                     <label class="form-check-label fs-4 fw-semibold text-dark formal-text">

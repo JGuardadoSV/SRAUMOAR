@@ -28,7 +28,7 @@ namespace SRAUMOAR.Pages.generales.municipio
                 return NotFound();
             }
 
-            var municipio = await _context.Municipios.FirstOrDefaultAsync(m => m.MunicipioId == id);
+            var municipio = await _context.Municipios.Include(m => m.Distrito).FirstOrDefaultAsync(m => m.MunicipioId == id);
             if (municipio == null)
             {
                 return NotFound();

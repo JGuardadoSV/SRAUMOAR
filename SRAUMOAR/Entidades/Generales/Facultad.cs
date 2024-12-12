@@ -11,6 +11,9 @@ namespace SRAUMOAR.Entidades.Generales
         [DisplayName(displayName:"Nombre de la facultad")]
         [Required(ErrorMessage = "El campo Nombre de facultad es obligatorio")]
         public string? NombreFacultad { get; set; }
+        [DisplayName(displayName:"Código de la facultad")]
+        [Required(ErrorMessage = "El campo Código de facultad es obligatorio,es para fines de generar el carnet de estudiante")]
+        public string? CodigoFacultad { get; set; }
         public bool Activa { get; set; } = true;
 
         //***********************************************************

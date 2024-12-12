@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using SRAUMOAR.Entidades.Alumnos;
+using System.ComponentModel.DataAnnotations;
 
 namespace SRAUMOAR.Entidades.Generales
 {
@@ -15,5 +16,7 @@ namespace SRAUMOAR.Entidades.Generales
         [Display(Name = "Distrito")]
         public int DistritoId { get; set; } // Llave foránea
         public virtual Distrito? Distrito { get; set; } // Propiedad de navegación
+
+        public virtual ICollection<Alumno>? Alumnos { get; set; } // Propiedad de navegación
     }
 }

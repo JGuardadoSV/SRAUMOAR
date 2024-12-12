@@ -116,6 +116,16 @@
                     </dd>
                 </dl>
              </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-house-fill me-2">
+                        @Html.DisplayNameFor(model => model.Alumno.MunicipioId)
+                    </dt>
+                    <dd class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-info-circle">
+                        @Html.DisplayFor(model => model.Alumno.Municipio.NombreMunicipio)
+                    </dd>
+                </dl>
+            </div>
             <div class="card-footer text-end">
                 <a asp-page="./Edit" asp-route-id="@Model.Alumno.AlumnoId" class="btn btn-primary">
                     <i class="bi bi-pencil-square"></i> Editar
