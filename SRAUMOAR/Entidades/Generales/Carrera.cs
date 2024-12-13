@@ -1,4 +1,5 @@
-﻿using SRAUMOAR.Entidades.Materias;
+﻿using SRAUMOAR.Entidades.Alumnos;
+using SRAUMOAR.Entidades.Materias;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -37,6 +38,7 @@ namespace SRAUMOAR.Entidades.Generales
 
 
         public virtual ICollection<Pensum>? Pensums { get; set; } // Propiedad de navegación
+        public virtual ICollection<Alumno>? Alumnos { get; set; } // Propiedad de navegación
 
     }
 }

@@ -22,6 +22,7 @@ namespace SRAUMOAR.Pages.alumno
         public IActionResult OnGet()
         {
             ViewData["MunicipioId"] = new SelectList(_context.Municipios, "MunicipioId", "NombreMunicipio", selectedValue: null);
+            ViewData["CarreraId"] = new SelectList(_context.Carreras, "CarreraId", "NombreCarrera", selectedValue: null);
             return Page();
         }
 

@@ -30,7 +30,7 @@ namespace SRAUMOAR.Pages.alumno
                 return NotFound();
             }
 
-            var alumno = await _context.Alumno.Include(x => x.Municipio).FirstOrDefaultAsync(m => m.AlumnoId == id);
+            var alumno = await _context.Alumno.Include(x => x.Municipio).Include(x => x.Carrera).FirstOrDefaultAsync(m => m.AlumnoId == id);
             if (alumno == null)
             {
                 return NotFound();

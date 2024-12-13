@@ -14,6 +14,7 @@ namespace SRAUMOAR.Entidades.Accesos
         public string? NombreUsuario { get; set; } 
 
         [Required(ErrorMessage = "La contraseña es requerida")]
+        [MinLength(6, ErrorMessage = "La contraseña debe de ser de al menos 6 caracteres")]
         [StringLength(256)]
         public string? Clave { get; set; }
 

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SRAUMOAR.Modelos;
 
@@ -11,9 +12,11 @@ using SRAUMOAR.Modelos;
 namespace SRAUMOAR.Migrations
 {
     [DbContext(typeof(Contexto))]
-    partial class ContextoModelSnapshot : ModelSnapshot
+    [Migration("20241213102307_fechaingresodocente")]
+    partial class fechaingresodocente
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -91,9 +94,6 @@ namespace SRAUMOAR.Migrations
                     b.Property<string>("Carnet")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("CarreraId")
-                        .HasColumnType("int");
-
                     b.Property<string>("ContactoDeEmergencia")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -151,54 +151,11 @@ namespace SRAUMOAR.Migrations
 
                     b.HasKey("AlumnoId");
 
-                    b.HasIndex("CarreraId");
-
                     b.HasIndex("MunicipioId");
 
                     b.HasIndex("UsuarioId");
 
                     b.ToTable("Alumno");
-                });
-
-            modelBuilder.Entity("SRAUMOAR.Entidades.Colecturia.CobroArancel", b =>
-                {
-                    b.Property<int>("CobroArancelId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CobroArancelId"));
-
-                    b.Property<int?>("AlumnoId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("ArancelId")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("Cambio")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int?>("CicloId")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("EfectivoRecibido")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime>("Fecha")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("nota")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("CobroArancelId");
-
-                    b.HasIndex("AlumnoId");
-
-                    b.HasIndex("ArancelId");
-
-                    b.HasIndex("CicloId");
-
-                    b.ToTable("CobrosArancel");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Docentes.Docente", b =>
@@ -673,10 +630,6 @@ namespace SRAUMOAR.Migrations
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Alumnos.Alumno", b =>
                 {
-                    b.HasOne("SRAUMOAR.Entidades.Generales.Carrera", "Carrera")
-                        .WithMany("Alumnos")
-                        .HasForeignKey("CarreraId");
-
                     b.HasOne("SRAUMOAR.Entidades.Generales.Municipio", "Municipio")
                         .WithMany("Alumnos")
                         .HasForeignKey("MunicipioId");
@@ -685,32 +638,9 @@ namespace SRAUMOAR.Migrations
                         .WithMany()
                         .HasForeignKey("UsuarioId");
 
-                    b.Navigation("Carrera");
-
                     b.Navigation("Municipio");
 
                     b.Navigation("Usuario");
-                });
-
-            modelBuilder.Entity("SRAUMOAR.Entidades.Colecturia.CobroArancel", b =>
-                {
-                    b.HasOne("SRAUMOAR.Entidades.Alumnos.Alumno", "Alumno")
-                        .WithMany()
-                        .HasForeignKey("AlumnoId");
-
-                    b.HasOne("SRAUMOAR.Entidades.Procesos.Arancel", "Arancel")
-                        .WithMany()
-                        .HasForeignKey("ArancelId");
-
-                    b.HasOne("SRAUMOAR.Entidades.Procesos.Ciclo", "Ciclo")
-                        .WithMany()
-                        .HasForeignKey("CicloId");
-
-                    b.Navigation("Alumno");
-
-                    b.Navigation("Arancel");
-
-                    b.Navigation("Ciclo");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Docentes.Docente", b =>
@@ -903,8 +833,6 @@ namespace SRAUMOAR.Migrations
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Generales.Carrera", b =>
                 {
-                    b.Navigation("Alumnos");
-
                     b.Navigation("Pensums");
                 });
 

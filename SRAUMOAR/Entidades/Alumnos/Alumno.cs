@@ -81,6 +81,12 @@ namespace SRAUMOAR.Entidades.Alumnos
         public int? MunicipioId { get; set; }
 
         public virtual Municipio? Municipio { get; set; }
+
+
+
+        [Display(Name = "Carrera")]
+        public int? CarreraId { get; set; }
+        public virtual Carrera? Carrera { get; set; }
     }
 
    

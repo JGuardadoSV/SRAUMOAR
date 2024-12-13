@@ -1,12 +1,12 @@
-﻿@page "/autenticacion/crearusuarioalumno/{AlumnoId:int}"
+﻿@page "/autenticacion/desactivarusuario/{UsuarioId:int}"
 
-@model SRAUMOAR.Pages.Autenticacion.CrearUsuarioAlumnoModel
+@model SRAUMOAR.Pages.Autenticacion.DesactivarUsuarioModel
 
 @{
-    ViewData["Title"] = "CrearUsuarioAlumno";
+    ViewData["Title"] = "Administrar usuario";
 }
 
-<h1 class="text-center">Creación de usuario para alumnos</h1>
+<h1 class="text-center">Administracion de usuario</h1>
 
 <h4 class="text-center text-secondary mb-4">Alumno: @Model.nombre</h4>
 <hr />
@@ -14,7 +14,8 @@
     <div class="col-md-4">
         <form method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-
+            <input type="hidden" name="UsuarioId" value="@ViewData["usuarioid"]" />
+            <input type="hidden" name="Tipo" value="@ViewData["tipo"]" />
             <div class="mb-3">
                 <label asp-for="Usuario.NombreUsuario" class="form-label">Nombre de usuario</label>
                 <input asp-for="Usuario.NombreUsuario" class="form-control" readonly value="@Model.email" />
@@ -33,13 +34,8 @@
                 <span asp-validation-for="Usuario.Email" class="text-danger"></span>
             </div>
 
-            <div class="mb-3">
-                <label asp-for="Usuario.NivelAccesoId" class="form-label">Nivel de acceso</label>
-                <select asp-for="Usuario.NivelAccesoId" class="form-select" asp-items="ViewBag.NivelAccesoId"></select>
-            </div>
-
             <div class="d-grid">
-                <input type="submit" value="Crear" class="btn btn-primary" />
+                <input type="submit" value="Actualizar clave" class="btn btn-primary" />
             </div>
         </form>
         <div>

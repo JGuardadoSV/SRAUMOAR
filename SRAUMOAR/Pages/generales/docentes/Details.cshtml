@@ -58,6 +58,16 @@
             </div>
             <div class="card-body">
                 <dl class="row mb-0">
+                    <dt class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-calendar3 me-2">
+                        @Html.DisplayNameFor(model => model.Docente.FechaDeIngreso)
+                    </dt>
+                    <dd class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-info-circle">
+                        @Html.DisplayFor(model => model.Docente.FechaDeIngreso)
+                    </dd>
+                </dl>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
                     <dt class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-house-fill me-2">
                         @Html.DisplayNameFor(model => model.Docente.Direccion)
                     </dt>

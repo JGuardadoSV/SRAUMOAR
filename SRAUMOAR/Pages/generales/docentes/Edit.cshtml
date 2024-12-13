@@ -23,6 +23,23 @@
                             <form method="post">
                                 <div asp-validation-summary="ModelOnly" class="alert alert-danger d-flex align-items-center" role="alert"></div>
                                 <input type="hidden" asp-for="Docente.DocenteId" />
+                                <div class="form-group">
+                                    <label class="form-label fs-4 fw-semibold text-dark formal-text">Género</label>
+
+                                    <div class="d-flex">
+                                        <div class="form-check me-3">
+                                            <input type="radio" asp-for="Docente.Genero" value="0" id="generoMasculino" class="form-check-input">
+                                            <label class="form-check-label" for="generoMasculino">Masculino</label>
+                                        </div>
+
+                                        <div class="form-check">
+                                            <input type="radio" asp-for="Docente.Genero" value="1" id="generoFemenino" class="form-check-input">
+                                            <label class="form-check-label" for="generoFemenino">Femenino</label>
+                                        </div>
+                                    </div>
+
+                                    <span asp-validation-for="Docente.Genero" class="text-danger"></span>
+                                </div>
                                 <div class="mb-3">
                                     <label asp-for="Docente.Nombres" class="form-label fs-4 fw-semibold text-dark formal-text">Nombres</label>
                                     <div class="input-group">
@@ -58,6 +75,15 @@
                                     </div>
                                     <br>
                                     <span asp-validation-for="Docente.FechaDeNacimiento" class="text-danger"></span>
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="Docente.FechaDeNacimiento" class="form-label fs-4 fw-semibold text-dark formal-text">Fecha de Ingreso</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-book"></i></span>
+                                        <input asp-for="Docente.FechaDeIngreso" class="form-control" placeholder="Fecha de Nacimiento" />
+                                    </div>
+                                    <br>
+                                    <span asp-validation-for="Docente.FechaDeIngreso" class="text-danger"></span>
                                 </div>
                                 <div class="mb-3">
                                     <label asp-for="Docente.Direccion" class="form-label fs-4 fw-semibold text-dark formal-text">Dirección</label>

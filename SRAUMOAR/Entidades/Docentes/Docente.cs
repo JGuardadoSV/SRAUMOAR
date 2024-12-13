@@ -42,6 +42,12 @@ namespace SRAUMOAR.Entidades.Docentes
         [DisplayName("Correo Electrónico")]
         public string Email { get; set; }
 
+        [DisplayFormat(ApplyFormatInEditMode = false, DataFormatString = "{0:dd/MM/yyyy}")]
+        [DataType(DataType.Date)]
+        [Required(ErrorMessage = "La fecha de ingreso es obligatorio")]
+        [DisplayName("Fecha de ingreso a la institución")]
+        public DateTime? FechaDeIngreso { get; set; }
+
         [Required(ErrorMessage = "La profesión es obligatoria")]
         [DisplayName("Profesión")]
         public int ProfesionId { get; set; }
@@ -53,6 +59,7 @@ namespace SRAUMOAR.Entidades.Docentes
         [Required(ErrorMessage = "El campo género  es obligatorio")]
         [Display(Name = "Género")]
         public int Genero { get; set; }
+
 
         // Relación con Usuario
         public int? UsuarioId { get; set; }

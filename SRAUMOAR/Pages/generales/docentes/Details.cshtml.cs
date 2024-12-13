@@ -28,7 +28,7 @@ namespace SRAUMOAR.Pages.generales.docentes
                 return NotFound();
             }
 
-            var docente = await _context.Docentes.FirstOrDefaultAsync(m => m.DocenteId == id);
+            var docente = await _context.Docentes.Include(d => d.Profesion).FirstOrDefaultAsync(m => m.DocenteId == id);
             if (docente == null)
             {
                 return NotFound();

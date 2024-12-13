@@ -35,7 +35,7 @@ namespace SRAUMOAR.Pages.Autenticacion
             email = resultado.Email;
 
 
-            ViewData["NivelAccesoId"] = new SelectList(_context.NivelesAcceso.Where(x=>x.Id==3), "Id", "Nombre");
+            ViewData["NivelAccesoId"] = new SelectList(_context.NivelesAcceso.Where(x=>x.Id>=2 && x.Id<4), "Id", "Nombre");
             return Page();
         }
 

@@ -5,37 +5,30 @@
     ViewData["Title"] = "Usuarios del sistema";
 }
 
-<h1>Administración de usuarios</h1>
+<h1 class="text-center mb-4">Administración de usuarios</h1>
 
-
-<table class="table">
-    <thead>
+<table class="table table-striped table-hover">
+    <thead class="table-dark">
         <tr>
-            <th>
-                Usuario
-            </th>
-            <th>
-                Rol
-            </th>
-            <th></th>
+            <th>Usuario</th>
+            <th>Rol</th>
+            <th class="text-center">Acción</th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model.Usuario) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.NombreUsuario)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.NivelAcceso.Nombre)
-            </td>
-            <td>
-                    @Html.Raw(item.Activo.Value==true
-                             ? $"<a href='autenticacion/desactivarusuario/{item.IdUsuario}' class='btn btn-danger'>Desactivar</a>"
-                             : $"<a href='autenticacion/activarusuario/{item.IdUsuario}' class='btn btn-success'>Activar</a>")
-                
-            </td>
-        </tr>
-}
+        @foreach (var item in Model.Usuario)
+        {
+            <tr>
+                <td>@Html.DisplayFor(modelItem => item.NombreUsuario)</td>
+                <td>@Html.DisplayFor(modelItem => item.NivelAcceso.Nombre)</td>
+                <td class="text-center">
+                    @Html.Raw(item.Activo.Value == true
+                             ? $"<a href='/autenticacion/desactivarusuario/{item.IdUsuario}' onclick='return confirm(\"¿Está seguro de que desea desactivar este usuario?\")' class='btn btn-danger btn-sm'>Desactivar</a>"
+                             : $"<a href='/autenticacion/desactivarusuario/{item.IdUsuario}' onclick='return confirm(\"¿Está seguro de que desea activar este usuario?\")' class='btn btn-success btn-sm'>Activar</a>")
+                </td>
+            </tr>
+        }
     </tbody>
 </table>
+
+

@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using SRAUMOAR.Entidades.Docentes;
 using SRAUMOAR.Entidades.Accesos;
 using SRAUMOAR.Entidades.Procesos;
+using SRAUMOAR.Entidades.Colecturia;
 
 namespace SRAUMOAR.Modelos
 {
@@ -39,6 +40,8 @@ namespace SRAUMOAR.Modelos
 
         public DbSet<Grupo> Grupo { get; set; }
         public DbSet<MateriasGrupo> MateriasGrupo { get; set; }
+
+        public DbSet<CobroArancel> CobrosArancel { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -43,7 +43,11 @@
                         @foreach (var item in Model.Docente)
                         {
                             <tr>
-                                <td>@Html.DisplayFor(modelItem => item.Nombres)</td>
+                                <td>
+                                    @Html.Raw($@"{(item.Genero == 0 ? "<i class='bi bi-gender-male'></i>" : "<i class='bi bi-gender-female'></i>")} {item.Nombres}")
+                                </td>
+
+
                                 <td>@Html.DisplayFor(modelItem => item.Apellidos)</td>
                                 <td>@Html.DisplayFor(modelItem => item.Dui)</td>
                                 <td>@Html.DisplayFor(modelItem => item.FechaDeNacimiento)</td>
@@ -52,7 +56,7 @@
                                 <td>@Html.DisplayFor(modelItem => item.Profesion.NombreProfesion)</td>
                                 <td>
                                     @Html.Raw(item.Usuario?.ToString().Length > 0
-                                             ? $"<a href='/autenticacion/administrarusuariodocente/{item.DocenteId}' class='btn btn-link'>Administrar</a>"
+                                             ? $"<a href='/autenticacion/AdministrarUsuario/{item.DocenteId}/2' class='btn btn-link'>Administrar</a>"
                                              : $"<a href='/autenticacion/crearusuariodocente/{item.DocenteId}/{item.Usuario?.IdUsuario}' class='btn btn-link'>Crear</a>")
 
                                 </td>

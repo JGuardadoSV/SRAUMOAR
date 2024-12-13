@@ -71,6 +71,20 @@
                                     <span asp-validation-for="Alumno.FechaDeNacimiento" class="text-danger"></span>
                                 </div>
                                 <div class="mb-3">
+                                    <label asp-for="Alumno.CarreraId" class="form-label fs-4 fw-semibold text-dark formal-text">Carrera Elegida</label>
+                                    <br>
+                                    <br>
+                                    <div class="input-group">
+
+                                        <span class="input-group-text"><i class="bi bi-map-fill"></i></span>
+                                        <select asp-for="Alumno.CarreraId" class="form-control" asp-items="ViewBag.CarreraId">
+                                            <option value="">Seleccione una carrera</option>
+                                        </select>
+                                    </div>
+                                    <br>
+                                    <span asp-validation-for="Alumno.MunicipioId" class="text-danger"></span>
+                                </div>
+                                <div class="mb-3">
                                     <label asp-for="Alumno.Email" class="form-label fs-4 fw-semibold text-dark formal-text">Correo Electronico</label>
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="bi bi-person"></i></span>

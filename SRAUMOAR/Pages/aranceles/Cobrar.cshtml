@@ -1,0 +1,80 @@
+﻿@page
+@model SRAUMOAR.Pages.aranceles.CobrarModel
+
+@{
+    ViewData["Title"] = "Aranceles del ciclo";
+    var alumno = ViewData["Alumno"] as SRAUMOAR.Entidades.Alumnos.Alumno;
+}
+
+<div class="container my-5">
+    <h1 class="text-center mb-4"></h1>
+    <div class="card">
+        <div class="card-header bg-success text-white text-center">
+            <h2 class="mb-0">Cobro de aranceles</h2>
+        </div>
+        <div class="card-body text-center">
+            <p class="mb-0"><b>Alumno:</b> @alumno?.Nombres @alumno?.Apellidos</p>
+        </div>
+    </div>
+</div>
+
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Arancel[0].Nombre)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Arancel[0].Costo)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Arancel[0].Activo)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Arancel[0].FechaInicio)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Arancel[0].FechaFin)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Arancel[0].Ciclo)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model.Arancel) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Nombre)
+            </td>
+            <td>
+               $ @Html.DisplayFor(modelItem => item.Costo)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Activo)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FechaInicio)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FechaFin)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Ciclo.NCiclo) /
+                    @Html.DisplayFor(modelItem => item.Ciclo.anio)
+            </td>
+            <td>
+                    <a asp-page="/Cobros/Facturar" asp-route-id="@item.ArancelId" asp-route-alumnoId="@alumno?.AlumnoId" class="btn btn-primary">Cobrar</a>
+
+                <!--
+                |
+                <a asp-page="./Details" asp-route-id="@item.ArancelId">Details</a> |
+                <a asp-page="./Delete" asp-route-id="@item.ArancelId">Delete</a>
+                    -->
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

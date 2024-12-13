@@ -27,7 +27,7 @@ namespace SRAUMOAR.Pages
         {
             if (ModelState.IsValid)
             {
-                var usuario = await _context.Usuarios.Where(x=>x.NombreUsuario==LoginData.NombreUsuario && x.Clave==LoginData.Clave).Include(x=>x.NivelAcceso).FirstOrDefaultAsync();
+                var usuario = await _context.Usuarios.Where(x=>x.NombreUsuario==LoginData.NombreUsuario && x.Clave==LoginData.Clave && x.Activo==true).Include(x=>x.NivelAcceso).FirstOrDefaultAsync();
                 if (usuario != null)
                 {
                     string nombre;
