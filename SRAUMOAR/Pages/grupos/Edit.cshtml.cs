@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using SRAUMOAR.Entidades.Generales;
 using SRAUMOAR.Entidades.Procesos;
 using SRAUMOAR.Modelos;
 
@@ -36,9 +37,27 @@ namespace SRAUMOAR.Pages.grupos
                 return NotFound();
             }
             Grupo = grupo;
-           ViewData["CarreraId"] = new SelectList(_context.Carreras, "CarreraId", "CodigoCarrera");
-           ViewData["CicloId"] = new SelectList(_context.Ciclos, "Id", "Id");
-           ViewData["DocenteId"] = new SelectList(_context.Docentes, "DocenteId", "Apellidos");
+            var carreras = _context.Carreras.ToList();
+            carreras.Insert(0, new Carrera { CarreraId = 0, NombreCarrera = "Seleccione una carrera" });
+            ViewData["CarreraId"] = new SelectList(carreras, "CarreraId", "NombreCarrera");
+
+            ViewData["CicloId"] = new SelectList(
+                  _context.Ciclos
+                  .Where(x => x.Activo == true)
+                  .Select(d => new
+                  {
+                      Id = d.Id,
+                      Ciclon = d.NCiclo + "-" + d.anio
+                  }), "Id", "Ciclon");
+            ViewData["DocenteId"] = new SelectList(
+                                                   _context.Docentes.Select(d => new
+                                                   {
+                                                       DocenteId = d.DocenteId,
+                                                       NombreCompleto = d.Nombres + " " + d.Apellidos
+                                                   }),
+                                                   "DocenteId",
+                                                   "NombreCompleto"
+                                               );
             return Page();
         }
 

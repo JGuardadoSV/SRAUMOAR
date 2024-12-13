@@ -69,6 +69,16 @@
                                     <br>
                                     <span asp-validation-for="Docente.Dui" class="text-danger"></span>
                                 </div>
+
+                                <div class="mb-3">
+                                    <label asp-for="Docente.Telefono" class="form-label fs-4 fw-semibold text-dark formal-text">Teléfono</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-book"></i></span>
+                                        <input asp-for="Docente.Telefono" class="form-control" pattern="\d{4}-\d{4}" placeholder="Ingrese teléfono del Docente" />
+                                    </div>
+                                    <br>
+                                    <span asp-validation-for="Docente.Telefono" class="text-danger"></span>
+                                </div>
                                 <div class="mb-3">
                                     <label asp-for="Docente.FechaDeNacimiento" class="form-label fs-4 fw-semibold text-dark formal-text">Fecha de Nacimiento</label>
                                     <div class="input-group">

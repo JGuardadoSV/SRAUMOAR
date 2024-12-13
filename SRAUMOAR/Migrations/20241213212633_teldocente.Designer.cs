@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SRAUMOAR.Modelos;
 
@@ -11,9 +12,11 @@ using SRAUMOAR.Modelos;
 namespace SRAUMOAR.Migrations
 {
     [DbContext(typeof(Contexto))]
-    partial class ContextoModelSnapshot : ModelSnapshot
+    [Migration("20241213212633_teldocente")]
+    partial class teldocente
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -586,6 +589,10 @@ namespace SRAUMOAR.Migrations
                     b.Property<string>("Nombre")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("PensumId")
+                        .HasColumnType("int")
+                        .HasColumnName("PensumIdG_FK");
+
                     b.HasKey("GrupoId");
 
                     b.HasIndex("CarreraId");
@@ -593,6 +600,8 @@ namespace SRAUMOAR.Migrations
                     b.HasIndex("CicloId");
 
                     b.HasIndex("DocenteId");
+
+                    b.HasIndex("PensumId");
 
                     b.ToTable("grupos");
                 });
@@ -835,11 +844,19 @@ namespace SRAUMOAR.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("SRAUMOAR.Entidades.Materias.Pensum", "Pensum")
+                        .WithMany()
+                        .HasForeignKey("PensumId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Carrera");
 
                     b.Navigation("Ciclo");
 
                     b.Navigation("Docente");
+
+                    b.Navigation("Pensum");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Procesos.Inscripcion", b =>

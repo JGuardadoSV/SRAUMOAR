@@ -11,6 +11,7 @@ namespace SRAUMOAR.Entidades.Procesos
     {
         public int GrupoId { get; set; }
         public int Limite { get; set; }
+        [Display(Name = "Código")]
         public string? Nombre { get; set; }
         public bool Activo { get; set; }
 
@@ -29,11 +30,11 @@ namespace SRAUMOAR.Entidades.Procesos
         public int DocenteId { get; set; } // Llave foránea
         public virtual Docente? Docente { get; set; } // Propiedad de navegación
 
-        [Required(ErrorMessage = "El pensum es requerido")]
-        [Display(Name = "Pensum")]
-        [ForeignKey("GruPensum")]
-        [Column("PensumIdG_FK")]
-        public int? PensumId { get; set; } // Llave foránea
-        public virtual Pensum? Pensum { get; set; } // Propiedad de navegación
+        //[Required(ErrorMessage = "El pensum es requerido")]
+        //[Display(Name = "Pensum")]
+        //[ForeignKey("GruPensum")]
+        //[Column("PensumIdG_FK")]
+        //public int? PensumId { get; set; } // Llave foránea
+        //public virtual Pensum? Pensum { get; set; } // Propiedad de navegación
     }
 }

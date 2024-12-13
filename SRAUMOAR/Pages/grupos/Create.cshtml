@@ -5,49 +5,53 @@
     ViewData["Title"] = "Registro de grupo";
 }
 
-<h1>Registro de nuevo grupo</h1>
+<h1 class=" text-primary fw-bold mb-4 display-5">Registro de nuevo grupo</h1>
 
 
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <form method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Grupo.Nombre" class="control-label"></label>
+        <form method="post" class="p-4 border rounded-3 shadow-sm bg-light">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Grupo.Nombre" class="form-label"></label>
                 <input asp-for="Grupo.Nombre" class="form-control" />
                 <span asp-validation-for="Grupo.Nombre" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="Grupo.Limite" class="control-label"></label>
+
+            <div class="form-group mb-3">
+                <label asp-for="Grupo.Limite" class="form-label"></label>
                 <input asp-for="Grupo.Limite" class="form-control" />
                 <span asp-validation-for="Grupo.Limite" class="text-danger"></span>
             </div>
-            <div class="form-group form-check">
-                <label class="form-check-label">
-                    <input class="form-check-input" asp-for="Grupo.Activo" /> @Html.DisplayNameFor(model => model.Grupo.Activo)
-                </label>
+
+            <div class="form-group form-check mb-3">
+                <input class="form-check-input" asp-for="Grupo.Activo" />
+                <label class="form-check-label" asp-for="Grupo.Activo"></label>
             </div>
-            <div class="form-group">
-                <label asp-for="Grupo.CarreraId" class="control-label"></label>
-                <select id="carreraSelect" asp-for="Grupo.CarreraId" class="form-control" asp-items="ViewBag.CarreraId"></select>
+
+            <div class="form-group mb-3">
+                <label asp-for="Grupo.CarreraId" class="form-label"></label>
+                <select id="carreraSelect" asp-for="Grupo.CarreraId" class="form-select" asp-items="ViewBag.CarreraId"></select>
             </div>
-            <div class="form-group">
-                <label asp-for="Grupo.PensumId" class="control-label"></label>
-                <select id="pensumSelect"  asp-for="Grupo.PensumId" class="form-control"></select>
+
+            <div class="form-group mb-3">
+                <label asp-for="Grupo.CicloId" class="form-label"></label>
+                <select asp-for="Grupo.CicloId" class="form-select" asp-items="ViewBag.CicloId"></select>
             </div>
-            <div class="form-group">
-                <label asp-for="Grupo.CicloId" class="control-label"></label>
-                <select asp-for="Grupo.CicloId" class ="form-control" asp-items="ViewBag.CicloId"></select>
+
+            <div class="form-group mb-3">
+                <label asp-for="Grupo.DocenteId" class="form-label"></label>
+                <select asp-for="Grupo.DocenteId" class="form-select" asp-items="ViewBag.DocenteId"></select>
             </div>
-            <div class="form-group">
-                <label asp-for="Grupo.DocenteId" class="control-label"></label>
-                <select asp-for="Grupo.DocenteId" class ="form-control" asp-items="ViewBag.DocenteId"></select>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Registrar grupo" class="btn btn-primary" /> |  <a asp-page="Index" class="btn btn-success">Volver</a>
+
+            <div class="form-group text-center">
+                <input type="submit" value="Registrar grupo" class="btn btn-success btn-lg me-2" />
+                <a asp-page="Index" class="btn btn-outline-secondary btn-lg">Volver</a>
             </div>
         </form>
+
     </div>
 </div>
 

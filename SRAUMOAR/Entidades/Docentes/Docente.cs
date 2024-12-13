@@ -27,6 +27,10 @@ namespace SRAUMOAR.Entidades.Docentes
         [UIHint("Dui", "Placeholder = 00000000-0")]
         public string Dui { get; set; }
 
+        [Required(ErrorMessage = "El teléfono es obligatorio")]
+        [DisplayName("Teléfono")]
+        public string? Telefono { get; set; }
+
         [Required(ErrorMessage = "La fecha de nacimiento es obligatoria")]
         [DisplayName("Fecha de Nacimiento")]
         [DisplayFormat(ApplyFormatInEditMode = false, DataFormatString = "{0:dd/MM/yyyy}")]

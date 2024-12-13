@@ -7,89 +7,81 @@
 
 @if (User.IsInRole("Docentes"))
 {
-    <h1>Mis grupos para el ciclo actual</h1>
+    <div class="container my-5">
+        <div class="row justify-content-center">
+            <div class="col-md-12">
+                <div class="card bg-light shadow-lg">
+                    <div class="card-body">
+                        <h1 class="display-4 text-center text-success fw-bold">Mis grupos para el ciclo actual</h1>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 }
 else
 {
-    <h1>Grupos para el ciclo actual</h1>
+    <div class="container my-5">
+        <div class="row justify-content-center">
+            <div class="col-md-12">
+                <div class="card bg-light shadow-lg">
+                    <div class="card-body">
+                        <h1 class="display-4 text-center text-success fw-bold">Grupos para el ciclo actual</h1>
+                       
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
 }
-@if (User.IsInRole("Administrador"))
+@if (User.IsInRole("Administrador") || User.IsInRole("Administracion"))
 {
 
-    <p>
-        <a asp-page="Create" class="btn btn-primary">Registrar nuevo grupo</a>
+    <p class="text-center my-4">
+        <a asp-page="Create" class="btn btn-success btn-lg shadow">
+            <i class="bi bi-plus-lg me-2"></i>Registrar nuevo grupo
+        </a>
     </p>
-}
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Grupo[0].Nombre)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Grupo[0].Limite)
-            </th>
 
-            <th>
-                @Html.DisplayNameFor(model => model.Grupo[0].Activo)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Grupo[0].Carrera)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Grupo[0].Ciclo)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Grupo[0].Docente)
-            </th>
-            <th>
-                Pensum
-            </th>
-            <th></th>
+}
+<table class="table table-hover table-bordered">
+    <thead class="table-dark table-success text-center">
+        <tr>
+            <th>@Html.DisplayNameFor(model => model.Grupo[0].Nombre)</th>
+            <th>@Html.DisplayNameFor(model => model.Grupo[0].Limite)</th>
+            <th>@Html.DisplayNameFor(model => model.Grupo[0].Activo)</th>
+            <th>@Html.DisplayNameFor(model => model.Grupo[0].Carrera)</th>
+            <th>@Html.DisplayNameFor(model => model.Grupo[0].Ciclo)</th>
+            <th>@Html.DisplayNameFor(model => model.Grupo[0].Docente)</th>
+            <th>Acciones</th>
         </tr>
     </thead>
     <tbody>
         @foreach (var item in Model.Grupo)
         {
             <tr>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Nombre)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Limite)
-                </td>
-
-                <td>
-                    @Html.DisplayFor(modelItem => item.Activo)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Carrera.NombreCarrera)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Ciclo.NCiclo)-@Html.DisplayFor(modelItem => item.Ciclo.anio)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Docente.Nombres) @Html.DisplayFor(modelItem => item.Docente.Apellidos)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Pensum.CodigoPensum)
-                </td>
-                <td>
+                <td>@Html.DisplayFor(modelItem => item.Nombre)</td>
+                <td>@Html.DisplayFor(modelItem => item.Limite)</td>
+                <td>@Html.DisplayFor(modelItem => item.Activo)</td>
+                <td>@Html.DisplayFor(modelItem => item.Carrera.NombreCarrera)</td>
+                <td>@Html.DisplayFor(modelItem => item.Ciclo.NCiclo)-@Html.DisplayFor(modelItem => item.Ciclo.anio)</td>
+                <td>@Html.DisplayFor(modelItem => item.Docente.Nombres) @Html.DisplayFor(modelItem => item.Docente.Apellidos)</td>
+                <td class="text-center">
                     @if (User.IsInRole("Administrador"))
                     {
-                        <a asp-page="./Edit" asp-route-id="@item.GrupoId" class="btn btn-primary">Editar</a>
-                        <a asp-page="/materiasgrupo/Index" asp-route-id="@item.PensumId" class="btn btn-success">Materias</a>
+                        <a asp-page="./Edit" asp-route-id="@item.GrupoId" class="btn btn-success">Editar</a>
+                        @*  <a asp-page="/materiasgrupo/Index" asp-route-id="@item.PensumId" class="btn btn-success">Materias</a> *@
                     }
                     else
                     {
-                        <a asp-page="./Edit" asp-route-id="@item.GrupoId" class="btn btn-primary">Administrar</a>
+                        <a asp-page="./Edit" asp-route-id="@item.GrupoId" class="btn btn-success">Administrar</a>
                     }
-                    <!--|
-                    <a asp-page="./Details" asp-route-id="@item.GrupoId">Details</a> |
-                    <a asp-page="./Delete" asp-route-id="@item.GrupoId">Delete</a>
-                    -->
                 </td>
             </tr>
         }
     </tbody>
 </table>
+
