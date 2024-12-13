@@ -71,9 +71,9 @@
                             <li class="user-body">
                                 <!--begin::Row
                                 <div class="row">
-                                    <div class="col-4 text-center"> <a href="#">Followers</a> </div>
-                                    <div class="col-4 text-center"> <a href="#">Sales</a> </div>
-                                    <div class="col-4 text-center"> <a href="#">Friends</a> </div>
+                                <div class="col-4 text-center"> <a href="#">Followers</a> </div>
+                                <div class="col-4 text-center"> <a href="#">Sales</a> </div>
+                                <div class="col-4 text-center"> <a href="#">Friends</a> </div>
                                 </div> end::Row-->
                             </li> <!--end::Menu Body--> <!--begin::Menu Footer-->
                             <li class="user-footer">
@@ -108,14 +108,14 @@
                                 </a>
                                 <ul class="nav nav-treeview">
 
-                                    
-                                        <li class="nav-item">
-                                            <a asp-area="" asp-page="/generales/departamento/Index" class="nav-link">
-                                                <i class="nav-icon bi bi-building"></i>
-                                                <p>Departamentos</p>
-                                            </a>
-                                        </li>
-                                    
+
+                                    <li class="nav-item">
+                                        <a asp-area="" asp-page="/generales/departamento/Index" class="nav-link">
+                                            <i class="nav-icon bi bi-building"></i>
+                                            <p>Departamentos</p>
+                                        </a>
+                                    </li>
+
 
                                     <li class="nav-item">
                                         <a asp-area="" asp-page="/generales/distrito/Index" class="nav-link">
@@ -231,6 +231,28 @@
                             </ul>
                         </li>
 
+                        @if ( User.IsInRole("Administracion"))
+                        {
+
+                            <li class="nav-item">
+                                <a asp-area="" asp-page="/aranceles/facturas" class="nav-link">
+                                    <i class="nav-icon bi bi-coin"></i>
+                                    <p>
+                                        Cobros
+                                    </p>
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a asp-area="" asp-page="/alumno/Busqueda" class="nav-link">
+                                    <i class="nav-icon bi bi-coin"></i>
+                                    <p>
+                                        Cobrar
+                                    </p>
+                                </a>
+                            </li>
+
+                        }
 
 
 

@@ -7,9 +7,8 @@ namespace SRAUMOAR.Entidades.Colecturia
 {
     public class CobroArancel
     {
-
         public int CobroArancelId { get; set; }
-
+        [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true)]
         [Display(Name = "Fecha")] 
         public DateTime Fecha { get; set; } = DateTime.Now;
 
@@ -26,8 +25,9 @@ namespace SRAUMOAR.Entidades.Colecturia
         public virtual Ciclo? Ciclo { get; set; }
 
         public decimal EfectivoRecibido { get; set; }
+        public decimal Costo { get; set; }
         public decimal Cambio { get; set; }
-        public string nota { get; set; } = "";
+        public string? nota { get; set; } = "";
 
 
 

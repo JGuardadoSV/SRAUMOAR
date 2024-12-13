@@ -1,0 +1,148 @@
+﻿@page
+@inject IJsonHelper Json
+@model SRAUMOAR.Pages.aranceles.FacturasModel
+
+@{
+    ViewData["Title"] = "Cobros realizados";
+}
+
+
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h1 class="h3 mb-0">Cobros realizados</h1>
+                   @*  <a asp-page="Create" class="btn btn-outline-light">
+                        <i class="bi bi-plus-circle me-1"></i>Nuevo Cobro
+                    </a> *@
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover mb-0">
+                            <thead class="table-success">
+                                <tr>
+                                    <th>@Html.DisplayNameFor(model => model.CobroArancel[0].Fecha)</th>
+                                    <th>@Html.DisplayNameFor(model => model.CobroArancel[0].Arancel)</th>
+                                    <th>@Html.DisplayNameFor(model => model.CobroArancel[0].Alumno)</th>
+                                    <th>@Html.DisplayNameFor(model => model.CobroArancel[0].Ciclo)</th>
+                                    <th>@Html.DisplayNameFor(model => model.CobroArancel[0].Costo)</th>
+                                    <th>Efectivo Recibido</th>
+                                    <th>@Html.DisplayNameFor(model => model.CobroArancel[0].Cambio)</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.CobroArancel)
+                                {
+                                    <tr>
+                                        <td>@Html.DisplayFor(modelItem => item.Fecha)</td>
+                                        <td>@Html.DisplayFor(modelItem => item.Arancel.Nombre)</td>
+                                        <td>@Html.DisplayFor(modelItem => item.Alumno.Nombres) @Html.DisplayFor(modelItem => item.Alumno.Apellidos)</td>
+                                        <td>@Html.DisplayFor(modelItem => item.Ciclo.NCiclo)/@Html.DisplayFor(modelItem => item.Ciclo.anio)</td>
+                                        <td>$@Html.DisplayFor(modelItem => item.Costo)</td>
+                                        <td>$@Html.DisplayFor(modelItem => item.EfectivoRecibido)</td>
+                                        <td>$@Html.DisplayFor(modelItem => item.Cambio)</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-info" onclick="showDetails(@item.CobroArancelId)">
+                                                Ver detalles
+                                            </button>
+                                        </td>
+
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="max-width: 400px; margin: auto; font-family: monospace;">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detailsModalLabel">Ticket de Cobro</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Encabezado del Ticket -->
+                <div class="text-center">
+                    <h6>Universidad Monseñor Oscar Arnulfo Romero</h6>
+                    <p><small>Dirección: Calle Principal, Ciudad</small></p>
+                    <p><small>Teléfono: 1234-5678</small></p>
+                    <hr style="border-top: 1px dashed;">
+                </div>
+
+                <!-- Detalles del Cobro -->
+                <div id="cobroDetails">
+                    <p><strong>Fecha:</strong> <span id="detalleFecha">13/12/2024</span></p>
+                    <p><strong>Arancel:</strong> <span id="detalleArancel">Matrícula</span></p>
+                    <p><strong>Alumno:</strong> <span id="detalleAlumno">Juan Pérez</span></p>
+                    <p><strong>Ciclo:</strong> <span id="detalleCiclo">2024</span></p>
+                    <p><strong>Costo:</strong> $<span id="detalleCosto">50.00</span></p>
+                    <p><strong>Efectivo Recibido:</strong> $<span id="detalleEfectivoRecibido">60.00</span></p>
+                    <p><strong>Cambio:</strong> $<span id="detalleCambio">10.00</span></p>
+                    <p><strong>Nota:</strong> <span id="detalleNota">Pago en efectivo</span></p>
+                </div>
+                <hr style="border-top: 1px dashed;">
+
+                <!-- Mensaje Final -->
+                <div class="text-center">
+                    <p><small>¡Gracias por su preferencia!</small></p>
+                    <p><small>Este documento no es válido como factura.</small></p>
+                </div>
+            </div>
+            <div class="modal-footer d-print-none">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="window.print();">Imprimir</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function showDetails(id) {
+            $.ajax({
+                url: '@Url.Page("DetallesCobro")',
+                type: 'GET',
+                data: { id: id },
+                    success: function (data) {
+                        console.log('Datos recibidos:', data); // Verifica los datos en la consola del navegador
+                            $('#detalleFecha').text(data.fecha);
+                        $('#detalleArancel').text(data.arancel);
+                        $('#detalleAlumno').text(data.alumno);
+                        $('#detalleCiclo').text(data.ciclo);
+                        $('#detalleCosto').text(data.costo);
+                        $('#detalleEfectivoRecibido').text(data.efectivoRecibido);
+                        $('#detalleCambio').text(data.cambio);
+                        $('#detalleNota').text(data.nota);
+                        $('#detailsModal').modal('show');
+                    },
+            });
+        }
+
+            document.addEventListener('DOMContentLoaded', () => {
+        const modal = document.getElementById('detailsModal');
+
+        // Remove the inert attribute when the modal is shown
+        modal.addEventListener('show.bs.modal', () => {
+            modal.removeAttribute('inert');
+        });
+
+        // Add the inert attribute when the modal is hidden
+        modal.addEventListener('hide.bs.modal', () => {
+            modal.setAttribute('inert', '');
+        });
+    });
+
+    </script>
+}

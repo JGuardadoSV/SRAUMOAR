@@ -1,0 +1,105 @@
+﻿@page
+@model SRAUMOAR.Pages.aranceles.FacturarModel
+
+@{ ViewData["Title"]="Registrar Cobro de Arancel";}
+@{
+    var arancel = ViewData["Arancel"] as SRAUMOAR.Entidades.Procesos.Arancel;
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-success mb-3">
+                <div class="card-header bg-success text-white">
+                    <h3 class="card-title mb-0">Registro de Cobro de Arancel</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        
+                        <div class="row mb-3">
+                            
+                            <h4>Alumno: @ViewData["AlumnoNombre"] </h4>
+                            <div class="col-md-4">
+                                <label class="form-label">Arancel</label>
+                                <input value="@arancel?.Nombre" class="form-control" readonly="readonly" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Ciclo</label>
+                                <input value="@arancel?.Ciclo?.NCiclo- @arancel?.Ciclo?.anio" class="form-control" readonly="readonly" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Monto</label>
+                                <input value="@arancel?.Costo"  id="MontoArancel" class="form-control" readonly="readonly" />
+                            </div>
+                               
+                        <input asp-for="CobroArancel.ArancelId" value="@arancel?.ArancelId" type="hidden" />
+                        <input asp-for="CobroArancel.AlumnoId" value="@ViewData["AlumnoId"]" type="hidden" />
+                            <input asp-for="CobroArancel.CicloId" value="@arancel?.Ciclo.Id" type="hidden" />
+                            <input asp-for="CobroArancel.Costo" value="@arancel?.Costo" type="hidden" />
+
+                            <div class="col-md-4">
+                                <label asp-for="CobroArancel.EfectivoRecibido" class="form-label">Efectivo Recibido</label>
+                                <input asp-for="CobroArancel.EfectivoRecibido"
+                                       class="form-control"
+                                       type="number"
+                                       step="0.01"
+                                       min="@arancel?.Costo"
+                                       oninvalid="this.setCustomValidity('El efectivo recibido debe ser al menos @arancel?.Costo')"
+                                       oninput="this.setCustomValidity('')"
+                                       required />
+
+
+                                <span asp-validation-for="CobroArancel.EfectivoRecibido" class="text-danger"></span>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label asp-for="CobroArancel.Cambio" class="form-label"></label>
+                                <input asp-for="CobroArancel.Cambio" 
+                                       class="form-control" 
+                                       type="number" 
+                                       step="0.01" 
+                                       readonly />
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="CobroArancel.nota" class="form-label">Nota adicional</label>
+                            <textarea asp-for="CobroArancel.nota" 
+                                      class="form-control" 
+                                      rows="3"></textarea>
+                        </div> 
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-save"></i> Guardar Cobro
+                            </button>
+                            <a asp-page="./Index" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(document).ready(function() {
+            // Calcular cambio automáticamente
+            $('#CobroArancel_EfectivoRecibido').on('input', function() {
+                // Aquí deberías agregar la lógica para calcular el cambio
+                // Este es solo un ejemplo simple
+                var efectivoRecibido = parseFloat($(this).val()) || 0;
+                var montoArancel = parseFloat($('#MontoArancel').val()) || 0;
+                var cambio = Math.max(0, efectivoRecibido - montoArancel);
+                $('#CobroArancel_Cambio').val(cambio.toFixed(2));
+            });
+        });
+    </script>
+
+    
+}

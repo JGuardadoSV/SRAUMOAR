@@ -13,9 +13,15 @@
     <title>@ViewData["Title"]</title>
 </head>
 <body>
-    <header class="bg-primary text-white text-center py-3 mb-4">
-        <h1>Resultado búsqueda de alumnos</h1>
+    <header class="bg-success text-white text-center py-3 mb-4 shadow-lg">
+        <h1 class="display-4 fw-bold">Búsqueda de alumnos</h1>
     </header>
+
+
+     @if ( !User.IsInRole("Administracion")){
+                        
+
+
     <div class="container-fluid mt-4">
         <a asp-page="./Index" class="btn btn-primary btn-custom">
             <i class="bi bi-arrow-left-circle btn-icon"></i>
@@ -23,6 +29,9 @@
             Volver
         </a>
     </div>
+
+     }
+
     <div class="container-fluid mt-4">
         <div class="card shadow-sm">
             <div class="card-body">
@@ -53,6 +62,18 @@
                                 <td>@Html.DisplayFor(modelItem => item.FechaDeNacimiento)</td>
                                 <td>@Html.DisplayFor(modelItem => item.Email)</td>
                                 <td class="text-center">
+                                    @if(User.IsInRole("Administracion"))
+                                    {
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Acciones
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" asp-page="/aranceles/Cobrar" asp-route-id="@item.AlumnoId">Aranceles <i class="bi bi-dollar"></i></a></li>
+                                                
+                                            </ul>
+                                        </div>
+                                    }else{
                                     <div class="btn-group">
                                         <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                                             Acciones
@@ -64,6 +85,7 @@
                                             <!-- <li><a class="dropdown-item" asp-page="./Delete" asp-route-id="@item.AlumnoId">Eliminar <i class="bi bi-trash"></i></a></li>//-->
                                         </ul>
                                     </div>
+                                    }
                                 </td>
                             </tr>
                         }

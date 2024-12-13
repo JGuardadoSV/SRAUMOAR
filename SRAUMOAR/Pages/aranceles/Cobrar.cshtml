@@ -66,7 +66,15 @@
                     @Html.DisplayFor(modelItem => item.Ciclo.anio)
             </td>
             <td>
-                    <a asp-page="/Cobros/Facturar" asp-route-id="@item.ArancelId" asp-route-alumnoId="@alumno?.AlumnoId" class="btn btn-primary">Cobrar</a>
+
+
+                    @if (!Model.AlumnoHaPagado(item.ArancelId,  @alumno.AlumnoId))
+                    {
+                                <a asp-page="./Facturar" asp-route-arancelId="@item.ArancelId" asp-route-alumnoId="@alumno?.AlumnoId" class="btn btn-primary">Cobrar</a>
+                    }else{
+                                <a asp-page="/aranceles/Facturas" asp-route-arancelId="@item.ArancelId" asp-route-alumnoId="@alumno?.AlumnoId" class="btn btn-success">Recibo</a>
+                                
+                    }
 
                 <!--
                 |
