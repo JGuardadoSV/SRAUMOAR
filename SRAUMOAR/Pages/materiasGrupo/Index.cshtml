@@ -2,55 +2,52 @@
 @model SRAUMOAR.Pages.materiasGrupo.IndexModel
 
 @{
-    ViewData["Title"] = "Materias del grupo";
+    ViewData["Title"] = "Materias asignadas";
 }
 
-<h1>Materias del grupo</h1>
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h1 class="h3 mb-0">Mis materias asignadas</h1>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>@Html.DisplayNameFor(model => model.MateriasGrupo[0].Materia)</th>
+                                    <th>@Html.DisplayNameFor(model => model.MateriasGrupo[0].Aula)</th>
+                                    <th>Horario</th>
+                                    <th>@Html.DisplayNameFor(model => model.MateriasGrupo[0].Grupo)</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.MateriasGrupo)
+                                {
+                                    <tr>
+                                        <td>@Html.DisplayFor(modelItem => item.Materia.NombreMateria)</td>
+                                        <td>@Html.DisplayFor(modelItem => item.Aula)</td>
+                                        <td>@item.FormatearHora12Horas(item.HoraInicio) - @item.FormatearHora12Horas(item.HoraFin)</td>
+                                   
+                                        <td>@Html.DisplayFor(modelItem => item.Grupo.Nombre)</td>
+                                        <td>
+                                            
+                                                <a asp-page="./Details" asp-route-id="@item.GrupoId" class="btn btn-success">Ver grupo</a>
+                                            
 
-<p>
-    <a asp-page="Create" asp-route-id="@Model.idgrupo" class="btn btn-success">Registrar nueva</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.MateriasGrupo[0].Aula)
-            </th>
-            <th>
-                Horario
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.MateriasGrupo[0].Materia)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.MateriasGrupo[0].Grupo)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model.MateriasGrupo) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Aula)
-            </td>
-            <td>
-                    @Html.DisplayFor(modelItem => item.HoraInicio) - @Html.DisplayFor(modelItem => item.HoraFin)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Materia.CodigoMateria)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Grupo.GrupoId)
-            </td>
-            <td>
-                <!--
-                <a asp-page="./Edit" asp-route-id="@item.MateriasGrupoId">Edit</a> |
-                <a asp-page="./Details" asp-route-id="@item.MateriasGrupoId">Details</a> |
-                <a asp-page="./Delete" asp-route-id="@item.MateriasGrupoId">Delete</a>
-                    -->
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+                                            
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

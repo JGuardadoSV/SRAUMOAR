@@ -1,4 +1,5 @@
-﻿using SRAUMOAR.Entidades.Materias;
+﻿using SRAUMOAR.Entidades.Docentes;
+using SRAUMOAR.Entidades.Materias;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -31,5 +32,12 @@ namespace SRAUMOAR.Entidades.Procesos
         
         public int GrupoId { get; set; } // Llave foránea
         public virtual Grupo? Grupo { get; set; } // Propiedad de navegación
+
+        [Required(ErrorMessage = "El docente es requerido")]
+        [Display(Name = "Docente encargado")]
+        public int DocenteId { get; set; } // Llave foránea
+        public virtual Docente? Docente { get; set; } // Propiedad de navegación
+
+        public string FormatearHora12Horas(TimeSpan hora) { DateTime dt = DateTime.Today.Add(hora); return dt.ToString("hh:mm tt"); }
     }
 }

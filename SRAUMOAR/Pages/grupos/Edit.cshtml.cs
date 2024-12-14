@@ -22,6 +22,7 @@ namespace SRAUMOAR.Pages.grupos
         {
             _context = context;
         }
+        [BindProperty]
         public IList<MateriasGrupo> ListadoMateriasGrupo { get; set; } = default!;
 
         [BindProperty]
@@ -71,24 +72,34 @@ namespace SRAUMOAR.Pages.grupos
              );
 
 
+            // Obtener los IDs de las materias ya registradas en el grupo
+            var materiasRegistradas = _context.MateriasGrupo
+                .Where(mg => mg.GrupoId == grupo.GrupoId)
+                .Select(mg => mg.MateriaId)
+                .ToList();
+
+            // Obtener las materias que no están registradas en el grupo
             ViewData["MateriaId"] = new SelectList(
-             _context.Materias
-                 .Include(x => x.Pensum)
-                 .ThenInclude(x => x.Carrera)
-                 .Where(x => x.Pensum.Activo == true && x.Pensum.CarreraId == grupo.CarreraId)
-                 .Select(x => new
-                 {
-                     MateriaId = x.MateriaId,
-                     NombreCompleto = x.NombreMateria + " - " + x.Pensum.CodigoPensum
-                 }),
-             "MateriaId",
-             "NombreCompleto"
+                _context.Materias
+                    .Include(x => x.Pensum)
+                    .ThenInclude(x => x.Carrera)
+                    .Where(x => x.Pensum.Activo == true && x.Pensum.CarreraId == grupo.CarreraId)
+                    .Where(x => !materiasRegistradas.Contains(x.MateriaId)) // Filtrar materias no registradas
+                    .Select(x => new
+                    {
+                        MateriaId = x.MateriaId,
+                        NombreCompleto = x.NombreMateria + " - " + x.Pensum.CodigoPensum
+                    }),
+                "MateriaId",
+                "NombreCompleto"
             );
+
 
 
             ListadoMateriasGrupo = await _context.MateriasGrupo.Where(x => x.GrupoId == id)
                 .Include(m => m.Grupo)
                 .Include(m => m.Materia)
+                .Include(m => m.Docente)
                 .Where(x => x.GrupoId == id)
                 .ToListAsync();
 
@@ -98,7 +109,7 @@ namespace SRAUMOAR.Pages.grupos
 
             return Page();
         }
-
+       
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see https://aka.ms/RazorPagesCRUD.
         public async Task<IActionResult> OnPostAsync()
@@ -135,8 +146,22 @@ namespace SRAUMOAR.Pages.grupos
                     return Page();
                 }
 
-               // _context.Attach(Grupo).State = EntityState.Modified;
-               _context.MateriasGrupo.Add(MateriasGrupo);
+                // verificar si ya esta registrada 
+                // Verificar si la materia ya está registrada en el grupo
+                var materiaDuplicada = await _context.MateriasGrupo
+                    .AnyAsync(mg => mg.GrupoId == MateriasGrupo.GrupoId && mg.MateriaId == MateriasGrupo.MateriaId);
+
+                if (materiaDuplicada)
+                {
+                    ModelState.AddModelError(string.Empty, "Esta materia ya está registrada en este grupo.");
+                    //return Page();
+                    return RedirectToPage("./Edit", new { id = MateriasGrupo.GrupoId });
+                }
+
+
+
+                // _context.Attach(Grupo).State = EntityState.Modified;
+                _context.MateriasGrupo.Add(MateriasGrupo);
                 try
                 {
                     await _context.SaveChangesAsync();
@@ -157,7 +182,7 @@ namespace SRAUMOAR.Pages.grupos
 
 
 
-            return RedirectToPage("./Edit", new { id = 1 });
+            return RedirectToPage("./Edit", new { id = MateriasGrupo.GrupoId });
         }
 
         private bool GrupoExists(int id)

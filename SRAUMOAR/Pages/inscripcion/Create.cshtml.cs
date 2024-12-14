@@ -34,16 +34,23 @@ namespace SRAUMOAR.Pages.inscripcion
             var carreraid = _context.Alumno.Where(x => x.AlumnoId == id).FirstOrDefault()?.CarreraId??0;
 
             ViewData["AlumnoId"] = new SelectList(_context.Alumno.Where(x=>x.AlumnoId==id), "AlumnoId", "Nombres");
-
-            ViewData["GrupoId"] = new SelectList(
-              _context.Grupo
-              .Where(x => x.CarreraId == carreraid)
-              .Include(c => c.Carrera)
-              .Select(c => new
-              {
-                  Id = c.GrupoId,
-                  Grupo = c.Carrera.NombreCarrera + " - " + c.Nombre
-              }), "Id", "Grupo");
+            ViewData["CicloId"] = new SelectList(
+                _context.Ciclos
+                .Where(x => x.Activo == true)
+                .Select(c => new {
+                    Id = c.Id,
+                    Nombre = c.NCiclo+" - "+c.anio
+                })
+                , "Id", "Nombre");
+            //ViewData["GrupoId"] = new SelectList(
+            //  _context.Grupo
+            //  .Where(x => x.CarreraId == carreraid)
+            //  .Include(c => c.Carrera)
+            //  .Select(c => new
+            //  {
+            //      Id = c.GrupoId,
+            //      Grupo = c.Carrera.NombreCarrera + " - " + c.Nombre
+            //  }), "Id", "Grupo");
             return Page();
         }
 

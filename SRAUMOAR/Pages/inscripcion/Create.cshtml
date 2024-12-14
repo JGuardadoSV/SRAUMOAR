@@ -34,14 +34,23 @@
                     </select>
                 </div>
 
-                <div class="mb-3">
+                    <div class="mb-3">
+                        <label asp-for="Inscripcion.CicloId" class="form-label">
+                            <span class="text-danger">*</span> Ciclo
+                        </label>
+                        <select asp-for="Inscripcion.CicloId" class="form-select" asp-items="ViewBag.CicloId">
+                            <option value="">Selecciona un ciclo</option>
+                        </select>
+                    </div>
+
+               @*  <div class="mb-3">
                     <label asp-for="Inscripcion.GrupoId" class="form-label">
                         <span class="text-danger">*</span> Grupo
                     </label>
                     <select asp-for="Inscripcion.GrupoId" class="form-select" asp-items="ViewBag.GrupoId">
                         <option value="">Selecciona un grupo</option>
                     </select>
-                </div>
+                </div> *@
 
                 <div class="d-grid gap-2 d-md-flex justify-content-md-between">
                        

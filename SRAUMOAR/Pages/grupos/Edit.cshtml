@@ -2,7 +2,7 @@
 @model SRAUMOAR.Pages.grupos.EditModel
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Edición de grupo";
 }
 
 <h1 class=" text-primary fw-bold mb-4 display-5">Edición de grupo</h1>
@@ -13,23 +13,25 @@
         <form method="post" class="p-4 border rounded-3 shadow-sm bg-light">
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
             <input type="hidden" asp-for="Grupo.GrupoId" />
-            <div class="form-group mb-3">
-                <label asp-for="Grupo.Nombre" class="form-label"></label>
-                <input asp-for="Grupo.Nombre" class="form-control" />
-                <span asp-validation-for="Grupo.Nombre" class="text-danger"></span>
-            </div>
+            <div class="row">
+                <div class="form-group mb-3 col-4">
+                    <label asp-for="Grupo.Nombre" class="form-label"></label>
+                    <input asp-for="Grupo.Nombre" class="form-control" />
+                    <span asp-validation-for="Grupo.Nombre" class="text-danger"></span>
+                </div>
 
-            <div class="form-group mb-3">
-                <label asp-for="Grupo.Limite" class="form-label"></label>
-                <input asp-for="Grupo.Limite" class="form-control" />
-                <span asp-validation-for="Grupo.Limite" class="text-danger"></span>
-            </div>
+                <div class="form-group mb-3 col-4">
+                    <label asp-for="Grupo.Limite" class="form-label"></label>
+                    <input asp-for="Grupo.Limite" class="form-control" />
+                    <span asp-validation-for="Grupo.Limite" class="text-danger"></span>
+                </div>
 
-            <div class="form-group form-check mb-3">
-                <input class="form-check-input" asp-for="Grupo.Activo" />
-                <label class="form-check-label" asp-for="Grupo.Activo"></label>
-            </div>
+                <div class="form-group form-check mb-3 col-4 d-flex align-items-center">
+                    <input class="form-check-input mt-1" asp-for="Grupo.Activo" />
+                    <label class="form-check-label ms-2" asp-for="Grupo.Activo">Activo</label>
+                </div>
 
+            </div>
             <div class="form-group mb-3">
                 <label asp-for="Grupo.CarreraId" class="form-label"></label>
                 <select id="carreraSelect" asp-for="Grupo.CarreraId" class="form-select" asp-items="ViewBag.CarreraId"></select>
@@ -39,10 +41,24 @@
                 <label asp-for="Grupo.CicloId" class="form-label"></label>
                 <select asp-for="Grupo.CicloId" class="form-select" asp-items="ViewBag.CicloId"></select>
             </div>
+            @{
+                bool isDocente = User.IsInRole("Docentes");
+            }
 
             <div class="form-group mb-3">
                 <label asp-for="Grupo.DocenteId" class="form-label"></label>
-                <select asp-for="Grupo.DocenteId" class="form-select" asp-items="ViewBag.DocenteId"></select>
+                
+                @if (isDocente)
+                {
+                    <select asp-for="Grupo.DocenteId" class="form-select" asp-items="ViewBag.DocenteId" disabled="disabled"></select>
+                }
+                else
+                {
+                    <select asp-for="Grupo.DocenteId" class="form-select" asp-items="ViewBag.DocenteId"></select>
+                }
+
+
+
             </div>
 
             <div class="form-group text-center">
@@ -52,7 +68,7 @@
         </form>
     </div>
     <div class="col-md-6">
-        <form method="post" id="formMaterias">
+        <form method="post" id="formMaterias" class="p-4 border rounded-3 shadow-sm bg-light">
             @* <input type="hidden" asp-for="MateriasGrupo.MateriasGrupoId" /> *@
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" id="formulario2" value="0" />
@@ -76,11 +92,21 @@
             <div class="form-group">
                 <label asp-for="MateriasGrupo.MateriaId" class="control-label"></label>
                 <select asp-for="MateriasGrupo.MateriaId" class="form-control" asp-items="ViewBag.MateriaId"></select>
+                
+            </div>
+            <div class="form-group">
+                <label asp-for="MateriasGrupo.DocenteId" class="control-label"></label>
+                <select asp-for="MateriasGrupo.DocenteId" class="form-control" asp-items="ViewBag.DocenteId"></select>
+
             </div>
             <input type="hidden" asp-for="MateriasGrupo.GrupoId" value="@Model.GrupoId" />
             <div class="form-group">
-                <input type="submit" value="Asignar Materia" class="btn btn-primary mt-2" />
+                <button type="submit" class="btn btn-primary mt-2 shadow-sm">
+                    <i class="bi bi-book"></i> Asignar Materia
+                </button>
             </div>
+
+
         </form>
         <hr />
         <h6>Materias del Grupo</h6>
@@ -92,6 +118,9 @@
                     </th>
                     <th>
                         @Html.DisplayNameFor(model => model.ListadoMateriasGrupo[0].Aula)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.ListadoMateriasGrupo[0].Docente)
                     </th>
                     <th>
                         Horario
@@ -114,7 +143,10 @@
                             @Html.DisplayFor(modelItem => item.Aula)
                         </td>
                         <td>
-                            @Html.DisplayFor(modelItem => item.HoraInicio) - @Html.DisplayFor(modelItem => item.HoraFin)
+                            @Html.DisplayFor(modelItem => item.Docente.Nombres) @Html.DisplayFor(modelItem => item.Docente.Apellidos)
+                        </td>
+                        <td>
+                            @item.FormatearHora12Horas(item.HoraInicio) - @item.FormatearHora12Horas(item.HoraFin)
                         </td>
                         
                        @*  <td>

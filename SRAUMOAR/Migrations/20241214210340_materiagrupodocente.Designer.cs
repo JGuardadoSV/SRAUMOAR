@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SRAUMOAR.Modelos;
 
@@ -11,9 +12,11 @@ using SRAUMOAR.Modelos;
 namespace SRAUMOAR.Migrations
 {
     [DbContext(typeof(Contexto))]
-    partial class ContextoModelSnapshot : ModelSnapshot
+    [Migration("20241214210340_materiagrupodocente")]
+    partial class materiagrupodocente
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -648,17 +651,17 @@ namespace SRAUMOAR.Migrations
                     b.Property<int>("AlumnoId")
                         .HasColumnType("int");
 
-                    b.Property<int>("CicloId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("Fecha")
                         .HasColumnType("datetime2");
+
+                    b.Property<int>("GrupoId")
+                        .HasColumnType("int");
 
                     b.HasKey("InscripcionId");
 
                     b.HasIndex("AlumnoId");
 
-                    b.HasIndex("CicloId");
+                    b.HasIndex("GrupoId");
 
                     b.ToTable("Inscripciones");
                 });
@@ -909,15 +912,15 @@ namespace SRAUMOAR.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SRAUMOAR.Entidades.Procesos.Ciclo", "Ciclo")
+                    b.HasOne("SRAUMOAR.Entidades.Procesos.Grupo", "Grupro")
                         .WithMany()
-                        .HasForeignKey("CicloId")
+                        .HasForeignKey("GrupoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Alumno");
 
-                    b.Navigation("Ciclo");
+                    b.Navigation("Grupro");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Procesos.MateriasGrupo", b =>

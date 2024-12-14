@@ -32,12 +32,20 @@
                 <select asp-for="Inscripcion.AlumnoId" class="form-control" asp-items="ViewBag.AlumnoId"></select>
                 <span asp-validation-for="Inscripcion.AlumnoId" class="text-danger"></span>
             </div>
-            <div class="form-group">
+            <div class="mb-3">
+                <label asp-for="Inscripcion.CicloId" class="form-label">
+                    <span class="text-danger">*</span> Ciclo
+                </label>
+                <select asp-for="Inscripcion.CicloId" class="form-select" asp-items="ViewBag.CicloId">
+                    <option value="">Selecciona un ciclo</option>
+                </select>
+            </div>
+            @* <div class="form-group">
                 <span class="text-danger">*</span>
                 <label asp-for="Inscripcion.GrupoId" class="control-label"></label>
                 <select asp-for="Inscripcion.GrupoId" class="form-control" asp-items="ViewBag.GrupoId"></select>
                 <span asp-validation-for="Inscripcion.GrupoId" class="text-danger"></span>
-            </div>
+            </div> *@
             <div class="form-group">
                 <input type="submit" value="Save" class="btn btn-primary" />
             </div>

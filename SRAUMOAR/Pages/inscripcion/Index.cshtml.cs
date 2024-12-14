@@ -26,25 +26,25 @@ namespace SRAUMOAR.Pages.inscripcion
 
 
         [BindProperty(SupportsGet = true)]
-        public int? SelectedGrupoId { get; set; }
+        public int? SelectedCarreraId { get; set; }
         public async Task OnGetAsync()
         {
             var cicloactual = _context.Ciclos.Where(x => x.Activo == true).FirstOrDefault()?.Id ?? 0;
             ViewData["GrupoId"] = new SelectList(
-              _context.Grupo
-              .Where(x => x.CicloId== cicloactual)
-              .Include(c => c.Carrera)
+              _context.Carreras
               .Select(c => new
               {
-                  Id = c.GrupoId,
-                  Grupo = c.Carrera.NombreCarrera + " - " + c.Nombre
-              }), "Id", "Grupo",SelectedGrupoId);
-            if (SelectedGrupoId.HasValue)
+                  Id = c.CarreraId,
+                  Grupo = c.NombreCarrera 
+              }), "Id", "Grupo", SelectedCarreraId);
+           
+            
+            if (SelectedCarreraId.HasValue)
             {
 
                 Inscripcion = await _context.Inscripciones
                 .Include(i => i.Alumno)
-                .Include(i => i.Grupro).Where(x=>x.Grupro.CicloId==cicloactual && x.Grupro.GrupoId==SelectedGrupoId).ToListAsync()?? new List<Inscripcion>();
+                .Include(i => i.Ciclo).Where(x=>x.CicloId==cicloactual && x.Alumno.CarreraId==SelectedCarreraId).ToListAsync()?? new List<Inscripcion>();
 
                 ViewData["TotalAlumnosInscritos"] = Inscripcion.Count;
                
@@ -55,7 +55,7 @@ namespace SRAUMOAR.Pages.inscripcion
                 Inscripcion= new List<Inscripcion>();
             }
 
-            ViewData["TotalInscripciones"] = _context.Inscripciones.Where(x => x.Grupro.CicloId == cicloactual).Count();
+            ViewData["TotalInscripciones"] = _context.Inscripciones.Where(x => x.CicloId == cicloactual).Count();
         }
     }
 }

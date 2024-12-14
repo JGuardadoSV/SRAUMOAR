@@ -18,8 +18,8 @@
                             <label for="grupoSelect" class="form-label">
                                 <span class="text-danger">*</span> Grupos registrados
                             </label>
-                            <select name="SelectedGrupoId" class="form-select" id="grupoSelect" onchange="this.form.submit()">
-                                <option value="">Selecciona un grupo</option>
+                            <select name="SelectedCarreraId" class="form-select" id="grupoSelect" onchange="this.form.submit()">
+                                <option value="">Selecciona una carrera</option>
                                 @foreach (var grupo in ViewBag.GrupoId)
                                 {
                                     <option value="@grupo.Value">@grupo.Text</option>
@@ -39,7 +39,7 @@
                                 <th>@Html.DisplayNameFor(model => model.Inscripcion[0].Fecha)</th>
                                 
                                 <th>@Html.DisplayNameFor(model => model.Inscripcion[0].Alumno)</th>
-                                <th>@Html.DisplayNameFor(model => model.Inscripcion[0].Grupro)</th>
+                                <th>@Html.DisplayNameFor(model => model.Inscripcion[0].Ciclo)</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -50,7 +50,7 @@
                                     <td>@Html.DisplayFor(modelItem => item.Fecha)</td>
                                     
                                     <td>@Html.DisplayFor(modelItem => item.Alumno.Nombres) @Html.DisplayFor(modelItem => item.Alumno.Apellidos)</td>
-                                    <td>@Html.DisplayFor(modelItem => item.Grupro.Nombre)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.Ciclo.NCiclo)-@Html.DisplayFor(modelItem => item.Ciclo.anio)</td>
                                     <td>
                                         <a asp-page="./Edit" asp-route-id="@item.InscripcionId" class="btn btn-primary btn-sm">Editar</a>
                                         <a asp-page="./Details" asp-route-id="@item.InscripcionId" class="btn btn-info btn-sm">Detalles</a>
@@ -75,13 +75,13 @@
 
         // Al cargar la página, recuperar el valor del localStorage y seleccionarlo
               window.onload = () => {
-            const selectedValue = localStorage.getItem('selectedGrupoId');
+            const selectedValue = localStorage.getItem('SelectedCarreraId');
             grupoSelect.value = selectedValue || grupoSelect.options[0].value; // Selecciona el primer elemento si no hay valor
         };
 
         // Al cambiar la selección, guardar el nuevo valor en el localStorage
         grupoSelect.addEventListener('change', () => {
-            localStorage.setItem('selectedGrupoId', grupoSelect.value);
+            localStorage.setItem('SelectedCarreraId', grupoSelect.value);
         });
     </script>
 }

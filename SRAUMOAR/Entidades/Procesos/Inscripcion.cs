@@ -27,15 +27,15 @@ namespace SRAUMOAR.Entidades.Procesos
         public virtual Alumno? Alumno { get; set; } // Propiedad de navegación
 
         //**********************************************************
-        //[Required(ErrorMessage = "El ciclo es requerido")]
-        //[Display(Name = "Ciclo")]
-        //public int CicloId { get; set; } // Llave foránea
-        //public virtual Ciclo? Ciclo { get; set; } // Propiedad de navegación
+        [Required(ErrorMessage = "El ciclo es requerido")]
+        [Display(Name = "Ciclo")]
+        public int CicloId { get; set; } // Llave foránea
+        public virtual Ciclo? Ciclo { get; set; } // Propiedad de navegación
 
-        //**********************************************************
-        [Required(ErrorMessage = "El grupo es requerido")]
-        [Display(Name = "Grupo")]
-        public int GrupoId { get; set; } // Llave foránea
-        public virtual Grupo? Grupro { get; set; } // Propiedad de navegación
+        ////**********************************************************
+        //[Required(ErrorMessage = "El grupo es requerido")]
+        //[Display(Name = "Grupo")]
+        //public int GrupoId { get; set; } // Llave foránea
+        //public virtual Grupo? Grupro { get; set; } // Propiedad de navegación
     }
 }

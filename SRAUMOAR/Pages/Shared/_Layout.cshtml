@@ -181,6 +181,8 @@
                             </li>
                             <!-- FIN MENU TABLAS GENERALES  -->
                         }
+                        @if (User.IsInRole("Administracion"))
+                        {
                         <li class="nav-item">
                             <a href="#" class="nav-link">
                                 <i class="nav-icon bi bi-speedometer"></i>
@@ -238,8 +240,7 @@
                             </ul>
                         </li>
 
-                        @if ( User.IsInRole("Administracion"))
-                        {
+                       
 
                             <li class="nav-item">
                                 <a asp-area="" asp-page="/aranceles/facturas" class="nav-link">
@@ -267,6 +268,38 @@
                                     </p>
                                 </a>
                             </li>
+
+                        }
+
+
+                        @if (User.IsInRole("Docentes"))
+                        {
+                            <li class="nav-item">
+                                <a href="#" class="nav-link">
+                                    <i class="nav-icon bi bi-speedometer"></i>
+                                    <p>
+                                        Asignaciones
+                                        <i class="nav-arrow bi bi-chevron-right"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a asp-area="" asp-page="/grupos/Index" class="nav-link">
+                                            <i class="bi bi-people-fill"></i>
+                                            <p>Grupos asignados</p>
+                                        </a>
+                                    </li>
+
+                                    <li class="nav-item">
+                                        <a asp-area="" asp-page="/materiasgrupo/Index" class="nav-link">
+                                            <i class="bi bi-people-fill"></i>
+                                            <p>Materias asignadas</p>
+                                        </a>
+                                    </li>
+
+                                </ul>
+                            </li>
+
 
                         }
 

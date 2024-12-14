@@ -37,7 +37,15 @@ namespace SRAUMOAR.Pages.inscripcion
             }
             Inscripcion = inscripcion;
            ViewData["AlumnoId"] = new SelectList(_context.Alumno, "AlumnoId", "Apellidos");
-           ViewData["GrupoId"] = new SelectList(_context.Grupo, "GrupoId", "GrupoId");
+            ViewData["CicloId"] = new SelectList(
+               _context.Ciclos
+               .Where(x => x.Activo == true)
+               .Select(c => new {
+                   Id = c.Id,
+                   Nombre = c.NCiclo + " - " + c.anio
+               })
+               , "Id", "Nombre");
+            // ViewData["GrupoId"] = new SelectList(_context.Grupo, "GrupoId", "GrupoId");
             return Page();
         }
 
