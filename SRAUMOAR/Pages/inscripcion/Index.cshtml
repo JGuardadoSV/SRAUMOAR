@@ -1,0 +1,87 @@
+﻿@page
+@model SRAUMOAR.Pages.inscripcion.IndexModel
+
+@{
+    ViewData["Title"] = "Inscripciones para el ciclo actual";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-success text-white text-center">
+                    <h1 class="display-6">Inscripciones para el ciclo actual</h1>
+                </div>
+                <div class="card-body">
+                    <form method="get">
+                        <div class="mb-3">
+                            <label for="grupoSelect" class="form-label">
+                                <span class="text-danger">*</span> Grupos registrados
+                            </label>
+                            <select name="SelectedGrupoId" class="form-select" id="grupoSelect" onchange="this.form.submit()">
+                                <option value="">Selecciona un grupo</option>
+                                @foreach (var grupo in ViewBag.GrupoId)
+                                {
+                                    <option value="@grupo.Value">@grupo.Text</option>
+                                }
+                            </select>
+                        </div>
+                    </form>
+                    <p><b>Inscripciones totales en todos los grupos: </b> @ViewData["TotalInscripciones"] alumnos</p>
+                </div>
+            </div>
+
+            <div class="card mt-4 shadow-lg border-0">
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead class="bg-success text-white text-center">
+                            <tr>
+                                <th>@Html.DisplayNameFor(model => model.Inscripcion[0].Fecha)</th>
+                                
+                                <th>@Html.DisplayNameFor(model => model.Inscripcion[0].Alumno)</th>
+                                <th>@Html.DisplayNameFor(model => model.Inscripcion[0].Grupro)</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Inscripcion)
+                            {
+                                <tr>
+                                    <td>@Html.DisplayFor(modelItem => item.Fecha)</td>
+                                    
+                                    <td>@Html.DisplayFor(modelItem => item.Alumno.Nombres) @Html.DisplayFor(modelItem => item.Alumno.Apellidos)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.Grupro.Nombre)</td>
+                                    <td>
+                                        <a asp-page="./Edit" asp-route-id="@item.InscripcionId" class="btn btn-primary btn-sm">Editar</a>
+                                        <a asp-page="./Details" asp-route-id="@item.InscripcionId" class="btn btn-info btn-sm">Detalles</a>
+                                        <a asp-page="./Delete" asp-route-id="@item.InscripcionId" class="btn btn-danger btn-sm">Eliminar</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot> <tr> <td colspan="4" class="text-center"> <strong>Total de alumnos inscritos en este grupo: @ViewData["TotalAlumnosInscritos"]</strong> </td> </tr> </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+               // Obtener el elemento select por su ID
+        const grupoSelect = document.getElementById('grupoSelect');
+
+        // Al cargar la página, recuperar el valor del localStorage y seleccionarlo
+              window.onload = () => {
+            const selectedValue = localStorage.getItem('selectedGrupoId');
+            grupoSelect.value = selectedValue || grupoSelect.options[0].value; // Selecciona el primer elemento si no hay valor
+        };
+
+        // Al cambiar la selección, guardar el nuevo valor en el localStorage
+        grupoSelect.addEventListener('change', () => {
+            localStorage.setItem('selectedGrupoId', grupoSelect.value);
+        });
+    </script>
+}

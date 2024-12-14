@@ -1,0 +1,66 @@
+﻿@page
+@model SRAUMOAR.Pages.actividades.EditModel
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>Edit</h1>
+
+<h4>ActividadAcademica</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="ActividadAcademica.ActividadAcademicaId" />
+            <div class="form-group">
+                <span class="text-danger">*</span>
+                <label asp-for="ActividadAcademica.Fecha" class="control-label"></label>
+                <input asp-for="ActividadAcademica.Fecha" class="form-control" />
+                <span asp-validation-for="ActividadAcademica.Fecha" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <span class="text-danger">*</span>
+                <label asp-for="ActividadAcademica.Nombre" class="control-label"></label>
+                <input asp-for="ActividadAcademica.Nombre" class="form-control" />
+                <span asp-validation-for="ActividadAcademica.Nombre" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <span class="text-danger">*</span>
+                <label asp-for="ActividadAcademica.FechaInicio" class="control-label"></label>
+                <input asp-for="ActividadAcademica.FechaInicio" class="form-control" />
+                <span asp-validation-for="ActividadAcademica.FechaInicio" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <span class="text-danger">*</span>
+                <label asp-for="ActividadAcademica.FechaFin" class="control-label"></label>
+                <input asp-for="ActividadAcademica.FechaFin" class="form-control" />
+                <span asp-validation-for="ActividadAcademica.FechaFin" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                
+                <label asp-for="ActividadAcademica.CicloId" class="control-label"></label>
+                <select asp-for="ActividadAcademica.CicloId" class="form-control" asp-items="ViewBag.CicloId"></select>
+                <span asp-validation-for="ActividadAcademica.CicloId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                
+                <label asp-for="ActividadAcademica.ArancelId" class="control-label"></label>
+                <select asp-for="ActividadAcademica.ArancelId" class="form-control" asp-items="ViewBag.ArancelId"></select>
+                <span asp-validation-for="ActividadAcademica.ArancelId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-page="./Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

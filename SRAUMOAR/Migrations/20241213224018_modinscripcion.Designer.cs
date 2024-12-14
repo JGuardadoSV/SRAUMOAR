@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SRAUMOAR.Modelos;
 
@@ -11,9 +12,11 @@ using SRAUMOAR.Modelos;
 namespace SRAUMOAR.Migrations
 {
     [DbContext(typeof(Contexto))]
-    partial class ContextoModelSnapshot : ModelSnapshot
+    [Migration("20241213224018_modinscripcion")]
+    partial class modinscripcion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -37,7 +40,7 @@ namespace SRAUMOAR.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("NivelAcceso", (string)null);
+                    b.ToTable("NivelAcceso");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Accesos.Usuario", b =>
@@ -73,7 +76,7 @@ namespace SRAUMOAR.Migrations
 
                     b.HasIndex("NivelAccesoId");
 
-                    b.ToTable("Usuarios", (string)null);
+                    b.ToTable("Usuarios");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Alumnos.Alumno", b =>
@@ -157,7 +160,7 @@ namespace SRAUMOAR.Migrations
 
                     b.HasIndex("UsuarioId");
 
-                    b.ToTable("Alumno", (string)null);
+                    b.ToTable("Alumno");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Colecturia.CobroArancel", b =>
@@ -200,7 +203,7 @@ namespace SRAUMOAR.Migrations
 
                     b.HasIndex("CicloId");
 
-                    b.ToTable("CobrosArancel", (string)null);
+                    b.ToTable("CobrosArancel");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Docentes.Docente", b =>
@@ -259,7 +262,7 @@ namespace SRAUMOAR.Migrations
 
                     b.HasIndex("UsuarioId");
 
-                    b.ToTable("Docentes", (string)null);
+                    b.ToTable("Docentes");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Generales.Carrera", b =>
@@ -294,7 +297,7 @@ namespace SRAUMOAR.Migrations
 
                     b.HasIndex("FacultadId");
 
-                    b.ToTable("Carreras", (string)null);
+                    b.ToTable("Carreras");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Generales.Departamento", b =>
@@ -311,7 +314,7 @@ namespace SRAUMOAR.Migrations
 
                     b.HasKey("DepartamentoId");
 
-                    b.ToTable("Departamentos", (string)null);
+                    b.ToTable("Departamentos");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Generales.Distrito", b =>
@@ -333,7 +336,7 @@ namespace SRAUMOAR.Migrations
 
                     b.HasIndex("DepartamentoId");
 
-                    b.ToTable("Distritos", (string)null);
+                    b.ToTable("Distritos");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Generales.Facultad", b =>
@@ -357,7 +360,7 @@ namespace SRAUMOAR.Migrations
 
                     b.HasKey("FacultadId");
 
-                    b.ToTable("Facultades", (string)null);
+                    b.ToTable("Facultades");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Generales.Municipio", b =>
@@ -379,7 +382,7 @@ namespace SRAUMOAR.Migrations
 
                     b.HasIndex("DistritoId");
 
-                    b.ToTable("Municipios", (string)null);
+                    b.ToTable("Municipios");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Generales.Profesion", b =>
@@ -396,7 +399,7 @@ namespace SRAUMOAR.Migrations
 
                     b.HasKey("ProfesionId");
 
-                    b.ToTable("Profesiones", (string)null);
+                    b.ToTable("Profesiones");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Materias.Materia", b =>
@@ -434,7 +437,7 @@ namespace SRAUMOAR.Migrations
 
                     b.HasIndex("PensumId");
 
-                    b.ToTable("Materias", (string)null);
+                    b.ToTable("Materias");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Materias.MateriaPrerequisito", b =>
@@ -457,7 +460,7 @@ namespace SRAUMOAR.Migrations
 
                     b.HasIndex("PrerrequisoMateriaId");
 
-                    b.ToTable("MateriaPrerequisitos", (string)null);
+                    b.ToTable("MateriaPrerequisitos");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Materias.Pensum", b =>
@@ -489,44 +492,7 @@ namespace SRAUMOAR.Migrations
 
                     b.HasIndex("CarreraId");
 
-                    b.ToTable("Pensum", (string)null);
-                });
-
-            modelBuilder.Entity("SRAUMOAR.Entidades.Procesos.ActividadAcademica", b =>
-                {
-                    b.Property<int>("ActividadAcademicaId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ActividadAcademicaId"));
-
-                    b.Property<int>("ArancelId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("CicloId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("Fecha")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("FechaFin")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("FechaInicio")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("ActividadAcademicaId");
-
-                    b.HasIndex("ArancelId");
-
-                    b.HasIndex("CicloId");
-
-                    b.ToTable("ActividadesAcademicas", (string)null);
+                    b.ToTable("Pensum");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Procesos.Arancel", b =>
@@ -560,7 +526,7 @@ namespace SRAUMOAR.Migrations
 
                     b.HasIndex("CicloId");
 
-                    b.ToTable("aranceles", (string)null);
+                    b.ToTable("aranceles");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Procesos.Ciclo", b =>
@@ -594,7 +560,7 @@ namespace SRAUMOAR.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Ciclos", (string)null);
+                    b.ToTable("Ciclos");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Procesos.Grupo", b =>
@@ -631,7 +597,7 @@ namespace SRAUMOAR.Migrations
 
                     b.HasIndex("DocenteId");
 
-                    b.ToTable("grupos", (string)null);
+                    b.ToTable("grupos");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Procesos.Inscripcion", b =>
@@ -660,7 +626,7 @@ namespace SRAUMOAR.Migrations
 
                     b.HasIndex("GrupoId");
 
-                    b.ToTable("Inscripciones", (string)null);
+                    b.ToTable("Inscripciones");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Procesos.MateriasGrupo", b =>
@@ -689,7 +655,7 @@ namespace SRAUMOAR.Migrations
 
                     b.HasIndex("MateriaId");
 
-                    b.ToTable("GruposMaterias", (string)null);
+                    b.ToTable("GruposMaterias");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Accesos.Usuario", b =>
@@ -834,25 +800,6 @@ namespace SRAUMOAR.Migrations
                         .IsRequired();
 
                     b.Navigation("Carrera");
-                });
-
-            modelBuilder.Entity("SRAUMOAR.Entidades.Procesos.ActividadAcademica", b =>
-                {
-                    b.HasOne("SRAUMOAR.Entidades.Procesos.Arancel", "Arancel")
-                        .WithMany()
-                        .HasForeignKey("ArancelId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SRAUMOAR.Entidades.Procesos.Ciclo", "Ciclo")
-                        .WithMany()
-                        .HasForeignKey("CicloId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Arancel");
-
-                    b.Navigation("Ciclo");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Procesos.Arancel", b =>

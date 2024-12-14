@@ -42,7 +42,7 @@ namespace SRAUMOAR.Modelos
         public DbSet<MateriasGrupo> MateriasGrupo { get; set; }
 
         public DbSet<CobroArancel> CobrosArancel { get; set; }
-
+        public DbSet<ActividadAcademica> ActividadesAcademicas { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Arancel>()
