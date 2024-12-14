@@ -17,7 +17,7 @@
                 @Html.DisplayNameFor(model => model.MateriasGrupo[0].Aula)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.MateriasGrupo[0].Horario)
+                Horario
             </th>
             <th>
                 @Html.DisplayNameFor(model => model.MateriasGrupo[0].Materia)
@@ -35,7 +35,7 @@
                 @Html.DisplayFor(modelItem => item.Aula)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Horario)
+                    @Html.DisplayFor(modelItem => item.HoraInicio) - @Html.DisplayFor(modelItem => item.HoraFin)
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Materia.CodigoMateria)

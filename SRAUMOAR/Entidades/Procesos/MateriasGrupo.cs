@@ -10,7 +10,16 @@ namespace SRAUMOAR.Entidades.Procesos
         public int MateriasGrupoId { get; set; }
 
         public string? Aula { get; set; }
-        public string? Horario { get; set; }
+        
+        [Required]
+        [DataType(DataType.Time)]
+        [Display(Name = "Hora de Inicio")] 
+        public TimeSpan HoraInicio { get; set; }
+        
+        [Required]
+        [DataType(DataType.Time)]
+        [Display(Name = "Hora de Fin")] 
+        public TimeSpan HoraFin { get; set; }
 
         [Required(ErrorMessage = "La Materia es requerida")]
         [Display(Name = "Materia")]

@@ -51,6 +51,87 @@
             </div>
         </form>
     </div>
+    <div class="col-md-6">
+        <form method="post" id="formMaterias">
+            @* <input type="hidden" asp-for="MateriasGrupo.MateriasGrupoId" /> *@
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" id="formulario2" value="0" />
+            <div class="row">
+                <div class="form-group col-4">
+                    <label asp-for="MateriasGrupo.Aula" class="form-label"></label>
+                    <input asp-for="MateriasGrupo.Aula" class="form-control" />
+                    <span asp-validation-for="MateriasGrupo.Aula" class="text-danger"></span>
+                </div>
+                <div class="form-group col-4">
+                    <label asp-for="MateriasGrupo.HoraInicio" class="form-label"></label>
+                    <input asp-for="MateriasGrupo.HoraInicio" class="form-control" />
+                    <span asp-validation-for="MateriasGrupo.HoraInicio" class="text-danger"></span>
+                </div>
+                <div class="form-group col-4">
+                    <label asp-for="MateriasGrupo.HoraFin" class="form-label"></label>
+                    <input asp-for="MateriasGrupo.HoraFin" class="form-control" />
+                    <span asp-validation-for="MateriasGrupo.HoraFin" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label asp-for="MateriasGrupo.MateriaId" class="control-label"></label>
+                <select asp-for="MateriasGrupo.MateriaId" class="form-control" asp-items="ViewBag.MateriaId"></select>
+            </div>
+            <input type="hidden" asp-for="MateriasGrupo.GrupoId" value="@Model.GrupoId" />
+            <div class="form-group">
+                <input type="submit" value="Asignar Materia" class="btn btn-primary mt-2" />
+            </div>
+        </form>
+        <hr />
+        <h6>Materias del Grupo</h6>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>
+                        @Html.DisplayNameFor(model => model.ListadoMateriasGrupo[0].Materia)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.ListadoMateriasGrupo[0].Aula)
+                    </th>
+                    <th>
+                        Horario
+                    </th>
+                   
+                   @*  <th>
+                        @Html.DisplayNameFor(model => model.ListadoMateriasGrupo[0].Grupo)
+                    </th> *@
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.ListadoMateriasGrupo)
+                {
+                    <tr>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Materia.NombreMateria)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Aula)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.HoraInicio) - @Html.DisplayFor(modelItem => item.HoraFin)
+                        </td>
+                        
+                       @*  <td>
+                            @Html.DisplayFor(modelItem => item.Grupo.GrupoId)
+                        </td> *@
+                        <td>
+                            <!--
+                            <a asp-page="./Edit" asp-route-id="@item.MateriasGrupoId">Edit</a> |
+                            <a asp-page="./Details" asp-route-id="@item.MateriasGrupoId">Details</a> |
+                            <a asp-page="./Delete" asp-route-id="@item.MateriasGrupoId">Delete</a>
+                                -->
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 </div>
 
 
