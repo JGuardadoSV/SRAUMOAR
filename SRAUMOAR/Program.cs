@@ -2,11 +2,13 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SRAUMOAR.Modelos;
+using SRAUMOAR.Servicios;
 
 var builder = WebApplication.CreateBuilder(args);
 
 
-
+// Registrar el servicio de alumnos
+builder.Services.AddScoped<IAlumnoService, AlumnoService>();
 
 
 // Add services to the container.

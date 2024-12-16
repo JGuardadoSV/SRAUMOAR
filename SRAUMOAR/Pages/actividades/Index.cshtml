@@ -31,6 +31,9 @@
             <th>
                 @Html.DisplayNameFor(model => model.ActividadAcademica[0].Arancel)
             </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ActividadAcademica[0].Porcentaje)
+            </th>
             <th></th>
         </tr>
     </thead>
@@ -52,10 +55,13 @@
             <td>
                 @Html.DisplayFor(modelItem => item.Arancel.Nombre)
             </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Porcentaje)%
+                </td>
             <td>
-                <a asp-page="./Edit" asp-route-id="@item.ActividadAcademicaId">Edit</a> |
+                <a asp-page="./Edit" asp-route-id="@item.ActividadAcademicaId" class="btn btn-primary">Editar <i class="bi bi-pencil-fill"></i> </a> @* |
                 <a asp-page="./Details" asp-route-id="@item.ActividadAcademicaId">Details</a> |
-                <a asp-page="./Delete" asp-route-id="@item.ActividadAcademicaId">Delete</a>
+                <a asp-page="./Delete" asp-route-id="@item.ActividadAcademicaId">Delete</a> *@
             </td>
         </tr>
 }

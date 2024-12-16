@@ -38,8 +38,15 @@ namespace SRAUMOAR.Pages.actividades
                 return NotFound();
             }
             ActividadAcademica = actividadacademica;
-           ViewData["ArancelId"] = new SelectList(_context.Aranceles, "ArancelId", "ArancelId");
-           ViewData["CicloId"] = new SelectList(_context.Ciclos, "Id", "Id");
+            ViewData["ArancelId"] = new SelectList(_context.Aranceles, "ArancelId", "Nombre");
+            ViewData["CicloId"] = new SelectList(
+        _context.Ciclos.Where(c => c.Activo == true).Select(c => new {
+            c.Id,
+            Descripcion = $"Ciclo {c.NCiclo} - {c.anio}"
+        }),
+        "Id",
+        "Descripcion"
+    );
             return Page();
         }
 

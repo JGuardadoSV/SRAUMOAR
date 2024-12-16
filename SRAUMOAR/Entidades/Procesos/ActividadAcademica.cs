@@ -15,6 +15,12 @@ namespace SRAUMOAR.Entidades.Procesos
         [Display(Name = "Fecha de Registro")]
         public DateTime Fecha { get; set; } = DateTime.Now;
 
+
+        //porcentaje
+        [Required]
+        [Range(0, 100)]
+        public int Porcentaje { get; set; }
+
         [Required]
         [StringLength(100)]
         public string? Nombre { get; set; }
