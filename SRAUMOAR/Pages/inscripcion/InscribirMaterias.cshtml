@@ -1,0 +1,122 @@
+﻿@page
+@model SRAUMOAR.Pages.inscripcion.InscribirMateriasModel
+
+        @{
+        ViewData["Title"] = "Materias inscritas";
+        }
+<style>
+    :root {
+        --primary-green: #008f39;
+        --light-green: #40bf6a;
+    }
+
+    body {
+        background-color: #f4f6f9;
+        font-family: 'Arial', sans-serif;
+    }
+
+    .form-container {
+        background-color: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+        margin-top: 30px;
+    }
+
+    h1 {
+        color: var(--primary-green);
+        text-align: center;
+        margin-bottom: 25px;
+        font-weight: bold;
+    }
+
+    h2 {
+        color: var(--light-green);
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-control {
+        border: 1.5px solid var(--primary-green);
+        transition: all 0.3s ease;
+    }
+
+        .form-control:focus {
+            border-color: var(--light-green);
+            box-shadow: 0 0 0 0.2rem rgba(0, 143, 57, 0.25);
+        }
+
+    .btn-primary {
+        background-color: var(--primary-green);
+        border-color: var(--primary-green);
+        transition: all 0.3s ease;
+    }
+
+        .btn-primary:hover {
+            background-color: var(--light-green);
+            border-color: var(--light-green);
+        }
+
+    .form-check-input:checked {
+        background-color: var(--primary-green);
+        border-color: var(--primary-green);
+    }
+
+    hr {
+        border-top: 2px solid var(--primary-green);
+        opacity: 0.7;
+    }
+</style>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 form-container">
+            <h1>Inscripción de materias</h1>
+            <h2>Alumno: @Model.Alumno.Nombres @Model.Alumno.Apellidos</h2>
+
+            <hr />
+            <form method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                @* <div class="form-group">
+                    <label asp-for="MateriasInscritas.FechaInscripcion" class="control-label">Fecha de Inscripción</label>
+                    <input asp-for="MateriasInscritas.FechaInscripcion" class="form-control" />
+                    <span asp-validation-for="MateriasInscritas.FechaInscripcion" class="text-danger"></span>
+                </div> *@
+                @* <div class="form-group">
+                    <label asp-for="MateriasInscritas.NotaPromedio" class="control-label">Nota Promedio</label>
+                    <input asp-for="MateriasInscritas.NotaPromedio" class="form-control" />
+                    <span asp-validation-for="MateriasInscritas.NotaPromedio" class="text-danger"></span>
+                </div> *@
+                <div class="form-group">
+                    <span class="text-danger">*</span>
+                    <label asp-for="MateriasInscritas.AlumnoId" class="control-label">Alumno</label>
+                    <select asp-for="MateriasInscritas.AlumnoId" class="form-control" asp-items="ViewBag.AlumnoId"></select>
+                </div>
+                <div class="form-group">
+                    <span class="text-danger">*</span>
+                    <label asp-for="MateriasInscritas.MateriasGrupoId" class="control-label">Grupo de Materias</label>
+                    <select asp-for="MateriasInscritas.MateriasGrupoId" class="form-control" asp-items="ViewBag.MateriasGrupoId"></select>
+                </div>
+               @*  <div class="form-group form-check">
+                    <input class="form-check-input" asp-for="MateriasInscritas.Aprobada" id="aprobadaCheck" />
+                    <label class="form-check-label" for="aprobadaCheck">
+                        @Html.DisplayNameFor(model => model.MateriasInscritas.Aprobada)
+                    </label>
+                </div> *@
+                <div class="form-group text-center">
+                    <input type="submit" value="Inscribir Materia" class="btn btn-primary" />
+                </div>
+            </form>
+            <div class="text-center mt-3">
+                <a asp-page="Index" class="text-decoration-none" style="color: var(--primary-green);">Volver a inscripciones</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -1,0 +1,147 @@
+﻿@page
+@model SRAUMOAR.Pages.inscripcion.MateriasInscritasModel
+
+@{
+    ViewData["Title"] = "Resumen de materias inscritas";
+}
+<style>
+    :root {
+        --primary-green: #008f39;
+        --light-green: #40bf6a;
+        --soft-green: #e6f3e8;
+    }
+
+    body {
+        background-color: #f4f6f9;
+        font-family: 'Arial', sans-serif;
+    }
+
+    .container {
+        background-color: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+        margin-top: 30px;
+    }
+
+    h1 {
+        color: var(--primary-green);
+        text-align: center;
+        margin-bottom: 25px;
+        font-weight: bold;
+    }
+
+    h2 {
+        color: var(--light-green);
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .table {
+        border-top: 2px solid var(--primary-green);
+    }
+
+        .table thead {
+            background-color: var(--soft-green);
+            color: var(--primary-green);
+        }
+
+            .table thead th {
+                font-weight: bold;
+                border-bottom: 2px solid var(--primary-green);
+            }
+
+        .table tbody tr:hover {
+            background-color: rgba(0, 143, 57, 0.05);
+        }
+
+        .table td, .table th {
+            vertical-align: middle;
+            padding: 15px;
+        }
+
+    .btn-create {
+        background-color: var(--primary-green);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        text-decoration: none;
+        display: inline-block;
+        margin-bottom: 20px;
+        transition: background-color 0.3s ease;
+    }
+
+        .btn-create:hover {
+            background-color: var(--light-green);
+            color: white;
+        }
+
+    .table-actions a {
+        color: var(--primary-green);
+        margin-right: 10px;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+        .table-actions a:hover {
+            color: var(--light-green);
+            text-decoration: underline;
+        }
+
+    .status-approved {
+        color: var(--primary-green);
+        font-weight: bold;
+    }
+
+    .status-not-approved {
+        color: #dc3545;
+        font-weight: bold;
+    }
+</style>
+<div class="container">
+    <h1>Resumen de Materias Inscritas</h1>
+    <h2>Alumno: @Model.Alumno.Nombres @Model.Alumno.Apellidos</h2>
+
+    <p>
+        <a  class="btn-create" asp-page="InscribirMaterias" asp-route-id="@Model.Alumno.AlumnoId">Inscribir materia</a>
+    </p>
+
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Fecha Inscripción</th>
+                @* <th>Nota Promedio</th> *@
+               @*  <th>Alumno</th> *@
+                <th>Materia</th>
+                <th>Aula</th>
+                <th>Horario</th>
+               @*  <th>Estado</th>
+                <th>Acciones</th> *@
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.MateriasInscritas)
+            {
+                <tr>
+                    <td>@Html.DisplayFor(modelItem => item.FechaInscripcion)</td>
+                  @*   <td>@Html.DisplayFor(modelItem => item.NotaPromedio)</td>
+                    <td>@Html.DisplayFor(modelItem => item.Alumno.Apellidos)</td> *@
+                    <td>@Html.DisplayFor(modelItem => item.MateriasGrupo.Materia.NombreMateria) - @Html.DisplayFor(modelItem => item.MateriasGrupo.Grupo.Nombre)</td>
+                    <td>@Html.DisplayFor(modelItem => item.MateriasGrupo.Aula)</td>
+                    <td>@item.MateriasGrupo.FormatearHora12Horas(item.MateriasGrupo.HoraInicio) - @item.MateriasGrupo.FormatearHora12Horas(item.MateriasGrupo.HoraInicio)</td>
+                    @* <td>
+                        <span class="@(item.Aprobada ? "status-approved" : "status-not-approved")">
+                            @(item.Aprobada ? "Aprobada" : "No Aprobada")
+                        </span>
+                    </td>
+                    <td class="table-actions">
+                        <a asp-page="./Edit" asp-route-id="@item.MateriasInscritasId">Editar</a>
+                        <a asp-page="./Details" asp-route-id="@item.MateriasInscritasId">Detalles</a>
+                        <a asp-page="./Delete" asp-route-id="@item.MateriasInscritasId">Eliminar</a>
+                    </td> *@
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
