@@ -24,10 +24,10 @@
                             <thead class="table-success">
                                 <tr>
                                     <th>@Html.DisplayNameFor(model => model.CobroArancel[0].Fecha)</th>
-                                    <th>@Html.DisplayNameFor(model => model.CobroArancel[0].Arancel)</th>
+                                   @*  <th>@Html.DisplayNameFor(model => model.CobroArancel[0].Arancel)</th> *@
                                     <th>@Html.DisplayNameFor(model => model.CobroArancel[0].Alumno)</th>
                                     <th>@Html.DisplayNameFor(model => model.CobroArancel[0].Ciclo)</th>
-                                    <th>@Html.DisplayNameFor(model => model.CobroArancel[0].Costo)</th>
+                                  @*   <th>@Html.DisplayNameFor(model => model.CobroArancel[0].Costo)</th> *@
                                     <th>Efectivo Recibido</th>
                                     <th>@Html.DisplayNameFor(model => model.CobroArancel[0].Cambio)</th>
                                     <th>Acciones</th>
@@ -38,10 +38,10 @@
                                 {
                                     <tr>
                                         <td>@Html.DisplayFor(modelItem => item.Fecha)</td>
-                                        <td>@Html.DisplayFor(modelItem => item.Arancel.Nombre)</td>
+                                      @*   <td>@Html.DisplayFor(modelItem => item.Arancel.Nombre)</td> *@
                                         <td>@Html.DisplayFor(modelItem => item.Alumno.Nombres) @Html.DisplayFor(modelItem => item.Alumno.Apellidos)</td>
                                         <td>@Html.DisplayFor(modelItem => item.Ciclo.NCiclo)/@Html.DisplayFor(modelItem => item.Ciclo.anio)</td>
-                                        <td>$@Html.DisplayFor(modelItem => item.Costo)</td>
+                                     @*    <td>$@Html.DisplayFor(modelItem => item.Costo)</td> *@
                                         <td>$@Html.DisplayFor(modelItem => item.EfectivoRecibido)</td>
                                         <td>$@Html.DisplayFor(modelItem => item.Cambio)</td>
                                         <td>

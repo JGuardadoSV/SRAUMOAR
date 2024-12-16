@@ -3,7 +3,7 @@
 
 @{ ViewData["Title"]="Registrar Cobro de Arancel";}
 @{
-    var arancel = ViewData["Arancel"] as SRAUMOAR.Entidades.Procesos.Arancel;
+   // var arancel = ViewData["Arancel"] as SRAUMOAR.Entidades.Procesos.Arancel;
 }
 
 <div class="container mt-4">
@@ -20,23 +20,45 @@
                         <div class="row mb-3">
                             
                             <h4>Alumno: @ViewData["AlumnoNombre"] </h4>
-                            <div class="col-md-4">
-                                <label class="form-label">Arancel</label>
-                                <input value="@arancel?.Nombre" class="form-control" readonly="readonly" />
+                            <div class="col-12">
+                                <h1 class="text-success">Lista de Aranceles</h1>
+                                <table class="table table-striped">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Nombres</th>
+                                            <th>Costo</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var i in Model.Aranceles)
+                                        {
+                                            <tr>
+                                                 <input type="hidden" name="selectedAranceles[]" value="@i.ArancelId" />
+                                                <input type="hidden" name="arancelescostos[]" value="@i.Costo" />
+                                                <td>@i.Nombre</td>
+                                                <td>@i.Costo.ToString("C")</td>
+                                            </tr>
+                                        }
+                                        <tr>
+                                            <td><strong>Total:</strong></td>
+                                            <td><strong>@Model.Aranceles.Sum(a => a.Costo).ToString("C")</strong></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Ciclo</label>
-                                <input value="@arancel?.Ciclo?.NCiclo- @arancel?.Ciclo?.anio" class="form-control" readonly="readonly" />
+                                <input value="@Model.Aranceles[0].Ciclo.NCiclo- @Model.Aranceles[0].Ciclo.anio" class="form-control" readonly="readonly" />
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Monto</label>
-                                <input value="@arancel?.Costo"  id="MontoArancel" class="form-control" readonly="readonly" />
+                                <input value="@Model.Aranceles.Sum(a => a.Costo)" id="MontoArancel" class="form-control" readonly="readonly" />
                             </div>
                                
-                        <input asp-for="CobroArancel.ArancelId" value="@arancel?.ArancelId" type="hidden" />
+                        
                         <input asp-for="CobroArancel.AlumnoId" value="@ViewData["AlumnoId"]" type="hidden" />
-                            <input asp-for="CobroArancel.CicloId" value="@arancel?.Ciclo.Id" type="hidden" />
-                            <input asp-for="CobroArancel.Costo" value="@arancel?.Costo" type="hidden" />
+                            <input asp-for="CobroArancel.CicloId" value="@Model.Aranceles[0].Ciclo.Id" type="hidden" />
+                            <input asp-for="CobroArancel.Total" value="@Model.Aranceles.Sum(a => a.Costo)" type="hidden" />
 
                             <div class="col-md-4">
                                 <label asp-for="CobroArancel.EfectivoRecibido" class="form-label">Efectivo Recibido</label>
@@ -44,8 +66,8 @@
                                        class="form-control"
                                        type="number"
                                        step="0.01"
-                                       min="@arancel?.Costo"
-                                       oninvalid="this.setCustomValidity('El efectivo recibido debe ser al menos @arancel?.Costo')"
+                                       min="@Model.Aranceles.Sum(a => a.Costo)"
+                                       oninvalid="this.setCustomValidity('El efectivo recibido debe ser al menos @Model.Aranceles.Sum(a => a.Costo)')"
                                        oninput="this.setCustomValidity('')"
                                        required />
 

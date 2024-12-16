@@ -17,29 +17,43 @@ namespace SRAUMOAR.Pages.aranceles
 
         public async Task<IActionResult> OnGet(int id)
         {
-            var cobro = await _context.CobrosArancel
-                                      .Include(c => c.Arancel)
-                                      .Include(c => c.Alumno)
-                                      .Include(c => c.Ciclo)
-                                      .FirstOrDefaultAsync(c => c.CobroArancelId == id);
+            var cobros = await _context.DetallesCobrosArancel
+                .Include(d => d.Arancel)
+                .Include(d => d.CobroArancel)
+                    .ThenInclude(c => c.Alumno)
+                .Include(d => d.CobroArancel)
+                    .ThenInclude(c => c.Ciclo) 
+                .Where(d => d.CobroArancelId == id)
+                .ToListAsync();
 
-            if (cobro == null)
+            var cobro = await _context.CobrosArancel
+                .Include(c => c.Alumno).Include(c => c.Ciclo)
+                .FirstOrDefaultAsync(c => c.CobroArancelId == id);
+
+            if (cobros == null)
             {
                 return NotFound();
             }
 
+            var arancelesDetalles = cobros.Select(d => new
+            {
+                Arancel = d.Arancel.Nombre,
+                Costo = d.Arancel.Costo
+            }).ToList();
+
             return new JsonResult(new
             {
                 Fecha = cobro.Fecha.ToString("dd/MM/yyyy"),
-                Arancel = cobro.Arancel?.Nombre,
                 Alumno = $"{cobro.Alumno?.Nombres} {cobro.Alumno?.Apellidos}",
                 Ciclo = $"{cobro.Ciclo?.NCiclo}/{cobro.Ciclo?.anio}",
-                Costo = cobro.Costo,
+                CostoTotal = cobro.Total,
                 EfectivoRecibido = cobro.EfectivoRecibido,
                 Cambio = cobro.Cambio,
-                Nota = cobro.nota
+                Nota = cobro.nota,
+                ArancelesDetalles = arancelesDetalles
             });
         }
+
 
     }
 }

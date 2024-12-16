@@ -19,70 +19,48 @@
 </div>
 
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Arancel[0].Nombre)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Arancel[0].Costo)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Arancel[0].Activo)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Arancel[0].FechaInicio)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Arancel[0].FechaFin)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Arancel[0].Ciclo)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model.Arancel) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Nombre)
-            </td>
-            <td>
-               $ @Html.DisplayFor(modelItem => item.Costo)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Activo)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FechaInicio)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FechaFin)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Ciclo.NCiclo) /
-                    @Html.DisplayFor(modelItem => item.Ciclo.anio)
-            </td>
-            <td>
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <form method="post" >
+                <input type="hidden" name="alumnoId" value="@alumno?.AlumnoId" />
+                <table class="table table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Seleccionar</th>
+                            <th>@Html.DisplayNameFor(model => model.Arancel[0].Nombre)</th>
+                            <th>@Html.DisplayNameFor(model => model.Arancel[0].Costo)</th>
+                            <th>@Html.DisplayNameFor(model => model.Arancel[0].Activo)</th>
+                            <th>@Html.DisplayNameFor(model => model.Arancel[0].FechaInicio)</th>
+                            <th>@Html.DisplayNameFor(model => model.Arancel[0].FechaFin)</th>
+                            <th>@Html.DisplayNameFor(model => model.Arancel[0].Ciclo)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Arancel)
+                        {
+                            <tr>
+                                <td>
+                                    @if (!Model.AlumnoHaPagado(item.ArancelId, @alumno.AlumnoId))
+                                    {
+                                        <input type="checkbox" name="selectedAranceles" value="@item.ArancelId" />
+                                    }else{
+                                        <a asp-page="/aranceles/Facturas" asp-route-arancelId="@item.ArancelId" asp-route-alumnoId="@alumno?.AlumnoId" class="btn btn-success">Recibo</a>
+                                    }
+                                </td>
+                                <td>@Html.DisplayFor(modelItem => item.Nombre)</td>
+                                <td>$ @Html.DisplayFor(modelItem => item.Costo)</td>
+                                <td>@Html.DisplayFor(modelItem => item.Activo)</td>
+                                <td>@Html.DisplayFor(modelItem => item.FechaInicio)</td>
+                                <td>@Html.DisplayFor(modelItem => item.FechaFin)</td>
+                                <td>@Html.DisplayFor(modelItem => item.Ciclo.NCiclo) / @Html.DisplayFor(modelItem => item.Ciclo.anio)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <button type="submit" class="btn btn-primary">Cobrar Seleccionados</button>
+            </form>
+        </div>
+    </div>
+</div>
 
-
-                    @if (!Model.AlumnoHaPagado(item.ArancelId,  @alumno.AlumnoId))
-                    {
-                                <a asp-page="./Facturar" asp-route-arancelId="@item.ArancelId" asp-route-alumnoId="@alumno?.AlumnoId" class="btn btn-primary">Cobrar</a>
-                    }else{
-                                <a asp-page="/aranceles/Facturas" asp-route-arancelId="@item.ArancelId" asp-route-alumnoId="@alumno?.AlumnoId" class="btn btn-success">Recibo</a>
-                                
-                    }
-
-                <!--
-                |
-                <a asp-page="./Details" asp-route-id="@item.ArancelId">Details</a> |
-                <a asp-page="./Delete" asp-route-id="@item.ArancelId">Delete</a>
-                    -->
-            </td>
-        </tr>
-}
-    </tbody>
-</table>

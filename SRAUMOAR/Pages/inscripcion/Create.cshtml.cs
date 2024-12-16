@@ -27,13 +27,18 @@ namespace SRAUMOAR.Pages.inscripcion
 
             var cicloactual = _context.Ciclos.Where(x => x.Activo == true).FirstOrDefault()?.Id ?? 0;
             YaPago = _context.CobrosArancel
-                .Include(x => x.Arancel)
-                .Any(x => x.CicloId == cicloactual && x.Arancel.Nombre == "Matricula");
+                .Include(x => x.DetallesCobroArancel)
+                .Any(x => x.CicloId == cicloactual && x.DetallesCobroArancel.FirstOrDefault().Arancel.Nombre == "Matricula" && x.AlumnoId == idalumno);
 
 
             var carreraid = _context.Alumno.Where(x => x.AlumnoId == id).FirstOrDefault()?.CarreraId??0;
 
-            ViewData["AlumnoId"] = new SelectList(_context.Alumno.Where(x=>x.AlumnoId==id), "AlumnoId", "Nombres");
+            ViewData["AlumnoId"] = new SelectList(
+                _context.Alumno.Where(x=>x.AlumnoId==id)
+                .Select(a => new {
+                    AlumnoId = a.AlumnoId, 
+                    Nombres = a.Nombres + " " + a.Apellidos})
+                , "AlumnoId", "Nombres");
             ViewData["CicloId"] = new SelectList(
                 _context.Ciclos
                 .Where(x => x.Activo == true)

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using SRAUMOAR.Entidades.Alumnos;
+using SRAUMOAR.Entidades.Colecturia;
 using SRAUMOAR.Entidades.Procesos;
 using SRAUMOAR.Modelos;
 
@@ -32,9 +33,10 @@ namespace SRAUMOAR.Pages.aranceles
 
             // Obtener los IDs de los aranceles que ya pagó el alumno
             var arancelesPagados = await _context.CobrosArancel
-            .Where(c => c.AlumnoId == id) // Asegúrate de tener el `alumnoId`
-                .Select(c => c.ArancelId)
-                .ToListAsync();
+             .Where(c => c.AlumnoId == id)
+             .SelectMany(c => c.DetallesCobroArancel ?? Enumerable.Empty<DetallesCobroArancel>())
+             .Select(dc => dc.ArancelId)
+             .ToListAsync();
 
             Arancel = await _context.Aranceles.Where(x => x.Ciclo.Id == cicloactual.Id)
                 .Include(a => a.Ciclo).ToListAsync();
@@ -47,8 +49,24 @@ namespace SRAUMOAR.Pages.aranceles
             }).ToList();
         }
 
-        public bool AlumnoHaPagado(int arancelId, int alumnoId) { 
-            return _context.CobrosArancel.Any(c => c.ArancelId == arancelId && c.AlumnoId == alumnoId); 
+        public IActionResult OnPost(List<int> selectedAranceles, int alumnoId)
+        {
+            if (selectedAranceles == null || !selectedAranceles.Any())
+            {
+                ModelState.AddModelError(string.Empty, "Debe seleccionar al menos un arancel.");
+                return Page();
+            }
+
+            // Redirigir a la página de cobro con los IDs de los aranceles seleccionados
+            return RedirectToPage("./Facturar", new { arancelIds = string.Join(",", selectedAranceles),idalumno=alumnoId });
+        }
+
+
+        public bool AlumnoHaPagado(int arancelId, int alumnoId) {
+            return _context.DetallesCobrosArancel
+               .Any(d => d.ArancelId == arancelId &&
+                         d.CobroArancel.AlumnoId == alumnoId);
+
         }
 
     }

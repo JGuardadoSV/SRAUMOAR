@@ -12,9 +12,9 @@ namespace SRAUMOAR.Entidades.Colecturia
         [Display(Name = "Fecha")] 
         public DateTime Fecha { get; set; } = DateTime.Now;
 
-        [Display(Name = "Arancel")]
-        public int? ArancelId { get; set; }
-        public virtual Arancel? Arancel { get; set; }
+        //[Display(Name = "Arancel")]
+        //public int? ArancelId { get; set; }
+        //public virtual Arancel? Arancel { get; set; }
 
         [Display(Name = "Alumno")]
         public int? AlumnoId { get; set; }
@@ -25,11 +25,24 @@ namespace SRAUMOAR.Entidades.Colecturia
         public virtual Ciclo? Ciclo { get; set; }
 
         public decimal EfectivoRecibido { get; set; }
-        public decimal Costo { get; set; }
+        public decimal Total { get; set; }
         public decimal Cambio { get; set; }
         public string? nota { get; set; } = "";
 
+        public virtual ICollection<DetallesCobroArancel>? DetallesCobroArancel { get; set; }
+    }
 
+    public class DetallesCobroArancel
+    {
+        public int DetallesCobroArancelId { get; set; }
 
+        //llave foranea
+        public int CobroArancelId { get; set; }
+        public virtual CobroArancel? CobroArancel { get; set; }
+
+        public int ArancelId { get; set; }
+        public virtual Arancel? Arancel { get; set; }
+
+        public decimal costo { get; set; }
     }
 }
