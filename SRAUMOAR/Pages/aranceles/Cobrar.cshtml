@@ -22,7 +22,11 @@
 <div class="container">
     <div class="row">
         <div class="col-12">
-            <form method="post" >
+            @{
+                int checkboxCount = 0;
+            }
+
+            <form method="post">
                 <input type="hidden" name="alumnoId" value="@alumno?.AlumnoId" />
                 <table class="table table-striped">
                     <thead class="table-dark">
@@ -43,8 +47,11 @@
                                 <td>
                                     @if (!Model.AlumnoHaPagado(item.ArancelId, @alumno.AlumnoId))
                                     {
+                                        checkboxCount++;
                                         <input type="checkbox" name="selectedAranceles" value="@item.ArancelId" />
-                                    }else{
+                                    }
+                                    else
+                                    {
                                         <a asp-page="/aranceles/Facturas" asp-route-arancelId="@item.ArancelId" asp-route-alumnoId="@alumno?.AlumnoId" class="btn btn-success">Recibo</a>
                                     }
                                 </td>
@@ -58,8 +65,12 @@
                         }
                     </tbody>
                 </table>
-                <button type="submit" class="btn btn-primary">Cobrar Seleccionados</button>
+                @if (checkboxCount > 0)
+                {
+                    <button type="submit" class="btn btn-primary">Cobrar Seleccionados</button>
+                }
             </form>
+
         </div>
     </div>
 </div>

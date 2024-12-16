@@ -21,25 +21,26 @@ namespace SRAUMOAR.Pages.aranceles
         [BindProperty]
         public IList<CobroArancel> CobroArancel { get;set; } = default!;
 
-        public async Task OnGetAsync(int arancelId=0, int alumnoId=0)
+        public async Task OnGetAsync( int alumnoId=0)
         {
-            //if (alumnoId != 0 && arancelId != 0) {
-            //    CobroArancel = await _context.CobrosArancel
-            //    .Include(c => c.Alumno)
-            //    .Include(c => c.Arancel)
-            //    .Include(c => c.Ciclo)
-            //    .Where(c => c.ArancelId == arancelId && c.AlumnoId == alumnoId)
-            //    .ToListAsync();
-            //}
-            //else { 
-            
-            //CobroArancel = await _context.CobrosArancel
-            //    .Include(c => c.Alumno)
-            //    .Include(c => c.Arancel)
-            //    .Include(c => c.Ciclo)
-            //    .OrderByDescending(c => c.CobroArancelId)
-            //    .ToListAsync();
-            //}
+            if (alumnoId != 0 )
+            {
+                CobroArancel = await _context.CobrosArancel
+                    .Include(c => c.Alumno)
+                    .Include(c => c.Ciclo)
+                    .Where(c => c.AlumnoId == alumnoId )
+                    .OrderByDescending(c => c.CobroArancelId)
+                    .ToListAsync();
+            }
+            else
+            {
+
+                CobroArancel = await _context.CobrosArancel
+                    .Include(c => c.Alumno)
+                    .Include(c => c.Ciclo)
+                    .OrderByDescending(c => c.CobroArancelId)
+                    .ToListAsync();
+            }
         }
     }
 }

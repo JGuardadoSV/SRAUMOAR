@@ -1,67 +1,67 @@
 ﻿@page
 @model SRAUMOAR.Pages.inscripcion.CreateModel
 
-        @{
-        ViewData["Title"] = "Inscripción de alumnos";
-        }
+@{
+    ViewData["Title"] = "Inscripción de alumnos";
+}
 
 <div class="container">
     <h1 class="my-4 text-center">Inscripción de alumnos</h1>
-    @if (!Model.YaPago)
+    @if (!Model.EstaInscrito)
     {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <strong>Atención:</strong> El alumno no ha cancelado el arancel correspondiente para realizar este proceso.
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+        @if (!Model.YaPago)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <strong>Atención:</strong> El alumno no ha cancelado el arancel correspondiente para realizar este proceso.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
 
-        <a asp-page="/aranceles/Cobrar" asp-route-id="@Model.idalumno" class="btn btn-primary">Ir a cobros</a>
-    }
-    <hr />
+            <a asp-page="/aranceles/Cobrar" asp-route-id="@Model.idalumno" class="btn btn-primary">Ir a cobros</a>
+        }
+        <hr />
 
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            @if (Model.YaPago)
-            {
-            <form method="post">
-                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                @if (Model.YaPago)
+                {
+                    <form method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
-                <div class="mb-3">
-                    <label asp-for="Inscripcion.AlumnoId" class="form-label">
-                        <span class="text-danger">*</span> Alumno
-                    </label>
-                    <select asp-for="Inscripcion.AlumnoId" class="form-select" asp-items="ViewBag.AlumnoId">
-                        <option value="">Selecciona un alumno</option>
-                    </select>
-                </div>
+                        <div class="mb-3">
+                            <label asp-for="Inscripcion.AlumnoId" class="form-label">
+                                <span class="text-danger">*</span> Alumno
+                            </label>
+                            <select asp-for="Inscripcion.AlumnoId" class="form-select" asp-items="ViewBag.AlumnoId">
+                                <option value="">Selecciona un alumno</option>
+                            </select>
+                        </div>
 
-                    <div class="mb-3">
-                        <label asp-for="Inscripcion.CicloId" class="form-label">
-                            <span class="text-danger">*</span> Ciclo
-                        </label>
-                        <select asp-for="Inscripcion.CicloId" class="form-select" asp-items="ViewBag.CicloId">
-                            <option value="">Selecciona un ciclo</option>
-                        </select>
-                    </div>
+                        <div class="mb-3">
+                            <label asp-for="Inscripcion.CicloId" class="form-label">
+                                <span class="text-danger">*</span> Ciclo
+                            </label>
+                            <select asp-for="Inscripcion.CicloId" class="form-select" asp-items="ViewBag.CicloId">
+                                <option value="">Selecciona un ciclo</option>
+                            </select>
+                        </div>
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-between">
 
-               @*  <div class="mb-3">
-                    <label asp-for="Inscripcion.GrupoId" class="form-label">
-                        <span class="text-danger">*</span> Grupo
-                    </label>
-                    <select asp-for="Inscripcion.GrupoId" class="form-select" asp-items="ViewBag.GrupoId">
-                        <option value="">Selecciona un grupo</option>
-                    </select>
-                </div> *@
-
-                <div class="d-grid gap-2 d-md-flex justify-content-md-between">
-                       
                             <input type="submit" value="Inscribir" class="btn btn-primary me-md-2" />
-                       
-                    <a asp-page="Index" class="btn btn-secondary">Volver</a>
-                </div>
-            </form>
-                    }
-        </div>
+
+                            <a asp-page="Index" class="btn btn-secondary">Volver</a>
+                        </div>
+                    </form>
+                }
+            </div>
     </div>
+    }else{
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Atención:</strong> El alumno ya se encuentra inscrito.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <a asp-page="./Index" class="btn btn-primary">Ir a inscripciones</a>
+            
+        </div>
+    }
 </div>
 
 @section Scripts {

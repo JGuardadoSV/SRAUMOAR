@@ -33,10 +33,11 @@ namespace SRAUMOAR.Pages.aranceles
 
             // Obtener los IDs de los aranceles que ya pagó el alumno
             var arancelesPagados = await _context.CobrosArancel
-             .Where(c => c.AlumnoId == id)
-             .SelectMany(c => c.DetallesCobroArancel ?? Enumerable.Empty<DetallesCobroArancel>())
-             .Select(dc => dc.ArancelId)
-             .ToListAsync();
+      .Where(c => c.AlumnoId == id)
+      .SelectMany(c => c.DetallesCobroArancel.DefaultIfEmpty())
+      .Select(dc => dc.ArancelId)
+      .ToListAsync();
+
 
             Arancel = await _context.Aranceles.Where(x => x.Ciclo.Id == cicloactual.Id)
                 .Include(a => a.Ciclo).ToListAsync();

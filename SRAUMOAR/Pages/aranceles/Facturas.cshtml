@@ -79,14 +79,14 @@
 
                 <!-- Detalles del Cobro -->
                 <div id="cobroDetails">
-                    <p><strong>Fecha:</strong> <span id="detalleFecha">13/12/2024</span></p>
-                    <p><strong>Arancel:</strong> <span id="detalleArancel">Matrícula</span></p>
-                    <p><strong>Alumno:</strong> <span id="detalleAlumno">Juan Pérez</span></p>
-                    <p><strong>Ciclo:</strong> <span id="detalleCiclo">2024</span></p>
-                    <p><strong>Costo:</strong> $<span id="detalleCosto">50.00</span></p>
-                    <p><strong>Efectivo Recibido:</strong> $<span id="detalleEfectivoRecibido">60.00</span></p>
-                    <p><strong>Cambio:</strong> $<span id="detalleCambio">10.00</span></p>
-                    <p><strong>Nota:</strong> <span id="detalleNota">Pago en efectivo</span></p>
+                    <p><strong>Fecha:</strong> <span id="detalleFecha"></span></p>
+                    <p><strong>Ciclo:</strong> <span id="detalleCiclo"></span></p>
+                    <p><strong>Alumno:</strong> <span id="detalleAlumno"></span></p>
+                    <p><strong>Aranceles:</strong> <span id="detalleArancel"></span></p>
+                    <p><strong>Total:</strong> $<span id="detalleCosto"></span></p>
+                    <p><strong>Efectivo Recibido:</strong> $<span id="detalleEfectivoRecibido"></span></p>
+                    <p><strong>Cambio:</strong> $<span id="detalleCambio"></span></p>
+                    <p><strong>Nota:</strong> <span id="detalleNota"></span></p>
                 </div>
                 <hr style="border-top: 1px dashed;">
 
@@ -111,23 +111,39 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         function showDetails(id) {
-            $.ajax({
-                url: '@Url.Page("DetallesCobro")',
-                type: 'GET',
-                data: { id: id },
-                    success: function (data) {
-                        console.log('Datos recibidos:', data); // Verifica los datos en la consola del navegador
-                            $('#detalleFecha').text(data.fecha);
-                        $('#detalleArancel').text(data.arancel);
-                        $('#detalleAlumno').text(data.alumno);
-                        $('#detalleCiclo').text(data.ciclo);
-                        $('#detalleCosto').text(data.costo);
-                        $('#detalleEfectivoRecibido').text(data.efectivoRecibido);
-                        $('#detalleCambio').text(data.cambio);
-                        $('#detalleNota').text(data.nota);
-                        $('#detailsModal').modal('show');
-                    },
-            });
+                    $.ajax({
+            url: '@Url.Page("DetallesCobro")',
+            type: 'GET',
+            data: { id: id },
+            success: function (data) {
+                console.log('Datos recibidos:', data); // Verifica los datos en la consola del navegador
+                $('#detalleFecha').text(data.fecha);
+                $('#detalleCiclo').text(data.ciclo);
+                $('#detalleAlumno').text(data.alumno);
+                $('#detalleCosto').text(data.costoTotal);
+                $('#detalleEfectivoRecibido').text(data.efectivoRecibido);
+                $('#detalleCambio').text(data.cambio);
+                $('#detalleNota').text(data.nota);
+
+                // Construir tabla de detalles de aranceles
+                let arancelesTable = '<table class="table table-striped">';
+                arancelesTable += '<thead class="table-dark"><tr><th>Arancel</th><th>Costo</th></tr></thead>';
+                arancelesTable += '<tbody>';
+                data.arancelesDetalles.forEach(function(arancel) {
+                    arancelesTable += '<tr>';
+                    arancelesTable += `<td>${arancel.arancel}</td>`;
+                       arancelesTable += `<td>${arancel.costo.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</td>`;
+
+                    arancelesTable += '</tr>';
+                });
+                arancelesTable += '</tbody></table>';
+
+                // Insertar tabla en el contenedor correspondiente
+                $('#detalleArancel').html(arancelesTable);
+
+                $('#detailsModal').modal('show');
+            }
+        });
         }
 
             document.addEventListener('DOMContentLoaded', () => {

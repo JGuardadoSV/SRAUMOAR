@@ -15,6 +15,7 @@ namespace SRAUMOAR.Pages.inscripcion
     {
         private readonly SRAUMOAR.Modelos.Contexto _context;
         public bool YaPago { get; set; }
+        public bool EstaInscrito { get; set; }
         public CreateModel(SRAUMOAR.Modelos.Contexto context)
         {
             _context = context;
@@ -24,8 +25,14 @@ namespace SRAUMOAR.Pages.inscripcion
         public IActionResult OnGet(int id)
         {
            idalumno = id;
-
             var cicloactual = _context.Ciclos.Where(x => x.Activo == true).FirstOrDefault()?.Id ?? 0;
+
+            EstaInscrito =  _context.Inscripciones
+              .Any(i => i.AlumnoId == idalumno && i.CicloId == cicloactual);
+
+
+
+            
             YaPago = _context.CobrosArancel
                 .Include(x => x.DetallesCobroArancel)
                 .Any(x => x.CicloId == cicloactual && x.DetallesCobroArancel.FirstOrDefault().Arancel.Nombre == "Matricula" && x.AlumnoId == idalumno);
@@ -69,6 +76,18 @@ namespace SRAUMOAR.Pages.inscripcion
             {
                 return Page();
             }
+
+            // Verificar si el alumno ya está inscrito en el ciclo
+            bool isAlreadyEnrolled = await _context.Inscripciones
+                .AnyAsync(i => i.AlumnoId == Inscripcion.AlumnoId && i.CicloId == Inscripcion.CicloId);
+
+            if (isAlreadyEnrolled)
+            {
+                // Manejar el caso donde el alumno ya está inscrito
+                ModelState.AddModelError(string.Empty, "El alumno ya está inscrito en este ciclo.");
+                return RedirectToPage("./Index");
+            }
+
 
             _context.Inscripciones.Add(Inscripcion);
             await _context.SaveChangesAsync();
