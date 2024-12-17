@@ -9,6 +9,7 @@ namespace SRAUMOAR.Entidades.Procesos
         public int MateriasInscritasId { get; set; }
 
         //fecha con valor por defecto
+        [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true)]
         public DateTime FechaInscripcion { get; set; }= DateTime.Now;
 
 
@@ -34,6 +35,15 @@ namespace SRAUMOAR.Entidades.Procesos
 
         //propiedad de navegacion con notas
         public virtual ICollection<Notas>? Notas { get; set; }
+
+
+
+        // Método para obtener las notas o 0 si no existen
+        public decimal ObtenerNota(int tipo, int numero)
+        {
+        //    //var nota = Notas?.FirstOrDefault(n => n.ActividadAcademica. == tipo && n.NumeroNota == numero)?.Nota;
+            return  0;
+        }
 
     }
 

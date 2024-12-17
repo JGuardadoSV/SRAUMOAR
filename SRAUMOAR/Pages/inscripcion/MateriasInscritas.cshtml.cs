@@ -32,6 +32,7 @@ namespace SRAUMOAR.Pages.inscripcion
                  .ThenInclude(mg => mg.Materia)
              .Include(mi => mi.MateriasGrupo)
                  .ThenInclude(mg => mg.Grupo)
+                 .ThenInclude(mg=>mg.Docente)
              .Where(mi => mi.MateriasGrupo.Grupo.CicloId == cicloactual)
              .ToListAsync();
 

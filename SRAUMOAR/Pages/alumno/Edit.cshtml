@@ -13,12 +13,19 @@
     <div class="card shadow-lg">
         <div class="card-header bg-dark text-white text-center">
             <h4 class="fs-4 fw-semibold text-white formal-text">Alumno</h4>
+            @if (Model.Alumno.Foto != null)
+            {
+                <div>
+                    <img src="data:image/jpeg;base64,@Convert.ToBase64String(Model.Alumno.Foto)" alt="Foto del Alumno" class="img-fluid rounded img-size-64" />
+                </div>
+            }
+
         </div>
         <div class="container mt-1">
             <div class="row justify-content-center">
                 <div class="col-md-5">
                     <div class="card-body">
-                        <form method="post">
+                        <form method="post" enctype="multipart/form-data">
                             <form method="post">
                                 <div asp-validation-summary="ModelOnly" class="alert alert-danger d-flex align-items-center" role="alert"></div>
                                 <input type="hidden" asp-for="Alumno.AlumnoId" />
@@ -139,6 +146,10 @@
                                     </div>
                                     <br>
                                     <span asp-validation-for="Alumno.MunicipioId" class="text-danger"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label asp-for="FotoUpload" class="control-label">Foto</label>
+                                    <input asp-for="FotoUpload" type="file" class="form-control" />
                                 </div>
                                 <div class="d-grid gap-2">
                                     <button type="submit" class="btn btn-primary btn-lg">

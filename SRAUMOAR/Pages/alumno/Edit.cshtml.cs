@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -24,7 +26,8 @@ namespace SRAUMOAR.Pages.alumno
 
         [BindProperty]
         public Alumno Alumno { get; set; } = default!;
-
+        [BindProperty]
+        public IFormFile FotoUpload { get; set; }
         public async Task<IActionResult> OnGetAsync(int? id)
         {
             if (id == null)
@@ -50,7 +53,24 @@ namespace SRAUMOAR.Pages.alumno
             {
                 return Page();
             }
+            if (FotoUpload != null)
+            {
+                using (var memoryStream = new MemoryStream())
+                {
+                    await FotoUpload.CopyToAsync(memoryStream);
 
+                    using (var originalImage = Image.FromStream(memoryStream))
+                    {
+                        var compressedImageStream = new MemoryStream();
+                        var jpegEncoder = GetEncoder(ImageFormat.Jpeg);
+                        var encoderParameters = new EncoderParameters(1);
+                        encoderParameters.Param[0] = new EncoderParameter(Encoder.Quality, 20L); // Ajusta la calidad aquí (0L-100L)
+
+                        originalImage.Save(compressedImageStream, jpegEncoder, encoderParameters);
+                        Alumno.Foto = compressedImageStream.ToArray();
+                    }
+                }
+            }
             _context.Attach(Alumno).State = EntityState.Modified;
 
             try
@@ -70,6 +90,19 @@ namespace SRAUMOAR.Pages.alumno
             }
 
             return RedirectToPage("./Index");
+        }
+
+        private ImageCodecInfo GetEncoder(ImageFormat format)
+        {
+            var codecs = ImageCodecInfo.GetImageDecoders();
+            foreach (var codec in codecs)
+            {
+                if (codec.FormatID == format.Guid)
+                {
+                    return codec;
+                }
+            }
+            return null;
         }
 
         private bool AlumnoExists(int id)

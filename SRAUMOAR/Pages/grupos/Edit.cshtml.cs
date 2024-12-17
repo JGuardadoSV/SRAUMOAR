@@ -114,6 +114,7 @@ namespace SRAUMOAR.Pages.grupos
         // For more details, see https://aka.ms/RazorPagesCRUD.
         public async Task<IActionResult> OnPostAsync()
         {
+            int idredireccion = 0;
             if (Request.Form.ContainsKey("Grupo.Limite"))
             {
                 if (!ModelState.IsValid)
@@ -122,6 +123,7 @@ namespace SRAUMOAR.Pages.grupos
                 }
 
                  _context.Attach(Grupo).State = EntityState.Modified;
+                idredireccion = Grupo.GrupoId;
                 //_context.MateriasGrupo.Add(MateriasGrupo);
                 try
                 {
@@ -145,7 +147,7 @@ namespace SRAUMOAR.Pages.grupos
                 {
                     return Page();
                 }
-
+                idredireccion=MateriasGrupo.GrupoId;
                 // verificar si ya esta registrada 
                 // Verificar si la materia ya está registrada en el grupo
                 var materiaDuplicada = await _context.MateriasGrupo
@@ -182,7 +184,7 @@ namespace SRAUMOAR.Pages.grupos
 
 
 
-            return RedirectToPage("./Edit", new { id = MateriasGrupo.GrupoId });
+            return RedirectToPage("./Edit", new { id = idredireccion });
         }
 
         private bool GrupoExists(int id)

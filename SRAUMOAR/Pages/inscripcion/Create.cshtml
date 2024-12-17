@@ -58,7 +58,8 @@
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             <strong>Atención:</strong> El alumno ya se encuentra inscrito.
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            <a asp-page="./Index" class="btn btn-primary">Ir a inscripciones</a>
+            
+            <a asp-page="/inscripcion/MateriasInscritas" asp-route-id="@Model.idalumno" class="btn btn-primary">Ir a inscripciones</a>
             
         </div>
     }

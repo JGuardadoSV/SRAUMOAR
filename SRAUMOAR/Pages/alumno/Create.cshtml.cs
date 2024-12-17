@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using SRAUMOAR.Entidades.Alumnos;
 using SRAUMOAR.Modelos;
+using System.Drawing;
+using System.Drawing.Imaging;
 
 namespace SRAUMOAR.Pages.alumno
 {
@@ -29,6 +31,9 @@ namespace SRAUMOAR.Pages.alumno
         [BindProperty]
         public Alumno Alumno { get; set; } = default!;
 
+        [BindProperty] 
+        public IFormFile FotoUpload { get; set; }
+
         // To protect from overposting attacks, see https://aka.ms/RazorPagesCRUD
         public async Task<IActionResult> OnPostAsync()
         {
@@ -37,10 +42,42 @@ namespace SRAUMOAR.Pages.alumno
                 return Page();
             }
 
+            if (FotoUpload != null)
+            {
+                using (var memoryStream = new MemoryStream())
+                {
+                    await FotoUpload.CopyToAsync(memoryStream);
+
+                    using (var originalImage = Image.FromStream(memoryStream))
+                    {
+                        var compressedImageStream = new MemoryStream();
+                        var jpegEncoder = GetEncoder(ImageFormat.Jpeg);
+                        var encoderParameters = new EncoderParameters(1);
+                        encoderParameters.Param[0] = new EncoderParameter(Encoder.Quality, 50L); // Ajusta la calidad aquí (0L-100L)
+
+                        originalImage.Save(compressedImageStream, jpegEncoder, encoderParameters);
+                        Alumno.Foto = compressedImageStream.ToArray();
+                    }
+                }
+            }
+
             _context.Alumno.Add(Alumno);
             await _context.SaveChangesAsync();
 
             return RedirectToPage("./Index");
+        }
+
+        private ImageCodecInfo GetEncoder(ImageFormat format)
+        {
+            var codecs = ImageCodecInfo.GetImageDecoders();
+            foreach (var codec in codecs)
+            {
+                if (codec.FormatID == format.Guid)
+                {
+                    return codec;
+                }
+            }
+            return null;
         }
     }
 }

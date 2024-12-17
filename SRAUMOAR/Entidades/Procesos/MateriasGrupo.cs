@@ -39,5 +39,9 @@ namespace SRAUMOAR.Entidades.Procesos
         public virtual Docente? Docente { get; set; } // Propiedad de navegación
 
         public string FormatearHora12Horas(TimeSpan hora) { DateTime dt = DateTime.Today.Add(hora); return dt.ToString("hh:mm tt"); }
+
+        //propiedad de navegacion MateriasInscritas
+        public virtual ICollection<MateriasInscritas>? MateriasInscritas { get; set; }
+
     }
 }

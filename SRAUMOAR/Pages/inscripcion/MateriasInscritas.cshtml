@@ -114,6 +114,8 @@
                 @* <th>Nota Promedio</th> *@
                @*  <th>Alumno</th> *@
                 <th>Materia</th>
+                <th>UV</th>
+                <th>Docente</th>
                 <th>Aula</th>
                 <th>Horario</th>
                @*  <th>Estado</th>
@@ -128,6 +130,8 @@
                   @*   <td>@Html.DisplayFor(modelItem => item.NotaPromedio)</td>
                     <td>@Html.DisplayFor(modelItem => item.Alumno.Apellidos)</td> *@
                     <td>@Html.DisplayFor(modelItem => item.MateriasGrupo.Materia.NombreMateria) - @Html.DisplayFor(modelItem => item.MateriasGrupo.Grupo.Nombre)</td>
+                    <td>@item.MateriasGrupo.Materia.uv</td>
+                    <td>@item.MateriasGrupo.Docente.Nombres @item.MateriasGrupo.Docente.Apellidos</td>
                     <td>@Html.DisplayFor(modelItem => item.MateriasGrupo.Aula)</td>
                     <td>@item.MateriasGrupo.FormatearHora12Horas(item.MateriasGrupo.HoraInicio) - @item.MateriasGrupo.FormatearHora12Horas(item.MateriasGrupo.HoraInicio)</td>
                     @* <td>
@@ -142,6 +146,9 @@
                     </td> *@
                 </tr>
             }
+            <tr>
+                <td colspan="5">Total Materias Inscritas: @Model.MateriasInscritas.Count | Total UV @Model.MateriasInscritas.Sum(m => m.MateriasGrupo.Materia.uv) </td>
+            </tr>
         </tbody>
     </table>
 </div>

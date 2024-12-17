@@ -1,0 +1,106 @@
+﻿@page
+@model SRAUMOAR.Pages.materiasGrupo.ListadoEstudiantesModel
+
+@{
+    ViewData["Title"] = "Listado de estudiantes";
+}
+<style>
+    body {
+        background-color: #f4f6f9;
+    }
+
+    .card-header {
+        background-color: green;
+        color: white;
+    }
+
+    .table-responsive {
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .table thead {
+        background-color: #4a4e69;
+        color: white;
+    }
+
+    .table-striped tbody tr:nth-of-type(even) {
+        background-color: rgba(74, 78, 105, 0.05);
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(74, 78, 105, 0.1);
+    }
+</style>
+<div class="container-fluid px-4 py-5">
+    <div class="card mb-4">
+        <div class="card-header">
+            <h1 class="h3 mb-0">Listado de Estudiantes de @Model.NombreMateria</h1>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-2">
+                    <h5 class="text-muted">
+                        <span class="fw-bold">Grupo:</span>  @Model.Grupo.Nombre 
+                    </h5>
+                </div>
+                <div class="col-md-3">
+                    <h5 class="text-muted">
+                        <span class="fw-bold">Materia:</span> @Model.NombreMateria
+                    </h5>
+                </div>
+                <div class="col-md-4">
+                    <h5 class="text-muted">
+                        <span class="fw-bold">Carrera:</span>  @Model.Grupo.Carrera.NombreCarrera 
+                    </h5>
+                </div>
+                <div class="col-md-3">
+                    <h5 class="text-muted">
+                        <span class="fw-bold">Docente supervisor:</span>  @Model.Grupo.Docente.Nombres @Model.Grupo.Docente.Apellidos 
+                    </h5>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle ">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Estudiante</th>
+                            <th class="text-center">Nota Promedio</th>
+                            <th class="text-center">Lab 01</th>
+                            <th class="text-center">Par 01</th>
+                            <th class="text-center">Lab 02</th>
+                            <th class="text-center">Par 02</th>
+                            <th class="text-center">Lab 03</th>
+                            <th class="text-center">Par 03</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.MateriasInscritas)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="ms-3">
+                                            <p class="fw-bold mb-1">@item.Alumno.Nombres @item.Alumno.Apellidos</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-primary">@item.NotaPromedio</span>
+                                </td>
+                                <td class="text-center">@item.ObtenerNota(1, 1)</td>
+                                <td class="text-center">@item.ObtenerNota(2, 1)</td>
+                                <td class="text-center">@item.ObtenerNota(1, 2)</td>
+                                <td class="text-center">@item.ObtenerNota(2, 2)</td>
+                                <td class="text-center">@item.ObtenerNota(1, 3)</td>
+                                <td class="text-center">@item.ObtenerNota(2, 3)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+

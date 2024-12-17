@@ -66,6 +66,8 @@ namespace SRAUMOAR.Entidades.Alumnos
 
         public string? Fotografia { get; set; }
 
+        public byte[]? Foto { get; set; }
+
         public string? Carnet { get; set; }
         
         [Required(ErrorMessage = "El campo género  es obligatorio")]
