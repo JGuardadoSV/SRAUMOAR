@@ -100,6 +100,7 @@ namespace SRAUMOAR.Pages.grupos
                 .Include(m => m.Grupo)
                 .Include(m => m.Materia)
                 .Include(m => m.Docente)
+                .Include(m=>m.MateriasInscritas)
                 .Where(x => x.GrupoId == id)
                 .ToListAsync();
 

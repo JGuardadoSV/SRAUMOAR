@@ -43,5 +43,7 @@ namespace SRAUMOAR.Entidades.Procesos
         //propiedad de navegacion MateriasInscritas
         public virtual ICollection<MateriasInscritas>? MateriasInscritas { get; set; }
 
+        public int TotalInscritos => MateriasInscritas?.Count ?? 0;
+
     }
 }

@@ -51,13 +51,14 @@
                 @if (isDocente)
                 {
                     <select asp-for="Grupo.DocenteId" class="form-select" asp-items="ViewBag.DocenteId" disabled="disabled"></select>
+                    <input type="hidden" asp-for="Grupo.DocenteId" value="@Model.Grupo.DocenteId" />
                 }
                 else
                 {
                     <select asp-for="Grupo.DocenteId" class="form-select" asp-items="ViewBag.DocenteId"></select>
                 }
 
-
+                
 
             </div>
 
@@ -125,10 +126,12 @@
                     <th>
                         Horario
                     </th>
+                    <th>Inscritos</th>
                    
                    @*  <th>
                         @Html.DisplayNameFor(model => model.ListadoMateriasGrupo[0].Grupo)
                     </th> *@
+                    <th></th>
                     <th></th>
                 </tr>
             </thead>
@@ -148,17 +151,22 @@
                         <td>
                             @item.FormatearHora12Horas(item.HoraInicio) - @item.FormatearHora12Horas(item.HoraFin)
                         </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.TotalInscritos)
+                        </td>
                         
                        @*  <td>
                             @Html.DisplayFor(modelItem => item.Grupo.GrupoId)
                         </td> *@
                         <td>
-                            <!--
-                            <a asp-page="./Edit" asp-route-id="@item.MateriasGrupoId">Edit</a> |
-                            <a asp-page="./Details" asp-route-id="@item.MateriasGrupoId">Details</a> |
-                            <a asp-page="./Delete" asp-route-id="@item.MateriasGrupoId">Delete</a>
-                                -->
+                            <a asp-page="./EliminarMateriaDeGrupo" data-inscritos="@item.TotalInscritos" asp-route-id="@item.MateriasGrupoId" class="btn btn-danger delete-btn" data-id="@item.MateriasGrupoId"><i class="bi bi-trash"></i></a>
+
+                           @*  <a href="javascript:void(0);" data-id="@item.MateriasGrupoId" class="btn btn-danger delete-link">
+                                <i class="bi bi-trash"></i>
+                            </a> *@
                         </td>
+
+
                     </tr>
                 }
             </tbody>
@@ -170,4 +178,78 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+  @*   <script>
+
+        $(document).ready(function(){
+            $('.delete-link').click(function(){
+                var id = $(this).data('id');
+                var url = '@Url.Page("./EliminarMateriaDeGrupo")' + "?id=" + id;
+
+                if(confirm("¿Deseas eliminar este registro?")) {
+                    $.ajax({
+                        url: url,
+                        type: 'POST',
+                        success: function(result){
+                            if(result.success) {
+                                alert("Registro eliminado exitosamente.");
+                                location.reload(); // Recarga la página para reflejar los cambios
+                            } else {
+                                alert("Hubo un error al eliminar el registro.");
+                            }
+                        },
+                        error: function(err){
+                            alert("Hubo un error en la solicitud.");
+                        }
+                    });
+                }
+            });
+        });
+   </script> *@
+
+    <script>
+        $(document).ready(function() {
+            $('.delete-btn').on('click', function(e) {
+                e.preventDefault(); // Evitar la navegación predeterminada
+
+                var id = $(this).data('id');
+                     var alumnosInscritos = $(this).data('inscritos');;
+
+        // Verificar número de alumnos antes de intentar eliminar
+        if (parseInt(alumnosInscritos) > 0) {
+          alert(`No se puede eliminar. Hay ${alumnosInscritos} alumnos inscritos.`);
+            return;
+        }
+                // Mostrar confirmación
+                if (confirm('¿Estás seguro de eliminar este registro?')) {
+                    $.ajax({
+                        url: '@Url.Page("./EliminarMateriaDeGrupo")', // URL de la página Delete
+                        type: 'POST',
+                        data: {
+                            id: id,
+                            // Añadir token de verificación de antifalsificación si es necesario
+                            __RequestVerificationToken: $('input:hidden[name="__RequestVerificationToken"]').val()
+                        },
+                        success: function(result) {
+                            if (result.success) {
+                                // Eliminar la fila de la tabla
+                                $(`[data-id="${id}"]`).closest('tr').remove();
+
+                                // Mostrar mensaje de éxito
+                                alert('Registro eliminado con éxito');
+                                window.location.reload();
+                            } else {
+                                // Mostrar mensaje de error
+                                alert(result.message || 'Error al eliminar el registro');
+                            }
+                        },
+                        error: function() {
+                            alert('Ocurrió un error al intentar eliminar el registro');
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+
 }

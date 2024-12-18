@@ -15,6 +15,8 @@ namespace SRAUMOAR.Entidades.Procesos
         [Display(Name = "Fecha de Registro")]
         public DateTime Fecha { get; set; } = DateTime.Now;
 
+        [Display(Name = "Tipo de Actividad")]
+        public int TipoActividad { get; set; }//1: Laboratorio, 2: Parcial,
 
         //porcentaje
         [Required]
@@ -47,6 +49,10 @@ namespace SRAUMOAR.Entidades.Procesos
         // Relaciones de navegación
         public virtual Ciclo? Ciclo { get; set; }
         public virtual Arancel? Arancel { get; set; }
+
+
+
+        public string GetNombreTipo() { return TipoActividad switch { 1 => "Laboratorio", 2 => "Parcial", _ => "Desconocido" }; }
     }
 }
 

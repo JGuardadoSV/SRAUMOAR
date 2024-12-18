@@ -23,6 +23,9 @@
                 @Html.DisplayNameFor(model => model.ActividadAcademica[0].Nombre)
             </th>
             <th>
+                @Html.DisplayNameFor(model => model.ActividadAcademica[0].TipoActividad)
+            </th>
+            <th>
                 @Html.DisplayNameFor(model => model.ActividadAcademica[0].FechaInicio)
             </th>
             <th>
@@ -46,6 +49,10 @@
             <td>
                 @Html.DisplayFor(modelItem => item.Nombre)
             </td>
+                <td>
+                    @item.GetNombreTipo()
+                </td>
+
             <td>
                 @Html.DisplayFor(modelItem => item.FechaInicio)
             </td>
