@@ -8,6 +8,7 @@ using SRAUMOAR.Entidades.Docentes;
 using SRAUMOAR.Entidades.Accesos;
 using SRAUMOAR.Entidades.Procesos;
 using SRAUMOAR.Entidades.Colecturia;
+using SRAUMOAR.Entidades.Becas;
 
 namespace SRAUMOAR.Modelos
 {
@@ -48,6 +49,7 @@ namespace SRAUMOAR.Modelos
 
         public DbSet<MateriasInscritas> MateriasInscritas { get; set; }
         public DbSet<Notas> Notas { get; set; }
+        public DbSet<EntidadBeca> InstitucionesBeca { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

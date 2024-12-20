@@ -1,0 +1,78 @@
+﻿@page
+@model SRAUMOAR.Pages.entidadesBecas.IndexModel
+
+@{
+    ViewData["Title"] = "Entidades Becas";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">
+            <i class="bi bi-mortarboard-fill text-primary me-2"></i>
+            Entidades Becas
+        </h1>
+        <a asp-page="Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-2"></i>Nuevo registro
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>@Html.DisplayNameFor(model => model.EntidadBeca[0].Nombre)</th>
+                           @*  <th>@Html.DisplayNameFor(model => model.EntidadBeca[0].Siglas)</th> *@
+                            <th>@Html.DisplayNameFor(model => model.EntidadBeca[0].Direccion)</th>
+                            <th>@Html.DisplayNameFor(model => model.EntidadBeca[0].NombreRepresente)</th>
+                            <th>@Html.DisplayNameFor(model => model.EntidadBeca[0].Telefono)</th>
+                         @*    <th>@Html.DisplayNameFor(model => model.EntidadBeca[0].FechaDeRegistro)</th> *@
+                            <th>@Html.DisplayNameFor(model => model.EntidadBeca[0].Email)</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.EntidadBeca)
+                        {
+                            <tr>
+                                <td>@Html.DisplayFor(modelItem => item.Nombre)</td>
+                                @* <td>@Html.DisplayFor(modelItem => item.Siglas)</td> *@
+                                <td>@Html.DisplayFor(modelItem => item.Direccion)</td>
+                                <td>@Html.DisplayFor(modelItem => item.NombreRepresente)</td>
+                                <td>@Html.DisplayFor(modelItem => item.Telefono)</td>
+                               @*  <td>@Html.DisplayFor(modelItem => item.FechaDeRegistro)</td> *@
+                                <td>@Html.DisplayFor(modelItem => item.Email)</td>
+                                <td>
+                                    <div class="d-flex justify-content-center gap-2">
+                                        <a asp-page="./Edit" asp-route-id="@item.EntidadBecaId"
+                                           class="btn btn-sm btn-outline-primary" title="Editar">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                       @*  <a asp-page="./Details" asp-route-id="@item.EntidadBecaId"
+                                           class="btn btn-sm btn-outline-info" title="Detalles">
+                                            <i class="bi bi-info-circle"></i>
+                                        </a>
+                                        <a asp-page="./Delete" asp-route-id="@item.EntidadBecaId"
+                                           class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                            <i class="bi bi-trash"></i>
+                                        </a> *@
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    @* Total de registros mostrados *@
+                    <tfoot>
+                        <tr>
+                            <td colspan="6" class="">
+                                <small class="text-muted
+                                    ">Mostrando Total de @Model.EntidadBeca.Count registros</small>
+                                </td>
+                                </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

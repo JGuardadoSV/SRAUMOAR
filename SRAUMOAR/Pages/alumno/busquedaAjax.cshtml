@@ -1,0 +1,144 @@
+﻿@page
+@model SRAUMOAR.Pages.alumno.busquedaAjaxModel
+
+@{
+    ViewData["Title"] = "busquedaAjax";
+}
+
+<h1>busquedaAjax</h1>
+
+<p>
+    <a asp-page="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Alumno[0].Nombres)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Alumno[0].Apellidos)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Alumno[0].FechaDeNacimiento)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Alumno[0].Email)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Alumno[0].TelefonoPrimario)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Alumno[0].Whatsapp)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Alumno[0].TelefonoSecundario)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Alumno[0].ContactoDeEmergencia)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Alumno[0].NumeroDeEmergencia)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Alumno[0].DireccionDeResidencia)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Alumno[0].Estado)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Alumno[0].IngresoPorEquivalencias)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Alumno[0].Fotografia)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Alumno[0].Foto)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Alumno[0].Carnet)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Alumno[0].Genero)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Alumno[0].Usuario)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Alumno[0].Municipio)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Alumno[0].Carrera)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model.Alumno) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Nombres)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Apellidos)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FechaDeNacimiento)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Email)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.TelefonoPrimario)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Whatsapp)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.TelefonoSecundario)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ContactoDeEmergencia)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.NumeroDeEmergencia)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.DireccionDeResidencia)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Estado)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.IngresoPorEquivalencias)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Fotografia)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Foto)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Carnet)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Genero)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Usuario.Clave)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Municipio.NombreMunicipio)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Carrera.CodigoCarrera)
+            </td>
+            <td>
+                <a asp-page="./Edit" asp-route-id="@item.AlumnoId">Edit</a> |
+                <a asp-page="./Details" asp-route-id="@item.AlumnoId">Details</a> |
+                <a asp-page="./Delete" asp-route-id="@item.AlumnoId">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

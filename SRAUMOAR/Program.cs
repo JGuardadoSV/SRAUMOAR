@@ -65,5 +65,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapRazorPages();
+app.MapControllers(); // Añade esta línea si usas controladores
+
 
 app.Run();

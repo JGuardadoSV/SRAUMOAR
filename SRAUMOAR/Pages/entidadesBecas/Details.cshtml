@@ -1,0 +1,61 @@
+﻿@page
+@model SRAUMOAR.Pages.entidadesBecas.DetailsModel
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h1>Details</h1>
+
+<div>
+    <h4>EntidadBeca</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.EntidadBeca.Nombre)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.EntidadBeca.Nombre)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.EntidadBeca.Siglas)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.EntidadBeca.Siglas)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.EntidadBeca.Direccion)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.EntidadBeca.Direccion)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.EntidadBeca.NombreRepresente)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.EntidadBeca.NombreRepresente)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.EntidadBeca.Telefono)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.EntidadBeca.Telefono)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.EntidadBeca.FechaDeRegistro)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.EntidadBeca.FechaDeRegistro)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.EntidadBeca.Email)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.EntidadBeca.Email)
+        </dd>
+    </dl>
+</div>
+<div>
+    <a asp-page="./Edit" asp-route-id="@Model.EntidadBeca.EntidadBecaId">Edit</a> |
+    <a asp-page="./Index">Back to List</a>
+</div>
