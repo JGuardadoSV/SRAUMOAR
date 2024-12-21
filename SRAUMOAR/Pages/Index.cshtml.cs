@@ -25,6 +25,7 @@ namespace SRAUMOAR.Pages
         public LoginModel? LoginData { get; set; }
         public async Task<IActionResult> OnPostAsync()
         {
+            bool existealumno = false;
             if (ModelState.IsValid)
             {
                 var usuario = await _context.Usuarios.Where(x=>x.NombreUsuario==LoginData.NombreUsuario && x.Clave==LoginData.Clave && x.Activo==true).Include(x=>x.NivelAcceso).FirstOrDefaultAsync();
@@ -36,6 +37,16 @@ namespace SRAUMOAR.Pages
                         if (usuario.NivelAcceso.Nombre == "Estudiantes")
                         {
                             nombre = _context.Alumno.Where(x => x.UsuarioId == usuario.IdUsuario).First().Nombres;
+                            var alumno = _context.Alumno.Where(x => x.UsuarioId == usuario.IdUsuario).FirstOrDefault();
+                            if (alumno != null)
+                            {
+                                existealumno = true;
+                            }
+                            else
+                            {
+                                existealumno = false;
+                                ModelState.AddModelError(string.Empty, "Nombre de usuario o contraseña incorrectos.");
+                            }
                         }
                         else
                         {

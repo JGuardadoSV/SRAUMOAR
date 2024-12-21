@@ -25,9 +25,10 @@ namespace SRAUMOAR.Pages.actividades
 
         public async Task OnGetAsync()
         {
+            var cicloactual= await _context.Ciclos.Where(x => x.Activo).FirstAsync();
             ActividadAcademica = await _context.ActividadesAcademicas
                 .Include(a => a.Arancel)
-                .Include(a => a.Ciclo).ToListAsync();
+                .Include(a => a.Ciclo).Where(c=>c.CicloId==cicloactual.Id).ToListAsync();
         }
     }
 }

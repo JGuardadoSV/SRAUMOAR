@@ -2,4 +2,426 @@
 @model SRAUMOAR.Pages.portal.estudiante.IndexModel
 @{
 }
-<p>Portal estudiante</p>
+<div class="container py-4">
+
+    @if (Model.Arancel.Any(a => !Model.DetallesCobroArancel
+    .Any(dc => dc.ArancelId == a.ArancelId && dc.CobroArancel.AlumnoId == Model.Alumno.AlumnoId)
+    && (a.FechaFin < DateTime.Now)))
+    {
+        <div class="card border-danger shadow-sm">
+            <div class="card-header bg-danger text-white py-3 d-flex align-items-center">
+                <i class="bi bi-exclamation-triangle-fill fs-4 me-2"></i>
+                <h5 class="mb-0">Aranceles Pendientes de Pago</h5>
+            </div>
+            <div class="card-body">
+                @{
+                    var arancelesVencidos = Model.Arancel
+                    .Where(a => !Model.DetallesCobroArancel
+                    .Any(dc => dc.ArancelId == a.ArancelId && dc.CobroArancel.AlumnoId == Model.Alumno.AlumnoId)
+                    && (a.FechaFin < DateTime.Now))
+                    .OrderBy(a => a.FechaFin)
+                    .ToList();
+                }
+
+                @foreach (var item in arancelesVencidos)
+                {
+                var diasAtraso = (DateTime.Now - item.FechaFin).Days;
+
+                <div class="alert alert-danger d-flex align-items-center p-3 mb-3">
+                    <div class="d-flex align-items-center flex-grow-1">
+                        <div class="bg-danger bg-opacity-10 rounded-circle p-2 me-3">
+                            <i class="bi bi-calendar-x text-danger fs-5"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">@item.Nombre</h6>
+                            <div class="d-flex flex-column flex-sm-row gap-2">
+                                <span class="text-danger">
+                                    <i class="bi bi-clock-history me-1"></i>
+                                    Atrasado <strong>@diasAtraso días</strong>
+                                </span>
+                                <span class="text-danger">
+                                    <i class="bi bi-calendar me-1"></i>
+                                    Venció el <strong>@item.FechaFin.ToString("dd/MM/yyyy")</strong>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn btn-danger ms-auto" onclick="location.href='@Url.Action("PagarArancel", "Pagos", new { id = item.ArancelId })'">
+                        <i class="bi bi-credit-card me-2"></i>Pagar Ahora
+                    </button>
+                </div>
+                }
+
+                <div class="mt-3">
+                    <small class="text-danger">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Los aranceles vencidos pueden generar recargos adicionales. Por favor, regulariza tu situación lo antes posible.
+                    </small>
+                </div>
+            </div>
+        </div>
+    }
+
+
+    <!-- Carnet Digital -->
+    <div class="row">
+        <!-- Carnet Digital - Ajustado a col-md-6 -->
+        <div class="col-md-6">
+            <div class="card mb-4 carnet-digital h-100">
+                <div class="card-header bg-success text-white py-3">
+                    <h4 class="text-center mb-0">@(Model?.Alumno?.Nombres ?? "No disponible") @(Model?.Alumno?.Apellidos ?? "")</h4>
+                </div>
+                <div class="card-body p-0">
+                    <div class="row g-0">
+                        <div class="col-md-4">
+                            <div class="p-3">
+                                <div class="foto-container">
+                                    @if (Model.Alumno.Foto != null)
+                                    {
+                                        <img src="data:image/jpeg;base64,@Convert.ToBase64String(Model.Alumno.Foto)" alt="Foto Estudiante" class="img-fluid rounded-circle border border-3 border-primary" />
+                                    }
+                                    else
+                                    {
+                                        <img src="~/images/default.PNG" alt="Foto Estudiante" class="img-fluid rounded-circle border border-3 border-primary" />
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="p-3">
+                                <div class="student-info">
+                                    <p class="mb-2">
+                                        <i class="bi bi-person-badge me-2"></i>
+                                        Carné: @(Model?.Alumno?.Carnet ?? "No disponible")
+                                    </p>
+                                    <p class="mb-2">
+                                        <i class="bi bi-mortarboard-fill me-2"></i>
+                                        Carrera: @(Model?.Alumno?.Carrera?.NombreCarrera ?? "No disponible")
+                                    </p>
+                                    <p class="mb-2">
+                                        <i class="bi bi-calendar3 me-2"></i>
+                                        Ciclo: @(Model?.Ciclo?.NCiclo ?? 0) - @(Model?.Ciclo?.anio.ToString() ?? "")
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nueva Tarjeta de Progreso -->
+        <div class="col-md-6">
+            <div class="card mb-4 h-100">
+                <div class="card-header bg-primary text-white py-3">
+                    <h4 class="text-center mb-0">Progreso Académico</h4>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="progress-circle">
+                            <div class="progress-circle-inner">
+                                <div class="progress-percentage">
+                                    65%
+                                </div>
+                                <div class="progress-label">
+                                    Avance en la Carrera
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="progress-stats">
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <h5 class="mb-1">42</h5>
+                                <small class="text-muted">Materias Aprobadas</small>
+                            </div>
+                            <div class="col-4">
+                                <h5 class="mb-1">65</h5>
+                                <small class="text-muted">Total Materias</small>
+                            </div>
+                            <div class="col-4">
+                                <h5 class="mb-1">8.5</h5>
+                                <small class="text-muted">Promedio Global</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Materias Inscritas -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white p-0">
+            <!-- Nav tabs -->
+            <ul class="nav nav-tabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active px-4 py-3" data-bs-toggle="tab" data-bs-target="#materias" type="button" role="tab">
+                        <i class="bi bi-journal-text me-2"></i>Materias Inscritas
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link px-4 py-3" data-bs-toggle="tab" data-bs-target="#aranceles" type="button" role="tab">
+                        <i class="bi bi-cash-coin me-2"></i>Aranceles del ciclo
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link px-4 py-3" data-bs-toggle="tab" data-bs-target="#calendario" type="button" role="tab">
+                        <i class="bi bi-calendar3 me-2"></i>Calendario Académico
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Tab content -->
+        <div class="tab-content">
+            <!-- Tab Materias Inscritas -->
+            <div class="tab-pane fade show active" id="materias" role="tabpanel">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Materia</th>
+                                    <th>Docente</th>
+                                    <th>Horario</th>
+                                    <th>Aula</th>
+                                    <th class="text-center">Nota Promedio</th>
+                                    <th class="text-center">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var materia in Model.MateriasInscritas)
+                                {
+                                    <tr>
+                                        <td>@materia.MateriasGrupo.Materia.CodigoMateria</td>
+                                        <td>@materia.MateriasGrupo.Materia.NombreMateria</td>
+                                        <td>@materia.MateriasGrupo.Docente.Nombres @materia.MateriasGrupo.Docente.Apellidos</td>
+                                        <td>@materia.MateriasGrupo.FormatearHora12Horas(materia.MateriasGrupo.HoraInicio) - @materia.MateriasGrupo.FormatearHora12Horas(materia.MateriasGrupo.HoraInicio)</td>
+                                        <td>@materia.MateriasGrupo.Aula</td>
+                                        <td class="text-center">
+                                            <span class="badge bg-primary rounded-pill px-3 py-2">
+                                                @materia.NotaPromedio
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            @if (materia.NotaPromedio >= 6)
+                                            {
+                                                <span class="badge bg-success">Aprobado</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-danger">En Riesgo</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Aranceles -->
+            <div class="tab-pane fade" id="aranceles" role="tabpanel">
+                <div class="card-body">
+                    <!-- Aquí va el contenido de Aranceles -->
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>@Html.DisplayNameFor(model => model.Arancel[0].Nombre)</th>
+                                <th>@Html.DisplayNameFor(model => model.Arancel[0].Costo)</th>
+                                <th>@Html.DisplayNameFor(model => model.Arancel[0].FechaInicio)</th>
+                                <th>@Html.DisplayNameFor(model => model.Arancel[0].FechaFin)</th>
+                                <th>@Html.DisplayNameFor(model => model.Arancel[0].Ciclo)</th>
+                                <th>Estado</th> <!-- Nueva columna -->
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Arancel)
+                            {
+                                var arancelPagado = Model.DetallesCobroArancel
+                                .Any(dc => dc.ArancelId == item.ArancelId && dc.CobroArancel.AlumnoId == Model.Alumno.AlumnoId);
+                                var diasRestantes = (item.FechaFin - DateTime.Now).Days;
+                                var diasAtraso = (DateTime.Now - item.FechaFin).Days;
+
+                                <tr>
+                                    <td>@Html.DisplayFor(modelItem => item.Nombre)</td>
+                                    <td>$ @Html.DisplayFor(modelItem => item.Costo)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.FechaInicio)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.FechaFin)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.Ciclo.NCiclo) - @Html.DisplayFor(modelItem => item.Ciclo.anio)</td>
+                                    <td>
+                                        @if (arancelPagado)
+                                        {
+                                            <span class="text-success">Pagado</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-danger">Pendiente</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (diasRestantes > 0)
+                                        {
+                                            if (!arancelPagado)
+                                            {
+                                            <span class="text-info">Faltan @diasRestantes días</span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            if (!arancelPagado)
+                                            {
+                                                <span class="text-danger">Atrasado @diasAtraso días</span>
+                                            }
+                                            
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+
+                    <!-- FIN -->
+                </div>
+            </div>
+
+            <!-- Tab Calendario -->
+            <div class="tab-pane fade" id="calendario" role="tabpanel">
+                <div class="card-body">
+                    <!-- Aquí va el contenido del Calendario -->
+                    <table class="table">
+                        <thead>
+                            <tr class="table-dark">
+                                <th>@Html.DisplayNameFor(model => model.ActividadAcademica[0].Ciclo)</th>
+                                <th>@Html.DisplayNameFor(model => model.ActividadAcademica[0].Nombre)</th>
+                                <th>@Html.DisplayNameFor(model => model.ActividadAcademica[0].TipoActividad)</th>
+                                <th>@Html.DisplayNameFor(model => model.ActividadAcademica[0].FechaInicio)</th>
+                                <th>@Html.DisplayNameFor(model => model.ActividadAcademica[0].FechaFin)</th>
+                                <th>@Html.DisplayNameFor(model => model.ActividadAcademica[0].Arancel)</th>
+                                <th>@Html.DisplayNameFor(model => model.ActividadAcademica[0].Porcentaje)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.ActividadAcademica)
+                            {
+                                <tr>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.Ciclo.NCiclo) / @Html.DisplayFor(modelItem => item.Ciclo.anio)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.Nombre)
+                                    </td>
+                                    <td>
+                                        @item.GetNombreTipo()
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.FechaInicio)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.FechaFin)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.Arancel.Nombre)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.Porcentaje)%
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    
+
+
+</div>
+
+<style>
+    .carnet-digital {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: none;
+        overflow: hidden;
+    }
+
+    .foto-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .student-info p {
+        color: #666;
+        font-size: 0.95rem;
+    }
+
+    .badge {
+        font-weight: 500;
+    }
+</style>
+
+<style>
+    .progress-circle {
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background: conic-gradient(green 50%, #e9ecef 0);
+        position: relative;
+        margin: 0 auto;
+    }
+
+    .progress-circle-inner {
+        position: absolute;
+        width: 160px;
+        height: 160px;
+        background: white;
+        border-radius: 50%;
+        top: 20px;
+        left: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .progress-percentage {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #0d6efd;
+    }
+
+    .progress-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
+    .progress-stats {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid #dee2e6;
+    }
+
+    .carnet-digital {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .foto-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .student-info p {
+        color: #666;
+        font-size: 0.95rem;
+    }
+</style>
