@@ -9,9 +9,11 @@ using SRAUMOAR.Entidades.Alumnos;
 using SRAUMOAR.Modelos;
 using System.Drawing;
 using System.Drawing.Imaging;
+using Microsoft.AspNetCore.Authorization;
 
 namespace SRAUMOAR.Pages.alumno
 {
+    [Authorize(Roles = "Administrador,Administracion")]
     public class CreateModel : PageModel
     {
         private readonly SRAUMOAR.Modelos.Contexto _context;

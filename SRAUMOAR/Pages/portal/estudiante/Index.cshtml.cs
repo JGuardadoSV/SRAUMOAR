@@ -28,7 +28,7 @@ namespace SRAUMOAR.Pages.portal.estudiante
         public IList<Arancel> Arancel { get; set; } = default!;
         public IList<ActividadAcademica> ActividadAcademica { get; set; } = default!;
         public IList<DetallesCobroArancel> DetallesCobroArancel { get; set; } = default!;
-        public void OnGet()
+        public IActionResult OnGet()
         {
             var userId = User.FindFirstValue("UserId") ?? "0"; 
             int idusuario = int.Parse(userId);
@@ -38,14 +38,16 @@ namespace SRAUMOAR.Pages.portal.estudiante
             Ciclo = _context.Ciclos.Where(x => x.Activo == true).First();
 
             //seleccionar todas las materias inscritas por el alumno
-            MateriasInscritas =  _context.MateriasInscritas
-            .Include(mi => mi.MateriasGrupo)
-                .ThenInclude(mg => mg.Materia)
-            .Include(mi => mi.MateriasGrupo)
-                .ThenInclude(mg => mg.Grupo)
-                .ThenInclude(mg => mg.Docente)
-            .Where(mi => mi.MateriasGrupo.Grupo.CicloId == Ciclo.Id && mi.Alumno.AlumnoId == Alumno.AlumnoId)
-            .ToList();
+            MateriasInscritas = _context.MateriasInscritas
+     .Include(mi => mi.MateriasGrupo)
+         .ThenInclude(mg => mg.Materia)
+     .Include(mi => mi.MateriasGrupo)
+         .ThenInclude(mg => mg.Docente)
+     .Include(mi => mi.MateriasGrupo)
+         .ThenInclude(mg => mg.Grupo)  // Agregamos esta línea para incluir el Grupo
+     .Where(mi => mi.MateriasGrupo.Grupo.CicloId == Ciclo.Id &&
+                  mi.Alumno.AlumnoId == Alumno.AlumnoId)
+     .ToList();
 
             // Consulta modificada para manejar múltiples pagos
             Arancel =  _context.Aranceles.Where(x => x.Ciclo.Id == Ciclo.Id)
@@ -64,7 +66,7 @@ namespace SRAUMOAR.Pages.portal.estudiante
 
 
             // var x = 10;
-
+            return Page();
 
         }
     }

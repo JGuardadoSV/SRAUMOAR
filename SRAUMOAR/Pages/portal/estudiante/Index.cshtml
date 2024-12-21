@@ -179,46 +179,47 @@
             <div class="tab-pane fade show active" id="materias" role="tabpanel">
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Código</th>
-                                    <th>Materia</th>
-                                    <th>Docente</th>
-                                    <th>Horario</th>
-                                    <th>Aula</th>
-                                    <th class="text-center">Nota Promedio</th>
-                                    <th class="text-center">Estado</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var materia in Model.MateriasInscritas)
-                                {
+                        
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
                                     <tr>
-                                        <td>@materia.MateriasGrupo.Materia.CodigoMateria</td>
-                                        <td>@materia.MateriasGrupo.Materia.NombreMateria</td>
-                                        <td>@materia.MateriasGrupo.Docente.Nombres @materia.MateriasGrupo.Docente.Apellidos</td>
-                                        <td>@materia.MateriasGrupo.FormatearHora12Horas(materia.MateriasGrupo.HoraInicio) - @materia.MateriasGrupo.FormatearHora12Horas(materia.MateriasGrupo.HoraInicio)</td>
-                                        <td>@materia.MateriasGrupo.Aula</td>
-                                        <td class="text-center">
-                                            <span class="badge bg-primary rounded-pill px-3 py-2">
-                                                @materia.NotaPromedio
-                                            </span>
-                                        </td>
-                                        <td class="text-center">
-                                            @if (materia.NotaPromedio >= 6)
-                                            {
-                                                <span class="badge bg-success">Aprobado</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge bg-danger">En Riesgo</span>
-                                            }
-                                        </td>
+                                        <th>Código</th>
+                                        <th>Materia</th>
+                                        <th>Docente</th>
+                                        <th>Horario</th>
+                                        <th>Aula</th>
+                                        <th class="text-center">Nota Promedio</th>
+                                        <th class="text-center">Estado</th>
                                     </tr>
-                                }
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    @foreach (var materia in Model.MateriasInscritas)
+                                    {
+                                        <tr>
+                                            <td>@materia.MateriasGrupo.Materia.CodigoMateria</td>
+                                        <td>@materia.MateriasGrupo.Materia.NombreMateria - @materia.MateriasGrupo.Grupo.Nombre </td>
+                                            <td>@materia.MateriasGrupo.Docente.Nombres  @materia.MateriasGrupo.Docente.Apellidos </td>
+                                            <td>@materia.MateriasGrupo.FormatearHora12Horas(materia.MateriasGrupo.HoraInicio) - @materia.MateriasGrupo.FormatearHora12Horas(materia.MateriasGrupo.HoraFin)</td>
+                                            <td>@materia.MateriasGrupo.Aula</td>
+                                            <td class="text-center">
+                                                <span class="badge bg-primary rounded-pill px-3 py-2">
+                                                    @(materia.NotaPromedio.ToString("N1") ?? "N/A")
+                                                </span>
+                                            </td>
+                                            <td class="text-center">
+                                                @if (materia.NotaPromedio >= 6)
+                                                {
+                                                    <span class="badge bg-success">Aprobado</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-danger">En Riesgo</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
                     </div>
                 </div>
             </div>

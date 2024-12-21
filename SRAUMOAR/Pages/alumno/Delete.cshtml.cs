@@ -11,6 +11,7 @@ using SRAUMOAR.Modelos;
 
 namespace SRAUMOAR.Pages.alumno
 {
+    [Authorize(Roles = "Administrador,Administracion")]
     public class DeleteModel : PageModel
     {
         private readonly SRAUMOAR.Modelos.Contexto _context;

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +11,7 @@ using SRAUMOAR.Modelos;
 
 namespace SRAUMOAR.Pages.alumno
 {
+    [Authorize(Roles = "Administrador,Administracion")]
     public class BusquedaModel : PageModel
     {
         private readonly SRAUMOAR.Modelos.Contexto _context;

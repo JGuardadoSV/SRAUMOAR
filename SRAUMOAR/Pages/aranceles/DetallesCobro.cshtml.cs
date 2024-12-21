@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 using Microsoft.EntityFrameworkCore;
 namespace SRAUMOAR.Pages.aranceles
 {
+    [Authorize(Roles = "Administrador,Administracion")]
     public class DetallesCobroModel : PageModel
     {
 

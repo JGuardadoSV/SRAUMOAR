@@ -22,20 +22,24 @@ namespace SRAUMOAR.Pages.inscripcion
 
         public IList<MateriasInscritas> MateriasInscritas { get;set; } = default!;
         public Alumno Alumno { get; set; }
-        public async Task OnGetAsync(int id)
+        public IActionResult OnGet(int id)
         {
             var cicloactual = _context.Ciclos.Where(x => x.Activo == true).FirstOrDefault()?.Id ?? 0;
             Alumno = _context.Alumno.Where(x => x.AlumnoId == id).FirstOrDefault()?? new Alumno() ;
 
-            MateriasInscritas = await _context.MateriasInscritas
+                    MateriasInscritas = _context.MateriasInscritas
              .Include(mi => mi.MateriasGrupo)
                  .ThenInclude(mg => mg.Materia)
              .Include(mi => mi.MateriasGrupo)
-                 .ThenInclude(mg => mg.Grupo)
-                 .ThenInclude(mg=>mg.Docente)
-             .Where(mi => mi.MateriasGrupo.Grupo.CicloId == cicloactual && mi.Alumno.AlumnoId==id)
-             .ToListAsync();
+                 .ThenInclude(mg => mg.Docente)
+             .Include(mi => mi.MateriasGrupo)
+                 .ThenInclude(mg => mg.Grupo)  // Agregamos esta línea para incluir el Grupo
+             .Where(mi => mi.MateriasGrupo.Grupo.CicloId == cicloactual &&
+                          mi.Alumno.AlumnoId == Alumno.AlumnoId)
+             .ToList();
 
+
+            return Page();
             //MateriasInscritas = await _context.MateriasInscritas
             //    .Include(m => m.Alumno)
             //    .Include(m => m.MateriasGrupo)

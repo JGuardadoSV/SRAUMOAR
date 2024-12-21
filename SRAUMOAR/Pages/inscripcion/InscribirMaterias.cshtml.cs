@@ -93,9 +93,11 @@ namespace SRAUMOAR.Pages.inscripcion
                 _context.MateriasInscritas.Add(MateriasInscritas);
                 await _context.SaveChangesAsync();
             }
-           
 
-            return RedirectToPage("./Index");
+            //redirigir a MateriasInscritas?id=5
+            return RedirectToPage("./MateriasInscritas", new { id = MateriasInscritas.AlumnoId });
+
+           // return RedirectToPage("./Index");
         }
     }
 }
