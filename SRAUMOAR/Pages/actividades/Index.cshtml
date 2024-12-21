@@ -37,6 +37,9 @@
             <th>
                 @Html.DisplayNameFor(model => model.ActividadAcademica[0].Porcentaje)
             </th>
+            <th>
+                Ingreso de notas
+            </th>
             <th></th>
         </tr>
     </thead>
@@ -64,6 +67,17 @@
             </td>
                 <td>
                     @Html.DisplayFor(modelItem => item.Porcentaje)%
+                </td>
+                <td>
+                    @{
+                        var ingresoNotas = item.ActivarIngresoNotas ? "Habilitado" : "Bloqueado";
+                        var badgeClass = item.ActivarIngresoNotas ? "badge bg-success" : "badge bg-danger";
+                        var icon = item.ActivarIngresoNotas ? "bi bi-unlock-fill text-success" : "bi bi-lock-fill text-danger";
+                    }
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="@icon"></i>
+                        <span class="@badgeClass">@ingresoNotas</span>
+                    </div>
                 </td>
             <td>
                 <a asp-page="./Edit" asp-route-id="@item.ActividadAcademicaId" class="btn btn-primary">Editar <i class="bi bi-pencil-fill"></i> </a> @* |

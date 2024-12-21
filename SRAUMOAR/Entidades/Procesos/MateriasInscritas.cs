@@ -39,9 +39,9 @@ namespace SRAUMOAR.Entidades.Procesos
 
 
         // Método para obtener las notas o 0 si no existen
-        public decimal ObtenerNota(int tipo, int numero)
+        public decimal ObtenerNota(int tipo)
         {
-        //    //var nota = Notas?.FirstOrDefault(n => n.ActividadAcademica. == tipo && n.NumeroNota == numero)?.Nota;
+            var nota = Notas?.FirstOrDefault(n => n.ActividadAcademica.TipoActividad == tipo)?.Nota;
             return  0;
         }
 
@@ -64,6 +64,11 @@ namespace SRAUMOAR.Entidades.Procesos
 
         public int ActividadAcademicaId { get; set; }
         public virtual ActividadAcademica? ActividadAcademica { get; set; }
+
+        //fecha de ingreso automaticamente NOW
+        public DateTime FechaRegistro { get; set; } = DateTime.Now;
+
+
     }
 
 

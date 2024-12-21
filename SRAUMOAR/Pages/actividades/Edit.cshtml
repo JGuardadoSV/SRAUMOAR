@@ -26,6 +26,33 @@
                                 <span asp-validation-for="ActividadAcademica.Fecha" class="text-danger"></span>
                             </div> *@
 
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox"
+                                           asp-for="ActividadAcademica.ActivarIngresoNotas"
+                                           style="width: 4em; height: 2em;"
+                                           role="switch"
+                                           id="switchNotas">
+                                    <label class="form-check-label ms-2" for="switchNotas">
+                                        <span class="h5">Habilitar ingreso de notas</span>
+                                        <br>
+                                        <small class="text-muted">
+                                            Estado actual:
+                                            <span class="badge bg-danger" id="estadoActual">Deshabilitado</span>
+                                        </small>
+                                    </label>
+                                </div>
+                                <div id="statusIcon" class="text-danger">
+                                    <i class="bi bi-lock-fill" style="font-size: 2rem;"></i>
+                                </div>
+                            </div>
+
+                            <!-- Alerta informativa -->
+                            <div class="alert alert-warning mt-3 mb-0">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                <strong>Importante:</strong> Al habilitar esta opción, los docentes podrán comenzar a ingresar notas en el sistema.
+                            </div>
+
                             <div class="col-md-12 mb-3">
                                 <label asp-for="ActividadAcademica.Nombre" class="form-label">
                                     <span class="text-danger">*</span> Nombre
@@ -101,4 +128,29 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        document.getElementById('switchNotas').addEventListener('change', function() {
+            const badge = document.getElementById('estadoActual');
+            const icon = document.getElementById('statusIcon');
+
+            if (this.checked) {
+                badge.className = 'badge bg-success';
+                badge.textContent = 'Habilitado';
+                icon.className = 'text-success';
+                icon.innerHTML = '<i class="bi bi-unlock-fill" style="font-size: 2rem;"></i>';
+            } else {
+                badge.className = 'badge bg-danger';
+                badge.textContent = 'Deshabilitado';
+                icon.className = 'text-danger';
+                icon.innerHTML = '<i class="bi bi-lock-fill" style="font-size: 2rem;"></i>';
+            }
+        });
+
+        // Inicializar el estado al cargar
+        window.addEventListener('load', function() {
+            const switchEl = document.getElementById('switchNotas');
+            switchEl.dispatchEvent(new Event('change'));
+        });
+    </script>
 }

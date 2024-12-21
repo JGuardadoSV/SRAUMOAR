@@ -1,0 +1,157 @@
+﻿@page
+@model SRAUMOAR.Pages.materiasGrupo.IngresoDeNotasModel
+
+        @{
+        ViewData["Title"] = "Ingreso de notas";
+        }
+<style>
+    .encabezado {
+        background-color: #129209; /* Verde musgo */
+        color: white;
+        padding: 10px 15px;
+        border-radius: 5px 5px 0 0;
+    }
+
+    .btn-verde-musgo {
+        background-color: #129209;
+        color: white;
+    }
+
+        .btn-verde-musgo:hover {
+            background-color: #3a4a1e;
+        }
+</style>
+<div class="container-fluid py-4">
+    <!-- Card Principal -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary bg-gradient text-white py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h3 mb-0">
+                    <i class="bi bi-pencil-square me-2"></i>
+                    Ingreso de notas
+                </h1>
+                <a asp-page="./ListadoEstudiantes" asp-route-id="@Model.idgrupo" class="btn btn-light btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i>
+                    Volver al listado
+                </a>
+            </div>
+        </div>
+
+        <!-- Card de Información -->
+        <div class="card-body bg-light border-bottom">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-person-badge fs-4 me-2 text-primary"></i>
+                        <div>
+                            <small class="text-muted d-block">Docente</small>
+                            <strong>@ViewData["Docente"] </strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-book fs-4 me-2 text-primary"></i>
+                        <div>
+                            <small class="text-muted d-block">Materia</small>
+                            <strong>@Model.NombreMateria</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-calendar-event fs-4 me-2 text-primary"></i>
+                        <div>
+                            <small class="text-muted d-block">Actividad</small>
+                            <strong>@Model.Actividad</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulario de Notas -->
+        <div class="card-body">
+            <form method="post" class="needs-validation" novalidate>
+                @Html.AntiForgeryToken()
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 60%">
+                                    <i class="bi bi-people me-1"></i>
+                                    Nombre del Alumno
+                                </th>
+                                <th style="width: 40%">
+                                    <i class="bi bi-star me-1"></i>
+                                    Nota (0-10)
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < Model.IngresoNotasView.Count; i++)
+                            {
+                                <tr>
+                                    <td>
+                                        <p class="fw-bold mb-0">@Model.IngresoNotasView[i].nombre</p>
+                                        @Html.HiddenFor(m => m.IngresoNotasView[i].idincripcion)
+                                        @Html.HiddenFor(m => m.IngresoNotasView[i].nombre)
+                                        @Html.HiddenFor(m => m.IngresoNotasView[i].actividadid)
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            @Html.TextBoxFor(m => m.IngresoNotasView[i].nota,
+                                                     new
+                                                     {
+                                                         type = "number",
+                                                         @class = "form-control",
+                                                         min = "0",
+                                                         max = "10",
+                                                         step = "0.1",
+                                                         required = "required",
+                                                         placeholder = "Ingrese nota"
+                                                     })
+                                            <span class="input-group-text">/ 10</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-end mt-4">
+                    @if(Model.IngresoPermitido){
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle me-2"></i>
+                        Guardar Calificaciones
+                    </button>
+                    }else{
+                        <p>Estas notas ya estan ingresadas</p>
+                    }
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        (function () {
+            'use strict'
+            var forms = document.querySelectorAll('.needs-validation')
+            Array.prototype.slice.call(forms).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+                    form.classList.add('was-validated')
+                }, false)
+            })
+        })()
+    </script>
+}

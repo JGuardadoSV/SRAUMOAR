@@ -1,0 +1,98 @@
+﻿@page
+@model SRAUMOAR.Pages.becados.CreateModel
+
+        @{
+        ViewData["Title"] = "Asignación de beca";
+        }
+<div class="container-fluid py-3">
+    <div class="card shadow-sm">
+        <div class="card-header bg-success bg-gradient text-white py-2">
+            <h1 class="h4 mb-0">
+                <i class="bi bi-award-fill me-2"></i>
+                Asignación de beca
+            </h1>
+        </div>
+
+        <div class="card-body col-6" >
+            <form method="post" class="needs-validation" novalidate>
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <div class="row g-3">
+                    <!-- Tipo de Beca -->
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            <i class="bi bi-bookmark-star me-1"></i>
+                            Tipo de Beca
+                        </label>
+                        <select asp-for="Becados.TipoBeca" class="form-select form-select-sm">
+                            <option value="1">Completa</option>
+                            <option value="2">Parcial</option>
+                        </select>
+                    </div>
+
+                    <!-- Estado -->
+                    <div class="col-md-6">
+                        <label class="form-label d-block">Estado de la Beca</label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" asp-for="Becados.Estado" role="switch" />
+                            <label class="form-check-label" asp-for="Becados.Estado">
+                                Activa
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Alumno -->
+                    <div class="col-md-12">
+                        <label class="form-label">
+                            <i class="bi bi-person me-1"></i>
+                            Alumno
+                        </label>
+                        <select asp-for="Becados.AlumnoId" class="form-select form-select-sm" asp-items="ViewBag.AlumnoId">
+                            <option value="">-- Seleccionar Alumno --</option>
+                        </select>
+                    </div>
+
+                    <!-- Entidad de Beca -->
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            <i class="bi bi-building me-1"></i>
+                            Entidad
+                        </label>
+                        <select asp-for="Becados.EntidadBecaId" class="form-select form-select-sm" asp-items="ViewBag.EntidadBecaId">
+                            <option value="">-- Seleccionar Entidad --</option>
+                        </select>
+                    </div>
+
+                    <!-- Ciclo -->
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            <i class="bi bi-clock-history me-1"></i>
+                            Ciclo
+                        </label>
+                        <select asp-for="Becados.CicloId" class="form-select form-select-sm" asp-items="ViewBag.CicloId">
+                            <option value="">-- Seleccionar Ciclo --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <a asp-page="Index" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left me-1"></i>
+                        Volver
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="bi bi-check-circle me-1"></i>
+                        Asignar Beca
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+   
+}

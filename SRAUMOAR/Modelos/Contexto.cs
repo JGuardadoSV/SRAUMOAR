@@ -51,6 +51,7 @@ namespace SRAUMOAR.Modelos
         public DbSet<Notas> Notas { get; set; }
         public DbSet<EntidadBeca> InstitucionesBeca { get; set; }
 
+        public DbSet<Becados> Becados { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -1,0 +1,123 @@
+﻿@page
+@model SRAUMOAR.Pages.becados.IndexModel
+
+@{
+    ViewData["Title"] = "Administración de alumnos becados";
+}
+
+<div class="container-fluid py-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary bg-gradient text-white d-flex justify-content-between align-items-center">
+            <h1 class="h3 mb-0">
+                <i class="bi bi-mortarboard-fill me-2"></i>
+                Administración de alumnos becados
+            </h1>
+            <a asp-page="Create" class="btn btn-light">
+                <i class="bi bi-plus-circle me-2"></i>
+                Asignar nueva beca
+            </a>
+        </div>
+
+        <div class="card-body">
+            <div class="container my-4">
+                <div class="row">
+                    <div class="col-md-4 mb-4">
+                        <div class="card text-center bg-primary text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Total de Becas</h5>
+                                <p class="card-text">@Model.Becados.Count</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="card text-center bg-success text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Becas Completas</h5>
+                                <p class="card-text">@Model.Becados.Count(x => x.TipoBeca == 1)</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="card text-center bg-warning text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Becas Parciales</h5>
+                                <p class="card-text">@Model.Becados.Count(x => x.TipoBeca == 2)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            
+                            <th>
+                                <i class="bi bi-person me-1"></i>
+                                @Html.DisplayNameFor(model => model.Becados[0].Alumno)
+                            </th>
+                            <th>
+                                <i class="bi bi-award me-1"></i>
+                                @Html.DisplayNameFor(model => model.Becados[0].TipoBeca)
+                            </th>
+                           
+                            <th>
+                                <i class="bi bi-building me-1"></i>
+                                Otorgante
+                            </th>
+                            <th>
+                                <i class="bi bi-clock-history me-1"></i>
+                                @Html.DisplayNameFor(model => model.Becados[0].Ciclo)
+                            </th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Becados)
+                        {
+                            <tr>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.Alumno.Nombres) @Html.DisplayFor(modelItem => item.Alumno.Apellidos)
+                                </td>
+                                
+                                <td>
+
+                                    @{
+                                        var tipoBeca = item.TipoBeca == 1 ? "Completa" : "Parcial";
+                                    }
+                                    <span>@tipoBeca</span>
+                                </td>
+                               
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.EntidadBeca.Nombre)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.Ciclo.NCiclo)/@Html.DisplayFor(modelItem => item.Ciclo.anio)
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a asp-page="./Edit" asp-route-id="@item.BecadosId"
+                                           class="btn btn-outline-primary" title="Editar">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                        <a asp-page="./Details" asp-route-id="@item.BecadosId"
+                                           class="btn btn-outline-info" title="Detalles">
+                                            <i class="bi bi-info-circle"></i>
+                                        </a>
+                                        <a asp-page="./Delete" asp-route-id="@item.BecadosId"
+                                           class="btn btn-outline-danger" title="Eliminar">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        <!--Totalizar cuantos hay, cuantos parcial y cuantos total-->
+                       
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

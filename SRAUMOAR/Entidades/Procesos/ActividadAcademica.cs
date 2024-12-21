@@ -18,6 +18,10 @@ namespace SRAUMOAR.Entidades.Procesos
         [Display(Name = "Tipo de Actividad")]
         public int TipoActividad { get; set; }//1: Laboratorio, 2: Parcial,
 
+
+        [Display(Name = "Habilitar ingreso de notas")]
+        public bool ActivarIngresoNotas { get; set; } = false;
+
         //porcentaje
         [Required]
         [Range(0, 100)]

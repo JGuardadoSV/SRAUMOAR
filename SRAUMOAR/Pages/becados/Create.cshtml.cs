@@ -6,10 +6,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using SRAUMOAR.Entidades.Procesos;
+using SRAUMOAR.Entidades.Becas;
 using SRAUMOAR.Modelos;
 
-namespace SRAUMOAR.Pages.actividades
+namespace SRAUMOAR.Pages.becados
 {
     [Authorize(Roles = "Administrador,Administracion")]
     public class CreateModel : PageModel
@@ -23,20 +23,19 @@ namespace SRAUMOAR.Pages.actividades
 
         public IActionResult OnGet()
         {
-        ViewData["ArancelId"] = new SelectList(_context.Aranceles, "ArancelId", "Nombre");
-            ViewData["CicloId"] = new SelectList(
-        _context.Ciclos.Where(c => c.Activo==true).Select(c => new {
-            c.Id,
-            Descripcion = $"Ciclo {c.NCiclo} - {c.anio}"
-        }),
-        "Id",
-        "Descripcion"
-    );
+            //incluir nombre y apellidos de alumnos en el selectlist
+
+            
+
+        ViewData["AlumnoId"] = new SelectList(_context.Alumno.Select(a=> new {AlumnoId=a.AlumnoId,Apellidos=a.Nombres+" "+a.Apellidos  }), "AlumnoId", "Apellidos");
+
+        ViewData["CicloId"] = new SelectList(_context.Ciclos.Where(x=>x.Activo==true).Select(a=> new {Id=a.Id,Ciclo=a.NCiclo+"/"+a.anio}), "Id", "Ciclo");
+        ViewData["EntidadBecaId"] = new SelectList(_context.InstitucionesBeca, "EntidadBecaId", "Nombre");
             return Page();
         }
 
         [BindProperty]
-        public ActividadAcademica ActividadAcademica { get; set; } = default!;
+        public Becados Becados { get; set; } = default!;
 
         // For more information, see https://aka.ms/RazorPagesCRUD.
         public async Task<IActionResult> OnPostAsync()
@@ -45,9 +44,8 @@ namespace SRAUMOAR.Pages.actividades
             {
                 return Page();
             }
-            ActividadAcademica.ActivarIngresoNotas = false;
-            ActividadAcademica.Fecha = DateTime.Now;
-            _context.ActividadesAcademicas.Add(ActividadAcademica);
+
+            _context.Becados.Add(Becados);
             await _context.SaveChangesAsync();
 
             return RedirectToPage("./Index");

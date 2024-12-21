@@ -1,0 +1,58 @@
+﻿@page
+@model SRAUMOAR.Pages.becados.DeleteModel
+
+@{
+    ViewData["Title"] = "Delete";
+}
+
+<h1>Delete</h1>
+
+<h3>Are you sure you want to delete this?</h3>
+<div>
+    <h4>Becados</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Becados.FechaRegistro)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Becados.FechaRegistro)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Becados.Estado)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Becados.Estado)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Becados.TipoBeca)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Becados.TipoBeca)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Becados.Alumno)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Becados.Alumno.Apellidos)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Becados.EntidadBeca)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Becados.EntidadBeca.Email)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Becados.Ciclo)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Becados.Ciclo.Id)
+        </dd>
+    </dl>
+    
+    <form method="post">
+        <input type="hidden" asp-for="Becados.BecadosId" />
+        <input type="submit" value="Delete" class="btn btn-danger" /> |
+        <a asp-page="./Index">Back to List</a>
+    </form>
+</div>

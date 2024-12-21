@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SRAUMOAR.Modelos;
 
@@ -11,9 +12,11 @@ using SRAUMOAR.Modelos;
 namespace SRAUMOAR.Migrations
 {
     [DbContext(typeof(Contexto))]
-    partial class ContextoModelSnapshot : ModelSnapshot
+    [Migration("20241221162448_activaringresonotas")]
+    partial class activaringresonotas
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -855,9 +858,6 @@ namespace SRAUMOAR.Migrations
 
                     b.Property<int>("ActividadAcademicaId")
                         .HasColumnType("int");
-
-                    b.Property<DateTime>("FechaRegistro")
-                        .HasColumnType("datetime2");
 
                     b.Property<int>("MateriasInscritasId")
                         .HasColumnType("int");
