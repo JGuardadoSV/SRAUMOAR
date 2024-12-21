@@ -37,6 +37,12 @@ namespace SRAUMOAR.Pages.materiasGrupo
             //averiguar si el grupo ya tiene nota para la actividad
             var notas = _context.Notas
                 .Where(x => x.MateriasInscritas.MateriasGrupoId == idgrupo && x.ActividadAcademicaId == actividadid).ToList();
+
+            
+
+
+
+
             if (notas.Count>0)
             {
                 this.IngresoPermitido = false;

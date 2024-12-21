@@ -60,6 +60,31 @@ namespace SRAUMOAR.Pages.materiasGrupo
                 .Where(m => m.MateriasGrupoId == id)
                 .ToListAsync();
 
+            /*
+            var resultados = _context.MateriasInscritas
+     .Where(mi => mi.MateriasGrupoId == idgrupo)
+     .Include(mi => mi.Alumno)
+     .Include(mi => mi.Notas)
+         .ThenInclude(n => n.ActividadAcademica)
+     .Select(mi => new
+     {
+         AlumnoNombre = mi.Alumno.Nombres + " " + mi.Alumno.Apellidos,
+         Promedio = mi.Notas.Where(n => n.ActividadAcademica.TipoActividad == 2).Sum(n => n.Nota * n.ActividadAcademica.Porcentaje / 100)
+                     + mi.Notas.Where(n => n.ActividadAcademica.TipoActividad == 1).Sum(n => n.Nota * n.ActividadAcademica.Porcentaje / 100),
+         Notas = mi.Notas.Select(n => new
+         {
+             n.Nota,
+             n.ActividadAcademica.Nombre,
+             n.ActividadAcademica.Porcentaje,
+             n.ActividadAcademica.TipoActividad
+         }).ToList()
+     })
+     .ToList();
+
+            */ //CALCULO DE PROMEDIO
+
+
+
 
 
         }
