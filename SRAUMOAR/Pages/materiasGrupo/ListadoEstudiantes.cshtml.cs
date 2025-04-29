@@ -69,6 +69,7 @@ namespace SRAUMOAR.Pages.materiasGrupo
      .Select(mi => new
      {
          AlumnoNombre = mi.Alumno.Nombres + " " + mi.Alumno.Apellidos,
+            Alumnoid = mi.Alumno.AlumnoId,
          Promedio = mi.Notas.Where(n => n.ActividadAcademica.TipoActividad == 2).Sum(n => n.Nota * n.ActividadAcademica.Porcentaje / 100)
                      + mi.Notas.Where(n => n.ActividadAcademica.TipoActividad == 1).Sum(n => n.Nota * n.ActividadAcademica.Porcentaje / 100),
          Notas = mi.Notas.Select(n => new
@@ -82,7 +83,38 @@ namespace SRAUMOAR.Pages.materiasGrupo
      .ToList();
 
             */ //CALCULO DE PROMEDIO
+            /* para la vista
+             @model IEnumerable<dynamic>
 
+<table class="table">
+    <thead>
+        <tr>
+            <th>Nombre del Alumno</th>
+            <th>Promedio</th>
+            <th>Notas</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.AlumnoNombre</td>
+                <td>@item.Promedio</td>
+                <td>
+                    <ul>
+                        @foreach (var nota in item.Notas)
+                        {
+                            <li>Nota: @nota.Nota, Actividad: @nota.Nombre, Porcentaje: @nota.Porcentaje%, Tipo: @nota.TipoActividad</li>
+                        }
+                    </ul>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+             
+             */
 
 
 

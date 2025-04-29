@@ -129,8 +129,8 @@
                             </tr>
 
                         }
-                        
-                         @foreach (var item in Model.MateriasInscritas)
+
+                        @foreach (var item in Model.MateriasInscritas)
                         {
                             <tr>
                                 <td>
@@ -143,20 +143,15 @@
                                 <td class="text-center">
                                     <span class="badge bg-primary">@item.NotaPromedio</span>
                                 </td>
-                                @{int vueltas=nactividades;}
-                                @foreach (var nota in item.Notas)
-                                {
-                                    vueltas--;
-                                    <td class="text-center">@nota.Nota</td>
-                                }
 
-                                @for (int i = 0; i < vueltas; i++)
+                                @foreach (var actividad in Model.ActividadAcademicas)
                                 {
-                                    <td class="text-center">0</td>
+                                    var nota = item.Notas.FirstOrDefault(n => n.ActividadAcademica.Nombre == actividad.Nombre);
+                                    <td class="text-center">@((nota != null) ? nota.Nota : 0)</td>
                                 }
-                               
                             </tr>
-                        } 
+                        }
+
                     </tbody>
                 </table>
             </div>
