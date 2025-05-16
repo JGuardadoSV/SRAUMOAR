@@ -12,1313 +12,171 @@
     <title>@ViewData["Title"]</title>
     <style>
         .small-container {
-            width: 100%; /* Ajusta el ancho según sea necesario */
-            margin-bottom: 20px; /* Espacio entre las estructuras */
+            width: 100%;
+            margin-bottom: 20px;
             overflow: hidden;
-            font-size: 10px;
+            font-size: 12px;
+            padding: 8px;
+            min-height: 120px;
+        }
+        .nav-tabs .nav-link.active {
+            font-weight: bold;
+            background-color: #f8f9fa;
+        }
+        .materia-nombre {
+            font-size: 12px;
+            line-height: 1.3;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px 0;
+        }
+        .materia-codigo {
+            font-size: 12px;
+            padding: 5px 0;
+        }
+        .materia-uv {
+            font-size: 12px;
+            padding: 5px 0;
+        }
+        .ciclo-titulo {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding: 5px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .ciclo-columna {
+            padding: 0 5px;
+        }
+        @@media (max-width: 768px) {
+            .ciclo-columna {
+                width: 50%;
+                float: left;
+            }
+            .small-container {
+                min-height: 100px;
+            }
+        }
+        @@media (max-width: 576px) {
+            .ciclo-columna {
+                width: 100%;
+                float: none;
+            }
         }
     </style>
 </head>
 <body>
     <header class="bg-primary text-white text-center py-3 mb-4">
-        <h1>Listado de Materias</h1>
+        <h1>Pensum de Materias</h1>
         <a href="~/descargas/pensum/pensumpdf.pdf" target="_blank" class="btn btn-info">PDF <i class="bi bi-filetype-pdf"></i></a>
     </header>
     <div class="container-fluid mt-4">
         <a asp-page="./Create" class="btn btn-primary btn-custom">
             <i class="bi bi-plus-circle btn-icon"></i>
-            Nuevo
+            Nueva Materia
         </a>
     </div>
-    <div class="row">
-        <!-- Crear 10 columnas -->
-        <div class="col-md-1" style="background-color: rgb(255, 255, 255);">
-            <!-- 5 estructuras en cada columna -->
-            <h6 class="text-center">I</h6>
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Repite la estructura para tener 5 en total -->
-            <!-- Estructura 2 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Internacional Publico</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Estructura 3 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Estructura 4 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Estructura 5 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- Repetir para las 9 columnas restantes -->
-        <!-- Repite esta sección para las 9 columnas restantes -->
-        <!-- ... -->
-        <div class="col-md-1" style="background-color: rgb(255, 255, 255);">
-            <h6 class="text-center">II</h6>
-            <!-- 5 estructuras en cada columna -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Repite la estructura para tener 5 en total -->
-            <!-- Estructura 2 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Internacional Publico</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Estructura 3 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Estructura 4 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Estructura 5 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-1" style="background-color: rgb(255, 255, 255);">
-            <!-- 5 estructuras en cada columna -->
-            <h6 class="text-center">III</h6>
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Repite la estructura para tener 5 en total -->
-            <!-- Estructura 2 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Internacional Publico</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Estructura 3 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Estructura 4 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Estructura 5 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-1" style="background-color: rgb(255, 255, 255);">
-            <!-- 5 estructuras en cada columna -->
-            <h6 class="text-center">IV</h6>
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Repite la estructura para tener 5 en total -->
-            <!-- Estructura 2 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Internacional Publico</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Estructura 3 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Estructura 4 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Estructura 5 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-1" style="background-color: rgb(255, 255, 255);">
-            <!-- 5 estructuras en cada columna -->
-            <h6 class="text-center">V</h6>
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Repite la estructura para tener 5 en total -->
-            <!-- Estructura 2 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Internacional Publico</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Estructura 3 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Estructura 4 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Estructura 5 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-1" style="background-color: rgb(255, 255, 255);">
-            <!-- 5 estructuras en cada columna -->
-            <h6 class="text-center">VI</h6>
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Repite la estructura para tener 5 en total -->
-            <!-- Estructura 2 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Internacional Publico</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Estructura 3 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Estructura 4 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Estructura 5 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-1" style="background-color: rgb(255, 255, 255);">
-            <!-- 5 estructuras en cada columna -->
-            <h6 class="text-center">VII</h6>
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Repite la estructura para tener 5 en total -->
-            <!-- Estructura 2 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Internacional Publico</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Estructura 3 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Estructura 4 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Estructura 5 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-1" style="background-color: rgb(255, 255, 255);">
-            <!-- 5 estructuras en cada columna -->
-            <h6 class="text-center">VIII</h6>
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Repite la estructura para tener 5 en total -->
-            <!-- Estructura 2 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Internacional Publico</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Estructura 3 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Estructura 4 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Estructura 5 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-1" style="background-color: rgb(255, 255, 255);">
-            <!-- 5 estructuras en cada columna -->
-            <h6 class="text-center">IX</h6>
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Repite la estructura para tener 5 en total -->
-            <!-- Estructura 2 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Internacional Publico</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Estructura 3 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Estructura 4 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Estructura 5 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-1" style="background-color: rgb(255, 255, 255);">
-            <!-- 5 estructuras en cada columna -->
-            <h6 class="text-center">X</h6>
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Repite la estructura para tener 5 en total -->
-            <!-- Estructura 2 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Internacional Publico</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Estructura 3 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Estructura 4 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Estructura 5 -->
-            <div class="small-container border">
-                <div class="row border-bottom">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">12</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">DPE I</p>
-                    </div>
-                </div>
-                <div class="row border-bottom">
-                    <div class="col text-center">
-                        <p class="my-2 fw-bold">Derecho Penal I</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6 border-end text-center">
-                        <p class="mb-0">10</p>
-                    </div>
-                    <div class="col-6 text-center">
-                        <p class="mb-0">4 UV</p>
-                    </div>
-                </div>
+
+    <!-- Pestañas de navegación -->
+    <ul class="nav nav-tabs mt-4" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="pensum-tab" data-bs-toggle="tab" data-bs-target="#pensum" type="button" role="tab" aria-controls="pensum" aria-selected="true">
+                <i class="bi bi-grid-3x3"></i> Vista Pensum
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tabla-tab" data-bs-toggle="tab" data-bs-target="#tabla" type="button" role="tab" aria-controls="tabla" aria-selected="false">
+                <i class="bi bi-table"></i> Vista Tabla
+            </button>
+        </li>
+    </ul>
+
+    <!-- Contenido de las pestañas -->
+    <div class="tab-content" id="myTabContent">
+        <!-- Vista Pensum -->
+        <div class="tab-pane fade show active" id="pensum" role="tabpanel" aria-labelledby="pensum-tab">
+            <div class="row mt-3">
+                @for (int ciclo = 1; ciclo <= 10; ciclo++)
+                {
+                    <div class="col-md-2 col-sm-6 ciclo-columna" style="background-color: rgb(255, 255, 255);">
+                        <h6 class="ciclo-titulo text-center">@(ciclo == 1 ? "I" : ciclo == 2 ? "II" : ciclo == 3 ? "III" : ciclo == 4 ? "IV" : ciclo == 5 ? "V" : ciclo == 6 ? "VI" : ciclo == 7 ? "VII" : ciclo == 8 ? "VIII" : ciclo == 9 ? "IX" : "X")</h6>
+                        @foreach (var materia in Model.Materia.Where(m => m.Ciclo == ciclo))
+                        {
+                            <div class="small-container border">
+                                <div class="row border-bottom">
+                                    <div class="col-6 border-end text-center">
+                                        <p class="mb-0 materia-codigo">@materia.Correlativo</p>
+                                    </div>
+                                    <div class="col-6 text-center">
+                                        <p class="mb-0 materia-codigo">@materia.CodigoMateria</p>
+                                    </div>
+                                </div>
+                                <div class="row border-bottom">
+                                    <div class="col text-center">
+                                        <p class="materia-nombre">@materia.NombreMateria</p>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6 border-end text-center">
+                                        <p class="mb-0 materia-uv">@materia.Correlativo</p>
+                                    </div>
+                                    <div class="col-6 text-center">
+                                        <p class="mb-0 materia-uv">@materia.uv UV</p>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
             </div>
         </div>
 
-    </div>
-    <div class="container-fluid mt-4">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <table class="table table-striped table-hover">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>@Html.DisplayNameFor(model => model.Materia[0].NombreMateria)</th>
-                            <th>@Html.DisplayNameFor(model => model.Materia[0].CodigoMateria)</th>
-                            <th>@Html.DisplayNameFor(model => model.Materia[0].Ciclo)</th>
-                            <th>@Html.DisplayNameFor(model => model.Materia[0].Correlativo)</th>
-                            <th>@Html.DisplayNameFor(model => model.Materia[0].uv)</th>
-                            <th>@Html.DisplayNameFor(model => model.Materia[0].Pensum)</th>
-                            <th class="text-center">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var item in Model.Materia)
-                        {
+        <!-- Vista Tabla -->
+        <div class="tab-pane fade" id="tabla" role="tabpanel" aria-labelledby="tabla-tab">
+            <div class="card shadow-sm mt-3">
+                <div class="card-body">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
                             <tr>
-                                <td>@Html.DisplayFor(modelItem => item.NombreMateria)</td>
-                                <td>@Html.DisplayFor(modelItem => item.CodigoMateria)</td>
-                                <td>@Html.DisplayFor(modelItem => item.Ciclo)</td>
-                                <td>@Html.DisplayFor(modelItem => item.Correlativo)</td>
-                                <td>@Html.DisplayFor(modelItem => item.uv)</td>
-                                <td>@Html.DisplayFor(modelItem => item.Pensum!.CodigoPensum)</td>
-                                <td class="text-center">
-                                    <div class="btn-group">
-                                        <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                            Acciones
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" asp-page="./Create">Nuevo <i class="bi bi-plus-circle"></i></a></li>
-                                            <li><a class="dropdown-item" asp-page="./Edit" asp-route-id="@item.MateriaId">Editar <i class="bi bi-pencil-square"></i></a></li>
-                                            <li><a class="dropdown-item" asp-page="./Details" asp-route-id="@item.MateriaId">Detalles <i class="bi bi-info-circle"></i></a></li>
-                                            <!-- <li><a class="dropdown-item" asp-page="./Delete" asp-route-id="@item.MateriaId">Eliminar <i class="bi bi-trash"></i></a></li>//-->
-                                        </ul>
-                                    </div>
-                                </td>
+                                <th>@Html.DisplayNameFor(model => model.Materia[0].NombreMateria)</th>
+                                <th>@Html.DisplayNameFor(model => model.Materia[0].CodigoMateria)</th>
+                                <th>@Html.DisplayNameFor(model => model.Materia[0].Ciclo)</th>
+                                <th>@Html.DisplayNameFor(model => model.Materia[0].Correlativo)</th>
+                                <th>@Html.DisplayNameFor(model => model.Materia[0].uv)</th>
+                                <th>@Html.DisplayNameFor(model => model.Materia[0].Pensum)</th>
+                                <th class="text-center">Acciones</th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Materia)
+                            {
+                                <tr>
+                                    <td>@Html.DisplayFor(modelItem => item.NombreMateria)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.CodigoMateria)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.Ciclo)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.Correlativo)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.uv)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.Pensum!.CodigoPensum)</td>
+                                    <td class="text-center">
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Acciones
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" asp-page="./Create">Nuevo <i class="bi bi-plus-circle"></i></a></li>
+                                                <li><a class="dropdown-item" asp-page="./Edit" asp-route-id="@item.MateriaId">Editar <i class="bi bi-pencil-square"></i></a></li>
+                                                <li><a class="dropdown-item" asp-page="./Details" asp-route-id="@item.MateriaId">Detalles <i class="bi bi-info-circle"></i></a></li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
