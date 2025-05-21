@@ -7,10 +7,10 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using SRAUMOAR.Entidades.Alumnos;
 using SRAUMOAR.Modelos;
-using System.Drawing;
-using System.Drawing.Imaging;
 using Microsoft.AspNetCore.Authorization;
-
+using SixLabors.ImageSharp.Formats.Jpeg;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
 namespace SRAUMOAR.Pages.alumno
 {
     [Authorize(Roles = "Administrador,Administracion")]
@@ -49,37 +49,39 @@ namespace SRAUMOAR.Pages.alumno
                 using (var memoryStream = new MemoryStream())
                 {
                     await FotoUpload.CopyToAsync(memoryStream);
+                    memoryStream.Position = 0; // Reiniciar posición del stream antes de leerlo
 
-                    using (var originalImage = Image.FromStream(memoryStream))
+                    using (var image = SixLabors.ImageSharp.Image.Load(memoryStream))
                     {
                         var compressedImageStream = new MemoryStream();
-                        var jpegEncoder = GetEncoder(ImageFormat.Jpeg);
-                        var encoderParameters = new EncoderParameters(1);
-                        encoderParameters.Param[0] = new EncoderParameter(Encoder.Quality, 50L); // Ajusta la calidad aquí (0L-100L)
 
-                        originalImage.Save(compressedImageStream, jpegEncoder, encoderParameters);
+                        var encoder = new JpegEncoder
+                        {
+                            Quality = 50 // Calidad de 0 a 100
+                        };
+
+                        image.Save(compressedImageStream, encoder);
                         Alumno.Foto = compressedImageStream.ToArray();
                     }
                 }
             }
-
             _context.Alumno.Add(Alumno);
             await _context.SaveChangesAsync();
 
             return RedirectToPage("./Index");
         }
 
-        private ImageCodecInfo GetEncoder(ImageFormat format)
-        {
-            var codecs = ImageCodecInfo.GetImageDecoders();
-            foreach (var codec in codecs)
-            {
-                if (codec.FormatID == format.Guid)
-                {
-                    return codec;
-                }
-            }
-            return null;
-        }
+        //private ImageCodecInfo GetEncoder(ImageFormat format)
+        //{
+        //    var codecs = ImageCodecInfo.GetImageDecoders();
+        //    foreach (var codec in codecs)
+        //    {
+        //        if (codec.FormatID == format.Guid)
+        //        {
+        //            return codec;
+        //        }
+        //    }
+        //    return null;
+        //}
     }
 }

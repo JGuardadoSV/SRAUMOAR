@@ -2,193 +2,581 @@
 @model SRAUMOAR.Pages.alumno.CreateModel
 
 @{
-    ViewData["Title"] = "Nuevo";
+    ViewData["Title"] = "Nuevo Alumno";
+    Layout = "_Layout";
 }
 
-<!DOCTYPE html>
-<html lang="es">
-<body>
-    <header class="bg-primary text-white text-center py-3 mb-4">
-        <h1>Nuevo Alumno</h1>
-    </header>
-    <hr />
-    <div class="container mt-5">
-        <div class="card shadow-lg">
-            <div class="card-header bg-dark text-white text-center">
-                <h4 class="fs-4 fw-semibold text-white formal-text">Alumno</h4>
+<style>
+    .form-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+
+    .form-card:hover {
+        box-shadow: 0 0 30px rgba(0,0,0,0.15);
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%);
+        color: white;
+        border-radius: 15px 15px 0 0 !important;
+        padding: 1.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .input-group {
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+    }
+
+    .input-group:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .input-group-text {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        color: #1B5E20;
+    }
+
+    .form-control {
+        border: 1px solid #e9ecef;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        border-color: #1B5E20;
+        box-shadow: 0 0 0 0.2rem rgba(27, 94, 32, 0.15);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%);
+        border: none;
+        padding: 0.75rem 2rem;
+        font-weight: 500;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(27, 94, 32, 0.3);
+    }
+
+    .btn-secondary {
+        background: #f8f9fa;
+        color: #2c3e50;
+        border: 1px solid #e9ecef;
+        padding: 0.75rem 2rem;
+        font-weight: 500;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-secondary:hover {
+        background: #e9ecef;
+        transform: translateY(-2px);
+    }
+
+    .form-check {
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+        margin-right: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-check:hover {
+        background: #e9ecef;
+    }
+
+    .form-check-input:checked {
+        background-color: #1B5E20;
+        border-color: #1B5E20;
+    }
+
+    .validation-message {
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
+    .breadcrumb {
+        background: transparent;
+        padding: 0;
+    }
+
+    .breadcrumb-item a {
+        color: #1B5E20;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .breadcrumb-item a:hover {
+        color: #2E7D32;
+    }
+
+    .breadcrumb-item.active {
+        color: #6c757d;
+    }
+
+    .file-upload {
+        position: relative;
+        overflow: hidden;
+        margin: 10px;
+        border: 2px dashed #1B5E20;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        background: #f8f9fa;
+        transition: all 0.3s ease;
+    }
+
+    .file-upload:hover {
+        background: #e9ecef;
+        border-color: #2E7D32;
+    }
+
+    .file-upload input[type="file"] {
+        position: absolute;
+        top: 0;
+        right: 0;
+        min-width: 100%;
+        min-height: 100%;
+        font-size: 100px;
+        text-align: right;
+        filter: alpha(opacity=0);
+        opacity: 0;
+        outline: none;
+        cursor: pointer;
+        display: block;
+    }
+
+    .file-upload-text {
+        color: #1B5E20;
+        font-size: 1.1rem;
+        margin-bottom: 10px;
+    }
+
+    .preview-container {
+        margin-top: 15px;
+        display: none;
+    }
+
+    .preview-image {
+        max-width: 200px;
+        max-height: 200px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        object-fit: contain;
+    }
+
+    .remove-image {
+        color: #dc3545;
+        cursor: pointer;
+        margin-top: 10px;
+        display: inline-block;
+    }
+
+    .remove-image:hover {
+        color: #c82333;
+    }
+
+    .file-error {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 5px;
+        display: none;
+    }
+
+    @@media (max-width: 768px) {
+        .form-card {
+            margin: 1rem;
+        }
+        
+        .card-body {
+            padding: 1rem;
+        }
+    }
+</style>
+
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-4">
+                <div class="col-sm-6">
+                    <h1 class="m-0">
+                        <i class="bi bi-person-plus text-success me-2"></i>
+                        Nuevo Alumno
+                    </h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a asp-page="/Index">Inicio</a></li>
+                        <li class="breadcrumb-item"><a asp-page="Index">Alumnos</a></li>
+                        <li class="breadcrumb-item active">Nuevo</li>
+                    </ol>
+                </div>
             </div>
-            <div class="container mt-1">
-                <div class="row justify-content-center">
-                    <div class="col-md-5">
-                        <div class="card-body">
-                            <form method="post" enctype="multipart/form-data">
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <div class="card form-card">
+                        <div class="card-header">
+                            <h3 class="card-title mb-0">
+                                <i class="bi bi-person-plus me-2"></i> Información del Alumno
+                            </h3>
+                        </div>
+                        <div class="card-body p-4">
+                            <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
                                 <div asp-validation-summary="ModelOnly" class="alert alert-danger d-flex align-items-center" role="alert"></div>
 
-                                <div class="form-group">
-                                    <label class="form-label fs-4 fw-semibold text-dark formal-text">Género</label>
-
-                                    <div class="d-flex">
-                                        <div class="form-check me-3">
-                                            <input type="radio" asp-for="Alumno.Genero" value="0" id="generoMasculino" class="form-check-input">
-                                            <label class="form-check-label" for="generoMasculino">Masculino</label>
+                                <div class="row">
+                                    <div class="col-md-12 mb-4">
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="bi bi-gender-ambiguous me-2"></i> Género
+                                            </label>
+                                            <div class="d-flex">
+                                                <div class="form-check">
+                                                    <input type="radio" asp-for="Alumno.Genero" value="0" id="generoMasculino" class="form-check-input">
+                                                    <label class="form-check-label" for="generoMasculino">
+                                                        <i class="bi bi-gender-male me-2"></i> Masculino
+                                                    </label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input type="radio" asp-for="Alumno.Genero" value="1" id="generoFemenino" class="form-check-input">
+                                                    <label class="form-check-label" for="generoFemenino">
+                                                        <i class="bi bi-gender-female me-2"></i> Femenino
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <span asp-validation-for="Alumno.Genero" class="text-danger validation-message"></span>
                                         </div>
+                                    </div>
+                                </div>
 
-                                        <div class="form-check">
-                                            <input type="radio" asp-for="Alumno.Genero" value="1" id="generoFemenino" class="form-check-input">
-                                            <label class="form-check-label" for="generoFemenino">Femenino</label>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label asp-for="Alumno.Nombres" class="form-label">
+                                                <i class="bi bi-person me-2"></i> Nombres
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                                <input asp-for="Alumno.Nombres" class="form-control" placeholder="Ingrese los nombres del Alumno" />
+                                            </div>
+                                            <span asp-validation-for="Alumno.Nombres" class="text-danger validation-message"></span>
                                         </div>
                                     </div>
-
-                                    <span asp-validation-for="Alumno.Genero" class="text-danger"></span>
-                                </div>
-
-
-                                <div class="mb-3">
-                                    <label asp-for="Alumno.Nombres" class="form-label fs-4 fw-semibold text-dark formal-text">Nombres</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                        <input asp-for="Alumno.Nombres" class="form-control" placeholder="Ingrese los nombres del Alumno" />
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label asp-for="Alumno.Apellidos" class="form-label">
+                                                <i class="bi bi-person me-2"></i> Apellidos
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                                <input asp-for="Alumno.Apellidos" class="form-control" placeholder="Ingrese Apellidos del Alumno" />
+                                            </div>
+                                            <span asp-validation-for="Alumno.Apellidos" class="text-danger validation-message"></span>
+                                        </div>
                                     </div>
-                                    <br>
-                                    <span asp-validation-for="Alumno.Nombres" class="text-danger"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label asp-for="Alumno.Apellidos" class="form-label fs-4 fw-semibold text-dark formal-text">Apellidos</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                        <input asp-for="Alumno.Apellidos" class="form-control" placeholder="Ingrese Apellidos del Alumno" />
-                                    </div>
-                                    <br>
-                                    <span asp-validation-for="Alumno.Apellidos" class="text-danger"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label asp-for="Alumno.FechaDeNacimiento" class="form-label fs-4 fw-semibold text-dark formal-text">Fecha de Nacimiento</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                        <input asp-for="Alumno.FechaDeNacimiento" class="form-control" placeholder="Fecha de Nacimiento" />
-                                    </div>
-                                    <br>
-                                    <span asp-validation-for="Alumno.FechaDeNacimiento" class="text-danger"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label asp-for="Alumno.CarreraId" class="form-label fs-4 fw-semibold text-dark formal-text">Carrera Elegida</label>
-                                    <br>
-                                    <br>
-                                    <div class="input-group">
-
-                                        <span class="input-group-text"><i class="bi bi-map-fill"></i></span>
-                                        <select asp-for="Alumno.CarreraId" class="form-control" asp-items="ViewBag.CarreraId">
-                                            <option value="">Seleccione una carrera</option>
-                                        </select>
-                                    </div>
-                                    <br>
-                                    <span asp-validation-for="Alumno.MunicipioId" class="text-danger"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label asp-for="Alumno.Email" class="form-label fs-4 fw-semibold text-dark formal-text">Correo Electronico</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                        <input asp-for="Alumno.Email" class="form-control" placeholder="Ingrese Correo Electronico" />
-                                    </div>
-                                    <br>
-                                    <span asp-validation-for="Alumno.Email" class="text-danger"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label asp-for="Alumno.TelefonoPrimario"  class="form-label fs-4 fw-semibold text-dark formal-text">Telefono</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                        <input asp-for="Alumno.TelefonoPrimario" class="form-control" pattern="\d{4}-\d{4}" placeholder="Ingrese numero de Telefono 0000-0000" />
-                                    </div>
-                                    <br>
-                                    <span asp-validation-for="Alumno.TelefonoPrimario" class="text-danger"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label asp-for="Alumno.Whatsapp" class="form-label fs-4 fw-semibold text-dark formal-text">Whatsapp</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                        <input asp-for="Alumno.Whatsapp" class="form-control" placeholder="Ingrese numero de Whatsapp +503 0000-0000" />
-                                    </div>
-                                    <br>
-                                    <span asp-validation-for="Alumno.Whatsapp" class="text-danger"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label asp-for="Alumno.TelefonoSecundario" class="form-label fs-4 fw-semibold text-dark formal-text">Celular Alternativo</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                        <input asp-for="Alumno.TelefonoSecundario" class="form-control" pattern="\d{4}-\d{4}"  placeholder="Ingrese numero de Celular Alternativo 0000-0000" />
-                                    </div>
-                                    <br>
-                                    <span asp-validation-for="Alumno.TelefonoSecundario" class="text-danger"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label asp-for="Alumno.ContactoDeEmergencia" class="form-label fs-4 fw-semibold text-dark formal-text">Contacto de Emergencia</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                        <input asp-for="Alumno.ContactoDeEmergencia" class="form-control" placeholder="Ingrese Contacto de Emergencia" />
-                                    </div>
-                                    <br>
-                                    <span asp-validation-for="Alumno.ContactoDeEmergencia" class="text-danger"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label asp-for="Alumno.NumeroDeEmergencia" class="form-label fs-4 fw-semibold text-dark formal-text">Telefono de Emergencia</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                        <input asp-for="Alumno.NumeroDeEmergencia" class="form-control" pattern="\d{4}-\d{4}" placeholder="Ingrese Telefono de Emergencia 0000-0000" />
-                                    </div>
-                                    <br>
-                                    <span asp-validation-for="Alumno.NumeroDeEmergencia" class="text-danger"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label asp-for="Alumno.DireccionDeResidencia" class="form-label fs-4 fw-semibold text-dark formal-text">Dirección</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                        <input asp-for="Alumno.DireccionDeResidencia" class="form-control" placeholder="Ingrese Dirección" />
-                                    </div>
-                                    <br>
-                                    <span asp-validation-for="Alumno.DireccionDeResidencia" class="text-danger"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label asp-for="Alumno.MunicipioId" class="form-label fs-4 fw-semibold text-dark formal-text">Municipio de residencia</label>
-                                    <br>
-                                    <br>
-                                    <div class="input-group">
-                                        
-                                        <span class="input-group-text"><i class="bi bi-map-fill"></i></span>
-                                        <select asp-for="Alumno.MunicipioId" class="form-control" asp-items="ViewBag.MunicipioId">
-                                            <option value="">Seleccione un municipio</option>
-                                        </select>
-                                    </div>
-                                    <br>
-                                    <span asp-validation-for="Alumno.MunicipioId" class="text-danger"></span>
                                 </div>
 
-                                <div class="form-group">
-                                    <label asp-for="FotoUpload" class="control-label">Foto</label>
-                                    <input asp-for="FotoUpload" type="file" class="form-control" />
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label asp-for="Alumno.FechaDeNacimiento" class="form-label">
+                                                <i class="bi bi-calendar me-2"></i> Fecha de Nacimiento
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-calendar"></i></span>
+                                                <input asp-for="Alumno.FechaDeNacimiento" class="form-control" type="date" />
+                                            </div>
+                                            <span asp-validation-for="Alumno.FechaDeNacimiento" class="text-danger validation-message"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label asp-for="Alumno.CarreraId" class="form-label">
+                                                <i class="bi bi-mortarboard me-2"></i> Carrera
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-book"></i></span>
+                                                <select asp-for="Alumno.CarreraId" class="form-control" asp-items="ViewBag.CarreraId">
+                                                    <option value="">Seleccione una carrera</option>
+                                                </select>
+                                            </div>
+                                            <span asp-validation-for="Alumno.CarreraId" class="text-danger validation-message"></span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="d-grid gap-2">
-                                    <button type="submit" class="btn btn-primary btn-lg">
-                                        <i class="bi bi-plus-circle"></i> Crear
-                                    </button>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label asp-for="Alumno.Email" class="form-label">
+                                                <i class="bi bi-envelope me-2"></i> Correo Electrónico
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                                <input asp-for="Alumno.Email" class="form-control" type="email" placeholder="Ingrese Correo Electrónico" />
+                                            </div>
+                                            <span asp-validation-for="Alumno.Email" class="text-danger validation-message"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label asp-for="Alumno.TelefonoPrimario" class="form-label">
+                                                <i class="bi bi-telephone me-2"></i> Teléfono
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                                                <input asp-for="Alumno.TelefonoPrimario" class="form-control" pattern="\d{8}" placeholder="00000000" />
+                                            </div>
+                                            <span asp-validation-for="Alumno.TelefonoPrimario" class="text-danger validation-message"></span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <br>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label asp-for="Alumno.Whatsapp" class="form-label">
+                                                <i class="bi bi-whatsapp me-2"></i> WhatsApp
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-whatsapp"></i></span>
+                                                <input asp-for="Alumno.Whatsapp" class="form-control" placeholder="+50300000000" />
+                                            </div>
+                                            <span asp-validation-for="Alumno.Whatsapp" class="text-danger validation-message"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label asp-for="Alumno.TelefonoSecundario" class="form-label">
+                                                <i class="bi bi-phone me-2"></i> Celular Alternativo
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-phone"></i></span>
+                                                <input asp-for="Alumno.TelefonoSecundario" class="form-control" pattern="\d{8}" placeholder="00000000" />
+                                            </div>
+                                            <span asp-validation-for="Alumno.TelefonoSecundario" class="text-danger validation-message"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label asp-for="Alumno.ContactoDeEmergencia" class="form-label">
+                                                <i class="bi bi-person-badge me-2"></i> Contacto de Emergencia
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+                                                <input asp-for="Alumno.ContactoDeEmergencia" class="form-control" placeholder="Ingrese Contacto de Emergencia" />
+                                            </div>
+                                            <span asp-validation-for="Alumno.ContactoDeEmergencia" class="text-danger validation-message"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label asp-for="Alumno.NumeroDeEmergencia" class="form-label">
+                                                <i class="bi bi-telephone-fill me-2"></i> Teléfono de Emergencia
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-telephone-fill"></i></span>
+                                                <input asp-for="Alumno.NumeroDeEmergencia" class="form-control" pattern="\d{8}" placeholder="00000000" />
+                                            </div>
+                                            <span asp-validation-for="Alumno.NumeroDeEmergencia" class="text-danger validation-message"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label asp-for="Alumno.DireccionDeResidencia" class="form-label">
+                                                <i class="bi bi-geo-alt me-2"></i> Dirección
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                                                <input asp-for="Alumno.DireccionDeResidencia" class="form-control" placeholder="Ingrese Dirección" />
+                                            </div>
+                                            <span asp-validation-for="Alumno.DireccionDeResidencia" class="text-danger validation-message"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label asp-for="Alumno.MunicipioId" class="form-label">
+                                                <i class="bi bi-geo me-2"></i> Municipio
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-geo"></i></span>
+                                                <select asp-for="Alumno.MunicipioId" class="form-control" asp-items="ViewBag.MunicipioId">
+                                                    <option value="">Seleccione un municipio</option>
+                                                </select>
+                                            </div>
+                                            <span asp-validation-for="Alumno.MunicipioId" class="text-danger validation-message"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label asp-for="FotoUpload" class="form-label">
+                                                <i class="bi bi-camera me-2"></i> Foto
+                                            </label>
+                                            <div class="file-upload">
+                                                <div class="file-upload-text">
+                                                    <i class="bi bi-cloud-upload me-2"></i>
+                                                    Arrastra una imagen o haz clic para seleccionar
+                                                </div>
+                                                <input asp-for="FotoUpload" type="file" class="form-control" accept="image/jpeg,image/png,image/gif" id="fotoInput" />
+                                                <div class="preview-container" id="previewContainer">
+                                                    <img id="previewImage" class="preview-image" src="#" alt="Vista previa" />
+                                                    <div class="remove-image" id="removeImage">
+                                                        <i class="bi bi-x-circle me-1"></i> Eliminar imagen
+                                                    </div>
+                                                </div>
+                                                <div class="file-error" id="fileError">
+                                                    Por favor, selecciona una imagen válida (JPG, PNG o GIF)
+                                                </div>
+                                            </div>
+                                            <span asp-validation-for="FotoUpload" class="text-danger validation-message"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row mt-4">
+                                    <div class="col-12">
+                                        <div class="d-flex justify-content-between">
+                                            <a asp-page="Index" class="btn btn-secondary">
+                                                <i class="bi bi-arrow-left me-2"></i> Volver a la lista
+                                            </a>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="bi bi-plus-circle me-2"></i> Crear Alumno
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </form>
                         </div>
-                        <br>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    <div class="text-center mt-3">
-        <a asp-page="Index" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left"></i> Volver a la lista
-        </a>
-    </div>
-    @section Scripts {
-        @{
-            await Html.RenderPartialAsync("_ValidationScriptsPartial");
-        }
-    }
-</body>
-</html>
+    </section>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        // Activar validación de Bootstrap
+        (function () {
+            'use strict'
+            var forms = document.querySelectorAll('.needs-validation')
+            Array.prototype.slice.call(forms).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+                    form.classList.add('was-validated')
+                }, false)
+            })
+        })()
+
+        // Animación suave al hacer scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Vista previa de imagen
+        document.getElementById('fotoInput').addEventListener('change', function(e) {
+            const previewContainer = document.getElementById('previewContainer');
+            const previewImage = document.getElementById('previewImage');
+            const fileError = document.getElementById('fileError');
+            const file = e.target.files[0];
+
+            // Validar tipo de archivo
+            const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+            if (file && !validTypes.includes(file.type)) {
+                fileError.style.display = 'block';
+                previewContainer.style.display = 'none';
+                this.value = '';
+                return;
+            }
+
+            fileError.style.display = 'none';
+
+            if (file) {
+                // Validar tamaño (máximo 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    fileError.textContent = 'La imagen no debe superar los 5MB';
+                    fileError.style.display = 'block';
+                    previewContainer.style.display = 'none';
+                    this.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    previewContainer.style.display = 'block';
+                }
+                reader.onerror = function() {
+                    fileError.textContent = 'Error al leer la imagen';
+                    fileError.style.display = 'block';
+                    previewContainer.style.display = 'none';
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Eliminar imagen
+        document.getElementById('removeImage').addEventListener('click', function() {
+            const previewContainer = document.getElementById('previewContainer');
+            const previewImage = document.getElementById('previewImage');
+            const fotoInput = document.getElementById('fotoInput');
+            const fileError = document.getElementById('fileError');
+
+            previewImage.src = '#';
+            previewContainer.style.display = 'none';
+            fotoInput.value = '';
+            fileError.style.display = 'none';
+        });
+
+        // Prevenir envío del formulario si hay error en la imagen
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const fileError = document.getElementById('fileError');
+            if (fileError.style.display === 'block') {
+                e.preventDefault();
+            }
+        });
+    </script>
+}
