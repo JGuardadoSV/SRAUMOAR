@@ -350,7 +350,7 @@
                                             </label>
                                             <div class="input-group">
                                                 <span class="input-group-text"><i class="bi bi-telephone"></i></span>
-                                                <input asp-for="Alumno.TelefonoPrimario" class="form-control" pattern="\d{8}" placeholder="00000000" />
+                                                <input asp-for="Alumno.TelefonoPrimario" class="form-control" pattern="\d{4}-\d{4}" placeholder="0000-0000" />
                                             </div>
                                             <span asp-validation-for="Alumno.TelefonoPrimario" class="text-danger validation-message"></span>
                                         </div>
@@ -365,7 +365,7 @@
                                             </label>
                                             <div class="input-group">
                                                 <span class="input-group-text"><i class="bi bi-whatsapp"></i></span>
-                                                <input asp-for="Alumno.Whatsapp" class="form-control" placeholder="+50300000000" />
+                                                <input asp-for="Alumno.Whatsapp" class="form-control" placeholder="+503 0000-0000" />
                                             </div>
                                             <span asp-validation-for="Alumno.Whatsapp" class="text-danger validation-message"></span>
                                         </div>
@@ -377,7 +377,7 @@
                                             </label>
                                             <div class="input-group">
                                                 <span class="input-group-text"><i class="bi bi-phone"></i></span>
-                                                <input asp-for="Alumno.TelefonoSecundario" class="form-control" pattern="\d{8}" placeholder="00000000" />
+                                                <input asp-for="Alumno.TelefonoSecundario" class="form-control" pattern="\d{4}-\d{4}" placeholder="0000-0000" />
                                             </div>
                                             <span asp-validation-for="Alumno.TelefonoSecundario" class="text-danger validation-message"></span>
                                         </div>
@@ -404,7 +404,7 @@
                                             </label>
                                             <div class="input-group">
                                                 <span class="input-group-text"><i class="bi bi-telephone-fill"></i></span>
-                                                <input asp-for="Alumno.NumeroDeEmergencia" class="form-control" pattern="\d{8}" placeholder="00000000" />
+                                                <input asp-for="Alumno.NumeroDeEmergencia" class="form-control" pattern="\d{4}-\d{4}" placeholder="0000-0000" />
                                             </div>
                                             <span asp-validation-for="Alumno.NumeroDeEmergencia" class="text-danger validation-message"></span>
                                         </div>
