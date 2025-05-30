@@ -141,27 +141,24 @@
         /* Estilos para el buscador de alumnos */
         .search-container {
             position: relative;
-            margin: 1rem 0;
+            margin: 0;
         }
 
         .search-input-group {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            background: #f8f9fa;
+            border-radius: 8px;
+            box-shadow: none;
             transition: all 0.3s ease;
-        }
-
-        .search-input-group:focus-within {
-            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
-            transform: translateY(-2px);
+            border: 1px solid #e9ecef;
         }
 
         .search-input {
             border: none;
-            padding: 1rem 1.5rem;
-            font-size: 1.1rem;
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
             width: 100%;
             background: transparent;
+            height: 38px;
         }
 
         .search-input:focus {
@@ -170,8 +167,8 @@
 
         .search-icon {
             color: #6c757d;
-            padding: 0 1.5rem;
-            font-size: 1.2rem;
+            padding: 0 1rem;
+            font-size: 1.1rem;
         }
 
         /* Estilos para los resultados del autocompletado */
@@ -188,6 +185,8 @@
             min-width: 260px;
             left: 50% !important;
             transform: translateX(-50%) !important;
+            top: 48px !important;
+            z-index: 2000;
         }
 
         .ui-autocomplete .ui-menu-item {
@@ -278,12 +277,10 @@
                 <ul class="navbar-nav">
                     <li class="nav-item"> <a class="nav-link" data-lte-toggle="sidebar" href="#" role="button"> <i class="bi bi-list"></i> </a> </li>
                     <li class="nav-item d-none d-md-block" title="Ir a inicio">
-
                         @if (User.IsInRole("Administracion") || User.IsInRole("Administrador"))
                         {
                             <a asp-page="/Home" class="nav-link"><i class="nav-icon bi bi-house"></i></a>
                         }
-                        
                         @if (User.IsInRole("Docentes") )
                         {
                             <a asp-page="/portal/docente/Index" class="nav-link"><i class="nav-icon bi bi-house"></i></a>
@@ -292,16 +289,41 @@
                         {
                             <a asp-page="/portal/estudiante/Index" class="nav-link"><i class="nav-icon bi bi-house"></i></a>
                         }
-
                     </li>
-
-                </ul> <!--end::Start Navbar Links--> <!--begin::End Navbar Links-->
-                <ul class="navbar-nav ms-auto">
-                    <!--begin::Navbar Search-->
-                    <li class="nav-item"> <a class="nav-link" data-widget="navbar-search" href="#" role="button"> <i class="bi bi-search"></i> </a> </li> <!--end::Navbar Search--> <!--begin::Messages Dropdown Menu-->
-
-
-                    <li class="nav-item"> <a class="nav-link" href="#" data-lte-toggle="fullscreen"> <i data-lte-icon="maximize" class="bi bi-arrows-fullscreen"></i> <i data-lte-icon="minimize" class="bi bi-fullscreen-exit" style="display: none;"></i> </a> </li> <!--end::Fullscreen Toggle--> <!--begin::User Menu Dropdown-->
+                </ul>
+                <!--end::Start Navbar Links-->
+                <div class="d-none d-md-flex align-items-center ms-auto" style="max-width: 420px; width: 100%;">
+                    @if (User.IsInRole("Administracion") || User.IsInRole("Administrador"))
+                    {
+                        <div class="search-container mb-0" style="width:100%;">
+                            <form method="get" id="searchForm">
+                                @Html.AntiForgeryToken()
+                                <div class="search-input-group" style="box-shadow:none; border-radius:8px;">
+                                    <div class="d-flex align-items-center">
+                                        <span class="search-icon">
+                                            <i class="bi bi-search"></i>
+                                        </span>
+                                        <input type="text"
+                                               id="studentSearch"
+                                               name="searchTerm"
+                                               class="search-input"
+                                               placeholder="Buscar alumno..."
+                                               autocomplete="off"
+                                               style="padding:0.5rem 1rem; font-size:1rem; height:38px;">
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    }
+                </div>
+                <ul class="navbar-nav ms-2">
+                    <!-- Quitar el icono de búsqueda -->
+                    <!--<li class="nav-item"> <a class="nav-link" data-widget="navbar-search" href="#" role="button"> <i class="bi bi-search"></i> </a> </li>-->
+                    <!--end::Navbar Search-->
+                    <!--begin::Messages Dropdown Menu-->
+                    <li class="nav-item"> <a class="nav-link" href="#" data-lte-toggle="fullscreen"> <i data-lte-icon="maximize" class="bi bi-arrows-fullscreen"></i> <i data-lte-icon="minimize" class="bi bi-fullscreen-exit" style="display: none;"></i> </a> </li>
+                    <!--end::Fullscreen Toggle-->
+                    <!--begin::User Menu Dropdown-->
                     <li class="nav-item dropdown user-menu">
                         <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
                             <img src="~/assets/img/user2-160x160.jpg" class="user-image rounded-circle shadow" alt="User Image">
@@ -350,9 +372,12 @@
                             </li> <!--end::Menu Footer-->
                         </ul>
                     </li> <!--end::User Menu Dropdown-->
-                </ul> <!--end::End Navbar Links-->
-            </div> <!--end::Container-->
-        </nav> <!--end::Header--> <!--begin::Sidebar-->
+                </ul>
+            </div>
+            <!--end::Container-->
+        </nav>
+        <!--end::Header-->
+        <!--begin::Sidebar-->
         <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
             <!--begin::Sidebar Brand-->
             <div class="sidebar-brand"> <!--begin::Brand Link--> <a asp-page="/Index" class="brand-link"> <!--begin::Brand Image--> <img src="~/assets/img/logo1.jpg" alt="Logo" class="brand-image opacity-75 shadow"> <!--end::Brand Image--> <!--begin::Brand Text-->  <!--end::Brand Text--> </a> <!--end::Brand Link--> </div> <!--end::Sidebar Brand--> <!--begin::Sidebar Wrapper-->
@@ -621,7 +646,7 @@
                                 <div class="row justify-content-center">
                                     <div class="col-md-8">
                                         <div class="search-container">
-                                            <form method="get" id="searchForm">
+                                           @*  <form method="get" id="searchForm">
                                                 @Html.AntiForgeryToken()
                                                 <div class="search-input-group">
                                                     <div class="d-flex align-items-center">
@@ -636,7 +661,7 @@
                                                                autocomplete="off">
                                                     </div>
                                                 </div>
-                                            </form>
+                                            </form> *@
                                         </div>
                                     </div>
                                 </div>
