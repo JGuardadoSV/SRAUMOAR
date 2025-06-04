@@ -212,6 +212,100 @@
             padding: 1rem;
         }
     }
+
+    /* Estilos para Select2 */
+    .select2-container {
+        width: 100% !important;
+    }
+
+    .select2-container--default .select2-selection--single {
+        height: 38px;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        background-color: #fff;
+        transition: all 0.3s ease;
+    }
+
+    .select2-container--default .select2-selection--single:hover {
+        border-color: #1B5E20;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 38px;
+        padding-left: 12px;
+        color: #2c3e50;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px;
+        width: 36px;
+    }
+
+    .select2-container--default .select2-search--dropdown .select2-search__field {
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        padding: 8px 12px;
+    }
+
+    .select2-container--default .select2-search--dropdown .select2-search__field:focus {
+        border-color: #1B5E20;
+        outline: none;
+        box-shadow: 0 0 0 0.2rem rgba(27, 94, 32, 0.15);
+    }
+
+    .select2-dropdown {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: #1B5E20;
+    }
+
+    .select2-container--default .select2-results__option[aria-selected=true] {
+        background-color: #e8f5e9;
+        color: #1B5E20;
+    }
+
+    .select2-container--default .select2-results__option {
+        padding: 10px 12px;
+        transition: all 0.2s ease;
+    }
+
+    .select2-container--default .select2-results__option:hover {
+        background-color: #f8f9fa;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__placeholder {
+        color: #6c757d;
+    }
+
+    .select2-container--default.select2-container--focus .select2-selection--single {
+        border-color: #1B5E20;
+        box-shadow: 0 0 0 0.2rem rgba(27, 94, 32, 0.15);
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__clear {
+        color: #dc3545;
+        margin-right: 30px;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__clear:hover {
+        color: #c82333;
+    }
+
+    .select2-container--default .select2-results__option .select2-results__option {
+        padding-left: 24px;
+    }
+
+    .select2-container--default .select2-results__group {
+        padding: 8px 12px;
+        font-weight: 600;
+        color: #1B5E20;
+        background-color: #f8f9fa;
+    }
+
 </style>
 
 <div class="content-wrapper">
@@ -302,7 +396,7 @@
                                 </div>
 
                                 <div class="row">
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <div class="form-group">
                                             <label asp-for="Alumno.FechaDeNacimiento" class="form-label">
                                                 <i class="bi bi-calendar me-2"></i> Fecha de Nacimiento
@@ -314,7 +408,19 @@
                                             <span asp-validation-for="Alumno.FechaDeNacimiento" class="text-danger validation-message"></span>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label asp-for="Alumno.Carnet" class="form-label">
+                                                <i class="bi bi-calendar me-2"></i> Carnet
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-calendar"></i></span>
+                                                <input asp-for="Alumno.Carnet" class="form-control" type="text" />
+                                            </div>
+                                            <span asp-validation-for="Alumno.Carnet" class="text-danger validation-message"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
                                         <div class="form-group">
                                             <label asp-for="Alumno.CarreraId" class="form-label">
                                                 <i class="bi bi-mortarboard me-2"></i> Carrera
@@ -331,7 +437,7 @@
                                 </div>
 
                                 <div class="row">
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <div class="form-group">
                                             <label asp-for="Alumno.Email" class="form-label">
                                                 <i class="bi bi-envelope me-2"></i> Correo Electrónico
@@ -343,16 +449,28 @@
                                             <span asp-validation-for="Alumno.Email" class="text-danger validation-message"></span>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <div class="form-group">
                                             <label asp-for="Alumno.TelefonoPrimario" class="form-label">
                                                 <i class="bi bi-telephone me-2"></i> Teléfono
                                             </label>
                                             <div class="input-group">
                                                 <span class="input-group-text"><i class="bi bi-telephone"></i></span>
-                                                <input asp-for="Alumno.TelefonoPrimario" class="form-control" pattern="\d{4}-\d{4}" placeholder="0000-0000" />
+                                                <input asp-for="Alumno.TelefonoPrimario" class="form-control" placeholder="00000000" maxlength="8" oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
                                             </div>
                                             <span asp-validation-for="Alumno.TelefonoPrimario" class="text-danger validation-message"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label asp-for="Alumno.DUI" class="form-label">
+                                                <i class="bi bi-telephone me-2"></i> DUI
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                                                <input asp-for="Alumno.DUI" class="form-control" placeholder="00000000-0" />
+                                            </div>
+                                            <span asp-validation-for="Alumno.DUI" class="text-danger validation-message"></span>
                                         </div>
                                     </div>
                                 </div>
@@ -365,7 +483,7 @@
                                             </label>
                                             <div class="input-group">
                                                 <span class="input-group-text"><i class="bi bi-whatsapp"></i></span>
-                                                <input asp-for="Alumno.Whatsapp" class="form-control" placeholder="+503 0000-0000" />
+                                                <input asp-for="Alumno.Whatsapp" class="form-control" placeholder="+50300000000" maxlength="12" oninput="this.value = this.value.replace(/[^0-9+]/g, '')" />
                                             </div>
                                             <span asp-validation-for="Alumno.Whatsapp" class="text-danger validation-message"></span>
                                         </div>
@@ -377,7 +495,7 @@
                                             </label>
                                             <div class="input-group">
                                                 <span class="input-group-text"><i class="bi bi-phone"></i></span>
-                                                <input asp-for="Alumno.TelefonoSecundario" class="form-control" pattern="\d{4}-\d{4}" placeholder="0000-0000" />
+                                                <input asp-for="Alumno.TelefonoSecundario" class="form-control" placeholder="00000000" maxlength="8" oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
                                             </div>
                                             <span asp-validation-for="Alumno.TelefonoSecundario" class="text-danger validation-message"></span>
                                         </div>
@@ -404,7 +522,7 @@
                                             </label>
                                             <div class="input-group">
                                                 <span class="input-group-text"><i class="bi bi-telephone-fill"></i></span>
-                                                <input asp-for="Alumno.NumeroDeEmergencia" class="form-control" pattern="\d{4}-\d{4}" placeholder="0000-0000" />
+                                                <input asp-for="Alumno.NumeroDeEmergencia" class="form-control" placeholder="00000000" maxlength="8" oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
                                             </div>
                                             <span asp-validation-for="Alumno.NumeroDeEmergencia" class="text-danger validation-message"></span>
                                         </div>
@@ -427,11 +545,11 @@
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label asp-for="Alumno.MunicipioId" class="form-label">
-                                                <i class="bi bi-geo me-2"></i> Municipio
+                                                <i class="bi bi-geo-alt me-2"></i> Municipio
                                             </label>
                                             <div class="input-group">
-                                                <span class="input-group-text"><i class="bi bi-geo"></i></span>
-                                                <select asp-for="Alumno.MunicipioId" class="form-control" asp-items="ViewBag.MunicipioId">
+                                                <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                                                <select asp-for="Alumno.MunicipioId" class="form-control select2" asp-items="ViewBag.MunicipioId">
                                                     <option value="">Seleccione un municipio</option>
                                                 </select>
                                             </div>
@@ -490,6 +608,8 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         // Activar validación de Bootstrap
         (function () {
@@ -578,5 +698,40 @@
                 e.preventDefault();
             }
         });
+
+        $(document).ready(function() {
+            $('.select2').select2({
+                placeholder: "Buscar municipio o distrito...",
+                allowClear: true,
+                language: {
+                    noResults: function() {
+                        return "No se encontraron resultados";
+                    },
+                    searching: function() {
+                        return "Buscando...";
+                    }
+                },
+                templateResult: formatMunicipio,
+                templateSelection: formatMunicipio
+            }).on('select2:open', function() {
+                setTimeout(function() {
+                    $('.select2-search__field').focus();
+                }, 10);
+            });
+        });
+
+        function formatMunicipio(municipio) {
+            if (!municipio.id) {
+                return municipio.text;
+            }
+
+            var $container = $(
+                "<div class='select2-result-municipio'>" +
+                    "<div class='select2-result-municipio__title'>" + municipio.text + "</div>" +
+                "</div>"
+            );
+
+            return $container;
+        }
     </script>
 }

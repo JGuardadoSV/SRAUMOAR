@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Authorization;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
+using Microsoft.EntityFrameworkCore;
+
 namespace SRAUMOAR.Pages.alumno
 {
     [Authorize(Roles = "Administrador,Administracion")]
@@ -23,11 +25,41 @@ namespace SRAUMOAR.Pages.alumno
             _context = context;
         }
 
+        [BindProperty(SupportsGet = true)]
+        public string? BuscarMunicipio { get; set; }
+
         public IActionResult OnGet()
         {
-            ViewData["MunicipioId"] = new SelectList(_context.Municipios, "MunicipioId", "NombreMunicipio", selectedValue: null);
-            ViewData["CarreraId"] = new SelectList(_context.Carreras, "CarreraId", "NombreCarrera", selectedValue: null);
+            CargarCombos();
             return Page();
+        }
+
+        private void CargarCombos()
+        {
+            var query = _context.Municipios
+                .Include(m => m.Distrito)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(BuscarMunicipio))
+            {
+                query = query.Where(m => m.NombreMunicipio.Contains(BuscarMunicipio) || 
+                                       m.Distrito.NombreDistrito.Contains(BuscarMunicipio));
+            }
+
+            var orderedQuery = query.OrderBy(m => m.Distrito.NombreDistrito)
+                                  .ThenBy(m => m.NombreMunicipio);
+
+            ViewData["MunicipioId"] = new SelectList(
+                orderedQuery.Select(m => new {
+                    MunicipioId = m.MunicipioId,
+                    NombreCompleto = $"{m.NombreMunicipio} - {m.Distrito.NombreDistrito}"
+                }),
+                "MunicipioId",
+                "NombreCompleto",
+                Alumno?.MunicipioId
+            );
+
+            ViewData["CarreraId"] = new SelectList(_context.Carreras, "CarreraId", "NombreCarrera", Alumno?.CarreraId);
         }
 
         [BindProperty]
@@ -41,6 +73,7 @@ namespace SRAUMOAR.Pages.alumno
         {
             if (!ModelState.IsValid)
             {
+                CargarCombos();
                 return Page();
             }
 
@@ -49,22 +82,17 @@ namespace SRAUMOAR.Pages.alumno
                 using (var memoryStream = new MemoryStream())
                 {
                     await FotoUpload.CopyToAsync(memoryStream);
-                    memoryStream.Position = 0; // Reiniciar posición del stream antes de leerlo
+                    memoryStream.Position = 0;
 
                     using (var image = SixLabors.ImageSharp.Image.Load(memoryStream))
                     {
                         var compressedImageStream = new MemoryStream();
-
-                        var encoder = new JpegEncoder
-                        {
-                            Quality = 50 // Calidad de 0 a 100
-                        };
-
-                        image.Save(compressedImageStream, encoder);
+                        image.Save(compressedImageStream, new JpegEncoder { Quality = 75 });
                         Alumno.Foto = compressedImageStream.ToArray();
                     }
                 }
             }
+
             _context.Alumno.Add(Alumno);
             await _context.SaveChangesAsync();
 

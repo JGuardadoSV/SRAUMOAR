@@ -168,6 +168,35 @@
         color: #2c3e50;
     }
 
+    .pagination {
+        margin-bottom: 0;
+    }
+
+    .pagination .page-link {
+        color: #2c3e50;
+        border: none;
+        padding: 0.5rem 1rem;
+        margin: 0 0.2rem;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+    }
+
+    .pagination .page-link:hover {
+        background-color: #f8f9fa;
+        color: #2c3e50;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: #2c3e50;
+        color: white;
+    }
+
+    .pagination .page-item.disabled .page-link {
+        color: #6c757d;
+        pointer-events: none;
+        background-color: #f8f9fa;
+    }
+
     @@media (max-width: 768px) {
         .table-responsive {
             border-radius: 12px;
@@ -313,6 +342,45 @@
                                 }
                             </tbody>
                         </table>
+
+                        @if (Model.Alumno.Any())
+                        {
+                            <div class="d-flex justify-content-between align-items-center mt-4">
+                                <div>
+                                    <span class="text-muted">
+                                        Mostrando @(((Model.PageNumber - 1) * Model.PageSize) + 1) a 
+                                        @(Math.Min(Model.PageNumber * Model.PageSize, Model.TotalPages * Model.PageSize)) 
+                                        de @(Model.TotalPages * Model.PageSize) resultados
+                                    </span>
+                                </div>
+                                <nav aria-label="Navegación de páginas">
+                                    <ul class="pagination mb-0">
+                                        <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                                            <a class="page-link" asp-page="./Index" asp-route-PageNumber="@(Model.PageNumber - 1)" aria-label="Anterior">
+                                                <span aria-hidden="true">&laquo;</span>
+                                            </a>
+                                        </li>
+                                        @for (int i = 1; i <= Model.TotalPages; i++)
+                                        {
+                                            <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                                                <a class="page-link" asp-page="./Index" asp-route-PageNumber="@i">@i</a>
+                                            </li>
+                                        }
+                                        <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                                            <a class="page-link" asp-page="./Index" asp-route-PageNumber="@(Model.PageNumber + 1)" aria-label="Siguiente">
+                                                <span aria-hidden="true">&raquo;</span>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-info mt-4">
+                                No hay estudiantes inscritos
+                            </div>
+                        }
                     </div>
                 </div>
             </div>

@@ -30,6 +30,17 @@ namespace SRAUMOAR.Pages.inscripcion
         public async Task OnGetAsync()
         {
             var cicloactual = _context.Ciclos.Where(x => x.Activo == true).FirstOrDefault()?.Id ?? 0;
+            
+            // Obtener la primera carrera si no hay una seleccionada o si se seleccionó la opción 0
+            if (!SelectedCarreraId.HasValue || SelectedCarreraId == 0)
+            {
+                var primeraCarrera = await _context.Carreras.FirstOrDefaultAsync();
+                if (primeraCarrera != null)
+                {
+                    SelectedCarreraId = primeraCarrera.CarreraId;
+                }
+            }
+
             ViewData["GrupoId"] = new SelectList(
               _context.Carreras
               .Select(c => new

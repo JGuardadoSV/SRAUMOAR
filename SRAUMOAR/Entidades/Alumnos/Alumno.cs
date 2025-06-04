@@ -33,6 +33,9 @@ namespace SRAUMOAR.Entidades.Alumnos
         [EmailAddress(ErrorMessage = "Email inválido")]
         public string? Email { get; set; }
 
+        [Display(Name = "DUI")]
+        public string? DUI { get; set; }
+
         [Required(ErrorMessage = "El teléfono primario es obligatorio")]
         [Display(Name = "Teléfono primario")]
         [RegularExpression(@"^\d{8}$", ErrorMessage = "El teléfono primario no tiene un formato válido (00000000)")]

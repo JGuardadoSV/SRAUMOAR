@@ -98,7 +98,9 @@
                 <div class="form-group">
                     <span class="text-danger">*</span>
                     <label asp-for="MateriasInscritas.MateriasGrupoId" class="control-label">Grupo de Materias</label>
-                    <select asp-for="MateriasInscritas.MateriasGrupoId" class="form-control" asp-items="ViewBag.MateriasGrupoId"></select>
+                    <select asp-for="MateriasSeleccionadas" class="form-select" multiple size="5" asp-items="ViewBag.MateriasGrupoId">
+                    </select>
+                    <small class="form-text text-muted">Mantén presionado Ctrl (o Cmd en Mac) para seleccionar múltiples materias</small>
                 </div>
                @*  <div class="form-group form-check">
                     <input class="form-check-input" asp-for="MateriasInscritas.Aprobada" id="aprobadaCheck" />

@@ -25,10 +25,22 @@ namespace SRAUMOAR.Pages.alumno
         public IList<Alumno> Alumno { get; set; } = default!;
         public string busqueda { get; set; }
 
+        [BindProperty(SupportsGet = true)]
+        public int PageNumber { get; set; } = 1;
+        
+        public int PageSize { get; set; } = 10;
+        
+        public int TotalPages { get; set; }
+        
+        public bool HasPreviousPage => PageNumber > 1;
+        public bool HasNextPage => PageNumber < TotalPages;
+
         public async Task OnGetAsync()
         {
-            Alumno = await _alumnoService.ObtenerAlumnosAsync();
+            var totalItems = await _alumnoService.ObtenerTotalAlumnosAsync();
+            TotalPages = (int)Math.Ceiling(totalItems / (double)PageSize);
+
+            Alumno = await _alumnoService.ObtenerAlumnosPaginadosAsync(PageNumber, PageSize);
         }
     }
-
 }

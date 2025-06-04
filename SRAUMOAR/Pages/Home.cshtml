@@ -107,44 +107,83 @@
                 </form>
 
         <h2 class="mb-4">Lista de últimos estudiantes inscritos</h2>
-                <table class="table table-striped table-hover">
-                    <thead class="table-dark">
-                        <tr>
-                            <th></th>
-                            <th>Fecha</th>
-                            <th>@Html.DisplayNameFor(model => model.Alumno[0].Nombres)</th>
-                            <th>@Html.DisplayNameFor(model => model.Alumno[0].Apellidos)</th>
-                            <th>Carrera</th>
-                           <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var item in Model.Alumno)
-                        {
-                            <tr>
-                                <td>@Html.Raw($@"{(item.Genero == 0 ? "<i class='bi bi-gender-male'></i>" : "<i class='bi bi-gender-female'></i>")}")</td>
-                                <td>@item.FechaDeRegistro.ToString("dd/MM/yyyy")</td>
-                                <td>@Html.DisplayFor(modelItem => item.Nombres)</td>
-                                <td>@Html.DisplayFor(modelItem => item.Apellidos)</td>
-                                <td>@Html.DisplayFor(modelItem => item.Carrera.NombreCarrera)</td>
-                                <td class="text-center">
-                                    <div class="btn-group">
-                                        <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                            Acciones
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" asp-page="/aranceles/Cobrar" asp-route-id="@item.AlumnoId">Aranceles <i class="bi bi-dollar"></i></a></li>
-                                            <li><a class="dropdown-item" asp-page="/alumno/Edit" asp-route-id="@item.AlumnoId">Editar <i class="bi bi-pencil-square"></i></a></li>
-                                            <li><a class="dropdown-item" href="#">Imprimir <i class="bi bi-printer"></i></a></li>
-                                            <!-- <li><a class="dropdown-item" asp-page="./Delete" asp-route-id="@item.AlumnoId">Eliminar <i class="bi bi-trash"></i></a></li>//-->
-                                        </ul>
-                                    </div>
-                                </td>
-                           
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Lista de últimos estudiantes inscritos</h3>
+                                </div>
+                                <div class="card-body">
+                                    @if (Model.Alumno != null && Model.Alumno.Any())
+                                    {
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Nombres</th>
+                                                        <th>Apellidos</th>
+                                                        <th>Fecha de Nacimiento</th>
+                                                        <th>Email</th>
+                                                        <th>Acciones</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var item in Model.Alumno)
+                                                    {
+                                                        <tr>
+                                                            <td>@item.Nombres</td>
+                                                            <td>@item.Apellidos</td>
+                                                            <td>@item.FechaDeNacimiento.ToShortDateString()</td>
+                                                            <td>@item.Email</td>
+                                                            <td>
+                                                                <a asp-page="/alumno/Details" asp-route-id="@item.AlumnoId" class="btn btn-info btn-sm">
+                                                                    <i class="fas fa-eye"></i> Detalles
+                                                                </a>
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <div class="d-flex justify-content-between align-items-center mt-3">
+                                            <div>
+                                                Mostrando @(((Model.PageNumber - 1) * Model.PageSize) + 1) a @(Math.Min(Model.PageNumber * Model.PageSize, Model.TotalPages * Model.PageSize)) de @(Model.TotalPages * Model.PageSize) resultados
+                                            </div>
+                                            <nav aria-label="Navegación de páginas">
+                                                <ul class="pagination">
+                                                    <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                                                        <a class="page-link" asp-page="./Home" asp-route-pageNumber="@(Model.PageNumber - 1)" aria-label="Anterior">
+                                                            <span aria-hidden="true">&laquo;</span>
+                                                        </a>
+                                                    </li>
+                                                    @for (int i = 1; i <= Model.TotalPages; i++)
+                                                    {
+                                                        <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                                                            <a class="page-link" asp-page="./Home" asp-route-pageNumber="@i">@i</a>
+                                                        </li>
+                                                    }
+                                                    <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                                                        <a class="page-link" asp-page="./Home" asp-route-pageNumber="@(Model.PageNumber + 1)" aria-label="Siguiente">
+                                                            <span aria-hidden="true">&raquo;</span>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </nav>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="alert alert-info">
+                                            No hay estudiantes inscritos en este año.
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
         </div>
         </div>
     }
@@ -155,3 +194,31 @@
     }
 
 </div> <!--end::Row--> <!--begin::Row-->
+
+<style>
+    .pagination {
+        margin-bottom: 0;
+    }
+    .page-link {
+        color: #007bff;
+        background-color: #fff;
+        border: 1px solid #dee2e6;
+    }
+    .page-item.active .page-link {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+    .page-item.disabled .page-link {
+        color: #6c757d;
+        pointer-events: none;
+        background-color: #fff;
+        border-color: #dee2e6;
+    }
+    .table th {
+        background-color: #f8f9fa;
+    }
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+</style>

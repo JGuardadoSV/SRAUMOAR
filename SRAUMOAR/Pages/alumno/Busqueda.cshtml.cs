@@ -22,11 +22,34 @@ namespace SRAUMOAR.Pages.alumno
         }
 
         public IList<Alumno> Alumno { get; set; } = default!;
-        public string busqueda;
+        public string busqueda { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public int PageNumber { get; set; } = 1;
+        
+        public int PageSize { get; set; } = 10;
+        
+        public int TotalPages { get; set; }
+        
+        public bool HasPreviousPage => PageNumber > 1;
+        public bool HasNextPage => PageNumber < TotalPages;
+
         public async Task OnGetAsync()
         {
             this.busqueda = Request.Query["buscar"];
-            Alumno = await _context.Alumno.Where(a => a.Nombres.Contains(busqueda) || a.Apellidos.Contains(busqueda) || a.TelefonoPrimario.Contains(busqueda)).ToListAsync();
+            
+            var query = _context.Alumno
+                .Where(a => a.Nombres.Contains(busqueda) || 
+                           a.Apellidos.Contains(busqueda) || 
+                           a.TelefonoPrimario.Contains(busqueda));
+
+            var totalItems = await query.CountAsync();
+            TotalPages = (int)Math.Ceiling(totalItems / (double)PageSize);
+
+            Alumno = await query
+                .Skip((PageNumber - 1) * PageSize)
+                .Take(PageSize)
+                .ToListAsync();
         }
     }
 }
