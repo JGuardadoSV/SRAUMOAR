@@ -31,12 +31,13 @@ namespace SRAUMOAR.Pages
                 var usuario = await _context.Usuarios.Where(x=>x.NombreUsuario==LoginData.NombreUsuario && x.Clave==LoginData.Clave && x.Activo==true).Include(x=>x.NivelAcceso).FirstOrDefaultAsync();
                 if (usuario != null)
                 {
-                    string nombre;
+                    string nombre;string idalumno="0";
                     try
                     {
                         if (usuario.NivelAcceso.Nombre == "Estudiantes")
                         {
                             nombre = _context.Alumno.Where(x => x.UsuarioId == usuario.IdUsuario).First().Nombres;
+                            idalumno = _context.Alumno.Where(x => x.UsuarioId == usuario.IdUsuario).First().AlumnoId.ToString();
                             var alumno = _context.Alumno.Where(x => x.UsuarioId == usuario.IdUsuario).FirstOrDefault();
                             if (alumno != null)
                             {
@@ -66,6 +67,7 @@ namespace SRAUMOAR.Pages
                     new Claim(ClaimTypes.Role, usuario.NivelAcceso.Nombre.ToString()),
                     new Claim(ClaimTypes.Email, usuario.NombreUsuario),
                     new Claim("NombreCompleto", nombre),
+                     new Claim("idalumno", idalumno),
                     new Claim("UserId", usuario.IdUsuario.ToString())
                 };
 
