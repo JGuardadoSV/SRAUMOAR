@@ -1,0 +1,307 @@
+﻿@page
+@model SRAUMOAR.Pages.materiasGrupo.ListadoEstudiantesModel
+
+@{
+    ViewData["Title"] = "Lista de Asistencia";
+
+    // Validar que el modelo no sea null
+    if (Model == null)
+    {
+        ViewData["Title"] = "Error - Lista de Asistencia";
+    }
+}
+
+<style>
+    @@media print {
+        @@page {
+            margin: 1cm;
+        }
+
+        .main-sidebar, .sidebar, .navbar, .main-header, .main-footer, .footer, .breadcrumb, .no-print {
+            display: none !important;
+        }
+
+        .content-wrapper, .content, .container-fluid, .print-area {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            background: white !important;
+            color: black !important;
+            visibility: visible !important;
+        }
+
+        body {
+            background: white !important;
+            color: black !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .card, .attendance-header, .attendance-info {
+            border: 1px solid black !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+        }
+
+        .table thead {
+            background: white !important;
+            color: black !important;
+        }
+
+        .table th, .table td {
+            border: 1px solid black !important;
+            color: black !important;
+        }
+
+        .avatar-sm {
+            display: none !important;
+        }
+
+        .signature-line {
+            border-bottom: 2px solid black !important;
+            height: 30px !important;
+        }
+
+        .correlativo {
+            color: black !important;
+        }
+
+        .table {
+            font-size: 12px;
+        }
+    }
+
+    .attendance-header {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        padding: 1rem;
+        border-radius: 10px 10px 0 0;
+    }
+
+    .attendance-info {
+        background: white;
+        border-left: 4px solid #007bff;
+        padding: 0.5rem 1rem; /* más compacto */
+        margin-bottom: 0.5rem;
+    }
+
+        .attendance-info p {
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+            line-height: 1.2;
+        }
+
+        .attendance-info .row.mt-3.pt-3.border-top {
+            margin-top: 0.5rem !important;
+            padding-top: 0.5rem !important;
+            border-top: 1px solid #ccc !important;
+        }
+
+    /* Tabla básica y simple */
+    .simple-table {
+        border: 1px solid #000;
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 12px;
+    }
+
+        .simple-table th,
+        .simple-table td {
+            border: 1px solid #000;
+            padding: 2px 4px;
+            text-align: left;
+        }
+
+        .simple-table th {
+            background-color: #eee;
+        }
+
+    .signature-line {
+        border-bottom: 1px solid #333;
+        height: 35px;
+        min-width: 120px;
+        display: inline-block;
+        width: 100%;
+    }
+
+    .correlativo {
+        font-weight: bold;
+        color: #007bff;
+        font-size: 1.1em;
+    }
+
+    .avatar-sm {
+        width: 35px;
+        height: 35px;
+    }
+
+    .no-data-message {
+        text-align: center;
+        padding: 2rem;
+        color: #6c757d;
+        font-style: italic;
+    }
+</style>
+
+<div class="container-fluid px-4 py-3 print-area">
+    @if (Model == null)
+    {
+        <div class="alert alert-danger text-center">
+            <i class="bi bi-exclamation-triangle" style="font-size: 2rem;"></i>
+            <h4 class="mt-3">Error al cargar los datos</h4>
+            <p>No se pudo cargar la información de la lista de asistencia. Por favor, intente nuevamente.</p>
+            <a href="javascript:history.back()" class="btn btn-primary">
+                <i class="bi bi-arrow-left me-2"></i>Regresar
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="mb-3 no-print">
+            <button class="btn btn-success" onclick="window.print()">
+                <i class="bi bi-printer me-2"></i> Imprimir Lista
+            </button>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="attendance-header text-center">
+                <h2 class="mb-0"><i class="bi bi-clipboard-check me-2"></i> LISTA DE ASISTENCIA</h2>
+            </div>
+            <div class="attendance-info">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Materia:</strong> @(Model.NombreMateria ?? "No especificada")</p>
+                        <p><strong>Grupo:</strong> @(Model.Grupo?.Nombre ?? "No especificado")</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Carrera:</strong> @(Model.Grupo?.Carrera?.NombreCarrera ?? "No especificada")</p>
+                        <p>
+                            <strong>Docente:</strong>
+                            @if (Model.Grupo?.MateriasGrupos?.Any() == true)
+                            {
+                                var docente = Model.Grupo.MateriasGrupos.First().Docente;
+                                @($"{docente?.Nombres ?? ""} {docente?.Apellidos ?? ""}")
+                            }
+                            else
+                            {
+                                <text>No asignado</text>
+                            }
+                        </p>
+                    </div>
+                </div>
+
+                <div class="row mt-3 pt-3 border-top">
+                    <div class="col-md-4"><strong>Fecha:</strong> @DateTime.Now.ToShortDateString()</div>
+                    <div class="col-md-4">
+                        <strong>Hora:</strong>
+                        @if (Model.Grupo?.MateriasGrupos?.Any() == true)
+                        {
+                            var horario = Model.Grupo.MateriasGrupos.First();
+                            @($"{horario.HoraInicio} / {horario.HoraFin}")
+                        }
+                        else
+                        {
+                            <text>No especificada</text>
+                        }
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Aula:</strong>
+                        @(Model.Grupo?.MateriasGrupos?.FirstOrDefault()?.Aula ?? "No asignada")
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                @if (Model.MateriasInscritas == null || !Model.MateriasInscritas.Any())
+                {
+                    <div class="no-data-message">
+                        <i class="bi bi-info-circle" style="font-size: 2rem; color: #6c757d;"></i>
+                        <h4 class="mt-3">No hay datos para esta lista</h4>
+                        <p>No se encontraron estudiantes inscritos en esta materia.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="simple-table">
+                            <thead>
+                                <tr>
+                                    <th class="text-center" style="width: 10%;">N°</th>
+                                    <th style="width: 60%;">NOMBRE DEL ESTUDIANTE</th>
+                                    <th class="text-center" style="width: 30%;">FIRMA</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    int correlativo = 1;
+                                }
+                                @foreach (var item in Model.MateriasInscritas)
+                                {
+                                    <tr>
+                                        <td class="text-center">@correlativo</td>
+                                        <td>@($"{item?.Alumno?.Nombres ?? ""} {item?.Alumno?.Apellidos ?? ""}")</td>
+                                        <td></td>
+                                    </tr>
+                                    correlativo++;
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Pie con resumen -->
+        <div class="row mt-4 no-print">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <strong>Total de estudiantes:</strong><br>
+                                <span class="badge bg-primary fs-6">@(Model.MateriasInscritas?.Count ?? 0)</span>
+                            </div>
+                            <div class="col-md-4"><strong>Presentes:</strong><br><span class="badge bg-success fs-6">____</span></div>
+                            <div class="col-md-4"><strong>Ausentes:</strong><br><span class="badge bg-danger fs-6">____</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Firmas -->
+        <div class="mt-5 pt-4" style="page-break-inside: avoid;">
+            <div class="row">
+                <div class="col-md-6 text-center">
+                    <div class="mt-5 pt-3">
+                        <div style="border-top: 2px solid #333; width: 250px; margin: 0 auto;"></div>
+                        <p class="mt-2 mb-0"><strong>Firma del Docente</strong></p>
+                        <small class="text-muted">
+                            @if (Model.Grupo?.MateriasGrupos?.Any() == true)
+                            {
+                                var docente = Model.Grupo.MateriasGrupos.First().Docente;
+                                @($"{docente?.Nombres ?? ""} {docente?.Apellidos ?? ""}")
+                            }
+                        </small>
+                    </div>
+                </div>
+                <div class="col-md-6 text-center">
+                    <div class="mt-5 pt-3">
+                        <div style="border-top: 2px solid #333; width: 250px; margin: 0 auto;"></div>
+                        <p class="mt-2 mb-0"><strong>Sello de la Institución</strong></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.body.className = "layout-fixed sidebar-expand-lg bg-body-tertiary app-loaded sidebar-collapse";
+        });
+    </script>
+}

@@ -1,0 +1,388 @@
+﻿@page
+@model SRAUMOAR.Pages.generales.listas.ListasDeAsistenciaModel
+@{
+    ViewData["Title"] = "Listas de Asistencia";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+<!-- Content Header (Page header) -->
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0">
+                    <i class="fas fa-clipboard-list text-primary me-2"></i>
+                    Listas de Asistencia
+                </h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-end">
+                    <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                    <li class="breadcrumb-item"><a href="#">Generales</a></li>
+                    <li class="breadcrumb-item active">Listas de Asistencia</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main content -->
+<section class="content">
+    <div class="container-fluid">
+        <!-- Stats Cards Row -->
+        <div class="row mb-4">
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-info">
+                    <div class="inner">
+                        <h3>@Model.Grupo.Count()</h3>
+                        <p>Total Grupos</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-success">
+                    <div class="inner">
+                        <h3>@Model.Grupo.Count(g => g.Activo)</h3>
+                        <p>Grupos Activos</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-warning">
+                    <div class="inner">
+                        <h3>@Model.Grupo.Sum(g => g.Limite)</h3>
+                        <p>Capacidad Total</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-danger">
+                    <div class="inner">
+                        <h3>@Model.Grupo.Select(g => g.Carrera).Distinct().Count()</h3>
+                        <p>Carreras</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Card -->
+        <div class="card card-primary card-outline">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-list me-2"></i>
+                    Gestión de Grupos
+                </h3>
+                @* <div class="card-tools">
+                    <a asp-page="Create" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-1"></i>
+                        Crear Nuevo Grupo
+                    </a>
+                </div> *@
+            </div>
+
+            <div class="card-body">
+                <!-- Filters Row -->
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="filterCarrera">Filtrar por Carrera:</label>
+                            <select class="form-select" id="filterCarrera">
+                                <option value="">Todas las carreras</option>
+                                @foreach (var carrera in Model.Grupo.Select(g => g.Carrera).Distinct())
+                                {
+                                    <option value="@carrera.CodigoCarrera">@carrera.CodigoCarrera</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="filterEstado">Estado:</label>
+                            <select class="form-select" id="filterEstado">
+                                <option value="">Todos</option>
+                                <option value="true">Activos</option>
+                                <option value="false">Inactivos</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="searchInput">Buscar:</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="searchInput" placeholder="Buscar por nombre de grupo o docente...">
+                                <div class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-secondary d-block w-100" onclick="clearFilters()">
+                                <i class="fas fa-eraser me-1"></i>
+                                Limpiar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Responsive Table -->
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped" id="gruposTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th class="text-center">
+                                    <i class="fas fa-users me-1"></i>
+                                    @Html.DisplayNameFor(model => model.Grupo[0].Limite)
+                                </th>
+                                <th>
+                                    <i class="fas fa-tag me-1"></i>
+                                    @Html.DisplayNameFor(model => model.Grupo[0].Nombre)
+                                </th>
+                                <th class="text-center">
+                                    <i class="fas fa-toggle-on me-1"></i>
+                                    Estado
+                                </th>
+                                <th>
+                                    <i class="fas fa-graduation-cap me-1"></i>
+                                    @Html.DisplayNameFor(model => model.Grupo[0].Carrera)
+                                </th>
+                                <th class="text-center">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    @Html.DisplayNameFor(model => model.Grupo[0].Ciclo)
+                                </th>
+                                <th>
+                                    <i class="fas fa-chalkboard-teacher me-1"></i>
+                                    @Html.DisplayNameFor(model => model.Grupo[0].Docente)
+                                </th>
+                                <th class="text-center">
+                                    <i class="fas fa-cogs me-1"></i>
+                                    Acciones
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Grupo)
+                            {
+                                <tr data-carrera="@item.Carrera.CodigoCarrera" data-estado="@item.Activo.ToString().ToLower()">
+                                    <td class="text-center">
+                                        <span class="badge bg-info fs-6">
+                                            @Html.DisplayFor(modelItem => item.Limite)
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <strong class="text-primary">@Html.DisplayFor(modelItem => item.Nombre)</strong>
+                                    </td>
+                                    <td class="text-center">
+                                        @if (item.Activo)
+                                        {
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check me-1"></i>Activo
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-times me-1"></i>Inactivo
+                                            </span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">
+                                            @Html.DisplayFor(modelItem => item.Carrera.CodigoCarrera)
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-warning text-dark">
+                                            @Html.DisplayFor(modelItem => item.Ciclo.Id)
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-user-tie text-muted me-1"></i>
+                                        @Html.DisplayFor(modelItem => item.Docente.Apellidos)
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group" role="group">
+                                            <a asp-page="./ListasMaterias" asp-route-id="@item.GrupoId"
+                                               class="btn btn-info btn-sm" title="Ver Detalles">
+                                                <i class="bi bi-printer"></i>
+                                                Imprimir listado
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                @if (!Model.Grupo.Any())
+                {
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <h4 class="text-muted">No hay grupos registrados</h4>
+                        <p class="text-muted">Comience creando su primer grupo de asistencia.</p>
+                        <a asp-page="Create" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>
+                            Crear Primer Grupo
+                        </a>
+                    </div>
+                }
+            </div>
+
+            @if (Model.Grupo.Any())
+            {
+                <div class="card-footer">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <small class="text-muted">
+                                Mostrando @Model.Grupo.Count() grupos en total
+                            </small>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Última actualización: @DateTime.Now.ToString("dd/MM/yyyy HH:mm")
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- Custom JavaScript for filtering and search -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        const filterCarrera = document.getElementById('filterCarrera');
+        const filterEstado = document.getElementById('filterEstado');
+        const tableRows = document.querySelectorAll('#gruposTable tbody tr');
+
+        function filterTable() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const selectedCarrera = filterCarrera.value;
+            const selectedEstado = filterEstado.value;
+
+            tableRows.forEach(row => {
+                const nombre = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                const docente = row.querySelector('td:nth-child(6)').textContent.toLowerCase();
+                const carrera = row.getAttribute('data-carrera');
+                const estado = row.getAttribute('data-estado');
+
+                const matchesSearch = nombre.includes(searchTerm) || docente.includes(searchTerm);
+                const matchesCarrera = !selectedCarrera || carrera === selectedCarrera;
+                const matchesEstado = !selectedEstado || estado === selectedEstado;
+
+                if (matchesSearch && matchesCarrera && matchesEstado) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        searchInput.addEventListener('input', filterTable);
+        filterCarrera.addEventListener('change', filterTable);
+        filterEstado.addEventListener('change', filterTable);
+    });
+
+    function clearFilters() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('filterCarrera').value = '';
+        document.getElementById('filterEstado').value = '';
+
+        const tableRows = document.querySelectorAll('#gruposTable tbody tr');
+        tableRows.forEach(row => {
+            row.style.display = '';
+        });
+    }
+
+    // Add smooth animations
+    document.querySelectorAll('.btn').forEach(btn => {
+        btn.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-1px)';
+            this.style.transition = 'all 0.2s ease';
+        });
+
+        btn.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+</script>
+
+<style>
+    /* Custom styles for better visual appeal */
+    .small-box {
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: transform 0.2s ease;
+    }
+
+        .small-box:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+    .card {
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .table th {
+        border-top: none;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .btn-group .btn {
+        margin: 0 1px;
+    }
+
+    .badge {
+        font-size: 0.8rem;
+    }
+
+    .table-responsive {
+        border-radius: 8px;
+    }
+
+    .content-header h1 {
+        font-weight: 600;
+        color: #495057;
+    }
+
+    @@media (max-width: 768px) {
+        .btn-group
+
+    {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .btn-group .btn {
+        margin: 0;
+        font-size: 0.8rem;
+    }
+
+    .small-box .inner h3 {
+        font-size: 1.5rem;
+    }
+
+    }
+</style>

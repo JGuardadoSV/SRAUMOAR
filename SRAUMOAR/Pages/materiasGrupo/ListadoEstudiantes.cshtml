@@ -62,8 +62,10 @@
 
             <div class="table-responsive">
 
-                @if (Model.MateriasInscritas.Count > 0)
+                @if (Model.MateriasInscritas.Count > 0 && Model.lista==false)
                 {
+                    
+                    
                     <!--  **** -->
                     <div class="card shadow-sm">
                         <div class="card-header bg-primary bg-gradient text-white">

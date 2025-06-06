@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using SRAUMOAR.Entidades.Procesos;
 using SRAUMOAR.Modelos;
 
-namespace SRAUMOAR.Pages.materiasGrupo
+namespace SRAUMOAR.Pages.generales.listas
 {
     public class ListadoEstudiantesModel : PageModel
     {
