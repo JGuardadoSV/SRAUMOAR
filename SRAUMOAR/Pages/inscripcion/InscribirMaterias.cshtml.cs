@@ -21,59 +21,40 @@ namespace SRAUMOAR.Pages.inscripcion
             _context = context;
         }
         public Alumno Alumno { get; set; }
-        public IActionResult OnGet(int id)
-        {
-            Alumno = _context.Alumno.Where(x => x.AlumnoId == id).FirstOrDefault() ?? new Alumno();
-        ViewData["AlumnoId"] = new SelectList(_context.Alumno.Where(x => x.AlumnoId == id)
-            .Select(a => new { AlumnoId = a.AlumnoId, Nombre = a.Nombres + " " + a.Apellidos })
-            , "AlumnoId", "Nombre");
 
-            // Suponiendo que tienes un método para obtener el ciclo actual
-            var cicloActual =  _context.Ciclos.FirstOrDefault(c => c.Activo).Id;
-
-            ViewData["MateriasGrupoId"] = new SelectList(
-    _context.MateriasGrupo
-        .Include(mg => mg.Materia)
-        .Include(mg => mg.Grupo)
-        .Where(mg => mg.Grupo.CicloId == cicloActual)
-        .Select(mg => new
-        {
-            MateriasGrupoId = mg.MateriasGrupoId,
-            NombreCompleto = $"{mg.Materia.NombreMateria} - {mg.Grupo.Nombre}"
-        })
-        .ToList(),
-    "MateriasGrupoId",
-    "NombreCompleto"
-);
-
-            // Obtener materias que tienen grupos en el ciclo actual
-            //ViewData["MateriasGrupoId"] = new SelectList(
-            //    _context.Materias
-            //        .Where(m => _context.MateriasGrupo
-            //            .Any(gm => gm.MateriaId == m.MateriaId &&
-            //                       gm.Grupo.CicloId == cicloActual))
-            //        .ToList(),
-            //    "MateriaId",
-            //    "NombreMateria"
-            // );
-            //ViewData["MateriasGrupoId"] = new SelectList(
-            //    _context.MateriasGrupo
-            //        .Include(mg => mg.Grupo)
-            //        .Include(mg => mg.Materia)
-            //        .Where(mg => mg.Grupo.CicloId == cicloActual.Id)
-            //        .ToList(),
-            //    "MateriasGrupoId",
-            //    "Materia.Nombre" // Asumiendo que quieres mostrar el nombre de la materia
-            //);
-
-            //ViewData["MateriasGrupoId"]= new SelectList(_context.Materias.ToList(), "MateriaId", "NombreMateria");
-            return Page();
-        }
+        [BindProperty]
+        public List<int> MateriasSeleccionadas { get; set; } = new List<int>();
 
         [BindProperty]
         public MateriasInscritas MateriasInscritas { get; set; } = default!;
 
-        // For more information, see https://aka.ms/RazorPagesCRUD.
+        public IActionResult OnGet(int id)
+        {
+            Alumno = _context.Alumno.Where(x => x.AlumnoId == id).FirstOrDefault() ?? new Alumno();
+            ViewData["AlumnoId"] = new SelectList(_context.Alumno.Where(x => x.AlumnoId == id)
+                .Select(a => new { AlumnoId = a.AlumnoId, Nombre = a.Nombres + " " + a.Apellidos })
+                , "AlumnoId", "Nombre");
+
+            var cicloActual = _context.Ciclos.FirstOrDefault(c => c.Activo).Id;
+
+            ViewData["MateriasGrupoId"] = new SelectList(
+                _context.MateriasGrupo
+                    .Include(mg => mg.Materia)
+                    .Include(mg => mg.Grupo)
+                    .Where(mg => mg.Grupo.CicloId == cicloActual)
+                    .Select(mg => new
+                    {
+                        MateriasGrupoId = mg.MateriasGrupoId,
+                        NombreCompleto = $"{mg.Materia.NombreMateria} - {mg.Grupo.Nombre}"
+                    })
+                    .ToList(),
+                "MateriasGrupoId",
+                "NombreCompleto"
+            );
+
+            return Page();
+        }
+
         public async Task<IActionResult> OnPostAsync()
         {
             if (!ModelState.IsValid)
@@ -81,23 +62,39 @@ namespace SRAUMOAR.Pages.inscripcion
                 return Page();
             }
 
-
-            bool existeInscripcion = await _context.MateriasInscritas
-                .AnyAsync(mi => mi.AlumnoId == MateriasInscritas.AlumnoId && mi.MateriasGrupoId == MateriasInscritas.MateriasGrupoId);
-
-            MateriasInscritas.FechaInscripcion = DateTime.Now;
-            MateriasInscritas.NotaPromedio = 0;
-            MateriasInscritas.Aprobada = false;
-            if (!existeInscripcion)
+            var alumnoId = Request.Form["MateriasInscritas.AlumnoId"].ToString();
+            if (string.IsNullOrEmpty(alumnoId))
             {
-                _context.MateriasInscritas.Add(MateriasInscritas);
-                await _context.SaveChangesAsync();
+                ModelState.AddModelError(string.Empty, "El ID del alumno es requerido");
+                return Page();
             }
 
-            //redirigir a MateriasInscritas?id=5
-            return RedirectToPage("./MateriasInscritas", new { id = MateriasInscritas.AlumnoId });
+            var alumnoIdInt = int.Parse(alumnoId);
+            var fechaInscripcion = DateTime.Now;
 
-           // return RedirectToPage("./Index");
+            foreach (var materiaGrupoId in MateriasSeleccionadas)
+            {
+                // Verificar si ya existe la inscripción
+                bool existeInscripcion = await _context.MateriasInscritas
+                    .AnyAsync(mi => mi.AlumnoId == alumnoIdInt && mi.MateriasGrupoId == materiaGrupoId);
+
+                if (!existeInscripcion)
+                {
+                    var nuevaInscripcion = new MateriasInscritas
+                    {
+                        AlumnoId = alumnoIdInt,
+                        MateriasGrupoId = materiaGrupoId,
+                        FechaInscripcion = fechaInscripcion,
+                        NotaPromedio = 0,
+                        Aprobada = false
+                    };
+
+                    _context.MateriasInscritas.Add(nuevaInscripcion);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return RedirectToPage("./MateriasInscritas", new { id = alumnoIdInt });
         }
     }
 }

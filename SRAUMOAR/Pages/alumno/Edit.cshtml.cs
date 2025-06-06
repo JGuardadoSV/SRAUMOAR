@@ -49,29 +49,66 @@ namespace SRAUMOAR.Pages.alumno
         // For more details, see https://aka.ms/RazorPagesCRUD.
         public async Task<IActionResult> OnPostAsync()
         {
+            ModelState.Remove("Alumno.Fotografia");
+            ModelState.Remove("Alumno.Foto");
+            ModelState.Remove("FotoUpload");
+            ModelState.Remove("Alumno.DireccionDeResidencia");
+            ModelState.Remove("Alumno.MunicipioId");
+
             if (!ModelState.IsValid)
             {
                 return Page();
             }
+
+            // Procesar la foto si se subió una nueva
             if (FotoUpload != null)
             {
                 using (var memoryStream = new MemoryStream())
                 {
                     await FotoUpload.CopyToAsync(memoryStream);
-
                     using (var originalImage = Image.FromStream(memoryStream))
                     {
                         var compressedImageStream = new MemoryStream();
                         var jpegEncoder = GetEncoder(ImageFormat.Jpeg);
                         var encoderParameters = new EncoderParameters(1);
-                        encoderParameters.Param[0] = new EncoderParameter(Encoder.Quality, 20L); // Ajusta la calidad aquí (0L-100L)
-
+                        encoderParameters.Param[0] = new EncoderParameter(Encoder.Quality, 20L);
                         originalImage.Save(compressedImageStream, jpegEncoder, encoderParameters);
                         Alumno.Foto = compressedImageStream.ToArray();
                     }
                 }
             }
-            _context.Attach(Alumno).State = EntityState.Modified;
+
+            // Adjuntar la entidad y marcar solo los campos específicos como modificados
+            _context.Attach(Alumno);
+
+            // Marcar como modificados solo los campos que quieres actualizar
+            // Elimina las líneas de los campos que NO quieres actualizar
+            _context.Entry(Alumno).Property(a => a.Nombres).IsModified = true;
+            _context.Entry(Alumno).Property(a => a.Apellidos).IsModified = true;
+            _context.Entry(Alumno).Property(a => a.FechaDeNacimiento).IsModified = true;
+            _context.Entry(Alumno).Property(a => a.FechaDeRegistro).IsModified = false;
+            _context.Entry(Alumno).Property(a => a.Email).IsModified = false;
+            _context.Entry(Alumno).Property(a => a.DUI).IsModified = true;
+            _context.Entry(Alumno).Property(a => a.TelefonoPrimario).IsModified = true;
+            _context.Entry(Alumno).Property(a => a.Whatsapp).IsModified = true;
+            _context.Entry(Alumno).Property(a => a.TelefonoSecundario).IsModified = true;
+            _context.Entry(Alumno).Property(a => a.ContactoDeEmergencia).IsModified = true;
+            _context.Entry(Alumno).Property(a => a.NumeroDeEmergencia).IsModified = true;
+            _context.Entry(Alumno).Property(a => a.DireccionDeResidencia).IsModified = true;
+            _context.Entry(Alumno).Property(a => a.Estado).IsModified = false;
+            _context.Entry(Alumno).Property(a => a.IngresoPorEquivalencias).IsModified = false;
+            _context.Entry(Alumno).Property(a => a.Fotografia).IsModified = false;
+            _context.Entry(Alumno).Property(a => a.Carnet).IsModified = true;
+            _context.Entry(Alumno).Property(a => a.Genero).IsModified = false;
+            _context.Entry(Alumno).Property(a => a.UsuarioId).IsModified = false;
+            _context.Entry(Alumno).Property(a => a.MunicipioId).IsModified = false;
+            _context.Entry(Alumno).Property(a => a.CarreraId).IsModified = false;
+
+            // Solo marcar la foto como modificada si se subió una nueva
+            if (FotoUpload != null)
+            {
+                _context.Entry(Alumno).Property(a => a.Foto).IsModified = true;
+            }
 
             try
             {

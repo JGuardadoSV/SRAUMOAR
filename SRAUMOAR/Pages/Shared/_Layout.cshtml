@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@using System.Security.Claims
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -62,7 +63,207 @@
         }
 
         .results-container {
-        margin-top: 2rem;
+            margin-top: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .student-details-card {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            padding: 2rem 2.5rem 1.5rem 2.5rem;
+            max-width: 420px;
+            width: 100%;
+            margin: 0 auto;
+            position: relative;
+            border: 1px solid #e9ecef;
+            animation: fadeInCard 0.3s;
+        }
+        @@keyframes fadeInCard {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .student-details-card .close-btn {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            background: #f8f9fa;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            font-size: 1.2rem;
+            transition: background 0.2s, color 0.2s;
+        }
+        .student-details-card .close-btn:hover {
+            background: #e9ecef;
+            color: #dc3545;
+        }
+        .student-details-card .student-photo-lg {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #e9ecef;
+            box-shadow: 0 2px 12px rgba(13,110,253,0.08);
+            margin-bottom: 1rem;
+            background: #f8f9fa;
+        }
+        .student-details-card .student-name-lg {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+        .student-details-card .actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.2rem;
+            flex-wrap: wrap;
+        }
+        .student-details-card .btn-action {
+            font-size: 0.98rem;
+            border-radius: 8px;
+            padding: 0.5rem 1.2rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .student-details-card .btn-action i {
+            font-size: 1.1rem;
+        }
+
+        /* Estilos para el buscador de alumnos */
+        .search-container {
+            position: relative;
+            margin: 0;
+        }
+
+        .search-input-group {
+            background: #f8f9fa;
+            border-radius: 8px;
+            box-shadow: none;
+            transition: all 0.3s ease;
+            border: 1px solid #e9ecef;
+        }
+
+        .search-input {
+            border: none;
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            width: 100%;
+            background: transparent;
+            height: 38px;
+        }
+
+        .search-input:focus {
+            outline: none;
+        }
+
+        .search-icon {
+            color: #6c757d;
+            padding: 0 1rem;
+            font-size: 1.1rem;
+        }
+
+        /* Estilos para los resultados del autocompletado */
+        .ui-autocomplete {
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+            max-height: 350px;
+            overflow-y: auto;
+            padding: 0.25rem 0;
+            width: 100% !important;
+            border: 1px solid #e9ecef;
+            max-width: 420px;
+            min-width: 260px;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            top: 48px !important;
+            z-index: 2000;
+        }
+
+        .ui-autocomplete .ui-menu-item {
+            border: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .student-item {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            border-radius: 0;
+            width: 100%;
+            border: none;
+            background: transparent;
+            transition: background 0.2s, box-shadow 0.2s;
+            border-bottom: 1px solid #f1f1f1;
+            min-height: 48px;
+        }
+
+        .student-item:last-child {
+            border-bottom: none;
+        }
+
+        .student-item:hover, .ui-state-active .student-item {
+            background: #e9f5ff;
+            box-shadow: 0 2px 8px rgba(13,110,253,0.06);
+        }
+
+        .student-photo {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #e9ecef;
+            margin-right: 0.75rem;
+            transition: border-color 0.3s, transform 0.3s;
+        }
+
+        .student-item:hover .student-photo {
+            border-color: #0d6efd;
+            transform: scale(1.08);
+        }
+
+        .student-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .student-name {
+            font-weight: 500;
+            color: #2c3e50;
+            margin-bottom: 0;
+            font-size: 1rem;
+        }
+
+        /* Estilos para la barra de desplazamiento */
+        .ui-autocomplete::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .ui-autocomplete::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .ui-autocomplete::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        .ui-autocomplete::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
         }
     </style>
 </head>
@@ -77,12 +278,10 @@
                 <ul class="navbar-nav">
                     <li class="nav-item"> <a class="nav-link" data-lte-toggle="sidebar" href="#" role="button"> <i class="bi bi-list"></i> </a> </li>
                     <li class="nav-item d-none d-md-block" title="Ir a inicio">
-
                         @if (User.IsInRole("Administracion") || User.IsInRole("Administrador"))
                         {
                             <a asp-page="/Home" class="nav-link"><i class="nav-icon bi bi-house"></i></a>
                         }
-                        
                         @if (User.IsInRole("Docentes") )
                         {
                             <a asp-page="/portal/docente/Index" class="nav-link"><i class="nav-icon bi bi-house"></i></a>
@@ -91,16 +290,41 @@
                         {
                             <a asp-page="/portal/estudiante/Index" class="nav-link"><i class="nav-icon bi bi-house"></i></a>
                         }
-
                     </li>
-
-                </ul> <!--end::Start Navbar Links--> <!--begin::End Navbar Links-->
-                <ul class="navbar-nav ms-auto">
-                    <!--begin::Navbar Search-->
-                    <li class="nav-item"> <a class="nav-link" data-widget="navbar-search" href="#" role="button"> <i class="bi bi-search"></i> </a> </li> <!--end::Navbar Search--> <!--begin::Messages Dropdown Menu-->
-
-
-                    <li class="nav-item"> <a class="nav-link" href="#" data-lte-toggle="fullscreen"> <i data-lte-icon="maximize" class="bi bi-arrows-fullscreen"></i> <i data-lte-icon="minimize" class="bi bi-fullscreen-exit" style="display: none;"></i> </a> </li> <!--end::Fullscreen Toggle--> <!--begin::User Menu Dropdown-->
+                </ul>
+                <!--end::Start Navbar Links-->
+                <div class="d-none d-md-flex align-items-center ms-auto" style="max-width: 420px; width: 100%;">
+                    @if (User.IsInRole("Administracion") || User.IsInRole("Administrador"))
+                    {
+                        <div class="search-container mb-0" style="width:100%;">
+                            <form method="get" id="searchForm">
+                                @Html.AntiForgeryToken()
+                                <div class="search-input-group" style="box-shadow:none; border-radius:8px;">
+                                    <div class="d-flex align-items-center">
+                                        <span class="search-icon">
+                                            <i class="bi bi-search"></i>
+                                        </span>
+                                        <input type="text"
+                                               id="studentSearch"
+                                               name="searchTerm"
+                                               class="search-input"
+                                               placeholder="Buscar alumno..."
+                                               autocomplete="off"
+                                               style="padding:0.5rem 1rem; font-size:1rem; height:38px;">
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    }
+                </div>
+                <ul class="navbar-nav ms-2">
+                    <!-- Quitar el icono de búsqueda -->
+                    <!--<li class="nav-item"> <a class="nav-link" data-widget="navbar-search" href="#" role="button"> <i class="bi bi-search"></i> </a> </li>-->
+                    <!--end::Navbar Search-->
+                    <!--begin::Messages Dropdown Menu-->
+                    <li class="nav-item"> <a class="nav-link" href="#" data-lte-toggle="fullscreen"> <i data-lte-icon="maximize" class="bi bi-arrows-fullscreen"></i> <i data-lte-icon="minimize" class="bi bi-fullscreen-exit" style="display: none;"></i> </a> </li>
+                    <!--end::Fullscreen Toggle-->
+                    <!--begin::User Menu Dropdown-->
                     <li class="nav-item dropdown user-menu">
                         <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
                             <img src="~/assets/img/user2-160x160.jpg" class="user-image rounded-circle shadow" alt="User Image">
@@ -141,7 +365,15 @@
                                 </div> end::Row-->
                             </li> <!--end::Menu Body--> <!--begin::Menu Footer-->
                             <li class="user-footer">
-                                <a href="#" class="btn btn-default btn-flat">Mis datos</a>
+                                @if (User.IsInRole("Estudiantes"))
+                                {
+                                    var userId = User.FindFirstValue("idalumno");
+                                    <a asp-area="" asp-page="/portal/estudiante/MiPerfil" asp-route-id="@userId" class="nav-link">
+                                        <i class="nav-icon bi bi-building"></i>
+                                        Mis datos
+                                    </a>
+                                }
+
                                 <a asp-area="" asp-page="/salir" class="nav-link">
                                     <i class="nav-icon bi bi-building"></i>
                                     Salir
@@ -149,9 +381,12 @@
                             </li> <!--end::Menu Footer-->
                         </ul>
                     </li> <!--end::User Menu Dropdown-->
-                </ul> <!--end::End Navbar Links-->
-            </div> <!--end::Container-->
-        </nav> <!--end::Header--> <!--begin::Sidebar-->
+                </ul>
+            </div>
+            <!--end::Container-->
+        </nav>
+        <!--end::Header-->
+        <!--begin::Sidebar-->
         <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
             <!--begin::Sidebar Brand-->
             <div class="sidebar-brand"> <!--begin::Brand Link--> <a asp-page="/Index" class="brand-link"> <!--begin::Brand Image--> <img src="~/assets/img/logo1.jpg" alt="Logo" class="brand-image opacity-75 shadow"> <!--end::Brand Image--> <!--begin::Brand Text-->  <!--end::Brand Text--> </a> <!--end::Brand Link--> </div> <!--end::Sidebar Brand--> <!--begin::Sidebar Wrapper-->
@@ -335,10 +570,10 @@
                                         </a>
                                     </li>
                                     <li class="nav-item">
-                                        <a asp-area="" asp-page="/inscripcion/Index" class="nav-link">
+                                        <a asp-area="" asp-page="/inscripcion/Index" asp-route-SelectedCarreraId="0" class="nav-link">
                                             <i class="nav-icon bi bi-list-check"></i>
                                             <p>
-                                                Ver Inscripciones
+                                                Ver Inscripciones.
                                             </p>
                                         </a>
                                     </li>
@@ -417,28 +652,25 @@
                             @if (User.IsInRole("Administracion") || User.IsInRole("Administrador"))
                         {
                             <div class="container py-4">
-                                @* <h1 class="mb-4">Búsqueda de Alumnos</h1> *@
-
-                                <!-- Buscador -->
                                 <div class="row justify-content-center">
                                     <div class="col-md-8">
-                                        <div class="card shadow-sm">
-                                            <div class="card-body">
-                                                <form method="get" id="searchForm">
-                                                    @Html.AntiForgeryToken()
-                                                    <div class="input-group input-group-lg">
-                                                        <span class="input-group-text bg-white">
+                                        <div class="search-container">
+                                           @*  <form method="get" id="searchForm">
+                                                @Html.AntiForgeryToken()
+                                                <div class="search-input-group">
+                                                    <div class="d-flex align-items-center">
+                                                        <span class="search-icon">
                                                             <i class="bi bi-search"></i>
                                                         </span>
                                                         <input type="text"
                                                                id="studentSearch"
                                                                name="searchTerm"
-                                                               class="form-control"
+                                                               class="search-input"
                                                                placeholder="Buscar alumno por nombre..."
                                                                autocomplete="off">
                                                     </div>
-                                                </form>
-                                            </div>
+                                                </div>
+                                            </form> *@
                                         </div>
                                     </div>
                                 </div>
@@ -509,8 +741,11 @@
             $("#studentSearch").autocomplete({
                 source: function(request, response) {
                     $.ajax({
-                        url: "/api/alumnosapi/busquedaajax1",  // Tu endpoint de búsqueda
-                        data: { term: request.term,  __RequestVerificationToken: $('input:hidden[name="__RequestVerificationToken"]').val() },
+                        url: "/api/alumnosapi/busquedaajax1",
+                        data: { 
+                            term: request.term,
+                            __RequestVerificationToken: $('input:hidden[name="__RequestVerificationToken"]').val() 
+                        },
                         success: function(data) {
                             response(data);
                         }
@@ -518,18 +753,20 @@
                 },
                 minLength: 2,
                 select: function(event, ui) {
-                    // Manejar la selección
                     showStudentDetails(ui.item);
                     return false;
+                },
+                focus: function(event, ui) {
+                    event.preventDefault();
+                    $(this).val(ui.item.name);
                 }
             }).autocomplete("instance")._renderItem = function(ul, item) {
-                // Personalizar el render de cada item en las sugerencias
                 return $("<li>")
                     .append(`<button type='button' class='student-item'>
-                    
                         <img src='${item.photoUrl || '/images/default.PNG'}'
                              class='student-photo'
-                             alt='Foto de ${item.name}'>
+                             alt='Foto de ${item.name}'
+                             onerror="this.src='/images/default.PNG'">
                         <div class='student-info'>
                             <div class='student-name'>${item.name}</div>
                         </div>
@@ -540,42 +777,21 @@
             function showStudentDetails(student) {
                 // Mostrar detalles del estudiante seleccionado
                 $("#searchResults").html(`
-                    <div class="row justify-content-center">
-                            
-                        <div class="col-md-8">
-                                <div class="card-header border-0 bg-transparent">
-            <button type="button" class="btn btn-outline-success btn-sm float-end" onclick="$('#searchResults').empty()">
-                <i class="bi bi-x-lg"></i> Cerrar
-            </button>
-        </div>
-                            <div class="card shadow-sm">
-                                <div class="card-body">
-                                    <div class="d-flex align-items-center">
-                                        <img src="${student.photoUrl || '/images/default.PNG'}"
-                                 class="student-photo"
-                                 style="width: 80px; height: 80px;"
+                    <div class="student-details-card">
+                        <button type="button" class="close-btn" onclick="$('#searchResults').empty()">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                        <div class="d-flex flex-column align-items-center">
+                            <img src="${student.photoUrl || '/images/default.PNG'}"
+                                 class="student-photo-lg mb-2"
                                  alt="Foto de ${student.name}"
                                  onerror="this.src='/images/default.PNG'">
-                                        <div class="ms-3">
-                                            <h3 class="card-title mb-1">${student.name}</h3>
-                                            <div class="d-flex gap-2">
-                                                <a href="/Students/Details/${student.id}"
-                                                   class="btn btn-primary btn-sm">
-                                                    Aranceles
-                                                </a>
-                                                 <a href="/Students/Details/${student.id}"
-                                                   class="btn btn-primary btn-sm">
-                                                    Inscribir en ciclo
-                                                </a>
-                                                <a href="/Students/Edit/${student.id}"
-                                                   class="btn btn-outline-secondary btn-sm">
-                                                    Inscribir materias
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            <div class="student-name-lg">${student.name}</div>
+                        </div>
+                        <div class="actions d-flex justify-content-center">
+                            <a href="/aranceles/Cobrar?id=${student.id}" class="btn btn-primary btn-action"><i class="bi bi-cash-coin"></i> Aranceles</a>
+                            <a href="/inscripcion/Create?id=${student.id}" class="btn btn-success btn-action"><i class="bi bi-arrow-right-circle"></i> Inscribir ciclo</a>
+                            <a href="/inscripcion/MateriasInscritas?id=${student.id}" class="btn btn-outline-secondary btn-action"><i class="bi bi-journal-plus"></i> Inscribir materias</a>
                         </div>
                     </div>
                 `);

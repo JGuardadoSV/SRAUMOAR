@@ -25,7 +25,7 @@
             <div class="row justify-content-center">
                 <div class="col-md-5">
                     <div class="card-body">
-                        <form method="post" enctype="multipart/form-data">
+                        
                             <form method="post">
                                 <div asp-validation-summary="ModelOnly" class="alert alert-danger d-flex align-items-center" role="alert"></div>
                                 <input type="hidden" asp-for="Alumno.AlumnoId" />
@@ -133,7 +133,7 @@
                                     <br>
                                     <span asp-validation-for="Alumno.DireccionDeResidencia" class="text-danger"></span>
                                 </div>
-                                <div class="mb-3">
+                           @*      <div class="mb-3">
                                     <label asp-for="Alumno.MunicipioId" class="form-label fs-4 fw-semibold text-dark formal-text">Municipio de residencia</label>
                                     <br>
                                     <br>
@@ -146,11 +146,8 @@
                                     </div>
                                     <br>
                                     <span asp-validation-for="Alumno.MunicipioId" class="text-danger"></span>
-                                </div>
-                                <div class="form-group">
-                                    <label asp-for="FotoUpload" class="control-label">Foto</label>
-                                    <input asp-for="FotoUpload" type="file" class="form-control" />
-                                </div>
+                                </div> *@
+                               
                                 <div class="d-grid gap-2">
                                     <button type="submit" class="btn btn-primary btn-lg">
                                         <i class="bi bi-arrow-clockwise"></i> Actualizar
@@ -158,7 +155,7 @@
                                 </div>
                                 <br>
                             </form>
-                        </form>
+                       
                     </div>
                     <br>
                 </div>

@@ -7,9 +7,11 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using SRAUMOAR.Entidades.Alumnos;
 using SRAUMOAR.Modelos;
-using System.Drawing;
-using System.Drawing.Imaging;
 using Microsoft.AspNetCore.Authorization;
+using SixLabors.ImageSharp.Formats.Jpeg;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
+using Microsoft.EntityFrameworkCore;
 
 namespace SRAUMOAR.Pages.alumno
 {
@@ -23,11 +25,41 @@ namespace SRAUMOAR.Pages.alumno
             _context = context;
         }
 
+        [BindProperty(SupportsGet = true)]
+        public string? BuscarMunicipio { get; set; }
+
         public IActionResult OnGet()
         {
-            ViewData["MunicipioId"] = new SelectList(_context.Municipios, "MunicipioId", "NombreMunicipio", selectedValue: null);
-            ViewData["CarreraId"] = new SelectList(_context.Carreras, "CarreraId", "NombreCarrera", selectedValue: null);
+            CargarCombos();
             return Page();
+        }
+
+        private void CargarCombos()
+        {
+            var query = _context.Municipios
+                .Include(m => m.Distrito)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(BuscarMunicipio))
+            {
+                query = query.Where(m => m.NombreMunicipio.Contains(BuscarMunicipio) || 
+                                       m.Distrito.NombreDistrito.Contains(BuscarMunicipio));
+            }
+
+            var orderedQuery = query.OrderBy(m => m.Distrito.NombreDistrito)
+                                  .ThenBy(m => m.NombreMunicipio);
+
+            ViewData["MunicipioId"] = new SelectList(
+                orderedQuery.Select(m => new {
+                    MunicipioId = m.MunicipioId,
+                    NombreCompleto = $"{m.NombreMunicipio} - {m.Distrito.NombreDistrito}"
+                }),
+                "MunicipioId",
+                "NombreCompleto",
+                Alumno?.MunicipioId
+            );
+
+            ViewData["CarreraId"] = new SelectList(_context.Carreras, "CarreraId", "NombreCarrera", Alumno?.CarreraId);
         }
 
         [BindProperty]
@@ -41,6 +73,7 @@ namespace SRAUMOAR.Pages.alumno
         {
             if (!ModelState.IsValid)
             {
+                CargarCombos();
                 return Page();
             }
 
@@ -49,15 +82,12 @@ namespace SRAUMOAR.Pages.alumno
                 using (var memoryStream = new MemoryStream())
                 {
                     await FotoUpload.CopyToAsync(memoryStream);
+                    memoryStream.Position = 0;
 
-                    using (var originalImage = Image.FromStream(memoryStream))
+                    using (var image = SixLabors.ImageSharp.Image.Load(memoryStream))
                     {
                         var compressedImageStream = new MemoryStream();
-                        var jpegEncoder = GetEncoder(ImageFormat.Jpeg);
-                        var encoderParameters = new EncoderParameters(1);
-                        encoderParameters.Param[0] = new EncoderParameter(Encoder.Quality, 50L); // Ajusta la calidad aquí (0L-100L)
-
-                        originalImage.Save(compressedImageStream, jpegEncoder, encoderParameters);
+                        image.Save(compressedImageStream, new JpegEncoder { Quality = 75 });
                         Alumno.Foto = compressedImageStream.ToArray();
                     }
                 }
@@ -69,17 +99,17 @@ namespace SRAUMOAR.Pages.alumno
             return RedirectToPage("./Index");
         }
 
-        private ImageCodecInfo GetEncoder(ImageFormat format)
-        {
-            var codecs = ImageCodecInfo.GetImageDecoders();
-            foreach (var codec in codecs)
-            {
-                if (codec.FormatID == format.Guid)
-                {
-                    return codec;
-                }
-            }
-            return null;
-        }
+        //private ImageCodecInfo GetEncoder(ImageFormat format)
+        //{
+        //    var codecs = ImageCodecInfo.GetImageDecoders();
+        //    foreach (var codec in codecs)
+        //    {
+        //        if (codec.FormatID == format.Guid)
+        //        {
+        //            return codec;
+        //        }
+        //    }
+        //    return null;
+        //}
     }
 }

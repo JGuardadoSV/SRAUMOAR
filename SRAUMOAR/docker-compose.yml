@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  sraumoar:
+    image: prehack77/sraumoar:latest
+    container_name: sraumoar
+    ports:
+      - "8080:80"
+      - "8443:443"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80;https://+:443
+    volumes:
+      - ./appsettings.json:/app/appsettings.json
+      - ./wwwroot:/app/wwwroot
+    restart: unless-stopped 

@@ -4,7 +4,7 @@
     Layout = null;
 }
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -19,30 +19,167 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/apexcharts@3.37.1/dist/apexcharts.css" integrity="sha256-4MX+61mt9NVvvuPjUWdUdyfZfxSB1/Rf9WtqRHgG5S0=" crossorigin="anonymous"><!-- jsvectormap -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/css/jsvectormap.min.css" integrity="sha256-+uGLJmmTKOqBr+2E6KDYs/NRsHxSkONXFHUL0fy2O/4=" crossorigin="anonymous">
     <style>
+        :root {
+            --primary-green: #1B5E20;
+            --secondary-green: #2E7D32;
+            --light-green: #4CAF50;
+            --accent-green: #81C784;
+        }
+
         body {
-            background-color: #ffffff;
-            background-image: linear-gradient(rgba(0, 100, 0, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 100, 0, 0.1) 1px, transparent 1px);
-            background-size: 20px 20px;
+            background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 25%, var(--light-green) 50%, var(--accent-green) 75%, #e8f5e9 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             position: relative;
             overflow: hidden;
         }
 
-            body::after {
-                content: '';
-                position: fixed;
-                border-radius: 50%;
-                background: radial-gradient( circle at center, rgba(0, 100, 0, 0.1) 0%, transparent 50% );
-                opacity: 0;
-                pointer-events: none;
-                transform: translate(-50%, -50%) scale(0);
-                transition: all 0.5s ease-out;
-                z-index: 9999;
-            }
+        body::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            opacity: 0.3;
+            animation: rotate 30s linear infinite;
+        }
 
-            body:hover::after {
-                opacity: 1;
-                transform: translate(-50%, -50%) scale(2);
+        @@keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .login-box {
+            width: 400px;
+            position: relative;
+            z-index: 1;
+            backdrop-filter: blur(10px);
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .card-header {
+            background: var(--primary-green);
+            padding: 2rem 1rem;
+            border-bottom: none;
+        }
+
+        .card-header img {
+            max-height: 120px;
+            transition: transform 0.3s ease;
+        }
+
+        .card-header img:hover {
+            transform: scale(1.05);
+        }
+
+        .login-card-body {
+            padding: 2rem;
+            background: white;
+        }
+
+        .login-box-msg {
+            color: var(--primary-green);
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-floating > .form-control {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            height: calc(3.5rem + 2px);
+            padding: 1rem 0.75rem;
+            transition: all 0.3s ease;
+            background-color: #f8f9fa;
+            font-size: 1rem;
+        }
+
+        .form-floating > .form-control:focus {
+            border-color: var(--light-green);
+            box-shadow: 0 0 0 0.25rem rgba(76, 175, 80, 0.15);
+            background-color: #ffffff;
+        }
+
+        .form-floating > .form-control:hover {
+            border-color: var(--accent-green);
+            background-color: #ffffff;
+        }
+
+        .input-group-text {
+            background: var(--primary-green);
+            border: none;
+            color: white;
+            border-radius: 0 8px 8px 0;
+            transition: all 0.3s ease;
+        }
+
+        .input-group:hover .input-group-text {
+            background: var(--secondary-green);
+        }
+
+        .form-floating > label {
+            color: #666;
+            padding: 1rem 0.75rem;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-floating > .form-control:focus ~ label,
+        .form-floating > .form-control:not(:placeholder-shown) ~ label {
+            color: var(--primary-green);
+            transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+        }
+
+        .input-group {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .input-group:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .btn-success {
+            background: var(--primary-green);
+            border: none;
+            padding: 0.8rem 2rem;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-success:hover {
+            background: var(--secondary-green);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(46, 125, 50, 0.3);
+        }
+
+        .validation-summary-errors {
+            background: #ffebee;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            color: #c62828;
+        }
+
+        @@media (max-width: 576px) {
+            .login-box {
+                width: 90%;
+                margin: 1rem;
             }
+        }
     </style>
 
    
@@ -58,31 +195,33 @@
                 </a>
             </div>
             <div class="card-body login-card-body">
-                <p class="login-box-msg">Por favor ingrese sus credenciales</p>
+                <p class="login-box-msg">Bienvenido al Sistema de Registro Académico</p>
                 <div asp-validation-summary="All" class="text-danger"></div>
                 <form method="post">
-                    <div class="input-group mb-3">
+                    <div class="input-group mb-4">
                         <div class="form-floating flex-grow-1">
                             <input name="NombreUsuario" required="true" id="loginEmail" type="email" class="form-control" placeholder=" " />
-                            <label for="loginEmail">Usuario</label>
+                            <label for="loginEmail">Correo Electrónico</label>
                         </div>
                         <div class="input-group-text">
                             <span class="bi bi-envelope"></span>
                         </div>
                     </div>
-                    <div class="input-group mb-3">
+                    <div class="input-group mb-4">
                         <div class="form-floating flex-grow-1">
                             <input name="Clave" required="true" id="loginPassword" type="password" class="form-control" placeholder=" " />
                             <label for="loginPassword">Contraseña</label>
                         </div>
-                        <div class="input-group-text">
-                            <span class="bi bi-lock-fill"></span>
-                        </div>
+                        <button type="button" class="input-group-text" id="togglePassword">
+                            <span class="bi bi-eye"></span>
+                        </button>
                     </div>
                     <div class="row">
-                        <div class="col-4">
-                            <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-success">Ingresar</button>
+                        <div class="col-12">
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -105,26 +244,18 @@
     <script src="~/js/adminlte.js"></script> <!--end::Required Plugin(AdminLTE)--><!--begin::OverlayScrollbars Configure-->
 
     <script>
-        const SELECTOR_SIDEBAR_WRAPPER = ".sidebar-wrapper";
-        const Default = {
-            scrollbarTheme: "os-theme-light",
-            scrollbarAutoHide: "leave",
-            scrollbarClickScroll: true,
-        };
-        document.addEventListener("DOMContentLoaded", function () {
-            const sidebarWrapper = document.querySelector(SELECTOR_SIDEBAR_WRAPPER);
-            if (
-                sidebarWrapper &&
-                typeof OverlayScrollbarsGlobal?.OverlayScrollbars !== "undefined"
-            ) {
-                OverlayScrollbarsGlobal.OverlayScrollbars(sidebarWrapper, {
-                    scrollbars: {
-                        theme: Default.scrollbarTheme,
-                        autoHide: Default.scrollbarAutoHide,
-                        clickScroll: Default.scrollbarClickScroll,
-                    },
-                });
-            }
+        document.addEventListener('DOMContentLoaded', function() {
+            const togglePassword = document.querySelector('#togglePassword');
+            const password = document.querySelector('#loginPassword');
+
+            togglePassword.addEventListener('click', function() {
+                const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                password.setAttribute('type', type);
+                
+                const icon = this.querySelector('span');
+                icon.classList.toggle('bi-eye');
+                icon.classList.toggle('bi-eye-slash');
+            });
         });
     </script> <!--end::OverlayScrollbars Configure--> <!-- OPTIONAL SCRIPTS --> <!-- sortablejs -->
 

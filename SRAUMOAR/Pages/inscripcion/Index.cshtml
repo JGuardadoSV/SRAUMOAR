@@ -19,7 +19,7 @@
                                 <span class="text-danger">*</span> Grupos registrados
                             </label>
                             <select name="SelectedCarreraId" class="form-select" id="grupoSelect" onchange="this.form.submit()">
-                                <option value="" selected>Selecciona una carrera</option>
+                                <option value="0" selected>Selecciona una carrera</option>
                                 @foreach (var grupo in ViewBag.GrupoId)
                                 {
                                     <option value="@grupo.Value">@grupo.Text</option>

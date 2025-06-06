@@ -33,17 +33,20 @@ namespace SRAUMOAR.Entidades.Alumnos
         [EmailAddress(ErrorMessage = "Email inválido")]
         public string? Email { get; set; }
 
+        [Display(Name = "DUI")]
+        public string? DUI { get; set; }
+
         [Required(ErrorMessage = "El teléfono primario es obligatorio")]
         [Display(Name = "Teléfono primario")]
-        [RegularExpression(@"^\d{4}-\d{4}$", ErrorMessage = "El teléfono primario no tiene un formato válido (xxxx-xxxx)")]
+        [RegularExpression(@"^\d{8}$", ErrorMessage = "El teléfono primario no tiene un formato válido (00000000)")]
         public string? TelefonoPrimario { get; set; }
 
         [Required(ErrorMessage = "El teléfono primario es obligatorio")]
         [Display(Name = "Teléfono Whatsapp")]
-        [RegularExpression(@"^\+\d{2,3} \d{4}-\d{4}$", ErrorMessage = "El teléfono de Whatsapp no tiene un formato válido (+xx xxxx-xxxx)")]
+        [RegularExpression(@"^\+\d{2,3}\d{8}$", ErrorMessage = "El teléfono de Whatsapp no tiene un formato válido (+00000000000)")]
         public string? Whatsapp { get; set; }
 
-        [RegularExpression(@"^\d{4}-\d{4}$", ErrorMessage = "El teléfono secundario no tiene un formato válido (xxxx-xxxx)")]
+        [RegularExpression(@"^\d{8}$", ErrorMessage = "El teléfono secundario no tiene un formato válido (00000000)")]
         [Display(Name = "Teléfono de secundario")]
         public string? TelefonoSecundario { get; set; }
 
@@ -53,7 +56,7 @@ namespace SRAUMOAR.Entidades.Alumnos
 
         [Required(ErrorMessage = "El teléfono del contacto de emergencia es obligatorio")]
         [Display(Name = "Teléfono de emergencia")]
-        [RegularExpression(@"^\d{4}-\d{4}$", ErrorMessage = "El teléfono de emergencia no tiene un formato válido (xxxx-xxxx)")]
+        [RegularExpression(@"^\d{8}$", ErrorMessage = "El teléfono de emergencia no tiene un formato válido (00000000)")]
         public string? NumeroDeEmergencia { get; set; }
 
         [Required(ErrorMessage = "El campo Dirección de residencia es obligatorio")]
