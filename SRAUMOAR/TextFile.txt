@@ -1,0 +1,37 @@
+﻿207.58.153.147
+Dwa3qWrkEAQRzQF2
+
+
+docker run -d -p 8080:80 -e ASPNETCORE_URLS=http://0.0.0.0:80 prehack77/sraumoar:latest
+
+Construir la imagen:
+Apply to Create.cshtm...
+Run
+docker build -t prehack77/sraumoar:latest .
+Iniciar sesión en DockerHub:
+Apply to Create.cshtm...
+docker login
+(Te pedirá tu usuario y contraseña de DockerHub)
+Subir la imagen a DockerHub:
+Apply to Create.cshtm...
+docker push prehack77/sraumoar:latest
+¿Quieres que ejecute alguno de estos comandos por ti? También podemos verificar si Docker está instalado y funcionando correctamente antes de proceder.
+docker run -d -p 8080:80 -e ASPNETCORE_URLS=http://0.0.0.0:80 prehack77/sraumoar:latest
+
+
+# Paso 1: Detener y eliminar el contenedor que está corriendo (si hay alguno)
+docker ps -a | grep prehack77/sraumoar
+docker stop $(docker ps -a | grep prehack77/sraumoar | awk '{print $1}')
+docker rm $(docker ps -a | grep prehack77/sraumoar | awk '{print $1}')
+
+# Paso 2: Eliminar la imagen
+docker rmi prehack77/sraumoar:latest
+
+# Paso 3: Volver a descargar la última versión de la imagen
+docker pull prehack77/sraumoar:latest
+
+# Paso 4: Ejecutar nuevamente el contenedor
+docker run -d -p 8080:80 prehack77/sraumoar:latest
+
+# Paso 5: Verificar que el contenedor está corriendo
+docker ps
