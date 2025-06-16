@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -14,13 +14,13 @@ using SRAUMOAR.Servicios;
 
 namespace SRAUMOAR.Pages.inscripcion
 {
-    public class MateriasInscritasModel : PageModel
+    public class HojaInscripcionPDFModel : PageModel
     {
         private readonly SRAUMOAR.Modelos.Contexto _context;
         private readonly IConverter _converter;
         private readonly PdfService _pdfService;
 
-        public MateriasInscritasModel(
+        public HojaInscripcionPDFModel(
             SRAUMOAR.Modelos.Contexto context,
             IConverter converter,
             PdfService pdfService)
@@ -52,7 +52,7 @@ namespace SRAUMOAR.Pages.inscripcion
             return Page();
         }
 
-        // NUEVO método para generar PDF
-        
+        // NUEVO m�todo para generar PDF
+
     }
 }

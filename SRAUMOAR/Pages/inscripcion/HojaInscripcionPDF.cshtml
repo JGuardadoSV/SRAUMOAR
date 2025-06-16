@@ -1,0 +1,200 @@
+﻿@page
+@model SRAUMOAR.Pages.inscripcion.MateriasInscritasModel
+
+<style>
+    @@page {
+        margin: 0.5in;
+        size: A4;
+    }
+
+    .print-button {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background-color: #333;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        font-size: 14px;
+        cursor: pointer;
+        border-radius: 4px;
+        z-index: 9999;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+        .print-button:hover {
+            background-color: #555;
+        }
+
+    .print-container {
+        width: 100%;
+        max-width: none;
+        margin: 20px auto;
+        padding: 30px;
+        background-color: white;
+        -border: 3px solid black;
+        box-sizing: border-box;
+    }
+
+    .header {
+        text-align: center;
+        margin-bottom: 30px;
+        border-bottom: 2px solid black;
+        padding-bottom: 20px;
+    }
+
+    .university-title {
+        color: black;
+        font-size: 22px;
+        font-weight: bold;
+        margin: 0 0 10px 0;
+        text-transform: uppercase;
+    }
+
+    .form-title {
+        color: black;
+        font-size: 18px;
+        font-weight: bold;
+        margin: 0;
+    }
+
+    .student-info {
+        color: black;
+        text-align: center;
+        margin-bottom: 25px;
+        font-size: 16px;
+        font-weight: bold;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        border: 2px solid black;
+        margin-bottom: 20px;
+    }
+
+        .table thead {
+            background-color: #f0f0f0;
+            color: black;
+        }
+
+            .table thead th {
+                font-weight: bold;
+                border: 1px solid black;
+                padding: 12px 10px;
+                text-align: center;
+                font-size: 12px;
+                vertical-align: middle;
+            }
+
+        .table td {
+            vertical-align: middle;
+            padding: 10px;
+            border: 1px solid black;
+            font-size: 11px;
+            text-align: center;
+        }
+
+        .table tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+    .total-row {
+        background-color: #f0f0f0 !important;
+        font-weight: bold;
+        color: black;
+        border: 2px solid black;
+    }
+
+        .total-row td {
+            border: 1px solid black;
+            font-size: 13px;
+            text-align: center;
+            padding: 15px;
+        }
+
+    .footer {
+        margin-top: 30px;
+        text-align: center;
+        font-size: 11px;
+        color: black;
+        border-top: 1px solid black;
+        padding-top: 15px;
+    }
+
+    @@media print {
+        * {
+            visibility: hidden !important;
+        }
+
+        .print-container {
+            visibility: visible !important;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            margin: 0 !important;
+            padding: 15mm !important;
+            border: 2px solid black !important;
+            background: white !important;
+            z-index: 9999 !important;
+        }
+
+            .print-container * {
+                visibility: visible !important;
+            }
+
+        .print-button {
+            visibility: hidden !important;
+        }
+    }
+</style>
+
+<button class="print-button" onclick="window.print()">🖨️ Imprimir</button>
+
+<div class="print-container">
+    <div class="header">
+        <h1 class="university-title">Universidad Monseñor Oscar Arnulfo Romero</h1>
+        <h2 class="form-title">Hoja de Inscripción Ciclo 02/2025</h2>
+    </div>
+
+    <div class="student-info">
+        Alumno: @Model.Alumno.Nombres @Model.Alumno.Apellidos
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                
+                <th>Materia</th>
+                <th>UV</th>
+                <th>Docente</th>
+                <th>Aula</th>
+                <th>Horario</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.MateriasInscritas)
+            {
+                <tr>
+                    
+                    <td>@Html.DisplayFor(modelItem => item.MateriasGrupo.Materia.NombreMateria) - @Html.DisplayFor(modelItem => item.MateriasGrupo.Grupo.Nombre)</td>
+                    <td>@item.MateriasGrupo.Materia.uv</td>
+                    <td>@item.MateriasGrupo.Docente.Nombres @item.MateriasGrupo.Docente.Apellidos</td>
+                    <td>@Html.DisplayFor(modelItem => item.MateriasGrupo.Aula)</td>
+                    <td>@item.MateriasGrupo.FormatearHora12Horas(item.MateriasGrupo.HoraInicio) - @item.MateriasGrupo.FormatearHora12Horas(item.MateriasGrupo.HoraInicio)</td>
+                </tr>
+            }
+            <tr class="total-row">
+                <td colspan="6">
+                    Total Materias Inscritas: @Model.MateriasInscritas.Count | Total UV: @Model.MateriasInscritas.Sum(m => m.MateriasGrupo.Materia.uv)
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p>Documento generado para fines académicos - UMOAR</p>
+    </div>
+</div>

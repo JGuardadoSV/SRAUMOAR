@@ -32,6 +32,7 @@ docker pull prehack77/sraumoar:latest
 
 # Paso 4: Ejecutar nuevamente el contenedor
 docker run -d -p 8080:80 prehack77/sraumoar:latest
+docker run -d -p 8080:80 -e ASPNETCORE_URLS=http://0.0.0.0:80 prehack77/sraumoar:latest
 
 # Paso 5: Verificar que el contenedor está corriendo
 docker ps
