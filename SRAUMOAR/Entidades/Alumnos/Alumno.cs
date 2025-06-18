@@ -92,7 +92,22 @@ namespace SRAUMOAR.Entidades.Alumnos
         [Display(Name = "Carrera")]
         public int? CarreraId { get; set; }
         public virtual Carrera? Carrera { get; set; }
+
+        public bool PPartida { get; set; }
+        public bool PTitulo { get; set; }
+        public bool PFotografias { get; set; }
+        public bool PPaes { get; set; }
+        public bool PHemograma { get; set; }
+        public bool PPreuniversitario { get; set; }
+        public bool PExamenOrina { get; set; }
+        public bool PSolicitudEquivalencia { get; set; }
+
+
+
+
+
+
     }
 
-   
+
 }

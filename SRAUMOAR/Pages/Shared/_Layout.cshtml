@@ -814,6 +814,29 @@
                 `);
             }
         });
+
+         function abrirPdfEnPopup(url, titulo = 'Reporte') {
+            const ancho = 900;
+            const alto = 850;
+            const left = (screen.width - ancho) / 2;
+            const top = (screen.height - alto) / 2;
+
+            const opciones = `
+                width=${ancho},
+                height=${alto},
+                left=${left},
+                top=${top},
+                scrollbars=yes,
+                resizable=yes,
+                toolbar=no,
+                menubar=no,
+                location=no,
+                directories=no,
+                status=no
+            `;
+
+            window.open(url, titulo, opciones);
+        }
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

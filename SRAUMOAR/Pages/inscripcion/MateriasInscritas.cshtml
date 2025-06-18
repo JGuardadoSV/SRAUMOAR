@@ -108,6 +108,16 @@
        title="Ver Detalles">
         <i class="bi bi-eye"></i>
     </a>
+    <a href="@Url.Page("/reportes/inscripcion/reporteInscripcion", "GeneratePdf")"
+       target="_blank"
+       class="btn">
+        Generar PDF
+    </a>
+    <h4>Ejemplo de uso para otros PDFs:</h4>
+    <pre style="background: #f8f9fa; padding: 10px; border-radius: 4px; margin-top: 10px;">
+<button onclick="abrirPdfEnPopup('/reportes/inscripcion/reporteInscripcion')">
+    Ver Otro PDF
+</button></pre>
     <p>
         <a  class="btn-create" asp-page="InscribirMaterias" asp-route-id="@Model.Alumno.AlumnoId">Inscribir materia</a>
     </p>

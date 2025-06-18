@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SRAUMOAR.Modelos;
 
@@ -11,9 +12,11 @@ using SRAUMOAR.Modelos;
 namespace SRAUMOAR.Migrations
 {
     [DbContext(typeof(Contexto))]
-    partial class ContextoModelSnapshot : ModelSnapshot
+    [Migration("20250618193410_presentoDocumentosAlumnos")]
+    partial class presentoDocumentosAlumnos
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -141,25 +144,10 @@ namespace SRAUMOAR.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("PExamenOrina")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("PFotografias")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("PHemograma")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("PPaes")
+                    b.Property<bool>("PDUI")
                         .HasColumnType("bit");
 
                     b.Property<bool>("PPartida")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("PPreuniversitario")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("PSolicitudEquivalencia")
                         .HasColumnType("bit");
 
                     b.Property<bool>("PTitulo")

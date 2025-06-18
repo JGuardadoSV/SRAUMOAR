@@ -22,7 +22,7 @@ namespace SRAUMOAR.Pages.inscripcion
         }
         [BindProperty(SupportsGet = true)]
         public int idalumno { get; set; }
-        public IActionResult OnGet(int id)
+        public IActionResult OnGet(int id, int cicloelegido=0)
         {
            idalumno = id;
             var cicloactual = _context.Ciclos.Where(x => x.Activo == true).FirstOrDefault()?.Id ?? 0;
