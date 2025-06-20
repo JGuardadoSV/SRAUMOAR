@@ -1,77 +1,463 @@
 ﻿@page
 @model SRAUMOAR.Pages.aranceles.CobrarModel
-
 @{
     ViewData["Title"] = "Aranceles del ciclo";
     var alumno = ViewData["Alumno"] as SRAUMOAR.Entidades.Alumnos.Alumno;
 }
 
-<div class="container my-5">
-    <h1 class="text-center mb-4"></h1>
-    <div class="card">
-        <div class="card-header bg-success text-white text-center">
-            <h2 class="mb-0">Cobro de aranceles</h2>
-        </div>
-        <div class="card-body text-center">
-            <p class="mb-0"><b>Alumno:</b> @alumno?.Nombres @alumno?.Apellidos</p>
-        </div>
+<style>
+    :root {
+        --primary-color: #195e2c;
+        --primary-light: #2d7a41;
+        --primary-dark: #0f3a1a;
+        --accent-color: #4caf50;
+        --success-color: #28a745;
+        --background-gradient: linear-gradient(135deg, #f8fffe 0%, #e8f5f0 100%);
+        --card-shadow: 0 10px 40px rgba(25, 94, 44, 0.15);
+        --button-shadow: 0 8px 25px rgba(25, 94, 44, 0.3);
+    }
+
+    body {
+        background: var(--background-gradient);
+        min-height: 100vh;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .header-professional {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(25, 94, 44, 0.25);
+        position: relative;
+        overflow: hidden;
+    }
+
+        .header-professional::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><defs><pattern id="grain" width="100" height="20" patternUnits="userSpaceOnUse"><circle cx="50" cy="10" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="20" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+
+    .header-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .alumno-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        box-shadow: var(--card-shadow);
+        margin-bottom: 2rem;
+        overflow: hidden;
+    }
+
+    .alumno-header {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+        color: white;
+        padding: 1.5rem 2rem;
+        position: relative;
+    }
+
+        .alumno-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-color) 0%, var(--success-color) 100%);
+        }
+
+    .alumno-info {
+        padding: 1.5rem 2rem;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fff8 100%);
+    }
+
+    .alumno-name {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin: 0;
+    }
+
+    .alumno-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+
+    .aranceles-container {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        box-shadow: var(--card-shadow);
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .table-professional {
+        margin: 0;
+        background: transparent;
+    }
+
+    .table-header {
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%);
+        color: white;
+    }
+
+        .table-header th {
+            border: none;
+            padding: 1.2rem 1rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            position: relative;
+        }
+
+            .table-header th::after {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: linear-gradient(90deg, var(--accent-color) 0%, transparent 100%);
+            }
+
+    .table-row {
+        border-bottom: 1px solid rgba(25, 94, 44, 0.1);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background: white;
+    }
+
+        .table-row:hover {
+            background: linear-gradient(135deg, #f8fff8 0%, #e8f5f0 100%);
+            transform: scale(1.005);
+            box-shadow: 0 5px 15px rgba(25, 94, 44, 0.1);
+        }
+
+        .table-row td {
+            padding: 1rem;
+            vertical-align: middle;
+            border: none;
+            font-weight: 500;
+        }
+
+    .checkbox-professional {
+        width: 20px;
+        height: 20px;
+        accent-color: var(--primary-color);
+        transform: scale(1.2);
+        cursor: pointer;
+    }
+
+        .checkbox-professional:checked {
+            background: var(--primary-color);
+        }
+
+    .btn-recibo {
+        background: linear-gradient(135deg, var(--success-color) 0%, #20c997 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        color: white;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: inline-block;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .btn-recibo::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-recibo:hover::before {
+            left: 100%;
+        }
+
+        .btn-recibo:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+            color: white;
+            text-decoration: none;
+        }
+
+    .costo-amount {
+        font-weight: 700;
+        color: var(--primary-color);
+        font-size: 1.1rem;
+    }
+
+    .status-activo {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        color: #155724;
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-align: center;
+        display: inline-block;
+    }
+
+    .status-inactivo {
+        background: linear-gradient(135deg, #f8d7da 0%, #f1aeb5 100%);
+        color: #721c24;
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-align: center;
+        display: inline-block;
+    }
+
+    .ciclo-info {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        color: #0d47a1;
+        padding: 0.4rem 0.8rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-align: center;
+        display: inline-block;
+    }
+
+    .btn-cobrar-principal {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+        border: none;
+        border-radius: 12px;
+        padding: 1rem 2.5rem;
+        color: white;
+        font-weight: 700;
+        font-size: 1.1rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: var(--button-shadow);
+        position: relative;
+        overflow: hidden;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+        .btn-cobrar-principal::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s;
+        }
+
+        .btn-cobrar-principal:hover::before {
+            left: 100%;
+        }
+
+        .btn-cobrar-principal:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(25, 94, 44, 0.4);
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--accent-color) 100%);
+        }
+
+        .btn-cobrar-principal:active {
+            transform: translateY(0);
+        }
+
+    .action-container {
+        text-align: center;
+        padding: 2rem;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fff8 100%);
+        border-top: 1px solid rgba(25, 94, 44, 0.1);
+    }
+
+    .no-aranceles {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: #6c757d;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 15px;
+        margin: 2rem 0;
+    }
+
+        .no-aranceles i {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+    @@media (max-width: 768px) {
+        .table-responsive
+
+    {
+        border-radius: 15px;
+        overflow: hidden;
+    }
+
+    .btn-cobrar-principal {
+        width: 100%;
+        margin-top: 1rem;
+    }
+
+    .alumno-card {
+        margin: 0 1rem 2rem 1rem;
+    }
+
+    .aranceles-container {
+        margin: 0 1rem;
+    }
+
+    }
+
+    .icon-money::before {
+        content: "💰";
+        margin-right: 0.5rem;
+    }
+
+    .icon-student::before {
+        content: "👨‍🎓";
+        margin-right: 0.5rem;
+    }
+</style>
+
+<div class="header-professional">
+    <div class="container header-content">
+        <h1 class="display-4 fw-bold text-center mb-0">
+            <i class="bi bi-cash-coin me-3"></i>
+            Gestión de Aranceles
+        </h1>
+        <p class="lead text-center mt-2 mb-0 opacity-90">Sistema de cobro y administración de pagos</p>
     </div>
 </div>
 
-
 <div class="container">
-    <div class="row">
-        <div class="col-12">
+    <!-- Información del Alumno -->
+    <div class="alumno-card">
+        <div class="alumno-header">
+            <h2 class="mb-0 fw-bold">
+                <i class="bi bi-person-circle me-2"></i>
+                Información del Estudiante
+            </h2>
+        </div>
+        <div class="alumno-info">
+            <div class="alumno-label icon-student">Alumno Registrado</div>
+            <div class="alumno-name">@alumno?.Nombres @alumno?.Apellidos</div>
+        </div>
+    </div>
+
+    <!-- Tabla de Aranceles -->
+    <div class="aranceles-container">
+        <form method="post">
+            <input type="hidden" name="alumnoId" value="@alumno?.AlumnoId" />
+
             @{
                 int checkboxCount = 0;
             }
 
-            <form method="post">
-                <input type="hidden" name="alumnoId" value="@alumno?.AlumnoId" />
-                <table class="table table-striped">
-                    <thead class="table-dark">
+            <div class="table-responsive">
+                <table class="table table-professional">
+                    <thead class="table-header">
                         <tr>
-                            <th>Seleccionar</th>
-                            <th>@Html.DisplayNameFor(model => model.Arancel[0].Nombre)</th>
-                            <th>@Html.DisplayNameFor(model => model.Arancel[0].Costo)</th>
-                            <th>@Html.DisplayNameFor(model => model.Arancel[0].Activo)</th>
-                            <th>@Html.DisplayNameFor(model => model.Arancel[0].FechaInicio)</th>
-                            <th>@Html.DisplayNameFor(model => model.Arancel[0].FechaFin)</th>
-                            <th>@Html.DisplayNameFor(model => model.Arancel[0].Ciclo)</th>
+                            <th><i class="bi bi-check-square me-2"></i>Seleccionar</th>
+                            <th><i class="bi bi-tag me-2"></i>@Html.DisplayNameFor(model => model.Arancel[0].Nombre)</th>
+                            <th><i class="bi bi-currency-dollar me-2"></i>@Html.DisplayNameFor(model => model.Arancel[0].Costo)</th>
+                            <th><i class="bi bi-toggle-on me-2"></i>@Html.DisplayNameFor(model => model.Arancel[0].Activo)</th>
+                            <th><i class="bi bi-calendar-event me-2"></i>@Html.DisplayNameFor(model => model.Arancel[0].FechaInicio)</th>
+                            <th><i class="bi bi-calendar-x me-2"></i>@Html.DisplayNameFor(model => model.Arancel[0].FechaFin)</th>
+                            <th><i class="bi bi-mortarboard me-2"></i>@Html.DisplayNameFor(model => model.Arancel[0].Ciclo)</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var item in Model.Arancel)
                         {
-                            <tr>
-                                <td>
+                            <tr class="table-row">
+                                <td class="text-center">
                                     @if (!Model.AlumnoHaPagado(item.ArancelId, @alumno.AlumnoId))
                                     {
                                         checkboxCount++;
-                                        <input type="checkbox" name="selectedAranceles" value="@item.ArancelId" />
+                                        <input type="checkbox" name="selectedAranceles" value="@item.ArancelId" class="checkbox-professional" />
                                     }
                                     else
                                     {
-                                        <a asp-page="/aranceles/Facturas" asp-route-arancelId="@item.ArancelId" asp-route-alumnoId="@alumno?.AlumnoId" class="btn btn-success">Recibo</a>
+                                        <a asp-page="/aranceles/Facturas" asp-route-arancelId="@item.ArancelId" asp-route-alumnoId="@alumno?.AlumnoId" class="btn btn-recibo">
+                                            <i class="bi bi-receipt me-1"></i>Ver Recibo
+                                        </a>
                                     }
                                 </td>
-                                <td>@Html.DisplayFor(modelItem => item.Nombre)</td>
-                                <td>$ @Html.DisplayFor(modelItem => item.Costo)</td>
-                                <td>@Html.DisplayFor(modelItem => item.Activo)</td>
+                                <td class="fw-semibold">@Html.DisplayFor(modelItem => item.Nombre)</td>
+                                <td><span class="costo-amount">$@Html.DisplayFor(modelItem => item.Costo)</span></td>
+                                <td>
+                                    @if (item.Activo)
+                                    {
+                                        <span class="status-activo">
+                                            <i class="bi bi-check-circle me-1"></i>Activo
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-inactivo">
+                                            <i class="bi bi-x-circle me-1"></i>Inactivo
+                                        </span>
+                                    }
+                                </td>
                                 <td>@Html.DisplayFor(modelItem => item.FechaInicio)</td>
                                 <td>@Html.DisplayFor(modelItem => item.FechaFin)</td>
-                                <td>@Html.DisplayFor(modelItem => item.Ciclo.NCiclo) / @Html.DisplayFor(modelItem => item.Ciclo.anio)</td>
+                                <td>
+                                    <span class="ciclo-info">
+                                        <i class="bi bi-calendar3 me-1"></i>
+                                        @Html.DisplayFor(modelItem => item.Ciclo.NCiclo) / @Html.DisplayFor(modelItem => item.Ciclo.anio)
+                                    </span>
+                                </td>
                             </tr>
                         }
                     </tbody>
                 </table>
-                @if (checkboxCount > 0)
-                {
-                    <button type="submit" class="btn btn-primary">Cobrar Seleccionados</button>
-                }
-            </form>
+            </div>
 
-        </div>
+            @if (checkboxCount > 0)
+            {
+                <div class="action-container">
+                    <button type="submit" class="btn btn-cobrar-principal">
+                        <i class="bi bi-credit-card me-2"></i>
+                        Procesar Cobro de Seleccionados
+                    </button>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Selecciona los aranceles que deseas cobrar y haz clic en el botón superior
+                        </small>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="no-aranceles">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <h4 class="fw-bold mt-2">Todos los Aranceles Pagados</h4>
+                    <p class="mb-0">Este alumno no tiene aranceles pendientes de pago.</p>
+                </div>
+            }
+        </form>
     </div>
 </div>
-

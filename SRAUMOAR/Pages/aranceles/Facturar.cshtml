@@ -1,109 +1,571 @@
 ﻿@page
 @model SRAUMOAR.Pages.aranceles.FacturarModel
 
-@{ ViewData["Title"]="Registrar Cobro de Arancel";}
 @{
-   // var arancel = ViewData["Arancel"] as SRAUMOAR.Entidades.Procesos.Arancel;
+    ViewData["Title"] = "Registrar Cobro de Arancel";
 }
 
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card border-success mb-3">
-                <div class="card-header bg-success text-white">
-                    <h3 class="card-title mb-0">Registro de Cobro de Arancel</h3>
+<style>
+    :root {
+        --primary-color: #195e2c;
+        --primary-light: #2d7a41;
+        --primary-dark: #0f3a1a;
+        --accent-color: #4caf50;
+        --success-color: #28a745;
+        --background-gradient: linear-gradient(135deg, #f8fffe 0%, #e8f5f0 100%);
+        --invoice-shadow: 0 8px 25px rgba(25, 94, 44, 0.12);
+        --section-shadow: 0 3px 12px rgba(25, 94, 44, 0.06);
+    }
+
+    body {
+        background: var(--background-gradient);
+        min-height: 100vh;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-size: 14px;
+    }
+
+    .invoice-container {
+        max-width: 800px;
+        margin: 1rem auto;
+        background: white;
+        border-radius: 12px;
+        box-shadow: var(--invoice-shadow);
+        overflow: hidden;
+        border: 1px solid rgba(25, 94, 44, 0.1);
+    }
+
+    .invoice-header {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+        color: white;
+        padding: 1rem 1.5rem;
+        position: relative;
+    }
+
+    .invoice-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .invoice-subtitle {
+        font-size: 0.85rem;
+        opacity: 0.9;
+        margin: 0.3rem 0 0 0;
+        font-weight: 400;
+    }
+
+    .invoice-body {
+        padding: 1.5rem;
+    }
+
+    .student-info {
+        background: linear-gradient(135deg, #f8fff8 0%, #e8f5f0 100%);
+        border: 1px solid rgba(25, 94, 44, 0.1);
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1.5rem;
+        position: relative;
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .student-name {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .student-label {
+        font-size: 0.75rem;
+        color: #6c757d;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.3rem;
+    }
+
+    .aranceles-section {
+        background: white;
+        border: 1px solid rgba(25, 94, 44, 0.1);
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--section-shadow);
+    }
+
+    .section-header {
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%);
+        color: white;
+        padding: 0.75rem 1rem;
+        border: none;
+    }
+
+    .section-title {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .invoice-table {
+        margin: 0;
+        background: transparent;
+        font-size: 0.9rem;
+    }
+
+        .invoice-table thead th {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            color: var(--primary-color);
+            border: none;
+            padding: 0.75rem;
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .invoice-table tbody td {
+            padding: 0.75rem;
+            border-bottom: 1px solid rgba(25, 94, 44, 0.05);
+            vertical-align: middle;
+        }
+
+        .invoice-table tbody tr:hover {
+            background: linear-gradient(135deg, #f8fff8 0%, rgba(233, 247, 238, 0.3) 100%);
+        }
+
+    .total-row {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+        color: white;
+        font-weight: 700;
+    }
+
+        .total-row td {
+            border: none;
+            font-size: 1rem;
+        }
+
+    .amount-display {
+        font-weight: 700;
+        color: var(--primary-color);
+        font-size: 0.95rem;
+    }
+
+    .payment-section {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fff8 100%);
+        border: 1px solid rgba(25, 94, 44, 0.1);
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--section-shadow);
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .form-label-professional {
+        font-weight: 600;
+        color: var(--primary-color);
+        margin-bottom: 0.3rem;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        display: block;
+    }
+
+    .form-control-professional {
+        border: 1px solid #e8f5f0;
+        border-radius: 6px;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        background: white;
+        width: 100%;
+        height: 36px;
+    }
+
+        .form-control-professional:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.15rem rgba(25, 94, 44, 0.15);
+            background: white;
+        }
+
+    .form-control-readonly {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        color: #495057;
+        font-weight: 600;
+    }
+
+    .textarea-professional {
+        border: 1px solid #e8f5f0;
+        border-radius: 6px;
+        padding: 0.5rem 0.75rem;
+        resize: vertical;
+        min-height: 60px;
+        transition: all 0.3s ease;
+        width: 100%;
+        font-size: 0.9rem;
+    }
+
+        .textarea-professional:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.15rem rgba(25, 94, 44, 0.15);
+        }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: flex-end;
+        align-items: center;
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(25, 94, 44, 0.1);
+    }
+
+    .btn-save-invoice {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 0.6rem 1.5rem;
+        color: white;
+        font-weight: 700;
+        font-size: 0.9rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 15px rgba(25, 94, 44, 0.25);
+        position: relative;
+        overflow: hidden;
+    }
+
+        .btn-save-invoice::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s;
+        }
+
+        .btn-save-invoice:hover::before {
+            left: 100%;
+        }
+
+        .btn-save-invoice:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(25, 94, 44, 0.35);
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--accent-color) 100%);
+        }
+
+    .btn-cancel-invoice {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 0.6rem 1.25rem;
+        color: white;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+        .btn-cancel-invoice:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+            color: white;
+            text-decoration: none;
+        }
+
+    .payment-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .payment-info-left {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .payment-controls-right {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .payment-controls {
+        background: linear-gradient(135deg, #f0f8f0 0%, #e8f5e8 100%);
+        border: 2px solid rgba(25, 94, 44, 0.15);
+        position: relative;
+    }
+
+        .payment-controls::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--accent-color) 0%, var(--primary-color) 100%);
+            border-radius: 0 2px 2px 0;
+        }
+
+    .payment-input {
+        border: 2px solid var(--accent-color) !important;
+        background: white !important;
+        font-size: 1rem !important;
+        font-weight: 600;
+        text-align: center;
+    }
+
+        .payment-input:focus {
+            border-color: var(--primary-color) !important;
+            box-shadow: 0 0 0 0.2rem rgba(25, 94, 44, 0.25) !important;
+            transform: scale(1.02);
+        }
+
+    .payment-result {
+        background: linear-gradient(135deg, var(--success-color) 0%, var(--accent-color) 100%) !important;
+        color: white !important;
+        font-weight: 700 !important;
+        text-align: center;
+        font-size: 1rem !important;
+    }
+
+    .action-buttons-right {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(25, 94, 44, 0.15);
+    }
+
+        .action-buttons-right .btn-save-invoice,
+        .action-buttons-right .btn-cancel-invoice {
+            width: 100%;
+            text-align: center;
+            justify-content: center;
+            display: flex;
+            align-items: center;
+        }
+
+    .payment-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+        margin-top: 0.75rem;
+    }
+
+    .validation-error {
+        color: #dc3545;
+        font-size: 0.8rem;
+        margin-top: 0.2rem;
+        font-weight: 500;
+    }
+
+    /* Iconos más pequeños */
+    .bi {
+        font-size: 1em;
+    }
+
+    @@media (max-width: 768px) {
+        .invoice-container
+
+    {
+        margin: 0.5rem;
+        border-radius: 10px;
+    }
+
+    .invoice-body {
+        padding: 1rem;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .btn-save-invoice,
+    .btn-cancel-invoice {
+        width: 100%;
+        text-align: center;
+    }
+
+    .payment-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    }
+</style>
+
+<div class="invoice-container">
+    <!-- Header de la Factura -->
+    <div class="invoice-header">
+        <h1 class="invoice-title">
+            <i class="bi bi-receipt"></i>
+            Factura de Aranceles
+        </h1>
+        <p class="invoice-subtitle">Registro de cobro y procesamiento de pagos</p>
+    </div>
+
+    <div class="invoice-body">
+        <!-- Información del Alumno -->
+        <div class="student-info">
+            <div class="student-label">
+                <i class="bi bi-person-circle me-1"></i>
+                Estudiante
+            </div>
+            <h2 class="student-name">
+                <i class="bi bi-mortarboard"></i>
+                @ViewData["AlumnoNombre"]
+            </h2>
+        </div>
+
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="validation-error mb-3"></div>
+
+            <!-- Lista de Aranceles -->
+            <div class="aranceles-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="bi bi-list-ul"></i>
+                        Detalle de Aranceles
+                    </h3>
                 </div>
-                <div class="card-body">
-                    <form method="post">
-                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                        
-                        <div class="row mb-3">
-                            
-                            <h4>Alumno: @ViewData["AlumnoNombre"] </h4>
-                            <div class="col-12">
-                                <h1 class="text-success">Lista de Aranceles</h1>
-                                <table class="table table-striped">
-                                    <thead class="table-dark">
-                                        <tr>
-                                            <th>Nombres</th>
-                                            <th>Costo</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var i in Model.Aranceles)
-                                        {
-                                            <tr>
-                                                 <input type="hidden" name="selectedAranceles[]" value="@i.ArancelId" />
-                                                <input type="hidden" name="arancelescostos[]" value="@i.Costo" />
-                                                <td>@i.Nombre</td>
-                                                <td>@i.Costo.ToString("C")</td>
-                                            </tr>
-                                        }
-                                        <tr>
-                                            <td><strong>Total:</strong></td>
-                                            <td><strong>@Model.Aranceles.Sum(a => a.Costo).ToString("C")</strong></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Ciclo</label>
-                                <input value="@Model.Aranceles[0].Ciclo.NCiclo- @Model.Aranceles[0].Ciclo.anio" class="form-control" readonly="readonly" />
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Monto</label>
-                                <input value="@Model.Aranceles.Sum(a => a.Costo)" id="MontoArancel" class="form-control" readonly="readonly" />
-                            </div>
-                               
-                        
-                        <input asp-for="CobroArancel.AlumnoId" value="@ViewData["AlumnoId"]" type="hidden" />
-                            <input asp-for="CobroArancel.CicloId" value="@Model.Aranceles[0].Ciclo.Id" type="hidden" />
-                            <input asp-for="CobroArancel.Total" value="@Model.Aranceles.Sum(a => a.Costo)" type="hidden" />
 
-                            <div class="col-md-4">
-                                <label asp-for="CobroArancel.EfectivoRecibido" class="form-label">Efectivo Recibido</label>
-                                <input asp-for="CobroArancel.EfectivoRecibido"
-                                       class="form-control"
-                                       type="number"
-                                       step="0.01"
-                                       min="@Model.Aranceles.Sum(a => a.Costo)"
-                                       oninvalid="this.setCustomValidity('El efectivo recibido debe ser al menos @Model.Aranceles.Sum(a => a.Costo)')"
-                                       oninput="this.setCustomValidity('')"
-                                       required />
-
-
-                                <span asp-validation-for="CobroArancel.EfectivoRecibido" class="text-danger"></span>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <label asp-for="CobroArancel.Cambio" class="form-label"></label>
-                                <input asp-for="CobroArancel.Cambio" 
-                                       class="form-control" 
-                                       type="number" 
-                                       step="0.01" 
-                                       readonly />
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label asp-for="CobroArancel.nota" class="form-label">Nota adicional</label>
-                            <textarea asp-for="CobroArancel.nota" 
-                                      class="form-control" 
-                                      rows="3"></textarea>
-                        </div> 
-                        
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <button type="submit" class="btn btn-success">
-                                <i class="bi bi-save"></i> Guardar Cobro
-                            </button>
-                            <a asp-page="/alumno/Busqueda" class="btn btn-secondary">
-                                <i class="bi bi-x-circle"></i> Cancelar
-                            </a>
-                        </div>
-                    </form>
+                <div class="table-responsive">
+                    <table class="table invoice-table">
+                        <thead>
+                            <tr>
+                                <th><i class="bi bi-tag me-1"></i>Descripción</th>
+                                <th class="text-end"><i class="bi bi-currency-dollar me-1"></i>Importe</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var i in Model.Aranceles)
+                            {
+                                <tr>
+                                    <input type="hidden" name="selectedAranceles[]" value="@i.ArancelId" />
+                                    <input type="hidden" name="arancelescostos[]" value="@i.Costo" />
+                                    <td class="fw-semibold">@i.Nombre</td>
+                                    <td class="text-end amount-display">@i.Costo.ToString("C")</td>
+                                </tr>
+                            }
+                            <tr class="total-row">
+                                <td><strong><i class="bi bi-calculator me-2"></i>TOTAL A PAGAR:</strong></td>
+                                <td class="text-end"><strong>@Model.Aranceles.Sum(a => a.Costo).ToString("C")</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        </div>
+
+            <!-- Layout de dos columnas -->
+            <div class="payment-layout">
+                <!-- Columna Izquierda - Información General -->
+                <div class="payment-info-left">
+                    <div class="payment-section">
+                        <h3 class="section-title mb-2">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Información General
+                        </h3>
+
+                        <div class="form-group">
+                            <label class="form-label-professional">
+                                <i class="bi bi-calendar3 me-1"></i>Ciclo Académico
+                            </label>
+                            <input value="@Model.Aranceles[0].Ciclo.NCiclo - @Model.Aranceles[0].Ciclo.anio"
+                                   class="form-control-professional form-control-readonly"
+                                   readonly="readonly" />
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label-professional">
+                                <i class="bi bi-currency-dollar me-1"></i>Monto Total
+                            </label>
+                            <input value="@Model.Aranceles.Sum(a => a.Costo)"
+                                   id="MontoArancel"
+                                   class="form-control-professional form-control-readonly"
+                                   readonly="readonly" />
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="CobroArancel.nota" class="form-label-professional">
+                                <i class="bi bi-journal-text me-1"></i>Observaciones
+                            </label>
+                            <textarea asp-for="CobroArancel.nota"
+                                      class="form-control textarea-professional"
+                                      rows="2"
+                                      placeholder="Observaciones adicionales..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Columna Derecha - Proceso de Pago -->
+                <div class="payment-controls-right">
+                    <div class="payment-section payment-controls">
+                        <h3 class="section-title mb-2">
+                            <i class="bi bi-credit-card me-2"></i>
+                            Proceso de Pago
+                        </h3>
+
+                        <div class="form-group">
+                            <label asp-for="CobroArancel.EfectivoRecibido" class="form-label-professional">
+                                <i class="bi bi-cash-stack me-1"></i>Efectivo Recibido
+                            </label>
+                            <input asp-for="CobroArancel.EfectivoRecibido"
+                                   class="form-control-professional payment-input"
+                                   type="number"
+                                   step="0.01"
+                                   min="@Model.Aranceles.Sum(a => a.Costo)"
+                                   oninvalid="this.setCustomValidity('El efectivo recibido debe ser al menos @Model.Aranceles.Sum(a => a.Costo)')"
+                                   oninput="this.setCustomValidity('')"
+                                   required />
+                            <span asp-validation-for="CobroArancel.EfectivoRecibido" class="validation-error"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="CobroArancel.Cambio" class="form-label-professional">
+                                <i class="bi bi-arrow-return-left me-1"></i>Cambio a Entregar
+                            </label>
+                            <input asp-for="CobroArancel.Cambio"
+                                   class="form-control-professional form-control-readonly payment-result"
+                                   type="number"
+                                   step="0.01"
+                                   readonly />
+                        </div>
+
+                        <!-- Botones de Acción -->
+                        <div class="action-buttons-right">
+                            <a asp-page="/alumno/Busqueda" class="btn-cancel-invoice">
+                                <i class="bi bi-x-circle me-1"></i>
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn-save-invoice">
+                                <i class="bi bi-check-circle me-1"></i>
+                                Procesar Cobro
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Campos Ocultos -->
+            <input asp-for="CobroArancel.AlumnoId" value="@ViewData["AlumnoId"]" type="hidden" />
+            <input asp-for="CobroArancel.CicloId" value="@Model.Aranceles[0].Ciclo.Id" type="hidden" />
+            <input asp-for="CobroArancel.Total" value="@Model.Aranceles.Sum(a => a.Costo)" type="hidden" />
+        </form>
     </div>
 </div>
 
@@ -113,15 +575,18 @@
         $(document).ready(function() {
             // Calcular cambio automáticamente
             $('#CobroArancel_EfectivoRecibido').on('input', function() {
-                // Aquí deberías agregar la lógica para calcular el cambio
-                // Este es solo un ejemplo simple
                 var efectivoRecibido = parseFloat($(this).val()) || 0;
                 var montoArancel = parseFloat($('#MontoArancel').val()) || 0;
                 var cambio = Math.max(0, efectivoRecibido - montoArancel);
                 $('#CobroArancel_Cambio').val(cambio.toFixed(2));
             });
+
+            // Efecto visual en el campo de efectivo recibido
+            $('#CobroArancel_EfectivoRecibido').on('focus', function() {
+                $(this).parent().addClass('focused');
+            }).on('blur', function() {
+                $(this).parent().removeClass('focused');
+            });
         });
     </script>
-
-    
 }

@@ -1,0 +1,85 @@
+﻿@page
+@model SRAUMOAR.Pages.donantes.DetailsModel
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h1>Details</h1>
+
+<div>
+    <h4>Donantes</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Donantes.TipoDocumento)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Donantes.TipoDocumento)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Donantes.NumDocumento)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Donantes.NumDocumento)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Donantes.Nrc)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Donantes.Nrc)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Donantes.Nombre)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Donantes.Nombre)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Donantes.CodActividad)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Donantes.CodActividad)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Donantes.DescActividad)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Donantes.DescActividad)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Donantes.Direccion)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Donantes.Direccion)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Donantes.Telefono)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Donantes.Telefono)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Donantes.Correo)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Donantes.Correo)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Donantes.CodDomiciliado)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Donantes.CodDomiciliado)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Donantes.CodPais)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Donantes.CodPais)
+        </dd>
+    </dl>
+</div>
+<div>
+    <a asp-page="./Edit" asp-route-id="@Model.Donantes.Id">Edit</a> |
+    <a asp-page="./Index">Back to List</a>
+</div>

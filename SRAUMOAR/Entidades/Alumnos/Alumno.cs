@@ -102,6 +102,11 @@ namespace SRAUMOAR.Entidades.Alumnos
         public bool PExamenOrina { get; set; }
         public bool PSolicitudEquivalencia { get; set; }
 
+        public string MunicipioNacimiento { get; set; }
+        public string DepartamentoNacimiento { get; set; }
+        public string EstudiosFinanciadoPor { get; set; }
+        public bool Casado { get; set; }
+
 
 
 

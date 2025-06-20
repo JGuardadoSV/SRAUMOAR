@@ -11,95 +11,374 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@ViewData["Title"]</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+
+        .header-gradient {
+            background: linear-gradient(135deg, #195e2c 0%, #12c110 100%);
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+        }
+
+        .search-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+        }
+
+        .search-input {
+            border: 2px solid #e3f2fd;
+            border-radius: 12px;
+            padding: 12px 20px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+            .search-input:focus {
+                border-color: #667eea;
+                box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+                background: white;
+            }
+
+        .search-btn {
+            background: linear-gradient(135deg, #12c110 0%, #12c110 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 8px 24px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+            .search-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+                color: white;
+            }
+
+        .professional-table {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            border: none;
+        }
+
+        .table-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+        }
+
+            .table-header th {
+                border: none;
+                padding: 18px 15px;
+                font-weight: 600;
+                letter-spacing: 0.5px;
+                text-transform: uppercase;
+                font-size: 0.85rem;
+            }
+
+        .table-row {
+            border-bottom: 1px solid #f8f9fa;
+            transition: all 0.3s ease;
+        }
+
+            .table-row:hover {
+                background: linear-gradient(135deg, #f8f9ff 0%, #e3f2fd 100%);
+                transform: scale(1.01);
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            }
+
+            .table-row td {
+                padding: 15px;
+                vertical-align: middle;
+                border: none;
+            }
+
+        .btn-professional {
+            padding: 8px 16px;
+            margin: 3px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            display: inline-block;
+            min-width: 110px;
+            text-align: center;
+        }
+
+            .btn-professional::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+                transition: left 0.5s;
+            }
+
+            .btn-professional:hover::before {
+                left: 100%;
+            }
+
+            .btn-professional:hover {
+                transform: translateY(-2px);
+                text-decoration: none;
+            }
+
+        .btn-aranceles {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+
+            .btn-aranceles:hover {
+                box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+                color: white;
+            }
+
+        .btn-inscribir-ciclo {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+        }
+
+            .btn-inscribir-ciclo:hover {
+                box-shadow: 0 8px 25px rgba(0, 123, 255, 0.4);
+                color: white;
+            }
+
+        .btn-inscribir-materias {
+            background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(111, 66, 193, 0.3);
+        }
+
+            .btn-inscribir-materias:hover {
+                box-shadow: 0 8px 25px rgba(111, 66, 193, 0.4);
+                color: white;
+            }
+
+        .btn-nuevo {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+
+            .btn-nuevo:hover {
+                box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+                color: white;
+            }
+
+        .btn-editar {
+            background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+            color: #212529;
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+        }
+
+            .btn-editar:hover {
+                box-shadow: 0 8px 25px rgba(255, 193, 7, 0.4);
+                color: #212529;
+            }
+
+        .btn-detalles {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(23, 162, 184, 0.3);
+        }
+
+            .btn-detalles:hover {
+                box-shadow: 0 8px 25px rgba(23, 162, 184, 0.4);
+                color: white;
+            }
+
+        .actions-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            justify-content: center;
+            align-items: center;
+            min-width: 350px;
+        }
+
+        .btn-back {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+            .btn-back:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
+                color: white;
+                text-decoration: none;
+            }
+
+        .pagination-professional .page-link {
+            border: 2px solid #e3f2fd;
+            border-radius: 8px;
+            margin: 0 2px;
+            color: #667eea;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+            .pagination-professional .page-link:hover {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border-color: #667eea;
+                color: white;
+                transform: translateY(-2px);
+            }
+
+        .pagination-professional .page-item.active .page-link {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #667eea;
+        }
+
+        .alert-professional {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border: 1px solid #2196f3;
+            border-radius: 12px;
+            color: #1565c0;
+            font-weight: 500;
+        }
+
+        .stats-text {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        @@media (max-width: 768px) {
+            .actions-container
+
+        {
+            min-width: auto;
+            flex-direction: column;
+        }
+
+        .btn-professional {
+            min-width: 140px;
+            margin: 2px 0;
+        }
+
+        }
+    </style>
 </head>
 <body>
-    <header class="bg-success text-white text-center py-3 mb-4 shadow-lg">
-        <h1 class="display-4 fw-bold">Búsqueda de alumnos</h1>
+    <header class="header-gradient text-white text-center py-4 mb-5">
+        <h1 class="display-4 fw-bold mb-0">
+            <i class="bi bi-search me-3"></i>
+            Búsqueda de Alumnos
+        </h1>
+        <p class="lead mt-2 mb-0">Sistema de gestión académica</p>
     </header>
 
     @if (!User.IsInRole("Administracion"))
     {
-        <div class="container-fluid mt-4">
-            <a asp-page="./Index" class="btn btn-primary btn-custom">
-                <i class="bi bi-arrow-left-circle btn-icon"></i>
-                Volver
+        <div class="container-fluid mb-4">
+            <a asp-page="./Index" class="btn btn-back">
+                <i class="bi bi-arrow-left-circle me-2"></i>
+                Volver al menú principal
             </a>
         </div>
     }
 
-    <div class="container-fluid mt-4">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <form method="get">
-                    <div class="input-group mb-3">
-                        <input type="text" class="form-control" placeholder="Buscar por nombre o apellido" name="buscar" value="@Model.busqueda" />
-                        <button class="btn btn-outline-secondary" type="submit">Buscar</button>
+    <div class="container-fluid">
+        <div class="card search-card">
+            <div class="card-body p-4">
+                <form method="get" class="mb-4">
+                    <div class="input-group">
+                        <input type="text" class="form-control search-input" placeholder="Buscar por nombre o apellido del alumno..." name="buscar" value="@Model.busqueda" />
+                        <button class="btn search-btn" type="submit">
+                            <i class="bi bi-search me-2"></i>
+                            Buscar
+                        </button>
                     </div>
                 </form>
 
-                <table class="table table-striped table-hover">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>@Html.DisplayNameFor(model => model.Alumno[0].Nombres)</th>
-                            <th>@Html.DisplayNameFor(model => model.Alumno[0].Apellidos)</th>
-                            <th>@Html.DisplayNameFor(model => model.Alumno[0].FechaDeNacimiento)</th>
-                            <th>@Html.DisplayNameFor(model => model.Alumno[0].Email)</th>
-                            <th class="text-center">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var item in Model.Alumno)
-                        {
+                <div class="table-responsive">
+                    <table class="table professional-table mb-0">
+                        <thead class="table-header">
                             <tr>
-                                <td>@Html.DisplayFor(modelItem => item.Nombres)</td>
-                                <td>@Html.DisplayFor(modelItem => item.Apellidos)</td>
-                                <td>@Html.DisplayFor(modelItem => item.FechaDeNacimiento)</td>
-                                <td>@Html.DisplayFor(modelItem => item.Email)</td>
-                                <td class="text-center">
-                                    @if(User.IsInRole("Administracion"))
-                                    {
-                                        <div class="btn-group">
-                                            <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                                Acciones
-                                            </button>
-                                            <ul class="dropdown-menu">
-                                                <li><a class="dropdown-item" asp-page="/aranceles/Cobrar" asp-route-id="@item.AlumnoId">Aranceles <i class="bi bi-dollar"></i></a></li>
-                                                <li><a class="dropdown-item" asp-page="/inscripcion/Create" asp-route-id="@item.AlumnoId">Inscribir al ciclo <i class="bi bi-arrow-right-circle"></i></a></li>
-                                                <li><a class="dropdown-item" asp-page="/inscripcion/MateriasInscritas" asp-route-id="@item.AlumnoId">Inscribir materias <i class="bi bi-arrow-right-circle"></i></a></li>
-                                                
-                                            </ul>
-                                        </div>
-                                    }else{
-                                    <div class="btn-group">
-                                        <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                            Acciones
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" asp-page="./Create">Nuevo <i class="bi bi-plus-circle"></i></a></li>
-                                            <li><a class="dropdown-item" asp-page="./Edit" asp-route-id="@item.AlumnoId">Editar <i class="bi bi-pencil-square"></i></a></li>
-                                            <li><a class="dropdown-item" asp-page="./Details" asp-route-id="@item.AlumnoId">Detalles <i class="bi bi-info-circle"></i></a></li>
-                                            <!-- <li><a class="dropdown-item" asp-page="./Delete" asp-route-id="@item.AlumnoId">Eliminar <i class="bi bi-trash"></i></a></li>//-->
-                                        </ul>
-                                    </div>
-                                    }
-                                </td>
+                                <th><i class="bi bi-person me-2"></i>@Html.DisplayNameFor(model => model.Alumno[0].Nombres)</th>
+                                <th><i class="bi bi-person-badge me-2"></i>@Html.DisplayNameFor(model => model.Alumno[0].Apellidos)</th>
+                                <th><i class="bi bi-calendar-date me-2"></i>@Html.DisplayNameFor(model => model.Alumno[0].FechaDeNacimiento)</th>
+                                <th><i class="bi bi-envelope me-2"></i>@Html.DisplayNameFor(model => model.Alumno[0].Email)</th>
+                                <th class="text-center"><i class="bi bi-gear me-2"></i>Acciones</th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Alumno)
+                            {
+                                <tr class="table-row">
+                                    <td><strong>@Html.DisplayFor(modelItem => item.Nombres)</strong></td>
+                                    <td>@Html.DisplayFor(modelItem => item.Apellidos)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.FechaDeNacimiento)</td>
+                                    <td><span class="text-muted">@Html.DisplayFor(modelItem => item.Email)</span></td>
+                                    <td>
+                                        <div class="actions-container">
+                                            @if (User.IsInRole("Administracion"))
+                                            {
+                                                <a class="btn btn-professional btn-aranceles" asp-page="/aranceles/Cobrar" asp-route-id="@item.AlumnoId">
+                                                    <i class="bi bi-dollar me-1"></i> Aranceles
+                                                </a>
+                                                <a class="btn btn-professional btn-inscribir-ciclo" asp-page="/inscripcion/Create" asp-route-id="@item.AlumnoId">
+                                                    <i class="bi bi-arrow-right-circle me-1"></i> Inscribir al ciclo
+                                                </a>
+                                                <a class="btn btn-professional btn-inscribir-materias" asp-page="/inscripcion/MateriasInscritas" asp-route-id="@item.AlumnoId">
+                                                    <i class="bi bi-journal-plus me-1"></i> Inscribir materias
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <a class="btn btn-professional btn-nuevo" asp-page="./Create">
+                                                    <i class="bi bi-plus-circle me-1"></i> Nuevo
+                                                </a>
+                                                <a class="btn btn-professional btn-editar" asp-page="./Edit" asp-route-id="@item.AlumnoId">
+                                                    <i class="bi bi-pencil-square me-1"></i> Editar
+                                                </a>
+                                                <a class="btn btn-professional btn-detalles" asp-page="./Details" asp-route-id="@item.AlumnoId">
+                                                    <i class="bi bi-info-circle me-1"></i> Detalles
+                                                </a>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
 
                 @if (Model.Alumno.Any())
                 {
-                    <div class="d-flex justify-content-between align-items-center mt-4">
-                        <div>
-                            <span class="text-muted">
-                                Mostrando @(((Model.PageNumber - 1) * Model.PageSize) + 1) a 
-                                @(Math.Min(Model.PageNumber * Model.PageSize, Model.TotalPages * Model.PageSize)) 
-                                de @(Model.TotalPages * Model.PageSize) resultados
-                            </span>
+                    <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                        <div class="stats-text">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Mostrando @(((Model.PageNumber - 1) * Model.PageSize) + 1) a
+                            @(Math.Min(Model.PageNumber * Model.PageSize, Model.TotalPages * Model.PageSize))
+                            de @(Model.TotalPages * Model.PageSize) resultados
                         </div>
                         <nav aria-label="Navegación de páginas">
-                            <ul class="pagination mb-0">
+                            <ul class="pagination pagination-professional mb-0">
                                 <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
                                     <a class="page-link" asp-page="./Busqueda" asp-route-buscar="@Model.busqueda" asp-route-PageNumber="@(Model.PageNumber - 1)">
                                         <i class="bi bi-chevron-left"></i> Anterior
@@ -122,8 +401,9 @@
                 }
                 else
                 {
-                    <div class="alert alert-info mt-4">
-                        No se encontraron resultados para la búsqueda "@Model.busqueda"
+                    <div class="alert alert-professional mt-4">
+                        <i class="bi bi-search me-2"></i>
+                        <strong>Sin resultados:</strong> No se encontraron alumnos para la búsqueda "@Model.busqueda"
                     </div>
                 }
             </div>

@@ -1,0 +1,163 @@
+﻿@page
+@using SRAUMOAR.Entidades.Generales
+@model SRAUMOAR.Pages.donantes.EditModel
+
+@{
+    ViewData["Title"] = "Editar Donante";
+}
+
+<!-- Incluir el CSS personalizado -->
+<link rel="stylesheet" href="~/css/donantes-edit.css" />
+
+<div class="edit-container">
+    <h1 class="page-title">Editar Donante</h1>
+    <h4 class="section-title">Información del Donante</h4>
+
+    <div class="form-container">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="validation-summary-errors text-danger"></div>
+            <input type="hidden" asp-for="Donantes.Id" />
+
+            <!-- Primera fila -->
+            <div class="form-row">
+                <div class="form-group required">
+                    <label asp-for="Donantes.TipoDocumento" class="control-label">
+                        <span class="required-field">*</span>
+                        Tipo de Documento
+                    </label>
+                    <select asp-for="Donantes.TipoDocumento" class="form-control" asp-items="Html.GetEnumSelectList<TipoDocumento>()">
+                        <option value="">-- Seleccione un tipo de documento --</option>
+                    </select>
+                    <span asp-validation-for="Donantes.TipoDocumento" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Donantes.NumDocumento" class="control-label">
+                        Número de Documento
+                    </label>
+                    <input asp-for="Donantes.NumDocumento" class="form-control" placeholder="Ingrese el número de documento" />
+                    <span asp-validation-for="Donantes.NumDocumento" class="text-danger"></span>
+                </div>
+            </div>
+
+            <!-- Segunda fila -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label asp-for="Donantes.Nrc" class="control-label">
+                        NRC
+                    </label>
+                    <input asp-for="Donantes.Nrc" class="form-control" placeholder="Número de Registro de Contribuyente" />
+                    <span asp-validation-for="Donantes.Nrc" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Donantes.Nombre" class="control-label">
+                        Nombre Completo
+                    </label>
+                    <input asp-for="Donantes.Nombre" class="form-control" placeholder="Nombre completo del donante" />
+                    <span asp-validation-for="Donantes.Nombre" class="text-danger"></span>
+                </div>
+            </div>
+
+            <!-- Tercera fila -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label asp-for="Donantes.CodActividad" class="control-label">
+                        Código de Actividad
+                    </label>
+                    <input asp-for="Donantes.CodActividad" class="form-control" placeholder="Código de actividad económica" />
+                    <span asp-validation-for="Donantes.CodActividad" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Donantes.DescActividad" class="control-label">
+                        Descripción de Actividad
+                    </label>
+                    <input asp-for="Donantes.DescActividad" class="form-control" placeholder="Descripción de la actividad económica" />
+                    <span asp-validation-for="Donantes.DescActividad" class="text-danger"></span>
+                </div>
+            </div>
+
+            <!-- Cuarta fila - Dirección completa -->
+            <div class="form-row full-width">
+                <div class="form-group">
+                    <label asp-for="Donantes.Direccion" class="control-label">
+                        Dirección
+                    </label>
+                    <input asp-for="Donantes.Direccion" class="form-control" placeholder="Dirección completa del donante" />
+                    <span asp-validation-for="Donantes.Direccion" class="text-danger"></span>
+                </div>
+            </div>
+
+            <!-- Quinta fila -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label asp-for="Donantes.Telefono" class="control-label">
+                        Teléfono
+                    </label>
+                    <input asp-for="Donantes.Telefono" class="form-control" placeholder="Número de teléfono" type="tel" />
+                    <span asp-validation-for="Donantes.Telefono" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Donantes.Correo" class="control-label">
+                        Correo Electrónico
+                    </label>
+                    <input asp-for="Donantes.Correo" class="form-control" placeholder="correo@ejemplo.com" type="email" />
+                    <span asp-validation-for="Donantes.Correo" class="text-danger"></span>
+                </div>
+            </div>
+
+            <!-- Sexta fila -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label asp-for="Donantes.CodDomiciliado" class="control-label">
+                        Código Domiciliado
+                    </label>
+                    <input asp-for="Donantes.CodDomiciliado" class="form-control" placeholder="Código de domiciliado" />
+                    <span asp-validation-for="Donantes.CodDomiciliado" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Donantes.CodPais" class="control-label">
+                        Código de País
+                    </label>
+                    <input asp-for="Donantes.CodPais" class="form-control" placeholder="Código del país" />
+                    <span asp-validation-for="Donantes.CodPais" class="text-danger"></span>
+                </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="action-buttons">
+                <a asp-page="./Index" class="back-link">Volver a la lista</a>
+                <input type="submit" value="Guardar Cambios" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        // Agregar funcionalidad adicional si es necesario
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-focus en el primer campo requerido si está vacío
+            const firstRequiredField = document.querySelector('.required .form-control');
+            if (firstRequiredField && !firstRequiredField.value) {
+                firstRequiredField.focus();
+            }
+
+            // Agregar efecto visual a campos con errores
+            const errorFields = document.querySelectorAll('.text-danger:not(:empty)');
+            errorFields.forEach(function(error) {
+                const formGroup = error.closest('.form-group');
+                if (formGroup) {
+                    formGroup.classList.add('has-error');
+                }
+            });
+        });
+    </script>
+}

@@ -79,7 +79,7 @@ namespace SRAUMOAR.Pages
                         case "administrador":
                             return RedirectToPage("/Home");
                         case "administracion":
-                            return RedirectToPage("/Home");
+                            return RedirectToPage("/Menu");
                         case "docentes":
                             return RedirectToPage("/portal/docente/Index");
                         case "estudiantes":

@@ -1,0 +1,195 @@
+﻿@page
+@model SRAUMOAR.Pages.MenuModel
+@{
+    ViewData["Title"] = "Sistema de Gestión Académica";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+<style>
+    .menu-card {
+        transition: all 0.3s ease;
+        border-radius: 12px;
+    }
+
+        .menu-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(40, 167, 69, 0.25) !important;
+        }
+
+    .menu-icon {
+        font-size: 2.5rem;
+        color: #28a745;
+        margin-bottom: 12px;
+        transition: all 0.3s ease;
+    }
+
+    .menu-card:hover .menu-icon {
+        transform: scale(1.1);
+        color: #ffffff;
+    }
+
+    .menu-card:hover .card-body {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+    }
+
+    .menu-card:hover .card-title,
+    .menu-card:hover .card-text {
+        color: white !important;
+    }
+
+    .card-custom {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .btn-menu {
+        background: linear-gradient(45deg, #28a745, #20c997);
+        border: none;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+
+        .btn-menu:hover {
+            background: linear-gradient(45deg, #20c997, #28a745);
+            transform: translateY(-2px);
+        }
+</style>
+
+<div class="content-wrapper">
+    <section class="content">
+        <div class="container-fluid py-4">
+            <!-- Header -->
+            <div class="row mb-4">
+                <div class="col-12 text-center">
+                    <h1 class="display-5 fw-bold text-success mb-2">
+                        <i class="bi bi-mortarboard-fill me-2"></i>
+                        Sistema de Gestión Académica
+                    </h1>
+                    <p class="text-muted">Selecciona una opción para continuar</p>
+                    <hr class="w-25 mx-auto" style="height: 2px; background-color: #28a745;">
+                </div>
+            </div>
+
+            <!-- Menu Options -->
+            <div class="row g-3">
+                <!-- Registrar Alumnos -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="card menu-card card-custom h-100 shadow border-0">
+                        <div class="card-body text-center p-3">
+                            <div class="menu-icon">
+                                <i class="bi bi-person-plus-fill"></i>
+                            </div>
+                            <h5 class="card-title fw-bold text-dark mb-2">Registrar Alumnos</h5>
+                            <p class="card-text text-muted mb-3 small">
+                                Administra el registro de nuevos estudiantes
+                            </p>
+                            <a href="/alumno/Create" class="btn btn-menu text-white">
+                                <i class="bi bi-arrow-right-circle me-1"></i>
+                                Acceder
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inscribir Alumno -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="card menu-card card-custom h-100 shadow border-0">
+                        <div class="card-body text-center p-3">
+                            <div class="menu-icon">
+                                <i class="bi bi-journal-plus"></i>
+                            </div>
+                            <h5 class="card-title fw-bold text-dark mb-2">Inscribir Alumno</h5>
+                            <p class="card-text text-muted mb-3 small">
+                                Gestiona inscripciones a cursos y materias
+                            </p>
+                            <a href="/alumno/Busqueda" class="btn btn-menu text-white">
+                                <i class="bi bi-arrow-right-circle me-1"></i>
+                                Acceder
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cobrar -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="card menu-card card-custom h-100 shadow border-0">
+                        <div class="card-body text-center p-3">
+                            <div class="menu-icon">
+                                <i class="bi bi-credit-card-2-front"></i>
+                            </div>
+                            <h5 class="card-title fw-bold text-dark mb-2">Cobrar</h5>
+                            <p class="card-text text-muted mb-3 small">
+                                Administra pagos y cobranzas del sistema
+                            </p>
+                            <a href="/alumno/Busqueda" class="btn btn-menu text-white">
+                                <i class="bi bi-arrow-right-circle me-1"></i>
+                                Acceder
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Imprimir Listas de Asistencia -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="card menu-card card-custom h-100 shadow border-0">
+                        <div class="card-body text-center p-3">
+                            <div class="menu-icon">
+                                <i class="bi bi-printer"></i>
+                            </div>
+                            <h5 class="card-title fw-bold text-dark mb-2">Listas de Asistencia</h5>
+                            <p class="card-text text-muted mb-3 small">
+                                Genera e imprime listas por curso y materia
+                            </p>
+                            <a href="/generales/listas/ListasDeAsistencia" class="btn btn-menu text-white">
+                                <i class="bi bi-arrow-right-circle me-1"></i>
+                                Acceder
+                            </a>
+                        </div>
+                    </div>
+                </div>
+@* 
+                <!-- Ejemplo de nueva opción -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="card menu-card card-custom h-100 shadow border-0">
+                        <div class="card-body text-center p-3">
+                            <div class="menu-icon">
+                                <i class="bi bi-graph-up"></i>
+                            </div>
+                            <h5 class="card-title fw-bold text-dark mb-2">Reportes</h5>
+                            <p class="card-text text-muted mb-3 small">
+                                Genera reportes académicos y estadísticas
+                            </p>
+                            <a href="#" class="btn btn-menu text-white">
+                                <i class="bi bi-arrow-right-circle me-1"></i>
+                                Acceder
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ejemplo de otra nueva opción -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="card menu-card card-custom h-100 shadow border-0">
+                        <div class="card-body text-center p-3">
+                            <div class="menu-icon">
+                                <i class="bi bi-gear"></i>
+                            </div>
+                            <h5 class="card-title fw-bold text-dark mb-2">Configuración</h5>
+                            <p class="card-text text-muted mb-3 small">
+                                Configura parámetros del sistema
+                            </p>
+                            <a href="#" class="btn btn-menu text-white">
+                                <i class="bi bi-arrow-right-circle me-1"></i>
+                                Acceder
+                            </a>
+                        </div>
+                    </div>
+                </div> *@
+            </div>
+        </div>
+    </section>
+</div>

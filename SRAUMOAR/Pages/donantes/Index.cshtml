@@ -1,0 +1,268 @@
+﻿@page
+@model SRAUMOAR.Pages.donantes.IndexModel
+@{
+    ViewData["Title"] = "Gestión de Donantes";
+}
+
+<style>
+    .donantes-container {
+        background: #f8f9fa;
+        min-height: 100vh;
+        padding: 2rem 0;
+    }
+
+    .donantes-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0 0 1rem 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .donantes-title {
+        font-size: 2.5rem;
+        font-weight: 300;
+        margin: 0;
+        text-align: center;
+    }
+
+    .donantes-subtitle {
+        text-align: center;
+        margin-top: 0.5rem;
+        opacity: 0.9;
+        font-size: 1.1rem;
+    }
+
+    .content-wrapper {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 1rem;
+    }
+
+    .toolbar {
+        background: white;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .btn-create {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 0.5rem;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+    }
+
+    .btn-create:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(40, 167, 69, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+
+    .table-container {
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .professional-table {
+        width: 100%;
+        margin: 0;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .professional-table thead {
+        background: linear-gradient(135deg, #343a40, #495057);
+        color: white;
+    }
+
+    .professional-table thead th {
+        padding: 1rem 0.75rem;
+        font-weight: 600;
+        text-align: left;
+        border: none;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .professional-table tbody tr {
+        transition: all 0.2s ease;
+    }
+
+    .professional-table tbody tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
+
+    .professional-table tbody tr:hover {
+        background-color: #e3f2fd;
+        transform: scale(1.01);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .professional-table tbody td {
+        padding: 1rem 0.75rem;
+        border: none;
+        border-bottom: 1px solid #e9ecef;
+        font-size: 0.9rem;
+        vertical-align: middle;
+    }
+
+    .actions-cell {
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    .action-link {
+        display: inline-block;
+        padding: 0.4rem 0.8rem;
+        margin: 0 0.2rem;
+        border-radius: 0.3rem;
+        text-decoration: none;
+        font-size: 0.8rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .action-edit {
+        background: linear-gradient(135deg, #ffc107, #ff8f00);
+        color: #212529;
+    }
+
+    .action-details {
+        background: linear-gradient(135deg, #17a2b8, #138496);
+        color: white;
+    }
+
+    .action-delete {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        color: white;
+    }
+
+    .action-link:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        text-decoration: none;
+    }
+
+    .action-edit:hover { color: #212529; }
+    .action-details:hover { color: white; }
+    .action-delete:hover { color: white; }
+
+    @@media (max-width: 1200px) {
+        .professional-table {
+            font-size: 0.8rem;
+        }
+
+        .professional-table thead th,
+        .professional-table tbody td {
+            padding: 0.5rem 0.4rem;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .donantes-title {
+            font-size: 2rem;
+        }
+
+        .toolbar {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        .professional-table {
+            min-width: 1000px;
+        }
+    }
+
+    .info-badge {
+        background: #e3f2fd;
+        color: #1976d2;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+</style>
+
+<div class="donantes-container">
+    <div class="donantes-header">
+        <div class="content-wrapper">
+            <h2 class="donantes-title">Gestión de Donantes</h2>
+            <p class="donantes-subtitle">Sistema de Registro y Administración</p>
+        </div>
+    </div>
+
+    <div class="content-wrapper">
+        <div class="toolbar">
+            <div class="info-badge">
+                Total de registros: @Model.Donantes.Count()
+            </div>
+            <a asp-page="Create" class="btn-create">
+                <i class="fas fa-plus"></i> Agregar Nuevo Donante
+            </a>
+        </div>
+
+        <div class="table-container">
+            <table class="professional-table">
+                <thead>
+                    <tr>
+                        <th>@Html.DisplayNameFor(model => model.Donantes[0].TipoDocumento)</th>
+                        <th>@Html.DisplayNameFor(model => model.Donantes[0].NumDocumento)</th>
+                        <th>@Html.DisplayNameFor(model => model.Donantes[0].Nrc)</th>
+                        <th>@Html.DisplayNameFor(model => model.Donantes[0].Nombre)</th>
+                        <th>@Html.DisplayNameFor(model => model.Donantes[0].CodActividad)</th>
+                        <th>@Html.DisplayNameFor(model => model.Donantes[0].DescActividad)</th>
+                        <th>@Html.DisplayNameFor(model => model.Donantes[0].Direccion)</th>
+                        <th>@Html.DisplayNameFor(model => model.Donantes[0].Telefono)</th>
+                        <th>@Html.DisplayNameFor(model => model.Donantes[0].Correo)</th>
+                        <th>@Html.DisplayNameFor(model => model.Donantes[0].CodDomiciliado)</th>
+                        <th>@Html.DisplayNameFor(model => model.Donantes[0].CodPais)</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Donantes) {
+                    <tr>
+                        <td>@Html.DisplayFor(modelItem => item.TipoDocumento)</td>
+                        <td>@Html.DisplayFor(modelItem => item.NumDocumento)</td>
+                        <td>@Html.DisplayFor(modelItem => item.Nrc)</td>
+                        <td>@Html.DisplayFor(modelItem => item.Nombre)</td>
+                        <td>@Html.DisplayFor(modelItem => item.CodActividad)</td>
+                        <td>@Html.DisplayFor(modelItem => item.DescActividad)</td>
+                        <td>@Html.DisplayFor(modelItem => item.Direccion)</td>
+                        <td>@Html.DisplayFor(modelItem => item.Telefono)</td>
+                        <td>@Html.DisplayFor(modelItem => item.Correo)</td>
+                        <td>@Html.DisplayFor(modelItem => item.CodDomiciliado)</td>
+                        <td>@Html.DisplayFor(modelItem => item.CodPais)</td>
+                        <td class="actions-cell">
+                            <a asp-page="./Edit" asp-route-id="@item.Id" class="action-link action-edit">Editar</a>
+                            <a asp-page="./Details" asp-route-id="@item.Id" class="action-link action-details">Ver</a>
+                            <a asp-page="./Delete" asp-route-id="@item.Id" class="action-link action-delete">Eliminar</a>
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

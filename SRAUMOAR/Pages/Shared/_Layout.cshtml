@@ -278,9 +278,13 @@
                 <ul class="navbar-nav">
                     <li class="nav-item"> <a class="nav-link" data-lte-toggle="sidebar" href="#" role="button"> <i class="bi bi-list"></i> </a> </li>
                     <li class="nav-item d-none d-md-block" title="Ir a inicio">
-                        @if (User.IsInRole("Administracion") || User.IsInRole("Administrador"))
+                        @if (User.IsInRole("Administrador"))
                         {
                             <a asp-page="/Home" class="nav-link"><i class="nav-icon bi bi-house"></i></a>
+                        }
+                        @if (User.IsInRole("Administracion"))
+                        {
+                            <a asp-page="/Menu" class="nav-link"><i class="nav-icon bi bi-house"></i></a>
                         }
                         @if (User.IsInRole("Docentes") )
                         {
@@ -389,7 +393,34 @@
         <!--begin::Sidebar-->
         <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
             <!--begin::Sidebar Brand-->
-            <div class="sidebar-brand"> <!--begin::Brand Link--> <a asp-page="/Index" class="brand-link"> <!--begin::Brand Image--> <img src="~/assets/img/logo1.jpg" alt="Logo" class="brand-image opacity-75 shadow"> <!--end::Brand Image--> <!--begin::Brand Text-->  <!--end::Brand Text--> </a> <!--end::Brand Link--> </div> <!--end::Sidebar Brand--> <!--begin::Sidebar Wrapper-->
+            <div class="sidebar-brand"> <!--begin::Brand Link-->
+
+            @if (User.IsInRole("Administrador"))
+                {
+                    <a asp-page="/Home" class="brand-link">
+                        <img src="~/assets/img/logo1.jpg" alt="Logo" class="brand-image opacity-75 shadow">
+                    </a>
+                }
+                @if (User.IsInRole("Administracion"))
+                {
+                    <a asp-page="/Menu" class="brand-link">
+                        <img src="~/assets/img/logo1.jpg" alt="Logo" class="brand-image opacity-75 shadow">
+                    </a>
+                }
+                @if (User.IsInRole("Docentes"))
+                {
+                    <a asp-page="/portal/docente/Index" class="brand-link">
+                        <img src="~/assets/img/logo1.jpg" alt="Logo" class="brand-image opacity-75 shadow">
+                    </a>
+                }
+                @if (User.IsInRole("Estudiantes"))
+                {
+                    <a asp-page="/portal/estudiante/Index" class="brand-link">
+                        <img src="~/assets/img/logo1.jpg" alt="Logo" class="brand-image opacity-75 shadow">
+                    </a>
+                }
+
+            </div> <!--end::Sidebar Brand--> <!--begin::Sidebar Wrapper-->
             <div class="sidebar-wrapper">
                 <nav class="mt-2">
                     <!--begin::Sidebar Menu-->
@@ -485,6 +516,23 @@
                                         <a asp-area="" asp-page="/generales/listas/ListasDeAsistencia" class="nav-link">
                                             <i class="nav-icon bi bi-building"></i>
                                             <p>Generar listas</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#" class="nav-link">
+                                    <i class="nav-icon bi bi-table"></i>
+                                    <p>
+                                        Donantes
+                                        <i class="nav-arrow bi bi-chevron-right"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a asp-area="" asp-page="/donantes/index" class="nav-link">
+                                            <i class="nav-icon bi bi-people"></i>
+                                            <p>Donantes</p>
                                         </a>
                                     </li>
                                 </ul>

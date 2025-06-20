@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SRAUMOAR.Modelos;
 
@@ -11,9 +12,11 @@ using SRAUMOAR.Modelos;
 namespace SRAUMOAR.Migrations
 {
     [DbContext(typeof(Contexto))]
-    partial class ContextoModelSnapshot : ModelSnapshot
+    [Migration("20250619172016_tablaDonantes")]
+    partial class tablaDonantes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -94,18 +97,11 @@ namespace SRAUMOAR.Migrations
                     b.Property<int?>("CarreraId")
                         .HasColumnType("int");
 
-                    b.Property<bool>("Casado")
-                        .HasColumnType("bit");
-
                     b.Property<string>("ContactoDeEmergencia")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("DUI")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("DepartamentoNacimiento")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("DireccionDeResidencia")
@@ -118,10 +114,6 @@ namespace SRAUMOAR.Migrations
 
                     b.Property<int>("Estado")
                         .HasColumnType("int");
-
-                    b.Property<string>("EstudiosFinanciadoPor")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("FechaDeNacimiento")
                         .HasColumnType("datetime2");
@@ -143,10 +135,6 @@ namespace SRAUMOAR.Migrations
 
                     b.Property<int?>("MunicipioId")
                         .HasColumnType("int");
-
-                    b.Property<string>("MunicipioNacimiento")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Nombres")
                         .IsRequired()

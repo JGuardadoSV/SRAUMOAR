@@ -1,0 +1,345 @@
+﻿@page
+@using SRAUMOAR.Entidades.Generales
+@model SRAUMOAR.Pages.donantes.CreateModel
+
+@{
+    ViewData["Title"] = "Crear Donante";
+}
+
+<style>
+    .create-container {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+        padding: 2rem 0;
+    }
+
+    .create-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0 0 1rem 1rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .create-title {
+        font-size: 2.5rem;
+        font-weight: 300;
+        margin: 0;
+        text-align: center;
+    }
+
+    .create-subtitle {
+        text-align: center;
+        margin-top: 0.5rem;
+        opacity: 0.9;
+        font-size: 1.1rem;
+    }
+
+    .form-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 0 1rem;
+    }
+
+    .form-card {
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .form-section-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+        .form-row.single {
+            grid-template-columns: 1fr;
+        }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .control-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+        display: block;
+        font-size: 0.95rem;
+    }
+
+    .required-field::after {
+        content: " *";
+        color: #dc3545;
+        font-weight: bold;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e9ecef;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background-color: #fff;
+    }
+
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            outline: none;
+        }
+
+        .form-control:hover {
+            border-color: #ced4da;
+        }
+
+    .text-danger {
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+        display: block;
+    }
+
+    .required-indicator {
+        color: #dc3545;
+        font-weight: bold;
+        font-size: 1.1rem;
+        margin-right: 0.25rem;
+    }
+
+    .btn-container {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        align-items: center;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        font-size: 1rem;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+            background: linear-gradient(135deg, #218838, #1ea085);
+        }
+
+    .btn-secondary {
+        background: linear-gradient(135deg, #6c757d, #5a6268);
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        color: white;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);
+    }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
+            background: linear-gradient(135deg, #5a6268, #495057);
+            color: white;
+            text-decoration: none;
+        }
+
+    .validation-summary {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        color: #721c24;
+    }
+
+    .field-validation-error {
+        background: #fff5f5;
+        border-left: 4px solid #dc3545;
+        padding: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    @@media (max-width: 768px) {
+        .create-title {
+            font-size: 2rem;
+        }
+
+        .form-card {
+            padding: 1.5rem;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .btn-container {
+            flex-direction: column;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .create-container {
+            padding: 1rem 0;
+        }
+
+        .form-container {
+            padding: 0 0.5rem;
+        }
+    }
+
+    .input-group {
+        position: relative;
+    }
+
+    .input-icon {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+        pointer-events: none;
+    }
+
+    .form-help {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+</style>
+
+<div class="create-container">
+    <div class="create-header">
+        <div class="form-container">
+            <h1 class="create-title">Nuevo Donante</h1>
+            <p class="create-subtitle">Registro de información del donante</p>
+        </div>
+    </div>
+
+    <div class="form-container">
+        <div class="form-card">
+            <h4 class="form-section-title">Información del Donante</h4>
+
+            <form method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger validation-summary"></div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <span class="required-indicator">*</span>
+                        <label asp-for="Donantes.TipoDocumento" class="control-label required-field"></label>
+                        <select asp-for="Donantes.TipoDocumento" class="form-control" asp-items="Html.GetEnumSelectList<TipoDocumento>()">
+                            <option value="">-- Seleccione un tipo de documento --</option>
+                        </select>
+                        <span asp-validation-for="Donantes.TipoDocumento" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Donantes.NumDocumento" class="control-label"></label>
+                        <input asp-for="Donantes.NumDocumento" class="form-control" placeholder="Ingrese número de documento" />
+                        <span asp-validation-for="Donantes.NumDocumento" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label asp-for="Donantes.Nrc" class="control-label"></label>
+                        <input asp-for="Donantes.Nrc" class="form-control" placeholder="Número de registro de contribuyente" />
+                        <span asp-validation-for="Donantes.Nrc" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Donantes.Nombre" class="control-label"></label>
+                        <input asp-for="Donantes.Nombre" class="form-control" placeholder="Nombre completo del donante" />
+                        <span asp-validation-for="Donantes.Nombre" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label asp-for="Donantes.CodActividad" class="control-label"></label>
+                        <input asp-for="Donantes.CodActividad" class="form-control" placeholder="Código de actividad" />
+                        <span asp-validation-for="Donantes.CodActividad" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Donantes.DescActividad" class="control-label"></label>
+                        <input asp-for="Donantes.DescActividad" class="form-control" placeholder="Descripción de la actividad" />
+                        <span asp-validation-for="Donantes.DescActividad" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="form-row single">
+                    <div class="form-group">
+                        <label asp-for="Donantes.Direccion" class="control-label"></label>
+                        <input asp-for="Donantes.Direccion" class="form-control" placeholder="Dirección completa" />
+                        <span asp-validation-for="Donantes.Direccion" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label asp-for="Donantes.Telefono" class="control-label"></label>
+                        <input asp-for="Donantes.Telefono" class="form-control" placeholder="Número de teléfono" />
+                        <span asp-validation-for="Donantes.Telefono" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Donantes.Correo" class="control-label"></label>
+                        <input asp-for="Donantes.Correo" class="form-control" type="email" placeholder="correo@ejemplo.com" />
+                        <span asp-validation-for="Donantes.Correo" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label asp-for="Donantes.CodDomiciliado" class="control-label"></label>
+                        <input asp-for="Donantes.CodDomiciliado" class="form-control" placeholder="Código de domiciliado" />
+                        <span asp-validation-for="Donantes.CodDomiciliado" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Donantes.CodPais" class="control-label"></label>
+                        <input asp-for="Donantes.CodPais" class="form-control" placeholder="Código de país" />
+                        <span asp-validation-for="Donantes.CodPais" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="btn-container">
+                    <input type="submit" value="Crear Donante" class="btn-primary" />
+                    <a asp-page="Index" class="btn-secondary">Volver al Listado</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
