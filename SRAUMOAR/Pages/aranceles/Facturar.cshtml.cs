@@ -74,7 +74,7 @@ namespace SRAUMOAR.Pages.aranceles
             string correlativo = i.ToString().PadLeft(15, '0'); // Rellena con ceros a la izquierda para que tenga 15 caracteres
                                                                 // Generar número de control
 
-            int numero = 1;
+            int numero = 7;
             string numeroFormateado = numero.ToString("D15");
             string numeroControl = "DTE-" + "01" + "-" + "ABCD1234" + "-" + numeroFormateado;
 
@@ -138,6 +138,12 @@ namespace SRAUMOAR.Pages.aranceles
                 telefono = (string)null,
                 correo = "jguardadosv@gmail.com"
             };
+            
+            var arancelesAPagar = await _context.Aranceles
+    .Include(a => a.Ciclo)
+    .Where(a => selectedAranceles.Contains(a.ArancelId))
+    .ToListAsync();
+            var arancelesDict = arancelesAPagar.ToDictionary(a => a.ArancelId, a => a.Nombre);
 
             // Crear el cuerpo del documento
             var cuerpoDocumento = selectedAranceles
@@ -150,7 +156,7 @@ namespace SRAUMOAR.Pages.aranceles
                  codigo = "0000" + index.ToString(),
                  codTributo = (string)null,
                  uniMedida = 59,
-                 descripcion = "Arancel", // O buscar la descripción del arancel por ID
+                 descripcion = arancelesDict.ContainsKey(arancelId) ? arancelesDict[arancelId] : "Arancel desconocido",
                  precioUni = arancelescostos[index],
                  montoDescu = 0.0,
                  ventaNoSuj = 0.0,
@@ -165,12 +171,13 @@ namespace SRAUMOAR.Pages.aranceles
             //ivaItem = Math.Round(arancelescostos[index] - (arancelescostos[index] / 1.13m), 6)
             // Crear el resumen
             // Calcular las variables primero
-            decimal totalVenta = arancelescostos.Sum();
-            decimal subTotalVentas = totalVenta;
-            decimal subTotal = totalVenta;
-            decimal montoTotalOperacion = totalVenta;
-            decimal totalPagar = totalVenta;
-            string totalLetras = new Conversor().ConvertirNumeroALetras(totalVenta);
+            decimal totalVentaExenta = arancelescostos.Sum();
+            decimal totalVenta = 0;
+            decimal subTotalVentas = totalVenta+totalVentaExenta;
+            decimal subTotal = totalVenta+totalVentaExenta;
+            decimal montoTotalOperacion = totalVenta+ totalVentaExenta;
+            decimal totalPagar = totalVenta+totalVentaExenta;
+            string totalLetras = new Conversor().ConvertirNumeroALetras(totalPagar);
             decimal totalIva = 0;
             //decimal totalIva = Math.Round(totalVenta - (totalVenta / 1.13m), 2);
 
@@ -178,7 +185,7 @@ namespace SRAUMOAR.Pages.aranceles
             var resumen = new
             {
                 totalNoSuj = 0.00,
-                totalExenta = 0.0,
+                totalExenta = totalVentaExenta,
                 totalGravada = totalVenta,
                 subTotalVentas = subTotalVentas,
                 descuNoSuj = 0.0,
@@ -269,9 +276,8 @@ namespace SRAUMOAR.Pages.aranceles
                 
             }
 
-
-
-
+            
+            
 
             //****************************************************
             //FIN CREACION DEL DTE
