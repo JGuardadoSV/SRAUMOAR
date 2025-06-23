@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SRAUMOAR.Modelos;
 using SRAUMOAR.Servicios;
+using SRAUMOAR.Entidades.Generales;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,7 +24,9 @@ builder.Services.AddDbContext<Contexto>(
 builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
 // Agregar después de AddRazorPages()
 builder.Services.AddScoped<PdfService>();
-
+// En Program.cs
+builder.Services.Configure<EmisorConfig>(
+    builder.Configuration.GetSection("EMISOR"));
 builder.Services.AddRazorPages();
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
         .AddCookie(options =>

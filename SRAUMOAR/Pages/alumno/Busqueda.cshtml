@@ -319,6 +319,7 @@
                     <table class="table professional-table mb-0">
                         <thead class="table-header">
                             <tr>
+                                <th><i class="bi bi-person me-2"></i>@Html.DisplayNameFor(model => model.Alumno[0].Carnet)</th>
                                 <th><i class="bi bi-person me-2"></i>@Html.DisplayNameFor(model => model.Alumno[0].Nombres)</th>
                                 <th><i class="bi bi-person-badge me-2"></i>@Html.DisplayNameFor(model => model.Alumno[0].Apellidos)</th>
                                 <th><i class="bi bi-calendar-date me-2"></i>@Html.DisplayNameFor(model => model.Alumno[0].FechaDeNacimiento)</th>
@@ -330,6 +331,28 @@
                             @foreach (var item in Model.Alumno)
                             {
                                 <tr class="table-row">
+                                    <td>
+                                        <strong>
+                                            @{
+                                                string displayValue = "";
+                                                if (!string.IsNullOrEmpty(item.Carnet))
+                                                {
+                                                    displayValue = item.Carnet;
+                                                }
+                                                else if (!string.IsNullOrEmpty(item.Email) &&
+                                                item.Email.Contains("@") &&
+                                                item.Email.Split('@')[1] == "umoar.edu.sv")
+                                                {
+                                                    displayValue = item.Email.Split('@')[0];
+                                                }
+                                                else
+                                                {
+                                                    displayValue = "";
+                                                }
+                                            }
+                                            @displayValue
+                                        </strong>
+                                    </td>
                                     <td><strong>@Html.DisplayFor(modelItem => item.Nombres)</strong></td>
                                     <td>@Html.DisplayFor(modelItem => item.Apellidos)</td>
                                     <td>@Html.DisplayFor(modelItem => item.FechaDeNacimiento)</td>

@@ -6,13 +6,15 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using SRAUMOAR.Entidades.Accesos;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
+using SRAUMOAR.Entidades.Generales;
 
 namespace SRAUMOAR.Pages
 {
     public class IndexModel : PageModel
     {
-        
-        
+        private readonly EmisorConfig _emisor;
+
+
 
         private readonly SRAUMOAR.Modelos.Contexto _context;
 
