@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SRAUMOAR.Entidades.Procesos
@@ -31,5 +32,10 @@ namespace SRAUMOAR.Entidades.Procesos
         [Display(Name = "Ciclo")]
         public int CicloId { get; set; } // Llave foránea
         public virtual Ciclo? Ciclo { get; set; } // Propiedad de navegación
+
+        [DefaultValue(true)]
+        public bool Exento { get; set; }
+
+
     }
 }

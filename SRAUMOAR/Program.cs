@@ -20,6 +20,7 @@ builder.Services.AddDbContext<Contexto>(
             builder.Configuration.GetConnectionString("Conexion")
         )
     );
+builder.Services.AddScoped<ICorrelativoService, CorrelativoService>();
 
 builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
 // Agregar después de AddRazorPages()

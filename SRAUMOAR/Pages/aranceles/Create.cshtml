@@ -1,61 +1,359 @@
 ﻿@page
 @model SRAUMOAR.Pages.aranceles.CreateModel
-
 @{
     ViewData["Title"] = "Registro de nuevo arancel";
 }
 
-<h1>Registro de arancel</h1>
-<div class="alert alert-info" role="alert">
-    <strong>Información:</strong> Este arancel se va a registrar vinculado al ciclo actual.
-</div>
+<style>
+    .create-container {
+        max-width: 800px;
+        margin: 1rem auto;
+        padding: 1rem;
+        background: #f8faf9;
+        min-height: calc(100vh - 2rem);
+    }
 
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Arancel.Nombre" class="control-label"></label>
-                <input asp-for="Arancel.Nombre" class="form-control" />
-                <span asp-validation-for="Arancel.Nombre" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Arancel.Costo" class="control-label"></label>
-                <input asp-for="Arancel.Costo" class="form-control" />
-                <span asp-validation-for="Arancel.Costo" class="text-danger"></span>
-            </div>
-            <div class="form-group form-check">
-                <label class="form-check-label">
-                    <input class="form-check-input" asp-for="Arancel.Activo" /> @Html.DisplayNameFor(model => model.Arancel.Activo)
-                </label>
-            </div>
-            <div class="form-group">
-                <label asp-for="Arancel.FechaInicio" class="control-label"></label>
-                <input asp-for="Arancel.FechaInicio" class="form-control" />
-                <span asp-validation-for="Arancel.FechaInicio" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Arancel.FechaFin" class="control-label"></label>
-                <input asp-for="Arancel.FechaFin" class="form-control" />
-                <span asp-validation-for="Arancel.FechaFin" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Arancel.CicloId" class="control-label"></label>
-                <select asp-for="Arancel.CicloId" class ="form-control" asp-items="ViewBag.CicloId"></select>
-            </div>
-            <br />
-            <div class="form-group">
-                <input type="submit" value="Registrar" class="btn btn-primary" /> | <a asp-page="Index" class="btn btn-success">Volver</a>
-            </div>
-        </form>
+    .create-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(56, 171, 87, 0.1);
+        padding: 1.5rem;
+        border-top: 4px solid #38ab57;
+    }
+
+    .page-header {
+        text-align: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .page-title {
+        color: #1f2937;
+        font-size: 1.8rem;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .info-alert {
+        background: #ecfdf5;
+        border: 1px solid #38ab57;
+        border-radius: 6px;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1.5rem;
+        color: #166534;
+        font-size: 0.9rem;
+    }
+
+        .info-alert strong {
+            color: #15803d;
+        }
+
+    .form-section {
+        background: #fafafa;
+        border-radius: 6px;
+        padding: 1.5rem;
+        border: 1px solid #e5e7eb;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .control-label {
+        display: block;
+        margin-bottom: 0.25rem;
+        color: #374151;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        transition: border-color 0.2s ease;
+        background: white;
+    }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #38ab57;
+            box-shadow: 0 0 0 2px rgba(56, 171, 87, 0.1);
+        }
+
+    .form-check-container {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 4px;
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
+        transition: all 0.2s ease;
+    }
+
+        .form-check-container:hover {
+            border-color: #38ab57;
+            background: #f9fdf9;
+        }
+
+    .form-check {
+        display: flex;
+        align-items: center;
+        margin: 0;
+    }
+
+    .form-check-input {
+        width: 16px;
+        height: 16px;
+        margin-right: 0.5rem;
+        accent-color: #38ab57;
+    }
+
+    .form-check-label {
+        color: #374151;
+        font-weight: 500;
+        font-size: 0.9rem;
+        margin: 0;
+    }
+
+    .text-danger {
+        color: #dc2626;
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+        display: block;
+    }
+
+    .btn-container {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .btn {
+        padding: 0.6rem 1.5rem;
+        border: none;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        text-decoration: none;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+        background: #38ab57;
+        color: white;
+        border: 1px solid #38ab57;
+    }
+
+        .btn-primary:hover {
+            background: #2d8a44;
+            transform: translateY(-1px);
+        }
+
+    .btn-success {
+        background: #6b7280;
+        color: white;
+        border: 1px solid #6b7280;
+    }
+
+        .btn-success:hover {
+            background: #4b5563;
+            transform: translateY(-1px);
+        }
+
+    .validation-summary {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 4px;
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+        color: #dc2626;
+        font-size: 0.9rem;
+    }
+
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.8);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+
+    .spinner {
+        width: 32px;
+        height: 32px;
+        border: 3px solid #e5e7eb;
+        border-top: 3px solid #38ab57;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @@keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .create-container {
+            margin: 0.5rem;
+            padding: 0.5rem;
+        }
+
+        .create-card {
+            padding: 1rem;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+
+        .btn-container {
+            flex-direction: column;
+        }
+
+        .form-section {
+            padding: 1rem;
+        }
+    }
+</style>
+
+<div class="create-container">
+    <div class="create-card">
+        <div class="page-header">
+            <h1 class="page-title">Registro de Arancel</h1>
+        </div>
+
+        <div class="info-alert">
+            <strong>Información:</strong> Este arancel se va a registrar vinculado al ciclo actual.
+        </div>
+
+        <div class="form-section">
+            <form method="post" id="createForm">
+                <div asp-validation-summary="ModelOnly" class="validation-summary text-danger"></div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label asp-for="Arancel.Nombre" class="control-label">Nombre del Arancel</label>
+                        <input asp-for="Arancel.Nombre" class="form-control" placeholder="Nombre del arancel" />
+                        <span asp-validation-for="Arancel.Nombre" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Arancel.Costo" class="control-label">Costo</label>
+                        <input asp-for="Arancel.Costo" class="form-control" placeholder="0.00" />
+                        <span asp-validation-for="Arancel.Costo" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <div class="form-check-container">
+                            <div class="form-check">
+                                <input class="form-check-input" asp-for="Arancel.Exento" type="checkbox" />
+                                <label class="form-check-label">
+                                    @Html.DisplayNameFor(model => model.Arancel.Exento)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-check-container">
+                            <div class="form-check">
+                                <input class="form-check-input" asp-for="Arancel.Activo" type="checkbox" />
+                                <label class="form-check-label">
+                                    @Html.DisplayNameFor(model => model.Arancel.Activo)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label asp-for="Arancel.FechaInicio" class="control-label">Fecha de Inicio</label>
+                        <input asp-for="Arancel.FechaInicio" class="form-control" type="date" />
+                        <span asp-validation-for="Arancel.FechaInicio" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Arancel.FechaFin" class="control-label">Fecha de Fin</label>
+                        <input asp-for="Arancel.FechaFin" class="form-control" type="date" />
+                        <span asp-validation-for="Arancel.FechaFin" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Arancel.CicloId" class="control-label">Ciclo</label>
+                    <select asp-for="Arancel.CicloId" class="form-control" asp-items="ViewBag.CicloId">
+                        <option value="">-- Seleccione un ciclo --</option>
+                    </select>
+                    <span asp-validation-for="Arancel.CicloId" class="text-danger"></span>
+                </div>
+
+                <div class="btn-container">
+                    <input type="submit" value="Registrar" class="btn btn-primary" />
+                    <a asp-page="Index" class="btn btn-success">Volver</a>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
-<div>
-    
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
 </div>
 
+<script>
+    document.getElementById('createForm').addEventListener('submit', function() {
+        document.getElementById('loadingOverlay').style.display = 'flex';
+    });
+
+    // Efectos en checkboxes
+    document.querySelectorAll('.form-check-input').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const container = this.closest('.form-check-container');
+            if (this.checked) {
+                container.style.borderColor = '#38ab57';
+                container.style.backgroundColor = '#f0fdf4';
+            } else {
+                container.style.borderColor = '#e5e7eb';
+                container.style.backgroundColor = 'white';
+            }
+        });
+    });
+</script>
+
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

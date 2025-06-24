@@ -14,6 +14,7 @@ using SRAUMOAR.Entidades.Colecturia;
 using SRAUMOAR.Entidades.Generales;
 using SRAUMOAR.Entidades.Procesos;
 using SRAUMOAR.Modelos;
+using SRAUMOAR.Servicios;
 
 namespace SRAUMOAR.Pages.aranceles
 {
@@ -22,11 +23,13 @@ namespace SRAUMOAR.Pages.aranceles
     {
         private readonly SRAUMOAR.Modelos.Contexto _context;
         private readonly EmisorConfig _emisor;
+        private readonly ICorrelativoService _correlativoService;
 
-        public FacturarModel(SRAUMOAR.Modelos.Contexto context, IOptions<EmisorConfig> emisorOptions)
+        public FacturarModel(SRAUMOAR.Modelos.Contexto context, IOptions<EmisorConfig> emisorOptions, ICorrelativoService correlativoService                                                                                )
         {
             _context = context;
             _emisor = emisorOptions.Value;
+            _correlativoService = correlativoService;
         }
         public List<Arancel> Aranceles { get; set; }
         //public async Task<IActionResult> OnGet(int alumnoId, int arancelId)
@@ -74,7 +77,7 @@ namespace SRAUMOAR.Pages.aranceles
             string correlativo = i.ToString().PadLeft(15, '0'); // Rellena con ceros a la izquierda para que tenga 15 caracteres
                                                                 // Generar número de control
 
-            int numero = 7;
+            int numero =(int) await _correlativoService.ObtenerSiguienteCorrelativo("01", "00"); ;
             string numeroFormateado = numero.ToString("D15");
             string numeroControl = "DTE-" + "01" + "-" + "ABCD1234" + "-" + numeroFormateado;
 
@@ -138,47 +141,50 @@ namespace SRAUMOAR.Pages.aranceles
                 telefono = (string)null,
                 correo = "jguardadosv@gmail.com"
             };
-            
-            var arancelesAPagar = await _context.Aranceles
-    .Include(a => a.Ciclo)
-    .Where(a => selectedAranceles.Contains(a.ArancelId))
-    .ToListAsync();
-            var arancelesDict = arancelesAPagar.ToDictionary(a => a.ArancelId, a => a.Nombre);
 
-            // Crear el cuerpo del documento
-            var cuerpoDocumento = selectedAranceles
-             .Select((arancelId, index) => new
-             {
-                 numItem = index + 1,
-                 tipoItem = 1,
-                 numeroDocumento = (string)null,
-                 cantidad = 1,
-                 codigo = "0000" + index.ToString(),
-                 codTributo = (string)null,
-                 uniMedida = 59,
-                 descripcion = arancelesDict.ContainsKey(arancelId) ? arancelesDict[arancelId] : "Arancel desconocido",
-                 precioUni = arancelescostos[index],
-                 montoDescu = 0.0,
-                 ventaNoSuj = 0.0,
-                 ventaExenta = arancelescostos[index],
-                 ventaGravada = 0.0,
-                 tributos = (string)null,
-                 psv = arancelescostos[index],
-                 noGravado = 0.0,
-                 ivaItem = 0.0
-             })
-             .ToArray();
+            var arancelesAPagar = await _context.Aranceles
+      .Include(a => a.Ciclo)
+      .Where(a => selectedAranceles.Contains(a.ArancelId))
+      .ToListAsync();
+
+            // Crear el cuerpo del documento usando los datos de los aranceles obtenidos
+            var cuerpoDocumento = arancelesAPagar
+                .Select((arancel, index) => new
+                {
+                    numItem = index + 1,
+                    tipoItem = 1,
+                    numeroDocumento = (string)null,
+                    cantidad = 1,
+                    codigo = "0000" + index.ToString(),
+                    codTributo = (string)null,
+                    uniMedida = 59,
+                    descripcion = arancel.Nombre,
+                    precioUni = arancel.Costo,
+                    montoDescu = 0.0,
+                    ventaNoSuj = 0.0,
+                    ventaExenta = arancel.Exento  ? arancel.Costo : 0.0m,
+                    ventaGravada = !arancel.Exento ? arancel.Costo : 0.0m,
+                    tributos = (string)null,
+                    psv = arancel.Costo,
+                    noGravado = 0.0,
+                    ivaItem = !arancel.Exento ? Math.Round(arancel.Costo - (arancel.Costo / 1.13m), 2) : 0.0m
+                })
+                .ToArray();
+
+            decimal totalVenta = arancelesAPagar.Where(a => a.Exento == false).Sum(a => a.Costo);
+            decimal totalVentaExenta = arancelesAPagar.Where(a => a.Exento == true).Sum(a => a.Costo);
+
             //ivaItem = Math.Round(arancelescostos[index] - (arancelescostos[index] / 1.13m), 6)
             // Crear el resumen
             // Calcular las variables primero
-            decimal totalVentaExenta = arancelescostos.Sum();
-            decimal totalVenta = 0;
+           // decimal totalVentaExenta = arancelescostos.Sum();
+         //   decimal totalVenta = 0;
             decimal subTotalVentas = totalVenta+totalVentaExenta;
             decimal subTotal = totalVenta+totalVentaExenta;
             decimal montoTotalOperacion = totalVenta+ totalVentaExenta;
             decimal totalPagar = totalVenta+totalVentaExenta;
             string totalLetras = new Conversor().ConvertirNumeroALetras(totalPagar);
-            decimal totalIva = 0;
+            decimal totalIva = cuerpoDocumento.Sum(item => item.ivaItem); 
             //decimal totalIva = Math.Round(totalVenta - (totalVenta / 1.13m), 2);
 
             // Crear el objeto resumen con las variables

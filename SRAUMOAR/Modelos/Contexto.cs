@@ -54,6 +54,7 @@ namespace SRAUMOAR.Modelos
         public DbSet<Becados> Becados { get; set; }
 
         public DbSet<Donantes> Donantes { get; set; }
+        public DbSet<DteCorrelativo> DteCorrelativos { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

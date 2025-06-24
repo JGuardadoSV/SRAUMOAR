@@ -1,72 +1,430 @@
 ﻿@page
 @model SRAUMOAR.Pages.aranceles.IndexModel
-
 @{
     ViewData["Title"] = "Aranceles del ciclo";
 }
 
-<h1>Administracion de aranceles del ciclo actual</h1>
-<div class="alert alert-info" role="alert">
-    <strong>Información:</strong> Solo se muestran aranceles vinculados al ciclo actual.
+<style>
+    .index-container {
+        max-width: 1200px;
+        margin: 1rem auto;
+        padding: 1rem;
+        background: #f8faf9;
+        min-height: calc(100vh - 2rem);
+    }
+
+    .index-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(56, 171, 87, 0.1);
+        padding: 1.5rem;
+        border-top: 4px solid #38ab57;
+    }
+
+    .page-header {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .page-title {
+        color: #1f2937;
+        font-size: 1.8rem;
+        font-weight: 600;
+        margin: 0 0 1rem 0;
+    }
+
+    .info-alert {
+        background: #ecfdf5;
+        border: 1px solid #38ab57;
+        border-radius: 6px;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1.5rem;
+        color: #166534;
+        font-size: 0.9rem;
+    }
+
+        .info-alert strong {
+            color: #15803d;
+        }
+
+    .actions-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        background: #f9fdfb;
+        border-radius: 6px;
+        border: 1px solid #d1fae5;
+    }
+
+    .btn {
+        padding: 0.6rem 1.5rem;
+        border: none;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        text-decoration: none;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-primary {
+        background: #38ab57;
+        color: white;
+        border: 1px solid #38ab57;
+    }
+
+        .btn-primary:hover {
+            background: #2d8a44;
+            transform: translateY(-1px);
+        }
+
+    .btn-secondary {
+        background: #6b7280;
+        color: white;
+        border: 1px solid #6b7280;
+    }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+            transform: translateY(-1px);
+        }
+
+    .btn-sm {
+        padding: 0.4rem 1rem;
+        font-size: 0.8rem;
+    }
+
+    .table-container {
+        background: white;
+        border-radius: 6px;
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+    }
+
+    .table {
+        width: 100%;
+        margin: 0;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+    }
+
+        .table thead {
+            background: linear-gradient(135deg, #38ab57, #2d8a44);
+            color: white;
+        }
+
+            .table thead th {
+                padding: 1rem 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                font-size: 0.8rem;
+                border: none;
+            }
+
+        .table tbody tr {
+            border-bottom: 1px solid #f3f4f6;
+            transition: background-color 0.2s ease;
+        }
+
+            .table tbody tr:hover {
+                background: #f9fdf9;
+            }
+
+            .table tbody tr:nth-child(even) {
+                background: #fafbfc;
+            }
+
+                .table tbody tr:nth-child(even):hover {
+                    background: #f0fdf4;
+                }
+
+        .table tbody td {
+            padding: 0.875rem 0.75rem;
+            vertical-align: middle;
+            border: none;
+        }
+
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-active {
+        background: #d1fae5;
+        color: #065f46;
+        border: 1px solid #10b981;
+    }
+
+    .status-inactive {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #ef4444;
+    }
+
+    .cost-cell {
+        font-weight: 600;
+        color: #059669;
+        font-family: 'Courier New', monospace;
+    }
+
+    .date-cell {
+        color: #6b7280;
+        font-size: 0.85rem;
+    }
+
+    .cycle-cell {
+        background: #f3f4f6;
+        border-radius: 4px;
+        padding: 0.5rem;
+        font-weight: 500;
+        color: #374151;
+        text-align: center;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #6b7280;
+    }
+
+    .empty-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 1rem;
+        border-radius: 6px;
+        border: 1px solid #e5e7eb;
+        text-align: center;
+    }
+
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #38ab57;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.8rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    @@media (max-width: 768px) {
+        .index-container {
+            margin: 0.5rem;
+            padding: 0.5rem;
+        }
+
+        .index-card {
+            padding: 1rem;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+        }
+
+        .actions-bar {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: stretch;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        .table {
+            min-width: 700px;
+        }
+
+        .stats-row {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .search-box {
+        flex: 1;
+        max-width: 300px;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 4px;
+        font-size: 0.9rem;
+    }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #38ab57;
+            box-shadow: 0 0 0 2px rgba(56, 171, 87, 0.1);
+        }
+</style>
+
+<div class="index-container">
+    <div class="index-card">
+        <div class="page-header">
+            <h1 class="page-title">Administración de Aranceles del Ciclo Actual</h1>
+
+            <div class="info-alert">
+                <strong>Información:</strong> Solo se muestran aranceles vinculados al ciclo actual.
+            </div>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-number">@Model.Arancel.Count()</div>
+                <div class="stat-label">Total Aranceles</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">@Model.Arancel.Count(a => a.Activo)</div>
+                <div class="stat-label">Activos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">$@Model.Arancel.Where(a => a.Activo).Sum(a => a.Costo).ToString("N2")</div>
+                <div class="stat-label">Total Activos</div>
+            </div>
+        </div>
+
+        <div class="actions-bar">
+            <div class="search-box">
+                <input type="text" class="search-input" placeholder="Buscar aranceles..." id="searchInput">
+            </div>
+            <a asp-page="Create" class="btn btn-primary">
+                ➕ Registrar Nuevo
+            </a>
+        </div>
+
+        <div class="table-container">
+            @if (Model.Arancel.Any())
+            {
+                <table class="table" id="arancelesTable">
+                    <thead>
+                        <tr>
+                            <th>@Html.DisplayNameFor(model => model.Arancel[0].Nombre)</th>
+                            <th>@Html.DisplayNameFor(model => model.Arancel[0].Costo)</th>
+                            <th>@Html.DisplayNameFor(model => model.Arancel[0].Activo)</th>
+                            <th>@Html.DisplayNameFor(model => model.Arancel[0].FechaInicio)</th>
+                            <th>@Html.DisplayNameFor(model => model.Arancel[0].FechaFin)</th>
+                            <th>@Html.DisplayNameFor(model => model.Arancel[0].Ciclo)</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Arancel)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@Html.DisplayFor(modelItem => item.Nombre)</strong>
+                                </td>
+                                <td class="cost-cell">
+                                    $@Html.DisplayFor(modelItem => item.Costo)
+                                </td>
+                                <td>
+                                    @if (item.Activo)
+                                    {
+                                        <span class="status-badge status-active">Activo</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge status-inactive">Inactivo</span>
+                                    }
+                                </td>
+                                <td class="date-cell">
+                                    @Html.DisplayFor(modelItem => item.FechaInicio)
+                                </td>
+                                <td class="date-cell">
+                                    @Html.DisplayFor(modelItem => item.FechaFin)
+                                </td>
+                                <td>
+                                    <div class="cycle-cell">
+                                        @Html.DisplayFor(modelItem => item.Ciclo.NCiclo) / @Html.DisplayFor(modelItem => item.Ciclo.anio)
+                                    </div>
+                                </td>
+                                <td>
+                                    <a asp-page="./Edit" asp-route-id="@item.ArancelId" class="btn btn-primary btn-sm">
+                                        ✏️ Editar
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <div class="empty-icon">📄</div>
+                    <h3>No hay aranceles registrados</h3>
+                    <p>Comienza registrando tu primer arancel para este ciclo.</p>
+                    <a asp-page="Create" class="btn btn-primary">➕ Registrar Primer Arancel</a>
+                </div>
+            }
+        </div>
+    </div>
 </div>
-<p>
-    <a asp-page="Create" class="btn btn-primary">Registrar nuevo</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Arancel[0].Nombre)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Arancel[0].Costo)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Arancel[0].Activo)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Arancel[0].FechaInicio)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Arancel[0].FechaFin)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Arancel[0].Ciclo)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model.Arancel) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Nombre)
-            </td>
-            <td>
-               $ @Html.DisplayFor(modelItem => item.Costo)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Activo)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FechaInicio)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FechaFin)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Ciclo.NCiclo) /
-                    @Html.DisplayFor(modelItem => item.Ciclo.anio)
-            </td>
-            <td>
-                <a asp-page="./Edit" asp-route-id="@item.ArancelId" class="btn btn-primary">Editar</a> 
-                <!--
-                |
-                <a asp-page="./Details" asp-route-id="@item.ArancelId">Details</a> |
-                <a asp-page="./Delete" asp-route-id="@item.ArancelId">Delete</a>
-                    -->
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+
+<script>
+    // Funcionalidad de búsqueda
+    document.getElementById('searchInput').addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const table = document.getElementById('arancelesTable');
+        const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const cells = row.getElementsByTagName('td');
+            let found = false;
+
+            for (let j = 0; j < cells.length - 1; j++) { // -1 para excluir la columna de acciones
+                if (cells[j].textContent.toLowerCase().includes(searchTerm)) {
+                    found = true;
+                    break;
+                }
+            }
+
+            row.style.display = found ? '' : 'none';
+        }
+    });
+
+    // Animación de entrada para las filas
+    document.addEventListener('DOMContentLoaded', function() {
+        const rows = document.querySelectorAll('.table tbody tr');
+        rows.forEach((row, index) => {
+            row.style.opacity = '0';
+            row.style.transform = 'translateY(10px)';
+
+            setTimeout(() => {
+                row.style.transition = 'all 0.3s ease';
+                row.style.opacity = '1';
+                row.style.transform = 'translateY(0)';
+            }, index * 50);
+        });
+    });
+</script>
