@@ -10,6 +10,7 @@
         public string DEPARTAMENTO { get; set; }
         public string DISTRITO { get; set; }
         public string EMAIL { get; set; }
+        public string EMAILBCC { get; set; }
         public string TELEFONO { get; set; }
         public string NOMBRE { get; set; }
         public string NOMBRECOMERCIAL { get; set; }

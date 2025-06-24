@@ -264,8 +264,9 @@ namespace SRAUMOAR.Pages.aranceles
                 CodigoGeneracion = codigoGeneracion,
                 NumControl = numeroControl,
                 VersionDte = 1,
-                CorreoCliente = "jguardadosv@gmail.com"
+                CorreoCliente = _emisor.EMAILBCC
             };
+            var selloRecibido="";
             using (HttpClient client = new HttpClient())
             {
                 // LLAMADA ÚNICA
@@ -279,11 +280,25 @@ namespace SRAUMOAR.Pages.aranceles
                 var selloRecepcion = resultado.TryGetProperty("selloRecibido", out var sello)
                     ? sello.GetString()
                     : null;
-                
+                selloRecibido = selloRecepcion;
             }
 
             
-            
+            Factura factura = new Factura();
+            factura.CodigoGeneracion = codigoGeneracion.ToString().ToUpper();
+            factura.NumeroControl = numeroControl;
+            factura.SelloRecepcion = selloRecibido;
+            factura.JsonDte = dteJson;
+            string fechaHoraString = $"{identificacion.fecEmi} {identificacion.horEmi}";
+            DateTime fechaHora = DateTime.ParseExact(fechaHoraString, "yyyy-MM-dd HH:mm:ss", null);
+            factura.Fecha = fechaHora;
+            factura.TipoDTE = identificacion.tipoDte == "01" ? 1 : 2; // Asumiendo que 01 es Factura y 03 CCF
+            factura.TotalGravado = totalVenta;
+            factura.TotalExento = totalVentaExenta;
+            factura.TotalIva = totalIva;
+            factura.TotalPagar = totalPagar;
+            _context.Facturas.Add(factura);
+            await _context.SaveChangesAsync();
 
             //****************************************************
             //FIN CREACION DEL DTE
@@ -297,9 +312,10 @@ namespace SRAUMOAR.Pages.aranceles
                 arancel.ArancelId = selectedAranceles[y];
                 arancel.costo = arancelescostos[y];
                 aranceles.Add(arancel);
+                
             }
             CobroArancel.DetallesCobroArancel = aranceles;
-
+            CobroArancel.CodigoGeneracion = codigoGeneracion.ToString().ToUpper();
             CobroArancel.Fecha = DateTime.Now;
             _context.CobrosArancel.Add(CobroArancel);
             await _context.SaveChangesAsync();

@@ -1,0 +1,97 @@
+﻿@page
+@model SRAUMOAR.Pages.facturas.DetailsModel
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h1>Details</h1>
+
+<div>
+    <h4>Factura</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Factura.JsonDte)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Factura.JsonDte)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Factura.Anulada)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Factura.Anulada)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Factura.SelloRecepcion)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Factura.SelloRecepcion)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Factura.JsonAnulacion)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Factura.JsonAnulacion)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Factura.SelloAnulacion)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Factura.SelloAnulacion)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Factura.Fecha)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Factura.Fecha)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Factura.CodigoGeneracion)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Factura.CodigoGeneracion)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Factura.NumeroControl)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Factura.NumeroControl)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Factura.TipoDTE)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Factura.TipoDTE)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Factura.TotalGravado)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Factura.TotalGravado)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Factura.TotalExento)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Factura.TotalExento)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Factura.TotalPagar)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Factura.TotalPagar)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Factura.TotalIva)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Factura.TotalIva)
+        </dd>
+    </dl>
+</div>
+<div>
+    <a asp-page="./Edit" asp-route-id="@Model.Factura.FacturaId">Edit</a> |
+    <a asp-page="./Index">Back to List</a>
+</div>

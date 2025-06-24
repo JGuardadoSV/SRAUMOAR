@@ -55,7 +55,7 @@ namespace SRAUMOAR.Modelos
 
         public DbSet<Donantes> Donantes { get; set; }
         public DbSet<DteCorrelativo> DteCorrelativos { get; set; }
-
+        public DbSet<Factura> Facturas { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Arancel>()

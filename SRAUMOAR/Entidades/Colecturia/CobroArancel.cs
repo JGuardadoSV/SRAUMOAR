@@ -28,6 +28,7 @@ namespace SRAUMOAR.Entidades.Colecturia
         public decimal Total { get; set; }
         public decimal Cambio { get; set; }
         public string? nota { get; set; } = "";
+        public string? CodigoGeneracion { get; set; }
 
         public virtual ICollection<DetallesCobroArancel>? DetallesCobroArancel { get; set; }
     }

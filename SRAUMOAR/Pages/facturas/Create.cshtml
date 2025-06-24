@@ -1,0 +1,98 @@
+﻿@page
+@model SRAUMOAR.Pages.facturas.CreateModel
+
+        @{
+        ViewData["Title"] = "Create";
+        }
+        
+        <h1>Create</h1>
+        
+    <h4>Factura</h4>
+    <hr />
+    <div class="row">
+    <div class="col-md-4">
+    <form method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Factura.JsonDte" class="control-label"></label>
+                <input asp-for="Factura.JsonDte" class="form-control" />
+                <span asp-validation-for="Factura.JsonDte" class="text-danger"></span>
+            </div>
+            <div class="form-group form-check">
+                <label class="form-check-label">
+                    <input class="form-check-input" asp-for="Factura.Anulada" /> @Html.DisplayNameFor(model => model.Factura.Anulada)
+                </label>
+            </div>
+            <div class="form-group">
+                <label asp-for="Factura.SelloRecepcion" class="control-label"></label>
+                <input asp-for="Factura.SelloRecepcion" class="form-control" />
+                <span asp-validation-for="Factura.SelloRecepcion" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Factura.JsonAnulacion" class="control-label"></label>
+                <input asp-for="Factura.JsonAnulacion" class="form-control" />
+                <span asp-validation-for="Factura.JsonAnulacion" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Factura.SelloAnulacion" class="control-label"></label>
+                <input asp-for="Factura.SelloAnulacion" class="form-control" />
+                <span asp-validation-for="Factura.SelloAnulacion" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <span class="text-danger">*</span>
+                <label asp-for="Factura.Fecha" class="control-label"></label>
+                <input asp-for="Factura.Fecha" class="form-control" />
+                <span asp-validation-for="Factura.Fecha" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <span class="text-danger">*</span>
+                <label asp-for="Factura.CodigoGeneracion" class="control-label"></label>
+                <input asp-for="Factura.CodigoGeneracion" class="form-control" />
+                <span asp-validation-for="Factura.CodigoGeneracion" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <span class="text-danger">*</span>
+                <label asp-for="Factura.NumeroControl" class="control-label"></label>
+                <input asp-for="Factura.NumeroControl" class="form-control" />
+                <span asp-validation-for="Factura.NumeroControl" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <span class="text-danger">*</span>
+                <label asp-for="Factura.TipoDTE" class="control-label"></label>
+                <input asp-for="Factura.TipoDTE" class="form-control" />
+                <span asp-validation-for="Factura.TipoDTE" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Factura.TotalGravado" class="control-label"></label>
+                <input asp-for="Factura.TotalGravado" class="form-control" />
+                <span asp-validation-for="Factura.TotalGravado" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Factura.TotalExento" class="control-label"></label>
+                <input asp-for="Factura.TotalExento" class="form-control" />
+                <span asp-validation-for="Factura.TotalExento" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Factura.TotalPagar" class="control-label"></label>
+                <input asp-for="Factura.TotalPagar" class="form-control" />
+                <span asp-validation-for="Factura.TotalPagar" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Factura.TotalIva" class="control-label"></label>
+                <input asp-for="Factura.TotalIva" class="form-control" />
+                <span asp-validation-for="Factura.TotalIva" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-page="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
