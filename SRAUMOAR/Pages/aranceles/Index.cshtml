@@ -330,6 +330,7 @@
                             <th>@Html.DisplayNameFor(model => model.Arancel[0].Nombre)</th>
                             <th>@Html.DisplayNameFor(model => model.Arancel[0].Costo)</th>
                             <th>@Html.DisplayNameFor(model => model.Arancel[0].Activo)</th>
+                            <th>@Html.DisplayNameFor(model => model.Arancel[0].Exento)</th>
                             <th>@Html.DisplayNameFor(model => model.Arancel[0].FechaInicio)</th>
                             <th>@Html.DisplayNameFor(model => model.Arancel[0].FechaFin)</th>
                             <th>@Html.DisplayNameFor(model => model.Arancel[0].Ciclo)</th>
@@ -354,6 +355,16 @@
                                     else
                                     {
                                         <span class="status-badge status-inactive">Inactivo</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.Exento)
+                                    {
+                                        <span class="status-badge status-active">Exento</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge status-inactive">Gravado</span>
                                     }
                                 </td>
                                 <td class="date-cell">

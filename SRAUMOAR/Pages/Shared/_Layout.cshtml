@@ -782,7 +782,6 @@
         </footer> <!--end::Footer-->
     </div> <!--end::App Wrapper--> <!--begin::Script--> <!--begin::Third Party Plugin(OverlayScrollbars)-->
 
-
     <script src="~/js/overlayscrollbars.browser.es6.min.js" crossorigin="anonymous"></script> <!--end::Third Party Plugin(OverlayScrollbars)-->
     <!--begin::Required Plugin(popperjs for Bootstrap 5)-->
     <script src="~/js/popper.min.js" crossorigin="anonymous"></script> <!--end::Required Plugin(popperjs for Bootstrap 5)-->
@@ -814,22 +813,88 @@
             }
         });
     </script> <!--end::OverlayScrollbars Configure--> <!-- OPTIONAL SCRIPTS --> <!-- sortablejs -->
-
+    <!-- jQuery PRIMERO -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
+
+    <!-- jQuery UI SEGUNDO (versión actualizada) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
+
+    <!-- Site.js TERCERO -->
     <script src="~/js/site.js" asp-append-version="true"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+
+    <!-- Función global para mostrar detalles del estudiante -->
+    <script>
+        function showStudentDetails(student) {
+            // Mostrar detalles del estudiante seleccionado
+            $("#searchResults").html(`
+                <div class="student-details-card">
+                    <button type="button" class="close-btn" onclick="$('#searchResults').empty()">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                    <div class="d-flex flex-column align-items-center">
+                        <img src="${student.photoUrl || '/images/default.PNG'}"
+                             class="student-photo-lg mb-2"
+                             alt="Foto de ${student.name}"
+                             onerror="this.src='/images/default.PNG'">
+                        <div class="student-name-lg">${student.name}</div>
+                    </div>
+                    <div class="actions d-flex justify-content-center">
+                        <a href="/aranceles/Cobrar?id=${student.id}" class="btn btn-primary btn-action"><i class="bi bi-cash-coin"></i> Aranceles</a>
+                        <a href="/inscripcion/Create?id=${student.id}" class="btn btn-success btn-action"><i class="bi bi-arrow-right-circle"></i> Inscribir ciclo</a>
+                        <a href="/inscripcion/MateriasInscritas?id=${student.id}" class="btn btn-outline-secondary btn-action"><i class="bi bi-journal-plus"></i> Inscribir materias</a>
+                    </div>
+                </div>
+            `);
+        }
+
+        function abrirPdfEnPopup(url, titulo = 'Reporte') {
+            const ancho = 900;
+            const alto = 850;
+            const left = (screen.width - ancho) / 2;
+            const top = (screen.height - alto) / 2;
+
+            const opciones = `
+                width=${ancho},
+                height=${alto},
+                left=${left},
+                top=${top},
+                scrollbars=yes,
+                resizable=yes,
+                toolbar=no,
+                menubar=no,
+                location=no,
+                directories=no,
+                status=no
+            `;
+
+            window.open(url, titulo, opciones);
+        }
+    </script>
+
+    <!-- Script de autocomplete AL FINAL -->
     <script>
         $(document).ready(function() {
+            // Verificar que jQuery UI esté disponible
+            if (typeof $.fn.autocomplete === 'undefined') {
+                console.error('jQuery UI no está cargado correctamente');
+                return;
+            }
+
             $("#studentSearch").autocomplete({
                 source: function(request, response) {
                     $.ajax({
                         url: "/api/alumnosapi/busquedaajax1",
-                        data: { 
+                        method: "POST",
+                        data: {
                             term: request.term,
-                            __RequestVerificationToken: $('input:hidden[name="__RequestVerificationToken"]').val() 
+                            __RequestVerificationToken: $('input:hidden[name="__RequestVerificationToken"]').val()
                         },
                         success: function(data) {
                             response(data);
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error en la búsqueda:', error);
+                            response([]);
                         }
                     });
                 },
@@ -855,53 +920,7 @@
                     </button>`)
                     .appendTo(ul);
             };
-
-            function showStudentDetails(student) {
-                // Mostrar detalles del estudiante seleccionado
-                $("#searchResults").html(`
-                    <div class="student-details-card">
-                        <button type="button" class="close-btn" onclick="$('#searchResults').empty()">
-                            <i class="bi bi-x-lg"></i>
-                        </button>
-                        <div class="d-flex flex-column align-items-center">
-                            <img src="${student.photoUrl || '/images/default.PNG'}"
-                                 class="student-photo-lg mb-2"
-                                 alt="Foto de ${student.name}"
-                                 onerror="this.src='/images/default.PNG'">
-                            <div class="student-name-lg">${student.name}</div>
-                        </div>
-                        <div class="actions d-flex justify-content-center">
-                            <a href="/aranceles/Cobrar?id=${student.id}" class="btn btn-primary btn-action"><i class="bi bi-cash-coin"></i> Aranceles</a>
-                            <a href="/inscripcion/Create?id=${student.id}" class="btn btn-success btn-action"><i class="bi bi-arrow-right-circle"></i> Inscribir ciclo</a>
-                            <a href="/inscripcion/MateriasInscritas?id=${student.id}" class="btn btn-outline-secondary btn-action"><i class="bi bi-journal-plus"></i> Inscribir materias</a>
-                        </div>
-                    </div>
-                `);
-            }
         });
-
-         function abrirPdfEnPopup(url, titulo = 'Reporte') {
-            const ancho = 900;
-            const alto = 850;
-            const left = (screen.width - ancho) / 2;
-            const top = (screen.height - alto) / 2;
-
-            const opciones = `
-                width=${ancho},
-                height=${alto},
-                left=${left},
-                top=${top},
-                scrollbars=yes,
-                resizable=yes,
-                toolbar=no,
-                menubar=no,
-                location=no,
-                directories=no,
-                status=no
-            `;
-
-            window.open(url, titulo, opciones);
-        }
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
