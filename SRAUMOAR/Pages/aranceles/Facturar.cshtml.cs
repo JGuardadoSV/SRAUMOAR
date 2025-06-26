@@ -264,7 +264,7 @@ namespace SRAUMOAR.Pages.aranceles
                 CodigoGeneracion = codigoGeneracion,
                 NumControl = numeroControl,
                 VersionDte = 1,
-                CorreoCliente = _emisor.EMAILBCC
+                CorreoCliente ="jguardadosv@gmail.com"
             };
             var selloRecibido="";
             using (HttpClient client = new HttpClient())

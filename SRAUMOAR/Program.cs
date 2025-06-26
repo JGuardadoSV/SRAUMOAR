@@ -36,8 +36,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
             options.AccessDeniedPath = "/AccessDenied";
             options.LogoutPath = "/salir";
         });
-
-    builder.Services.AddAuthorization(options =>
+builder.Services.AddHttpClient();
+builder.Services.AddAuthorization(options =>
     {
         options.AddPolicy("RequireAdministratorRole", policy => policy.RequireRole("Administrador"));
         options.AddPolicy("RequireAdministracionRole", policy => policy.RequireRole("Administracion"));
