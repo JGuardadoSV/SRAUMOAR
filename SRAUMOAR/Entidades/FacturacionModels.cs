@@ -31,11 +31,11 @@ namespace SRAUMOAR.Entidades
         public class Receptor
         {
             public string Nit { get; set; } = string.Empty;
-            public string Nrc { get; set; } = string.Empty;
+            public string? Nrc { get; set; } = string.Empty;
             public string Nombre { get; set; } = string.Empty;
-            public string CodActividad { get; set; } = string.Empty;
-            public string DescActividad { get; set; } = string.Empty;
-            public string NombreComercial { get; set; } = string.Empty;
+            public string? CodActividad { get; set; } = string.Empty;
+            public string? DescActividad { get; set; } = string.Empty;
+            public string? NombreComercial { get; set; } = string.Empty;
             public Direccion Direccion { get; set; } = new Direccion();
             public string Telefono { get; set; } = string.Empty;
             public string Correo { get; set; } = string.Empty;

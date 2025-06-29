@@ -2,19 +2,19 @@
 
 @model SRAUMOAR.Pages.puntoventa.puntoVentaModel
 @{
-    ViewData["Title"] = "Punto de Venta";
+    ViewData["Title"] = "Facturación";
 }
 
 <div class="content-header">
     <div class="container-fluid">
         <div class="row mb-2">
             <div class="col-sm-6">
-                <h1 class="m-0">Punto de Venta</h1>
+                <h1 class="m-0">Facturación</h1>
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
                     <li class="breadcrumb-item"><a href="#">Inicio</a></li>
-                    <li class="breadcrumb-item active">Punto de Venta</li>
+                    <li class="breadcrumb-item active">Facturación</li>
                 </ol>
             </div>
         </div>
@@ -34,7 +34,7 @@
                                     <label class="mb-0"><strong>Tipo de Documento:</strong></label>
                                 </div>
                                 <div class="col-md-6">
-                                    <select class="form-control" asp-for="Factura.TipoDocumento">
+                                    <select class="form-control" asp-for="Factura.TipoDocumento" id="tipoDocumentoSelect">
                                         <option value="">Seleccione...</option>
                                         <option value="01">01 - Consumidor Final</option>
                                         <option value="02">02 - Crédito Fiscal</option>
@@ -45,6 +45,19 @@
                                 </div>
                                 <div class="col-md-3">
                                     <span asp-validation-for="Factura.TipoDocumento" class="text-danger"></span>
+                                </div>
+                            </div>
+                            
+                            <!-- Mensaje de alerta cuando no hay tipo seleccionado -->
+                            <div class="row mt-2" id="alertaTipoDocumento" style="display: none;">
+                                <div class="col-md-12">
+                                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <strong>¡Atención!</strong> Debe seleccionar un tipo de documento antes de continuar con la facturación.
+                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -160,7 +173,7 @@
                                             <input type="text" class="form-control" asp-for="Factura.Receptor.Nit" />
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-6 campos-credito-fiscal" style="display: none;">
                                         <div class="form-group">
                                             <label>NRC</label>
                                             <input type="text" class="form-control" asp-for="Factura.Receptor.Nrc" />
@@ -225,6 +238,38 @@
                                             <input type="email" class="form-control" asp-for="Factura.Receptor.Correo" />
                                         </div>
                                     </div>
+                                </div>
+                                
+                                <!-- Campos adicionales para Crédito Fiscal -->
+                                <div class="campos-credito-fiscal" style="display: none;">
+                                    <hr class="my-3">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label>Giro</label>
+                                                <input type="text" class="form-control" asp-for="Factura.Receptor.DescActividad" placeholder="Ingrese el giro del receptor" />
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>Código de Actividad Económica</label>
+                                                <input type="text" class="form-control" asp-for="Factura.Receptor.CodActividad" placeholder="Ej: 85499" />
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>&nbsp;</label>
+                                                <button type="button" class="btn btn-info btn-block" onclick="abrirClasificacionBCR()" title="Buscar en clasificación BCR">
+                                                    <i class="fas fa-search"></i> BUSCAR
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle"></i> 
+                                        Estos campos son requeridos únicamente para documentos de Crédito Fiscal. 
+                                        Haga clic en el botón de búsqueda para consultar la clasificación oficial del BCR.
+                                    </small>
                                 </div>
                             </div>
                         </div>
@@ -404,6 +449,8 @@
             <input type="hidden" asp-for="Factura.Emisor.Correo" />
             <input type="hidden" asp-for="Factura.Receptor.CodigoDepartamento" />
             <input type="hidden" asp-for="Factura.Receptor.CodigoMunicipio" />
+            <input type="hidden" asp-for="Factura.Receptor.CodActividad" />
+            <input type="hidden" asp-for="Factura.Receptor.DescActividad" />
             <input type="hidden" asp-for="Factura.CodigoPais" />
         </form>
     </div>
@@ -427,6 +474,12 @@
             $('form').on('submit', function() {
                 scrollPosition = $(window).scrollTop();
                 sessionStorage.setItem('scrollPosition', scrollPosition);
+                
+                // Guardar el municipio seleccionado antes de enviar
+                var municipioSeleccionado = $('#Factura_Receptor_CodigoMunicipio').val();
+                if (municipioSeleccionado) {
+                    sessionStorage.setItem('municipioSeleccionado', municipioSeleccionado);
+                }
             });
             
             // Restaurar posición del scroll después de cargar la página
@@ -446,7 +499,12 @@
                 }
             });
             
-            // También restaurar en document ready por si acaso
+            // Restaurar municipio seleccionado si existe
+            setTimeout(function() {
+                restaurarMunicipioSeleccionado();
+            }, 200);
+            
+            // Restaurar posición del scroll si existe
             var savedPosition = sessionStorage.getItem('scrollPosition');
             if (savedPosition) {
                 setTimeout(function() {
@@ -463,21 +521,34 @@
             
             // Inicializar estado del IVA según el tipo de documento
             function actualizarEstado() {
-                var tipoDoc = $('#Factura_TipoDocumento').val();
+                var tipoDoc = $('#tipoDocumentoSelect').val();
                 var ivaRow = $('.iva-row');
                 var btnAgregar = $('.btn-agregar-producto');
                 var campoPais = $('.campo-pais');
+                var camposCreditoFiscal = $('.campos-credito-fiscal');
+                var alertaTipoDocumento = $('#alertaTipoDocumento');
                 
                 console.log('Tipo documento:', tipoDoc); // Debug
                 console.log('Botón encontrado:', btnAgregar.length); // Debug
                 
+                // Mostrar/ocultar alerta de tipo de documento
+                if (!tipoDoc) {
+                    alertaTipoDocumento.show();
+                } else {
+                    alertaTipoDocumento.hide();
+                }
+                
                 if (tipoDoc === '02') {
                     // Mostrar IVA solo para Crédito Fiscal
                     ivaRow.show();
+                    // Mostrar campos adicionales para Crédito Fiscal
+                    camposCreditoFiscal.show();
                     recalcularTotales(true); // Con IVA
                 } else {
                     // Ocultar IVA para todos los demás tipos de documento
                     ivaRow.hide();
+                    // Ocultar campos adicionales para otros tipos
+                    camposCreditoFiscal.hide();
                     recalcularTotales(false); // Sin IVA
                 }
                 
@@ -541,7 +612,7 @@
             }
             
             // Actualizar cálculos cuando cambie el tipo de documento
-            $('#Factura_TipoDocumento').on('change', function() {
+            $('#tipoDocumentoSelect').on('change', function() {
                 console.log('Cambio detectado en tipo documento'); // Debug
                 actualizarEstado();
             });
@@ -582,7 +653,38 @@
                 }
             });
             
-            // Función para obtener municipios por departamento
+            // Función para restaurar el municipio seleccionado
+            function restaurarMunicipioSeleccionado() {
+                var departamento = $('#Factura_Receptor_CodigoDepartamento').val();
+                var municipioSeleccionado = $('#Factura_Receptor_CodigoMunicipio').val();
+                
+                // Si no hay municipio seleccionado en el campo, intentar obtenerlo del sessionStorage
+                if (!municipioSeleccionado) {
+                    municipioSeleccionado = sessionStorage.getItem('municipioSeleccionado');
+                }
+                
+                if (departamento && municipioSeleccionado) {
+                    // Cargar municipios del departamento
+                    var municipioSelect = $('#Factura_Receptor_CodigoMunicipio');
+                    municipioSelect.empty();
+                    municipioSelect.append('<option value="">Seleccione municipio...</option>');
+                    
+                    var municipios = obtenerMunicipiosPorDepartamento(departamento);
+                    municipios.forEach(function(municipio) {
+                        var option = '<option value="' + municipio.codigo + '">' + municipio.codigo + ' - ' + municipio.nombre + '</option>';
+                        municipioSelect.append(option);
+                    });
+                    
+                    // Seleccionar el municipio que estaba guardado con un pequeño delay
+                    setTimeout(function() {
+                        municipioSelect.val(municipioSeleccionado);
+                        // Limpiar el sessionStorage después de restaurar
+                        sessionStorage.removeItem('municipioSeleccionado');
+                    }, 50);
+                }
+            }
+            
+            // Función para obtener municipios por departamento (definida globalmente)
             function obtenerMunicipiosPorDepartamento(departamento) {
                 var municipios = [];
                 
@@ -697,9 +799,14 @@
             
             // Recalcular totales cuando se agregue o elimine un producto
             function recalcularTotalesDespuesDeCambio() {
-                var tipoDoc = $('#Factura_TipoDocumento').val();
+                var tipoDoc = $('#tipoDocumentoSelect').val();
                 var conIVA = tipoDoc === '02';
                 recalcularTotales(conIVA);
+                
+                // Restaurar municipio después de cambios en productos
+                setTimeout(function() {
+                    restaurarMunicipioSeleccionado();
+                }, 100);
             }
             
             // Observar cambios en la tabla de productos (para cuando se agreguen/eliminen productos)
@@ -724,11 +831,11 @@
             
             if (handler && handler.includes('AgregarProducto')) {
                 // Verificar que se haya seleccionado un tipo de documento
-                var tipoDoc = $('#Factura_TipoDocumento').val();
+                var tipoDoc = $('#tipoDocumentoSelect').val();
                 if (!tipoDoc) {
                     e.preventDefault();
                     alert('Por favor seleccione un tipo de documento antes de agregar productos.');
-                    $('#Factura_TipoDocumento').focus();
+                    $('#tipoDocumentoSelect').focus();
                     return false;
                 }
                 
@@ -766,7 +873,7 @@
             }
             
             if (handler && handler.includes('ProcesarFactura')) {
-                var tipoDoc = $('#Factura_TipoDocumento').val();
+                var tipoDoc = $('#tipoDocumentoSelect').val();
                 if (!tipoDoc) {
                     e.preventDefault();
                     alert('Por favor seleccione el tipo de documento.');
@@ -774,6 +881,19 @@
                 }
             }
         });
+
+        // Función para abrir la clasificación del BCR
+        function abrirClasificacionBCR() {
+            var url = 'https://onec.bcr.gob.sv/clasificadoresv2/Clasificadores/Index/200?tipo=1';
+            var ventana = window.open(url, 'ClasificacionBCR', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+            
+            // Mostrar mensaje informativo
+            if (ventana) {
+                alert('Se ha abierto la clasificación del BCR en una nueva ventana.\n\nPara usar la información:\n1. Busque la actividad económica del receptor\n2. Copie el código y descripción\n3. Cierre la ventana y regrese aquí\n4. Complete los campos de Giro y Código de Actividad Económica del receptor\n\nNota: Estos campos solo son necesarios para Crédito Fiscal.');
+            } else {
+                alert('No se pudo abrir la ventana. Por favor, habilite los popups para este sitio.');
+            }
+        }
     </script>
 }
 
@@ -865,6 +985,132 @@
         /* Animación suave para el collapse */
         .collapse {
             transition: all 0.3s ease;
+        }
+        
+        /* Estilos para campos de crédito fiscal */
+        .campos-credito-fiscal {
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 15px;
+            border-left: 4px solid #17a2b8;
+            transition: all 0.3s ease-in-out;
+            opacity: 1;
+        }
+        
+        .campos-credito-fiscal[style*="display: none"] {
+            opacity: 0;
+        }
+        
+        .campos-credito-fiscal .form-group {
+            margin-bottom: 10px;
+        }
+        
+        .campos-credito-fiscal label {
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .campos-credito-fiscal .text-muted {
+            margin-top: 10px;
+            display: block;
+        }
+        
+        .campos-credito-fiscal hr {
+            border-color: #dee2e6;
+            margin: 15px 0;
+        }
+        
+        /* Estilo para el botón de búsqueda */
+        .btn-info {
+            background-color: #17a2b8;
+            border-color: #17a2b8;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-info:hover {
+            background-color: #138496;
+            border-color: #117a8b;
+            transform: translateY(-1px);
+        }
+        
+        /* Eliminar el indicador visual anterior ya que ahora está integrado */
+        .campos-credito-fiscal::before {
+            display: none;
+        }
+        
+        /* Estilo para el placeholder de los campos */
+        .campos-credito-fiscal input::placeholder {
+            color: #6c757d;
+            font-style: italic;
+        }
+        
+        /* Hover effect para el área de crédito fiscal */
+        .campos-credito-fiscal:hover {
+            background-color: #e9ecef;
+            border-left-color: #138496;
+        }
+        
+        /* Estilo para el ícono de información */
+        .campos-credito-fiscal .fa-info-circle {
+            color: #17a2b8;
+        }
+        
+        /* Estilos para la alerta del tipo de documento */
+        #alertaTipoDocumento .alert {
+            border-left: 4px solid #ffc107;
+            background-color: #fff3cd;
+            color: #856404;
+            margin-bottom: 0;
+        }
+        
+        #alertaTipoDocumento .alert .fa-exclamation-triangle {
+            color: #ffc107;
+            margin-right: 8px;
+        }
+        
+        #alertaTipoDocumento .alert strong {
+            color: #856404;
+        }
+        
+        #alertaTipoDocumento .alert .close {
+            color: #856404;
+            opacity: 0.7;
+        }
+        
+        #alertaTipoDocumento .alert .close:hover {
+            opacity: 1;
+        }
+        
+        /* Animación para la alerta */
+        #alertaTipoDocumento .alert {
+            animation: fadeInDown 0.5s ease-in-out;
+        }
+        
+        @@keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Estilo para el select del tipo de documento cuando no hay selección */
+        #tipoDocumentoSelect:invalid {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+        
+        /* Estilo para enfatizar la importancia del tipo de documento */
+        .card-warning.card-outline {
+            border-top-color: #ffc107 !important;
+        }
+        
+        .card-warning.card-outline .card-body {
+            background-color: #fff8e1;
         }
     </style>
 }

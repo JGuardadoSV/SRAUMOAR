@@ -305,10 +305,10 @@
     </div>
 
     <div class="action-bar">
-        <a asp-page="Create" class="btn-primary-custom">
+       @*  <a asp-page="Create" class="btn-primary-custom">
             <i class="fas fa-plus"></i>
             Nueva Factura
-        </a>
+        </a> *@
 
         <div class="search-box">
             <i class="fas fa-search search-icon"></i>
@@ -440,9 +440,14 @@
                         </td>
                         <td>
                             <div class="action-buttons">
-                                <a asp-page="./Details" asp-route-id="@item.FacturaId" class="btn-action btn-details" title="PDF">
-                                    <i class="fas fa-eye"></i>
-                                </a>
+                                
+                                
+                                        <div class="d-flex gap-1 flex-wrap">
+                                        <button class="btn btn-outline-danger btn-sm" onclick="verPDF(@item.FacturaId)" title="Ver PDF">
+                                                PDF
+                                            </button>
+                                        </div>
+                                
                                     @Html.AntiForgeryToken()
 
                                     <a href="javascript:void(0)" onclick="confirmarAnulacion(@item.FacturaId)" class="btn-action btn-delete" title="ANULAR">
@@ -516,6 +521,24 @@
         }
     
     }
+
+     // Función para ver PDF
+        function verPDF(id) {
+            // Mostrar indicador de carga
+            const button = event.target;
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
+            button.disabled = true;
+
+            // Hacer la llamada al método para generar el PDF
+             window.open(`@Url.Page("./Facturas")?handler=GenerarPdf&id=${id}`, '_blank');
+
+            // Restaurar el botón después de un breve delay
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }, 2000);
+        }
 </script>
 
 <!-- Font Awesome para los iconos -->
