@@ -266,6 +266,7 @@
             background: #a8a8a8;
         }
     </style>
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
     <!--begin::App Wrapper-->
@@ -515,7 +516,13 @@
                                     <li class="nav-item">
                                         <a asp-area="" asp-page="/facturas/Index" class="nav-link">
                                             <i class="nav-icon bi bi-building"></i>
-                                            <p>Generar listas</p>
+                                            <p>Ver factura emitidas</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a asp-area="" asp-page="/puntoventa/puntoVenta" class="nav-link">
+                                            <i class="nav-icon bi bi-building"></i>
+                                            <p>Facturar</p>
                                         </a>
                                     </li>
                                 </ul>
@@ -781,51 +788,15 @@
             <!--end::Copyright-->
         </footer> <!--end::Footer-->
     </div> <!--end::App Wrapper--> <!--begin::Script--> <!--begin::Third Party Plugin(OverlayScrollbars)-->
-
-    <script src="~/js/overlayscrollbars.browser.es6.min.js" crossorigin="anonymous"></script> <!--end::Third Party Plugin(OverlayScrollbars)-->
-    <!--begin::Required Plugin(popperjs for Bootstrap 5)-->
-    <script src="~/js/popper.min.js" crossorigin="anonymous"></script> <!--end::Required Plugin(popperjs for Bootstrap 5)-->
-    <!--begin::Required Plugin(Bootstrap 5)-->
-    <script src="~/js/bootstrap.min.js" crossorigin="anonymous"></script> <!--end::Required Plugin(Bootstrap 5)-->
-    <!--begin::Required Plugin(AdminLTE)-->
-    <script src="~/js/adminlte.js"></script> <!--end::Required Plugin(AdminLTE)--><!--begin::OverlayScrollbars Configure-->
-
-    <script>
-        const SELECTOR_SIDEBAR_WRAPPER = ".sidebar-wrapper";
-        const Default = {
-            scrollbarTheme: "os-theme-light",
-            scrollbarAutoHide: "leave",
-            scrollbarClickScroll: true,
-        };
-        document.addEventListener("DOMContentLoaded", function () {
-            const sidebarWrapper = document.querySelector(SELECTOR_SIDEBAR_WRAPPER);
-            if (
-                sidebarWrapper &&
-                typeof OverlayScrollbarsGlobal?.OverlayScrollbars !== "undefined"
-            ) {
-                OverlayScrollbarsGlobal.OverlayScrollbars(sidebarWrapper, {
-                    scrollbars: {
-                        theme: Default.scrollbarTheme,
-                        autoHide: Default.scrollbarAutoHide,
-                        clickScroll: Default.scrollbarClickScroll,
-                    },
-                });
-            }
-        });
-    </script> <!--end::OverlayScrollbars Configure--> <!-- OPTIONAL SCRIPTS --> <!-- sortablejs -->
-    <!-- jQuery PRIMERO -->
+    <!-- Primero jQuery -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
 
-    <!-- jQuery UI SEGUNDO (versión actualizada) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
+    <!-- Después jQuery UI -->
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
 
-    <!-- Site.js TERCERO -->
-    <script src="~/js/site.js" asp-append-version="true"></script>
-
-    <!-- Función global para mostrar detalles del estudiante -->
+    <!-- INMEDIATAMENTE después, tu código del autocomplete -->
     <script>
         function showStudentDetails(student) {
-            // Mostrar detalles del estudiante seleccionado
             $("#searchResults").html(`
                 <div class="student-details-card">
                     <button type="button" class="close-btn" onclick="$('#searchResults').empty()">
@@ -869,32 +840,18 @@
 
             window.open(url, titulo, opciones);
         }
-    </script>
 
-    <!-- Script de autocomplete AL FINAL -->
-    <script>
         $(document).ready(function() {
-            // Verificar que jQuery UI esté disponible
-            if (typeof $.fn.autocomplete === 'undefined') {
-                console.error('jQuery UI no está cargado correctamente');
-                return;
-            }
-
             $("#studentSearch").autocomplete({
                 source: function(request, response) {
                     $.ajax({
                         url: "/api/alumnosapi/busquedaajax1",
-                        method: "POST",
                         data: {
                             term: request.term,
                             __RequestVerificationToken: $('input:hidden[name="__RequestVerificationToken"]').val()
                         },
                         success: function(data) {
                             response(data);
-                        },
-                        error: function(xhr, status, error) {
-                            console.error('Error en la búsqueda:', error);
-                            response([]);
                         }
                     });
                 },
@@ -922,6 +879,39 @@
             };
         });
     </script>
+
+    <!-- DESPUÉS todos los demás scripts -->
+    <script src="~/js/overlayscrollbars.browser.es6.min.js"></script>
+    <script src="~/js/popper.min.js"></script>
+    <script src="~/js/bootstrap.min.js"></script>
+    <script src="~/js/adminlte.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <!-- Configuración de OverlayScrollbars -->
+    <script>
+        const SELECTOR_SIDEBAR_WRAPPER = ".sidebar-wrapper";
+        const Default = {
+            scrollbarTheme: "os-theme-light",
+            scrollbarAutoHide: "leave",
+            scrollbarClickScroll: true,
+        };
+        document.addEventListener("DOMContentLoaded", function () {
+            const sidebarWrapper = document.querySelector(SELECTOR_SIDEBAR_WRAPPER);
+            if (
+                sidebarWrapper &&
+                typeof OverlayScrollbarsGlobal?.OverlayScrollbars !== "undefined"
+            ) {
+                OverlayScrollbarsGlobal.OverlayScrollbars(sidebarWrapper, {
+                    scrollbars: {
+                        theme: Default.scrollbarTheme,
+                        autoHide: Default.scrollbarAutoHide,
+                        clickScroll: Default.scrollbarClickScroll,
+                    },
+                });
+            }
+        });
+    </script>
+   
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -119,7 +119,7 @@ namespace SRAUMOAR.Pages.reportes.alumno
 
             // Fecha
             headerTable.AddCell(new Cell()
-                .Add(new Paragraph($"Fecha: {DateTime.Now:dd/MM/yyyy}")
+                .Add(new Paragraph($"Fecha Registro: {alumno.FechaDeRegistro.ToString("dd/MM/yyyy")}")
                     .SetFont(fontRegular)
                     .SetFontSize(10)
                     .SetFontColor(colorTexto))
@@ -147,7 +147,7 @@ namespace SRAUMOAR.Pages.reportes.alumno
             AgregarCampo(tablaPersonal, "Nombres:", alumno.Nombres ?? "N/A", fontBold, fontRegular, colorSecundario);
             AgregarCampo(tablaPersonal, "Apellidos:", alumno.Apellidos ?? "N/A", fontBold, fontRegular, colorSecundario);
 
-            //// Fila 2
+            // Fila 2
             AgregarCampo(tablaPersonal, "DUI:", alumno.DUI ?? "N/A", fontBold, fontRegular, colorSecundario);
             AgregarCampo(tablaPersonal, "Fecha de Nacimiento:", alumno.FechaDeNacimiento.ToString("dd/MM/yyyy"), fontBold, fontRegular, colorSecundario);
 
@@ -155,20 +155,71 @@ namespace SRAUMOAR.Pages.reportes.alumno
             AgregarCampo(tablaPersonal, "Email:", alumno.Email ?? "N/A", fontBold, fontRegular, colorSecundario);
             AgregarCampo(tablaPersonal, "Género:", ObtenerGenero(alumno.Genero), fontBold, fontRegular, colorSecundario);
 
+            // Fila 4
+            AgregarCampo(tablaPersonal, "Lugar de Nacimiento:",
+            !string.IsNullOrEmpty(alumno.MunicipioNacimiento) || !string.IsNullOrEmpty(alumno.DepartamentoNacimiento)
+                ? $"{alumno.MunicipioNacimiento ?? ""} {alumno.DepartamentoNacimiento ?? ""}".Trim()
+                : "N/A",
+    fontBold, fontRegular, colorSecundario);
+
+
+            // Fila 5
+            AgregarCampo(tablaPersonal, "Estado Civil:",
+    alumno.Casado ? "Casado" : "Soltero",
+    fontBold, fontRegular, colorSecundario);
+            AgregarCampo(tablaPersonal, "Estudios Financiados por:", alumno.EstudiosFinanciadoPor ?? "N/A", fontBold, fontRegular, colorSecundario);
+
             document.Add(tablaPersonal);
 
             // Determinar símbolos individuales
-            string partidaSimbolo = alumno.PPartida ? "SI" : "NO";
-            //string duiSimbolo = alumno.PDUI ? "SI" : "NO";
-            string tituloSimbolo = alumno.PTitulo ? "SI" : "NO";
+            string partidaSimbolo = alumno.PPartida ? "[X]" : "[  ]";
+            //string duiSimbolo = alumno.PDUI ? "[X]" : "[ ]";
+            string tituloSimbolo = alumno.PTitulo ? "[X]" : "[  ]";
+            string orina = alumno.PExamenOrina ? "[X]" : "[  ]";
+            string paes = alumno.PPaes ? "[X]" : "[  ]";
+            string equivalencia = alumno.PSolicitudEquivalencia ? "[X]" : "[  ]";
+            string hemograma = alumno.PHemograma ? "[X]" : "[  ]";
+            string fotos = alumno.PFotografias ? "[X]" : "[  ]";
+            string curso = alumno.PPreuniversitario ? "[X]" : "[  ]";
+
+
             PdfFont font = PdfFontFactory.CreateFont(StandardFonts.HELVETICA_BOLD);
-            // Agregar línea con símbolos
-            Paragraph lineaEstado = new Paragraph($"DOCUMENTOS PRESENTADOS: Partida: {partidaSimbolo}    Título: {tituloSimbolo}")
+            PdfFont fontNormal = PdfFontFactory.CreateFont(StandardFonts.HELVETICA);
+
+            // Crear título
+            Paragraph titulo = new Paragraph("DOCUMENTOS PRESENTADOS:")
                 .SetFont(font)
                 .SetFontSize(12)
                 .SetTextAlignment(iText.Layout.Properties.TextAlignment.LEFT);
+            document.Add(titulo);
 
-            document.Add(lineaEstado);
+            // Crear tabla 3x3
+            Table tabla = new Table(3);
+            tabla.SetWidth(UnitValue.CreatePercentValue(100));
+
+            // Fila 1
+            tabla.AddCell(new Cell().Add(new Paragraph($"{partidaSimbolo} Partida").SetFont(fontNormal).SetFontSize(10)));
+            tabla.AddCell(new Cell().Add(new Paragraph($"{tituloSimbolo} Título").SetFont(fontNormal).SetFontSize(10)));
+            tabla.AddCell(new Cell().Add(new Paragraph($"{orina} Examen Orina").SetFont(fontNormal).SetFontSize(10)));
+
+            // Fila 2
+            tabla.AddCell(new Cell().Add(new Paragraph($"{hemograma} Hemograma").SetFont(fontNormal).SetFontSize(10)));
+            tabla.AddCell(new Cell().Add(new Paragraph($"{paes} PAES").SetFont(fontNormal).SetFontSize(10)));
+            tabla.AddCell(new Cell().Add(new Paragraph($"{equivalencia} Pago estudio de equivalencia").SetFont(fontNormal).SetFontSize(10)));
+
+            // Fila 3
+            tabla.AddCell(new Cell().Add(new Paragraph($"{curso} Preuniversitario").SetFont(fontNormal).SetFontSize(10)));
+            tabla.AddCell(new Cell().Add(new Paragraph($"{fotos} Fotografías").SetFont(fontNormal).SetFontSize(10)));
+            
+
+            // Quitar bordes si quieres
+            tabla.SetBorder(Border.NO_BORDER);
+            foreach (var cell in tabla.GetChildren())
+            {
+                ((Cell)cell).SetBorder(Border.NO_BORDER);
+            }
+
+            document.Add(tabla);
 
             // === INFORMACIÓN DE CONTACTO ===
             var seccionContacto = CrearSeccion("INFORMACIÓN DE CONTACTO", colorPrimario, fontBold);

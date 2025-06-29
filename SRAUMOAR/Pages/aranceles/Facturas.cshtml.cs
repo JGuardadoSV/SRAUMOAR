@@ -11,6 +11,9 @@ using SRAUMOAR.Modelos;
 using System.Net.Http;
 using System.Text;
 using Newtonsoft.Json;
+using iText.Kernel.Pdf;
+using iText.Layout.Element;
+using iText.Layout;
 
 namespace SRAUMOAR.Pages.aranceles
 {
@@ -72,6 +75,26 @@ namespace SRAUMOAR.Pages.aranceles
                 .Take(RegistrosPorPagina)
                 .ToListAsync();
         }
+        public IActionResult OnGetGenerarPDFSinDatos()
+        {
+            using var memoryStream = new MemoryStream();
+            var writer = new PdfWriter(memoryStream);
+            var pdf = new PdfDocument(writer);
+            var document = new Document(pdf);
+
+            document.Add(new Paragraph("Aviso")
+                .SetFontSize(18)
+                .SetTextAlignment(iText.Layout.Properties.TextAlignment.CENTER));
+
+            document.Add(new Paragraph("No hay datos disponibles para generar el PDF.")
+                .SetFontSize(12)
+                .SetTextAlignment(iText.Layout.Properties.TextAlignment.CENTER));
+
+            document.Close();
+            Response.Headers["Content-Disposition"] = "inline; filename=SinDatos.pdf";
+            return File(memoryStream.ToArray(), "application/pdf");
+            
+        }
 
         public async Task<IActionResult> OnGetGenerarPdfAsync(int id)
         {
@@ -84,6 +107,13 @@ namespace SRAUMOAR.Pages.aranceles
                     .Include(c => c.Ciclo)
                     .FirstOrDefaultAsync(c => c.CobroArancelId == id);
                 Factura factura = await _context.Facturas.FirstOrDefaultAsync(f => f.CodigoGeneracion == cobroArancel.CodigoGeneracion);
+                if (string.IsNullOrWhiteSpace(factura?.JsonDte))
+                {
+
+                   return OnGetGenerarPDFSinDatos();
+                }
+              
+
                 var dteJson = factura.JsonDte; // Reemplazar con tu lógica
                 var selloRecibido = factura.SelloRecepcion; // Reemplazar con tu lógica
                 var tipo = factura.TipoDTE.ToString().PadLeft(2, '0');
@@ -107,7 +137,7 @@ namespace SRAUMOAR.Pages.aranceles
                 {
                     var pdfBytes = await response.Content.ReadAsByteArrayAsync();
 
-                    Console.WriteLine($"[DEBUG CLIENT] PDF recibido, tamaño: {pdfBytes.Length} bytes");
+                    //Console.WriteLine($"[DEBUG CLIENT] PDF recibido, tamaño: {pdfBytes.Length} bytes");
 
                     // Respuesta más simple - deja que la API maneje los headers
                     return File(pdfBytes, "application/pdf");
