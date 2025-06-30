@@ -238,6 +238,7 @@
                                 <th>@Html.DisplayNameFor(model => model.Arancel[0].FechaFin)</th>
                                 <th>@Html.DisplayNameFor(model => model.Arancel[0].Ciclo)</th>
                                 <th>Estado</th> <!-- Nueva columna -->
+                                
                                 <th></th>
                             </tr>
                         </thead>
@@ -248,6 +249,10 @@
                                 .Any(dc => dc.ArancelId == item.ArancelId && dc.CobroArancel.AlumnoId == Model.Alumno.AlumnoId);
                                 var diasRestantes = (item.FechaFin - DateTime.Now).Days;
                                 var diasAtraso = (DateTime.Now - item.FechaFin).Days;
+                                var cobroArancelId = Model.DetallesCobroArancel
+                                .Where(dc => dc.ArancelId == item.ArancelId && dc.CobroArancel.AlumnoId == Model.Alumno.AlumnoId)
+                                .Select(dc => dc.CobroArancelId)
+                                .FirstOrDefault();
 
                                 <tr>
                                     <td>@Html.DisplayFor(modelItem => item.Nombre)</td>
@@ -259,6 +264,9 @@
                                         @if (arancelPagado)
                                         {
                                             <span class="text-success">Pagado</span>
+                                            <button class="btn btn-outline-danger btn-sm" onclick="verPDF(@cobroArancelId)" title="Ver PDF">
+                                                PDF
+                                            </button>
                                         }
                                         else
                                         {
@@ -282,6 +290,7 @@
                                             
                                         }
                                     </td>
+                                   
                                 </tr>
                             }
                         </tbody>
@@ -347,7 +356,27 @@
 
 
 </div>
+@section Scripts {
+<script>
+    // Función para ver PDF
+       function verPDF(id) {
+           // Mostrar indicador de carga
+           const button = event.target;
+           const originalText = button.innerHTML;
+           button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
+           button.disabled = true;
 
+           // Hacer la llamada al método para generar el PDF
+            window.open(`@Url.Page("./Facturas")?handler=GenerarPdf&id=${id}`, '_blank');
+
+           // Restaurar el botón después de un breve delay
+           setTimeout(() => {
+               button.innerHTML = originalText;
+               button.disabled = false;
+           }, 2000);
+       }
+</script>
+}
 <style>
     .carnet-digital {
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);

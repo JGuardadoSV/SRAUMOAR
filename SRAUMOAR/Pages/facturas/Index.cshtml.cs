@@ -30,9 +30,63 @@ namespace SRAUMOAR.Pages.facturas
 
         public IList<Factura> Factura { get;set; } = default!;
 
+        [BindProperty(SupportsGet = true)]
+        public DateTime? FechaInicio { get; set; } = DateTime.Today;
+
+        [BindProperty(SupportsGet = true)]
+        public DateTime? FechaFin { get; set; } = DateTime.Today;
+
+        [BindProperty(SupportsGet = true)]
+        public string? EstadoFiltro { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public int PaginaActual { get; set; } = 1;
+
+        public int TotalPaginas { get; set; }
+        public int TotalRegistros { get; set; }
+        public int RegistrosPorPagina { get; set; } = 20;
+
         public async Task OnGetAsync()
         {
-            Factura = await _context.Facturas.ToListAsync();
+            var query = _context.Facturas.AsQueryable();
+
+            // Filtro por fechas - por defecto muestra solo las del día actual
+            if (FechaInicio.HasValue)
+            {
+                query = query.Where(f => f.Fecha >= FechaInicio.Value);
+            }
+
+            if (FechaFin.HasValue)
+            {
+                query = query.Where(f => f.Fecha <= FechaFin.Value.AddDays(1).AddSeconds(-1));
+            }
+
+            // Filtro por estado
+            if (!string.IsNullOrEmpty(EstadoFiltro))
+            {
+                switch (EstadoFiltro.ToLower())
+                {
+                    case "activa":
+                        query = query.Where(f => !f.Anulada);
+                        break;
+                    case "anulada":
+                        query = query.Where(f => f.Anulada);
+                        break;
+                }
+            }
+
+            // Calcular total de registros
+            TotalRegistros = await query.CountAsync();
+            TotalPaginas = (int)Math.Ceiling((double)TotalRegistros / RegistrosPorPagina);
+
+            // Aplicar paginación
+            var facturasPaginadas = await query
+                .OrderByDescending(f => f.Fecha)
+                .Skip((PaginaActual - 1) * RegistrosPorPagina)
+                .Take(RegistrosPorPagina)
+                .ToListAsync();
+
+            Factura = facturasPaginadas;
         }
 
         public IActionResult OnGetGenerarPDFSinDatos()

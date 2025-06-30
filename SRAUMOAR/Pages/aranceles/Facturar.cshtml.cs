@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using SRAUMOAR.Entidades.Alumnos;
 using SRAUMOAR.Entidades.Colecturia;
 using SRAUMOAR.Entidades.Generales;
 using SRAUMOAR.Entidades.Procesos;
@@ -56,7 +57,7 @@ namespace SRAUMOAR.Pages.aranceles
         public CobroArancel CobroArancel { get; set; } = default!;
 
         // For more information, see https://aka.ms/RazorPagesCRUD.
-        public async Task<IActionResult> OnPostAsync(List<int> selectedAranceles, List<decimal> arancelescostos)
+        public async Task<IActionResult> OnPostAsync(List<int> selectedAranceles, List<decimal> arancelescostos, int idalumno)
         {
             if (!ModelState.IsValid)
             {
@@ -66,7 +67,7 @@ namespace SRAUMOAR.Pages.aranceles
             //****************************************************
             //CREACION DEL DTE
             //****************************************************
-
+            Alumno alumno = await _context.Alumno.FirstOrDefaultAsync(m => m.AlumnoId == idalumno);
 
 
             string dteJson = "";
@@ -129,17 +130,17 @@ namespace SRAUMOAR.Pages.aranceles
                 tipoDocumento = "37",
                 numDocumento = (string)null,
                 nrc = (string)null,
-                nombre = "JOSUE GUARDADO",
+                nombre = alumno.Nombres + " " + alumno.Apellidos,
                 codActividad = (string)null,
                 descActividad = (string)null,
                 direccion = new
                 {
                     departamento = "04",
                     municipio = "34",
-                    complemento = "Chalatenango"
+                    complemento = alumno.DireccionDeResidencia
                 },
                 telefono = (string)null,
-                correo = "jguardadosv@gmail.com"
+                correo = alumno.Email
             };
 
             var arancelesAPagar = await _context.Aranceles
@@ -264,7 +265,7 @@ namespace SRAUMOAR.Pages.aranceles
                 CodigoGeneracion = codigoGeneracion,
                 NumControl = numeroControl,
                 VersionDte = 1,
-                CorreoCliente ="jguardadosv@gmail.com"
+                CorreoCliente =alumno.Email
             };
             var selloRecibido="";
             using (HttpClient client = new HttpClient())

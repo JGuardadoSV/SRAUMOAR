@@ -5,149 +5,610 @@
     ViewData["Title"] = "Nuevo";
 }
 
-<!DOCTYPE html>
-<html lang="es">
-<body>
-    <header class="bg-primary text-white text-center py-3 mb-4">
-        <h1>Nuevo Docente</h1>
-    </header>
-    <hr />
-    <div class="container mt-5">
-        <div class="card shadow-lg">
-            <div class="card-header bg-dark text-white text-center">
-                <h4 class="fs-4 fw-semibold text-white formal-text">Docente</h4>
-            </div>
-            <div class="container mt-1">
-                <div class="row justify-content-center">
-                    <div class="col-md-5">
-                        <div class="card-body">
-                            <form method="post">
-                                <div asp-validation-summary="ModelOnly" class="alert alert-danger d-flex align-items-center" role="alert"></div>
-                                <div class="form-group">
-                                    <label class="form-label fs-4 fw-semibold text-dark formal-text">Género</label>
+<style>
+    :root {
+        --primary-color: #146b16;
+        --primary-dark: #0f5012;
+        --primary-light: #2d8f30;
+        --accent-color: #28a745;
+        --light-bg: #f8f9fa;
+        --shadow-color: rgba(20, 107, 22, 0.1);
+        --error-color: #dc3545;
+        --success-color: #198754;
+    }
 
-                                    <div class="d-flex">
-                                        <div class="form-check me-3">
-                                            <input type="radio" asp-for="Docente.Genero" value="0" id="generoMasculino" class="form-check-input">
-                                            <label class="form-check-label" for="generoMasculino">Masculino</label>
-                                        </div>
+    body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        min-height: 100vh;
+    }
 
-                                        <div class="form-check">
-                                            <input type="radio" asp-for="Docente.Genero" value="1" id="generoFemenino" class="form-check-input">
-                                            <label class="form-check-label" for="generoFemenino">Femenino</label>
-                                        </div>
-                                    </div>
+    /* Header profesional */
+    .header-professional {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 20px var(--shadow-color);
+        position: relative;
+        overflow: hidden;
+    }
 
-                                    <span asp-validation-for="Docente.Genero" class="text-danger"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label asp-for="Docente.Nombres" class="form-label fs-4 fw-semibold text-dark formal-text">Nombres</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-book"></i></span>
-                                        <input asp-for="Docente.Nombres" class="form-control" placeholder="Ingrese los nombres del Docente" />
-                                    </div>
-                                    <br>
-                                    <span asp-validation-for="Docente.Nombres" class="text-danger"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label asp-for="Docente.Apellidos" class="form-label fs-4 fw-semibold text-dark formal-text">Apellidos</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-book"></i></span>
-                                        <input asp-for="Docente.Apellidos" class="form-control" placeholder="Ingrese Apellidos del Docente" />
-                                    </div>
-                                    <br>
-                                    <span asp-validation-for="Docente.Apellidos" class="text-danger"></span>
-                                </div>
-                               
+        .header-professional::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
 
-                                <div class="mb-3">
-                                    <label asp-for="Docente.Dui" class="form-label fs-4 fw-semibold text-dark formal-text">Dui</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-book"></i></span>
-                                        <input asp-for="Docente.Dui" class="form-control" placeholder="Ingrese Dui del Docente" />
-                                    </div>
-                                    <br>
-                                    <span asp-validation-for="Docente.Dui" class="text-danger"></span>
-                                </div>
+        .header-professional h1 {
+            position: relative;
+            z-index: 1;
+            font-weight: 600;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin: 0;
+        }
 
-                                <div class="mb-3">
-                                    <label asp-for="Docente.Telefono" class="form-label fs-4 fw-semibold text-dark formal-text">Teléfono</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-book"></i></span>
-                                        <input asp-for="Docente.Telefono" class="form-control" pattern="\d{4}-\d{4}" placeholder="Ingrese teléfono del Docente" />
-                                    </div>
-                                    <br>
-                                    <span asp-validation-for="Docente.Telefono" class="text-danger"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label asp-for="Docente.FechaDeNacimiento" class="form-label fs-4 fw-semibold text-dark formal-text">Fecha de Nacimiento</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-book"></i></span>
-                                        <input asp-for="Docente.FechaDeNacimiento" class="form-control" placeholder="Fecha de Nacimiento" />
-                                    </div>
-                                    <br>
-                                    <span asp-validation-for="Docente.FechaDeNacimiento" class="text-danger"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label asp-for="Docente.FechaDeNacimiento" class="form-label fs-4 fw-semibold text-dark formal-text">Fecha de Ingreso</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-book"></i></span>
-                                        <input asp-for="Docente.FechaDeIngreso" class="form-control" placeholder="Fecha de Nacimiento" />
-                                    </div>
-                                    <br>
-                                    <span asp-validation-for="Docente.FechaDeIngreso" class="text-danger"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label asp-for="Docente.Direccion" class="form-label fs-4 fw-semibold text-dark formal-text">Dirección</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-book"></i></span>
-                                        <input asp-for="Docente.Direccion" class="form-control" placeholder="Ingrese Dirección" />
-                                    </div>
-                                    <br>
-                                    <span asp-validation-for="Docente.Direccion" class="text-danger"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label asp-for="Docente.Email" class="form-label fs-4 fw-semibold text-dark formal-text">Correo Electronico</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-book"></i></span>
-                                        <input asp-for="Docente.Email" class="form-control" placeholder="Ingrese Correo Electronico" />
-                                    </div>
-                                    <br>
-                                    <span asp-validation-for="Docente.Email" class="text-danger"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label asp-for="Docente.ProfesionId" class="form-label fs-4 fw-semibold text-dark formal-text">Profesión</label>
-                                    <br>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-briefcase"></i></span>
-                                        <select asp-for="Docente.ProfesionId" class="form-control" asp-items="ViewBag.ProfesionId"></select>
-                                    </div>
-                                    <br>
-                                </div>
-                                <br>
-                                <div class="d-grid gap-2">
-                                    <button type="submit" class="btn btn-primary btn-lg">
-                                        <i class="bi bi-plus-circle"></i> Crear
-                                    </button>
-                                </div>
-                                <br>
-                            </form>
-                        </div>
-                        <br>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="text-center mt-3">
-        <a asp-page="Index" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left"></i> Volver a la lista
-        </a>
-    </div>
-    @section Scripts {
-        @{
-            await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    /* Card principal */
+    .card-professional {
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        background: white;
+        overflow: hidden;
+        transition: transform 0.3s ease;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+        .card-professional:hover {
+            transform: translateY(-5px);
+        }
+
+    .card-header-professional {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+        color: white;
+        padding: 1.5rem;
+        border: none;
+        position: relative;
+    }
+
+        .card-header-professional::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.1) 50%, transparent 60%);
+            animation: shine 3s infinite;
+        }
+
+    @@keyframes shine {
+        0% {
+            transform: translateX(-100%);
+        }
+
+        100% {
+            transform: translateX(100%);
         }
     }
-</body>
-</html>
+
+    .card-header-professional h4 {
+        position: relative;
+        z-index: 1;
+        margin: 0;
+        font-weight: 600;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+
+    /* Formulario mejorado */
+    .form-section {
+        padding: 2rem;
+    }
+
+    .form-group-professional {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label-professional {
+        font-weight: 600;
+        color: var(--primary-dark);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        font-size: 1rem;
+    }
+
+        .form-label-professional i {
+            margin-right: 8px;
+            color: var(--primary-color);
+        }
+
+    /* Input groups mejorados */
+    .input-group-professional {
+        position: relative;
+        margin-bottom: 0.5rem;
+    }
+
+        .input-group-professional .input-group-text {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+            color: white;
+            border: none;
+            border-radius: 10px 0 0 10px;
+            padding: 12px 15px;
+            font-weight: 500;
+        }
+
+        .input-group-professional .form-control {
+            border: 2px solid #e9ecef;
+            border-left: none;
+            border-radius: 0 10px 10px 0;
+            padding: 12px 15px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+            .input-group-professional .form-control:focus {
+                border-color: var(--primary-color);
+                box-shadow: 0 0 0 0.2rem rgba(20, 107, 22, 0.25);
+                background: white;
+                transform: translateY(-1px);
+            }
+
+            .input-group-professional .form-control::placeholder {
+                color: #999;
+                font-style: italic;
+            }
+
+    /* Radio buttons mejorados */
+    .radio-group-professional {
+        display: flex;
+        gap: 2rem;
+        margin: 1rem 0;
+        padding: 1rem;
+        background: var(--light-bg);
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+    }
+
+    .form-check-professional {
+        position: relative;
+    }
+
+        .form-check-professional .form-check-input {
+            width: 1.2em;
+            height: 1.2em;
+            border: 2px solid var(--primary-color);
+            margin-right: 0.5rem;
+        }
+
+            .form-check-professional .form-check-input:checked {
+                background-color: var(--primary-color);
+                border-color: var(--primary-color);
+            }
+
+        .form-check-professional .form-check-label {
+            font-weight: 500;
+            color: var(--primary-dark);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+    /* Select mejorado */
+    .select-professional {
+        border: 2px solid #e9ecef;
+        border-left: none;
+        border-radius: 0 10px 10px 0;
+        padding: 12px 15px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: #fafafa;
+        cursor: pointer;
+    }
+
+        .select-professional:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(20, 107, 22, 0.25);
+            background: white;
+            transform: translateY(-1px);
+        }
+
+    /* Botones profesionales */
+    .btn-primary-professional {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+        border: none;
+        padding: 15px 30px;
+        border-radius: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(20, 107, 22, 0.3);
+        width: 100%;
+        font-size: 1.1rem;
+    }
+
+        .btn-primary-professional:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(20, 107, 22, 0.4);
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--accent-color) 100%);
+        }
+
+    .btn-secondary-professional {
+        background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+        border: none;
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+        color: white;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .btn-secondary-professional:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+            color: white;
+            text-decoration: none;
+        }
+
+    /* Validación de errores */
+    .text-danger {
+        color: var(--error-color) !important;
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-top: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+        .text-danger::before {
+            content: "⚠";
+            color: var(--error-color);
+        }
+
+    .alert-danger {
+        background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(220, 53, 69, 0.05) 100%);
+        border: 1px solid rgba(220, 53, 69, 0.3);
+        border-radius: 10px;
+        color: var(--error-color);
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Iconos específicos para cada campo */
+    .icon-nombres {
+        color: #007bff;
+    }
+
+    .icon-apellidos {
+        color: #6f42c1;
+    }
+
+    .icon-dui {
+        color: #fd7e14;
+    }
+
+    .icon-telefono {
+        color: #20c997;
+    }
+
+    .icon-fecha {
+        color: #e83e8c;
+    }
+
+    .icon-direccion {
+        color: #6c757d;
+    }
+
+    .icon-email {
+        color: #dc3545;
+    }
+
+    .icon-profesion {
+        color: var(--primary-color);
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .card-professional {
+            margin: 1rem;
+            border-radius: 15px;
+        }
+
+        .form-section {
+            padding: 1.5rem;
+        }
+
+        .radio-group-professional {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .header-professional {
+            padding: 1.5rem 0;
+        }
+
+            .header-professional h1 {
+                font-size: 1.8rem;
+            }
+    }
+
+    /* Animaciones */
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .card-professional {
+        animation: fadeInUp 0.6s ease;
+    }
+
+    .form-group-professional {
+        animation: fadeInUp 0.6s ease;
+        animation-fill-mode: both;
+    }
+
+        .form-group-professional:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .form-group-professional:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .form-group-professional:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .form-group-professional:nth-child(4) {
+            animation-delay: 0.4s;
+        }
+
+        .form-group-professional:nth-child(5) {
+            animation-delay: 0.5s;
+        }
+
+        .form-group-professional:nth-child(6) {
+            animation-delay: 0.6s;
+        }
+
+        .form-group-professional:nth-child(7) {
+            animation-delay: 0.7s;
+        }
+
+        .form-group-professional:nth-child(8) {
+            animation-delay: 0.8s;
+        }
+
+        .form-group-professional:nth-child(9) {
+            animation-delay: 0.9s;
+        }
+
+        .form-group-professional:nth-child(10) {
+            animation-delay: 1.0s;
+        }
+
+    /* Divider visual */
+    .section-divider {
+        height: 2px;
+        background: linear-gradient(90deg, transparent 0%, var(--primary-color) 50%, transparent 100%);
+        margin: 2rem 0;
+        opacity: 0.3;
+    }
+</style>
+
+<header class="header-professional text-center">
+    <div class="container">
+        <h1><i class="bi bi-person-plus me-3"></i>Nuevo Docente</h1>
+        <p class="mb-0 mt-2 opacity-75">Registro de Información Personal y Profesional</p>
+    </div>
+</header>
+
+<div class="container mt-4">
+    <div class="card card-professional">
+        <div class="card-header-professional text-center">
+            <h4><i class="bi bi-mortarboard me-2"></i>Información del Docente</h4>
+        </div>
+
+        <div class="form-section">
+            <form method="post">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger d-flex align-items-center" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <div>Por favor, revise los errores en el formulario</div>
+                </div>
+
+                <!-- Género -->
+                <div class="form-group-professional">
+                    <label class="form-label-professional">
+                        <i class="bi bi-gender-ambiguous"></i>
+                        Género
+                    </label>
+                    <div class="radio-group-professional">
+                        <div class="form-check form-check-professional">
+                            <input type="radio" asp-for="Docente.Genero" value="0" id="generoMasculino" class="form-check-input">
+                            <label class="form-check-label" for="generoMasculino">
+                                <i class="bi bi-gender-male me-2" style="color: #007bff;"></i>
+                                Masculino
+                            </label>
+                        </div>
+                        <div class="form-check form-check-professional">
+                            <input type="radio" asp-for="Docente.Genero" value="1" id="generoFemenino" class="form-check-input">
+                            <label class="form-check-label" for="generoFemenino">
+                                <i class="bi bi-gender-female me-2" style="color: #e91e63;"></i>
+                                Femenino
+                            </label>
+                        </div>
+                    </div>
+                    <span asp-validation-for="Docente.Genero" class="text-danger"></span>
+                </div>
+
+                <!-- Nombres -->
+                <div class="form-group-professional">
+                    <label asp-for="Docente.Nombres" class="form-label-professional">
+                        <i class="bi bi-person icon-nombres"></i>
+                        Nombres
+                    </label>
+                    <div class="input-group input-group-professional">
+                        <span class="input-group-text"><i class="bi bi-person icon-nombres"></i></span>
+                        <input asp-for="Docente.Nombres" class="form-control" placeholder="Ingrese los nombres del docente" />
+                    </div>
+                    <span asp-validation-for="Docente.Nombres" class="text-danger"></span>
+                </div>
+
+                <!-- Apellidos -->
+                <div class="form-group-professional">
+                    <label asp-for="Docente.Apellidos" class="form-label-professional">
+                        <i class="bi bi-person-badge icon-apellidos"></i>
+                        Apellidos
+                    </label>
+                    <div class="input-group input-group-professional">
+                        <span class="input-group-text"><i class="bi bi-person-badge icon-apellidos"></i></span>
+                        <input asp-for="Docente.Apellidos" class="form-control" placeholder="Ingrese los apellidos del docente" />
+                    </div>
+                    <span asp-validation-for="Docente.Apellidos" class="text-danger"></span>
+                </div>
+
+                <!-- DUI -->
+                <div class="form-group-professional">
+                    <label asp-for="Docente.Dui" class="form-label-professional">
+                        <i class="bi bi-card-text icon-dui"></i>
+                        DUI
+                    </label>
+                    <div class="input-group input-group-professional">
+                        <span class="input-group-text"><i class="bi bi-card-text icon-dui"></i></span>
+                        <input asp-for="Docente.Dui" class="form-control" placeholder="00000000-0" maxlength="10" />
+                    </div>
+                    <span asp-validation-for="Docente.Dui" class="text-danger"></span>
+                </div>
+
+                <!-- Teléfono -->
+                <div class="form-group-professional">
+                    <label asp-for="Docente.Telefono" class="form-label-professional">
+                        <i class="bi bi-telephone icon-telefono"></i>
+                        Teléfono
+                    </label>
+                    <div class="input-group input-group-professional">
+                        <span class="input-group-text"><i class="bi bi-telephone icon-telefono"></i></span>
+                        <input asp-for="Docente.Telefono" class="form-control" pattern="\d{4}-\d{4}" placeholder="0000-0000" />
+                    </div>
+                    <span asp-validation-for="Docente.Telefono" class="text-danger"></span>
+                </div>
+
+                <div class="section-divider"></div>
+
+                <!-- Fecha de Nacimiento -->
+                <div class="form-group-professional">
+                    <label asp-for="Docente.FechaDeNacimiento" class="form-label-professional">
+                        <i class="bi bi-calendar-date icon-fecha"></i>
+                        Fecha de Nacimiento
+                    </label>
+                    <div class="input-group input-group-professional">
+                        <span class="input-group-text"><i class="bi bi-calendar-date icon-fecha"></i></span>
+                        <input asp-for="Docente.FechaDeNacimiento" class="form-control" type="date" />
+                    </div>
+                    <span asp-validation-for="Docente.FechaDeNacimiento" class="text-danger"></span>
+                </div>
+
+                <!-- Fecha de Ingreso -->
+                <div class="form-group-professional">
+                    <label asp-for="Docente.FechaDeIngreso" class="form-label-professional">
+                        <i class="bi bi-calendar-check icon-fecha"></i>
+                        Fecha de Ingreso
+                    </label>
+                    <div class="input-group input-group-professional">
+                        <span class="input-group-text"><i class="bi bi-calendar-check icon-fecha"></i></span>
+                        <input asp-for="Docente.FechaDeIngreso" class="form-control" type="date" />
+                    </div>
+                    <span asp-validation-for="Docente.FechaDeIngreso" class="text-danger"></span>
+                </div>
+
+                <div class="section-divider"></div>
+
+                <!-- Dirección -->
+                <div class="form-group-professional">
+                    <label asp-for="Docente.Direccion" class="form-label-professional">
+                        <i class="bi bi-geo-alt icon-direccion"></i>
+                        Dirección
+                    </label>
+                    <div class="input-group input-group-professional">
+                        <span class="input-group-text"><i class="bi bi-geo-alt icon-direccion"></i></span>
+                        <input asp-for="Docente.Direccion" class="form-control" placeholder="Ingrese la dirección completa" />
+                    </div>
+                    <span asp-validation-for="Docente.Direccion" class="text-danger"></span>
+                </div>
+
+                <!-- Email -->
+                <div class="form-group-professional">
+                    <label asp-for="Docente.Email" class="form-label-professional">
+                        <i class="bi bi-envelope icon-email"></i>
+                        Correo Electrónico
+                    </label>
+                    <div class="input-group input-group-professional">
+                        <span class="input-group-text"><i class="bi bi-envelope icon-email"></i></span>
+                        <input asp-for="Docente.Email" class="form-control" type="email" placeholder="ejemplo@correo.com" />
+                    </div>
+                    <span asp-validation-for="Docente.Email" class="text-danger"></span>
+                </div>
+
+                <!-- Profesión -->
+                <div class="form-group-professional">
+                    <label asp-for="Docente.ProfesionId" class="form-label-professional">
+                        <i class="bi bi-award icon-profesion"></i>
+                        Profesión
+                    </label>
+                    <div class="input-group input-group-professional">
+                        <span class="input-group-text"><i class="bi bi-award icon-profesion"></i></span>
+                        <select asp-for="Docente.ProfesionId" class="form-control select-professional" asp-items="ViewBag.ProfesionId">
+                            <option value="">-- Seleccione una profesión --</option>
+                        </select>
+                    </div>
+                    <span asp-validation-for="Docente.ProfesionId" class="text-danger"></span>
+                </div>
+
+                <div class="section-divider"></div>
+
+                <!-- Botón de envío -->
+                <div class="d-grid gap-2 mb-4">
+                    <button type="submit" class="btn btn-primary-professional">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Crear Docente
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Botón de regreso -->
+    <div class="text-center mt-4 mb-5">
+        <a asp-page="Index" class="btn-secondary-professional">
+            <i class="bi bi-arrow-left"></i>
+            Volver a la lista
+        </a>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

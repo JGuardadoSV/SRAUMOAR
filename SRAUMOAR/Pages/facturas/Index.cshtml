@@ -270,6 +270,105 @@
         font-weight: 500;
     }
 
+    /* Estilos para los filtros */
+    .filters-container {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border: 1px solid var(--border-color);
+    }
+
+    .filters-container .form-label {
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-dark);
+    }
+
+    .filters-container .form-control,
+    .filters-container .form-select {
+        border: 2px solid var(--border-color);
+        border-radius: 6px;
+        padding: 0.75rem;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+
+    .filters-container .form-control:focus,
+    .filters-container .form-select:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(22, 128, 38, 0.1);
+        outline: none;
+    }
+
+    .filters-container .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .filters-container .btn-primary {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .filters-container .btn-primary:hover {
+        background: var(--primary-dark);
+        border-color: var(--primary-dark);
+        transform: translateY(-1px);
+    }
+
+    .filters-container .btn-outline-secondary {
+        border-color: var(--border-color);
+        color: var(--text-dark);
+    }
+
+    .filters-container .btn-outline-secondary:hover {
+        background: var(--border-color);
+        border-color: var(--border-color);
+        color: var(--text-dark);
+    }
+
+    /* Estilos para la paginación */
+    .pagination-container {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border: 1px solid var(--border-color);
+    }
+
+    .pagination .page-link {
+        color: var(--primary-color);
+        border: 1px solid var(--border-color);
+        padding: 0.5rem 0.75rem;
+        margin: 0 2px;
+        border-radius: 4px;
+        transition: all 0.3s ease;
+    }
+
+    .pagination .page-link:hover {
+        background-color: var(--primary-light);
+        border-color: var(--primary-color);
+        color: var(--primary-dark);
+        transform: translateY(-1px);
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        color: white;
+    }
+
+    .pagination .page-item.disabled .page-link {
+        color: #6c757d;
+        background-color: #f8f9fa;
+        border-color: var(--border-color);
+    }
+
 
     @@media (max-width: 768px) {
         .action-bar {
@@ -289,6 +388,41 @@
 
         .action-buttons {
             flex-direction: column;
+        }
+
+        .filters-container .row {
+            gap: 1rem;
+        }
+
+        .filters-container .col-md-3 {
+            width: 100%;
+        }
+
+        .filters-container .d-flex {
+            justify-content: stretch;
+        }
+
+        .filters-container .btn {
+            flex: 1;
+        }
+
+        .pagination-container .row {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .pagination-container .col-md-6 {
+            width: 100%;
+            text-align: center;
+        }
+
+        .pagination {
+            justify-content: center !important;
+        }
+
+        .pagination .page-link {
+            padding: 0.4rem 0.6rem;
+            font-size: 0.9rem;
         }
     }
 </style>
@@ -316,20 +450,60 @@
         </div>
     </div>
 
+    <!-- Filtros -->
+    <div class="filters-container" style="background: white; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid var(--border-color);">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label for="FechaInicio" class="form-label fw-semibold text-muted">
+                    <i class="fas fa-calendar-alt me-2"></i>Fecha Inicio
+                </label>
+                <input type="date" class="form-control" id="FechaInicio" name="FechaInicio" 
+                       value="@(Model.FechaInicio?.ToString("yyyy-MM-dd") ?? DateTime.Today.ToString("yyyy-MM-dd"))" />
+            </div>
+            <div class="col-md-3">
+                <label for="FechaFin" class="form-label fw-semibold text-muted">
+                    <i class="fas fa-calendar-alt me-2"></i>Fecha Fin
+                </label>
+                <input type="date" class="form-control" id="FechaFin" name="FechaFin" 
+                       value="@(Model.FechaFin?.ToString("yyyy-MM-dd") ?? DateTime.Today.ToString("yyyy-MM-dd"))" />
+            </div>
+            <div class="col-md-3">
+                <label for="EstadoFiltro" class="form-label fw-semibold text-muted">
+                    <i class="fas fa-filter me-2"></i>Estado
+                </label>
+                <select class="form-select" id="EstadoFiltro" name="EstadoFiltro">
+                    <option value="">Todos los estados</option>
+                    <option value="activa" selected="@(Model.EstadoFiltro == "activa")">Activas</option>
+                    <option value="anulada" selected="@(Model.EstadoFiltro == "anulada")">Anuladas</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-2"></i>Filtrar
+                    </button>
+                    <a href="@Url.Page("./Index")" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-2"></i>Limpiar
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
     <div class="table-container">
         <div class="legend-items">
             <div class="legend-item">
                 <span class="badge bg-primary">CF</span>
-                <span class="legend-text">Comprobante Fiscal</span>
+                <span class="legend-text">Consumidor Final</span>
             </div>
             <div class="legend-item">
                 <span class="badge bg-success">CCF</span>
                 <span class="legend-text">Comprobante de Crédito Fiscal</span>
             </div>
-            <div class="legend-item">
+           @*  <div class="legend-item">
                 <span class="badge bg-warning text-dark">NC</span>
                 <span class="legend-text">Nota de Crédito</span>
-            </div>
+            </div> *@
             <div class="legend-item">
                 <span class="badge bg-info">SE</span>
                 <span class="legend-text">Sujeto Excluido</span>
@@ -459,6 +633,128 @@
                     }
                 </tbody>
             </table>
+
+            <!-- Paginación -->
+            @if (Model.TotalPaginas > 1)
+            {
+                <div class="pagination-container" style="background: white; border-radius: 8px; padding: 1.5rem; margin-top: 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid var(--border-color);">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <p class="mb-0 text-muted">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Mostrando @(((Model.PaginaActual - 1) * Model.RegistrosPorPagina) + 1) - 
+                                @Math.Min(Model.PaginaActual * Model.RegistrosPorPagina, Model.TotalRegistros) 
+                                de @Model.TotalRegistros registros
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <nav aria-label="Navegación de páginas">
+                                <ul class="pagination justify-content-end mb-0">
+                                    <!-- Botón Anterior -->
+                                    @if (Model.PaginaActual > 1)
+                                    {
+                                        <li class="page-item">
+                                            <a class="page-link" href="@Url.Page("./Index", new { 
+                                                FechaInicio = Model.FechaInicio?.ToString("yyyy-MM-dd"), 
+                                                FechaFin = Model.FechaFin?.ToString("yyyy-MM-dd"), 
+                                                EstadoFiltro = Model.EstadoFiltro, 
+                                                PaginaActual = Model.PaginaActual - 1 
+                                            })">
+                                                <i class="fas fa-chevron-left"></i>
+                                            </a>
+                                        </li>
+                                    }
+                                    else
+                                    {
+                                        <li class="page-item disabled">
+                                            <span class="page-link">
+                                                <i class="fas fa-chevron-left"></i>
+                                            </span>
+                                        </li>
+                                    }
+
+                                    <!-- Números de página -->
+                                    @{
+                                        int inicio = Math.Max(1, Model.PaginaActual - 2);
+                                        int fin = Math.Min(Model.TotalPaginas, Model.PaginaActual + 2);
+                                    }
+
+                                    @if (inicio > 1)
+                                    {
+                                        <li class="page-item">
+                                            <a class="page-link" href="@Url.Page("./Index", new { 
+                                                FechaInicio = Model.FechaInicio?.ToString("yyyy-MM-dd"), 
+                                                FechaFin = Model.FechaFin?.ToString("yyyy-MM-dd"), 
+                                                EstadoFiltro = Model.EstadoFiltro, 
+                                                PaginaActual = 1 
+                                            })">1</a>
+                                        </li>
+                                        @if (inicio > 2)
+                                        {
+                                            <li class="page-item disabled">
+                                                <span class="page-link">...</span>
+                                            </li>
+                                        }
+                                    }
+
+                                    @for (int i = inicio; i <= fin; i++)
+                                    {
+                                        <li class="page-item @(i == Model.PaginaActual ? "active" : "")">
+                                            <a class="page-link" href="@Url.Page("./Index", new { 
+                                                FechaInicio = Model.FechaInicio?.ToString("yyyy-MM-dd"), 
+                                                FechaFin = Model.FechaFin?.ToString("yyyy-MM-dd"), 
+                                                EstadoFiltro = Model.EstadoFiltro, 
+                                                PaginaActual = i 
+                                            })">@i</a>
+                                        </li>
+                                    }
+
+                                    @if (fin < Model.TotalPaginas)
+                                    {
+                                        @if (fin < Model.TotalPaginas - 1)
+                                        {
+                                            <li class="page-item disabled">
+                                                <span class="page-link">...</span>
+                                            </li>
+                                        }
+                                        <li class="page-item">
+                                            <a class="page-link" href="@Url.Page("./Index", new { 
+                                                FechaInicio = Model.FechaInicio?.ToString("yyyy-MM-dd"), 
+                                                FechaFin = Model.FechaFin?.ToString("yyyy-MM-dd"), 
+                                                EstadoFiltro = Model.EstadoFiltro, 
+                                                PaginaActual = Model.TotalPaginas 
+                                            })">@Model.TotalPaginas</a>
+                                        </li>
+                                    }
+
+                                    <!-- Botón Siguiente -->
+                                    @if (Model.PaginaActual < Model.TotalPaginas)
+                                    {
+                                        <li class="page-item">
+                                            <a class="page-link" href="@Url.Page("./Index", new { 
+                                                FechaInicio = Model.FechaInicio?.ToString("yyyy-MM-dd"), 
+                                                FechaFin = Model.FechaFin?.ToString("yyyy-MM-dd"), 
+                                                EstadoFiltro = Model.EstadoFiltro, 
+                                                PaginaActual = Model.PaginaActual + 1 
+                                            })">
+                                                <i class="fas fa-chevron-right"></i>
+                                            </a>
+                                        </li>
+                                    }
+                                    else
+                                    {
+                                        <li class="page-item disabled">
+                                            <span class="page-link">
+                                                <i class="fas fa-chevron-right"></i>
+                                            </span>
+                                        </li>
+                                    }
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            }
             }
             else
             {
