@@ -13,29 +13,25 @@ namespace SRAUMOAR.Entidades.Procesos
         public decimal Costo { get; set; }
         public bool Activo { get; set; }
 
-        [Required]
         [Display(Name = "Fecha de Inicio")]
         [DisplayFormat(DataFormatString = "{0:dd-MM-yyyy}", ApplyFormatInEditMode = false)]
         [Column(TypeName = "date")]
         [DataType(DataType.Date)]
-        public DateTime FechaInicio { get; set; }
+        public DateTime? FechaInicio { get; set; }
 
-        [Required]
         [Display(Name = "Fecha de fin")]
         [DisplayFormat(DataFormatString = "{0:dd-MM-yyyy}", ApplyFormatInEditMode = false)]
         [Column(TypeName = "date")]
         [DataType(DataType.Date)]
-        public DateTime FechaFin { get; set; }
+        public DateTime? FechaFin { get; set; }
 
-
-        [Required(ErrorMessage = "El ciclo es requerido")]
         [Display(Name = "Ciclo")]
-        public int CicloId { get; set; } // Llave foránea
+        public int? CicloId { get; set; } // Llave foránea
         public virtual Ciclo? Ciclo { get; set; } // Propiedad de navegación
 
         [DefaultValue(true)]
         public bool Exento { get; set; }
-
-
+        [DefaultValue(false)]
+        public bool Obligatorio { get; set; }
     }
 }

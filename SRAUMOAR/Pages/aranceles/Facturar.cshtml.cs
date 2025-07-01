@@ -78,9 +78,9 @@ namespace SRAUMOAR.Pages.aranceles
             string correlativo = i.ToString().PadLeft(15, '0'); // Rellena con ceros a la izquierda para que tenga 15 caracteres
                                                                 // Generar número de control
 
-            int numero =(int) await _correlativoService.ObtenerSiguienteCorrelativo("01", "00"); ;
+            int numero =(int) await _correlativoService.ObtenerSiguienteCorrelativo("01", "01"); ;
             string numeroFormateado = numero.ToString("D15");
-            string numeroControl = "DTE-" + "01" + "-" + "ABCD1234" + "-" + numeroFormateado;
+            string numeroControl = "DTE-" + "01" + "-" + "U0000001" + "-" + numeroFormateado;
 
             // ESQUEMA PARA UN DTE DE CONSUMIDOR FINAL DTE 01
 
@@ -256,11 +256,11 @@ namespace SRAUMOAR.Pages.aranceles
             var requestUnificado = new
             {
                 Usuario = _emisor.NIT,
-                Password = _emisor.CLAVETESTAPI,
-                Ambiente = "00",
+                Password = _emisor.CLAVEPRODAPI,
+                Ambiente = "01",
                 DteJson = dteJson,
                 Nit = _emisor.NIT,
-                PasswordPrivado = _emisor.CLAVETESTCERTIFICADO,
+                PasswordPrivado = _emisor.CLAVEPRODCERTIFICADO,
                 TipoDte = "01",
                 CodigoGeneracion = codigoGeneracion,
                 NumControl = numeroControl,

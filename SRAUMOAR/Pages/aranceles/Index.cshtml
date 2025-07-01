@@ -234,6 +234,76 @@
         letter-spacing: 0.5px;
     }
 
+    /* Estilos para las pestañas */
+    .tabs-container {
+        margin-bottom: 1.5rem;
+    }
+
+    .tabs-nav {
+        display: flex;
+        border-bottom: 2px solid #e5e7eb;
+        margin-bottom: 1rem;
+    }
+
+    .tab-button {
+        padding: 0.75rem 1.5rem;
+        background: none;
+        border: none;
+        border-bottom: 3px solid transparent;
+        color: #6b7280;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+
+    .tab-button:hover {
+        color: #38ab57;
+        background: #f9fdf9;
+    }
+
+    .tab-button.active {
+        color: #38ab57;
+        border-bottom-color: #38ab57;
+        background: #f0fdf4;
+    }
+
+    .tab-button .badge {
+        background: #38ab57;
+        color: white;
+        padding: 0.2rem 0.5rem;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        margin-left: 0.5rem;
+    }
+
+    .tab-content {
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    .search-box {
+        flex: 1;
+        max-width: 300px;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 4px;
+        font-size: 0.9rem;
+    }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #38ab57;
+            box-shadow: 0 0 0 2px rgba(56, 171, 87, 0.1);
+        }
+
     @@media (max-width: 768px) {
         .index-container {
             margin: 0.5rem;
@@ -265,26 +335,22 @@
         .stats-row {
             grid-template-columns: 1fr;
         }
-    }
 
-    .search-box {
-        flex: 1;
-        max-width: 300px;
-    }
-
-    .search-input {
-        width: 100%;
-        padding: 0.5rem 0.75rem;
-        border: 1px solid #d1d5db;
-        border-radius: 4px;
-        font-size: 0.9rem;
-    }
-
-        .search-input:focus {
-            outline: none;
-            border-color: #38ab57;
-            box-shadow: 0 0 0 2px rgba(56, 171, 87, 0.1);
+        .tabs-nav {
+            flex-direction: column;
         }
+
+        .tab-button {
+            border-bottom: none;
+            border-left: 3px solid transparent;
+            text-align: left;
+        }
+
+        .tab-button.active {
+            border-left-color: #38ab57;
+            border-bottom-color: transparent;
+        }
+    }
 </style>
 
 <div class="index-container">
@@ -310,6 +376,14 @@
                 <div class="stat-number">$@Model.Arancel.Where(a => a.Activo).Sum(a => a.Costo).ToString("N2")</div>
                 <div class="stat-label">Total Activos</div>
             </div>
+            <div class="stat-card">
+                <div class="stat-number">@Model.Arancel.Count(a => a.Obligatorio)</div>
+                <div class="stat-label">Obligatorios</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">@Model.Arancel.Count(a => !a.Obligatorio)</div>
+                <div class="stat-label">No Obligatorios</div>
+            </div>
         </div>
 
         <div class="actions-bar">
@@ -321,106 +395,228 @@
             </a>
         </div>
 
-        <div class="table-container">
-            @if (Model.Arancel.Any())
-            {
-                <table class="table" id="arancelesTable">
-                    <thead>
-                        <tr>
-                            <th>@Html.DisplayNameFor(model => model.Arancel[0].Nombre)</th>
-                            <th>@Html.DisplayNameFor(model => model.Arancel[0].Costo)</th>
-                            <th>@Html.DisplayNameFor(model => model.Arancel[0].Activo)</th>
-                            <th>@Html.DisplayNameFor(model => model.Arancel[0].Exento)</th>
-                            <th>@Html.DisplayNameFor(model => model.Arancel[0].FechaInicio)</th>
-                            <th>@Html.DisplayNameFor(model => model.Arancel[0].FechaFin)</th>
-                            <th>@Html.DisplayNameFor(model => model.Arancel[0].Ciclo)</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var item in Model.Arancel)
-                        {
-                            <tr>
-                                <td>
-                                    <strong>@Html.DisplayFor(modelItem => item.Nombre)</strong>
-                                </td>
-                                <td class="cost-cell">
-                                    $@Html.DisplayFor(modelItem => item.Costo)
-                                </td>
-                                <td>
-                                    @if (item.Activo)
-                                    {
-                                        <span class="status-badge status-active">Activo</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="status-badge status-inactive">Inactivo</span>
-                                    }
-                                </td>
-                                <td>
-                                    @if (item.Exento)
-                                    {
-                                        <span class="status-badge status-active">Exento</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="status-badge status-inactive">Gravado</span>
-                                    }
-                                </td>
-                                <td class="date-cell">
-                                    @Html.DisplayFor(modelItem => item.FechaInicio)
-                                </td>
-                                <td class="date-cell">
-                                    @Html.DisplayFor(modelItem => item.FechaFin)
-                                </td>
-                                <td>
-                                    <div class="cycle-cell">
-                                        @Html.DisplayFor(modelItem => item.Ciclo.NCiclo) / @Html.DisplayFor(modelItem => item.Ciclo.anio)
-                                    </div>
-                                </td>
-                                <td>
-                                    <a asp-page="./Edit" asp-route-id="@item.ArancelId" class="btn btn-primary btn-sm">
-                                        ✏️ Editar
-                                    </a>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            }
-            else
-            {
-                <div class="empty-state">
-                    <div class="empty-icon">📄</div>
-                    <h3>No hay aranceles registrados</h3>
-                    <p>Comienza registrando tu primer arancel para este ciclo.</p>
-                    <a asp-page="Create" class="btn btn-primary">➕ Registrar Primer Arancel</a>
+        <!-- Pestañas -->
+        <div class="tabs-container">
+            <div class="tabs-nav">
+                <button class="tab-button active" data-tab="obligatorios">
+                    Aranceles Obligatorios
+                    <span class="badge">@Model.Arancel.Count(a => a.Obligatorio)</span>
+                </button>
+                <button class="tab-button" data-tab="no-obligatorios">
+                    Aranceles No Obligatorios
+                    <span class="badge">@Model.Arancel.Count(a => !a.Obligatorio)</span>
+                </button>
+            </div>
+
+            <!-- Contenido de pestaña: Aranceles Obligatorios -->
+            <div class="tab-content active" id="obligatorios">
+                <div class="table-container">
+                    @if (Model.Arancel.Any(a => a.Obligatorio))
+                    {
+                        <table class="table" id="arancelesObligatoriosTable">
+                            <thead>
+                                <tr>
+                                    <th>@Html.DisplayNameFor(model => model.Arancel[0].Nombre)</th>
+                                    <th>@Html.DisplayNameFor(model => model.Arancel[0].Costo)</th>
+                                    <th>@Html.DisplayNameFor(model => model.Arancel[0].Activo)</th>
+                                    <th>@Html.DisplayNameFor(model => model.Arancel[0].Exento)</th>
+                                    <th>@Html.DisplayNameFor(model => model.Arancel[0].FechaInicio)</th>
+                                    <th>@Html.DisplayNameFor(model => model.Arancel[0].FechaFin)</th>
+                                    <th>@Html.DisplayNameFor(model => model.Arancel[0].Ciclo)</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.Arancel.Where(a => a.Obligatorio))
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong>@Html.DisplayFor(modelItem => item.Nombre)</strong>
+                                        </td>
+                                        <td class="cost-cell">
+                                            $@Html.DisplayFor(modelItem => item.Costo)
+                                        </td>
+                                        <td>
+                                            @if (item.Activo)
+                                            {
+                                                <span class="status-badge status-active">Activo</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="status-badge status-inactive">Inactivo</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (item.Exento)
+                                            {
+                                                <span class="status-badge status-active">Exento</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="status-badge status-inactive">Gravado</span>
+                                            }
+                                        </td>
+                                        <td class="date-cell">
+                                            @(item.FechaInicio?.ToString("dd/MM/yyyy") ?? "No definida")
+                                        </td>
+                                        <td class="date-cell">
+                                            @(item.FechaFin?.ToString("dd/MM/yyyy") ?? "No definida")
+                                        </td>
+                                        <td>
+                                            <div class="cycle-cell">
+                                                @(item.Ciclo?.NCiclo.ToString() ?? "Sin ciclo") / @(item.Ciclo?.anio.ToString() ?? "N/A")
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <a asp-page="./Edit" asp-route-id="@item.ArancelId" class="btn btn-primary btn-sm">
+                                                ✏️ Editar
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <div class="empty-state">
+                            <div class="empty-icon">📄</div>
+                            <h3>No hay aranceles obligatorios registrados</h3>
+                            <p>Comienza registrando tu primer arancel obligatorio para este ciclo.</p>
+                            <a asp-page="Create" class="btn btn-primary">➕ Registrar Primer Arancel</a>
+                        </div>
+                    }
                 </div>
-            }
+            </div>
+
+            <!-- Contenido de pestaña: Aranceles No Obligatorios -->
+            <div class="tab-content" id="no-obligatorios">
+                <div class="table-container">
+                    @if (Model.Arancel.Any(a => !a.Obligatorio))
+                    {
+                        <table class="table" id="arancelesNoObligatoriosTable">
+                            <thead>
+                                <tr>
+                                    <th>@Html.DisplayNameFor(model => model.Arancel[0].Nombre)</th>
+                                    <th>@Html.DisplayNameFor(model => model.Arancel[0].Costo)</th>
+                                    <th>@Html.DisplayNameFor(model => model.Arancel[0].Activo)</th>
+                                    <th>@Html.DisplayNameFor(model => model.Arancel[0].Exento)</th>
+                                    <th>@Html.DisplayNameFor(model => model.Arancel[0].FechaInicio)</th>
+                                    <th>@Html.DisplayNameFor(model => model.Arancel[0].FechaFin)</th>
+                                    <th>@Html.DisplayNameFor(model => model.Arancel[0].Ciclo)</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.Arancel.Where(a => !a.Obligatorio))
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong>@Html.DisplayFor(modelItem => item.Nombre)</strong>
+                                        </td>
+                                        <td class="cost-cell">
+                                            $@Html.DisplayFor(modelItem => item.Costo)
+                                        </td>
+                                        <td>
+                                            @if (item.Activo)
+                                            {
+                                                <span class="status-badge status-active">Activo</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="status-badge status-inactive">Inactivo</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (item.Exento)
+                                            {
+                                                <span class="status-badge status-active">Exento</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="status-badge status-inactive">Gravado</span>
+                                            }
+                                        </td>
+                                        <td class="date-cell">
+                                            @(item.FechaInicio?.ToString("dd/MM/yyyy") ?? "No definida")
+                                        </td>
+                                        <td class="date-cell">
+                                            @(item.FechaFin?.ToString("dd/MM/yyyy") ?? "No definida")
+                                        </td>
+                                        <td>
+                                            <div class="cycle-cell">
+                                                @(item.Ciclo?.NCiclo.ToString() ?? "Sin ciclo") / @(item.Ciclo?.anio.ToString() ?? "N/A")
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <a asp-page="./Edit" asp-route-id="@item.ArancelId" class="btn btn-primary btn-sm">
+                                                ✏️ Editar
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <div class="empty-state">
+                            <div class="empty-icon">📄</div>
+                            <h3>No hay aranceles no obligatorios registrados</h3>
+                            <p>Comienza registrando tu primer arancel no obligatorio para este ciclo.</p>
+                            <a asp-page="Create" class="btn btn-primary">➕ Registrar Primer Arancel</a>
+                        </div>
+                    }
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
+    // Funcionalidad de pestañas
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const targetTab = this.getAttribute('data-tab');
+
+                // Remover clase active de todos los botones y contenidos
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+
+                // Agregar clase active al botón clickeado y su contenido correspondiente
+                this.classList.add('active');
+                document.getElementById(targetTab).classList.add('active');
+            });
+        });
+    });
+
     // Funcionalidad de búsqueda
     document.getElementById('searchInput').addEventListener('input', function() {
         const searchTerm = this.value.toLowerCase();
-        const table = document.getElementById('arancelesTable');
-        const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+        const activeTab = document.querySelector('.tab-content.active');
+        const table = activeTab.querySelector('table');
+        
+        if (table) {
+            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
 
-        for (let i = 0; i < rows.length; i++) {
-            const row = rows[i];
-            const cells = row.getElementsByTagName('td');
-            let found = false;
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                const cells = row.getElementsByTagName('td');
+                let found = false;
 
-            for (let j = 0; j < cells.length - 1; j++) { // -1 para excluir la columna de acciones
-                if (cells[j].textContent.toLowerCase().includes(searchTerm)) {
-                    found = true;
-                    break;
+                for (let j = 0; j < cells.length - 1; j++) { // -1 para excluir la columna de acciones
+                    if (cells[j].textContent.toLowerCase().includes(searchTerm)) {
+                        found = true;
+                        break;
+                    }
                 }
-            }
 
-            row.style.display = found ? '' : 'none';
+                row.style.display = found ? '' : 'none';
+            }
         }
     });
 

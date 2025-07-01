@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SRAUMOAR.Modelos;
 
@@ -11,9 +12,11 @@ using SRAUMOAR.Modelos;
 namespace SRAUMOAR.Migrations
 {
     [DbContext(typeof(Contexto))]
-    partial class ContextoModelSnapshot : ModelSnapshot
+    [Migration("20250701104534_obligatorioarancel")]
+    partial class obligatorioarancel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -820,7 +823,7 @@ namespace SRAUMOAR.Migrations
                     b.Property<bool>("Activo")
                         .HasColumnType("bit");
 
-                    b.Property<int?>("CicloId")
+                    b.Property<int>("CicloId")
                         .HasColumnType("int");
 
                     b.Property<decimal>("Costo")
@@ -830,10 +833,10 @@ namespace SRAUMOAR.Migrations
                     b.Property<bool>("Exento")
                         .HasColumnType("bit");
 
-                    b.Property<DateTime?>("FechaFin")
+                    b.Property<DateTime>("FechaFin")
                         .HasColumnType("date");
 
-                    b.Property<DateTime?>("FechaInicio")
+                    b.Property<DateTime>("FechaInicio")
                         .HasColumnType("date");
 
                     b.Property<string>("Nombre")
@@ -1283,7 +1286,9 @@ namespace SRAUMOAR.Migrations
                 {
                     b.HasOne("SRAUMOAR.Entidades.Procesos.Ciclo", "Ciclo")
                         .WithMany()
-                        .HasForeignKey("CicloId");
+                        .HasForeignKey("CicloId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Ciclo");
                 });

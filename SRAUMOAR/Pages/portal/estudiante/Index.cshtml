@@ -25,7 +25,7 @@
 
                 @foreach (var item in arancelesVencidos)
                 {
-                var diasAtraso = (DateTime.Now - item.FechaFin).Days;
+                var diasAtraso = item.FechaFin.HasValue ? (DateTime.Now - item.FechaFin.Value).Days : 0;
 
                 <div class="alert alert-danger d-flex align-items-center p-3 mb-3">
                     <div class="d-flex align-items-center flex-grow-1">
@@ -41,7 +41,7 @@
                                 </span>
                                 <span class="text-danger">
                                     <i class="bi bi-calendar me-1"></i>
-                                    Venció el <strong>@item.FechaFin.ToString("dd/MM/yyyy")</strong>
+                                    Venció el <strong>@(item.FechaFin?.ToString("dd/MM/yyyy") ?? "Fecha no definida")</strong>
                                 </span>
                             </div>
                         </div>
@@ -247,8 +247,8 @@
                             {
                                 var arancelPagado = Model.DetallesCobroArancel
                                 .Any(dc => dc.ArancelId == item.ArancelId && dc.CobroArancel.AlumnoId == Model.Alumno.AlumnoId);
-                                var diasRestantes = (item.FechaFin - DateTime.Now).Days;
-                                var diasAtraso = (DateTime.Now - item.FechaFin).Days;
+                                var diasRestantes = item.FechaFin.HasValue ? (item.FechaFin.Value - DateTime.Now).Days : 0;
+                                var diasAtraso = item.FechaFin.HasValue ? (DateTime.Now - item.FechaFin.Value).Days : 0;
                                 var cobroArancelId = Model.DetallesCobroArancel
                                 .Where(dc => dc.ArancelId == item.ArancelId && dc.CobroArancel.AlumnoId == Model.Alumno.AlumnoId)
                                 .Select(dc => dc.CobroArancelId)
@@ -257,9 +257,9 @@
                                 <tr>
                                     <td>@Html.DisplayFor(modelItem => item.Nombre)</td>
                                     <td>$ @Html.DisplayFor(modelItem => item.Costo)</td>
-                                    <td>@Html.DisplayFor(modelItem => item.FechaInicio)</td>
-                                    <td>@Html.DisplayFor(modelItem => item.FechaFin)</td>
-                                    <td>@Html.DisplayFor(modelItem => item.Ciclo.NCiclo) - @Html.DisplayFor(modelItem => item.Ciclo.anio)</td>
+                                    <td>@(item.FechaInicio?.ToString("dd/MM/yyyy") ?? "No definida")</td>
+                                    <td>@(item.FechaFin?.ToString("dd/MM/yyyy") ?? "No definida")</td>
+                                    <td>@(item.Ciclo != null ? $"{item.Ciclo.NCiclo} - {item.Ciclo.anio}" : "No asignado")</td>
                                     <td>
                                         @if (arancelPagado)
                                         {
@@ -274,20 +274,26 @@
                                         }
                                     </td>
                                     <td>
-                                        @if (diasRestantes > 0)
+                                        @if (item.FechaFin.HasValue)
                                         {
-                                            if (!arancelPagado)
+                                            if (diasRestantes > 0)
                                             {
-                                            <span class="text-info">Faltan @diasRestantes días</span>
+                                                if (!arancelPagado)
+                                                {
+                                                    <span class="text-info">Faltan @diasRestantes días</span>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                if (!arancelPagado)
+                                                {
+                                                    <span class="text-danger">Atrasado @diasAtraso días</span>
+                                                }
                                             }
                                         }
                                         else
                                         {
-                                            if (!arancelPagado)
-                                            {
-                                                <span class="text-danger">Atrasado @diasAtraso días</span>
-                                            }
-                                            
+                                            <span class="text-muted">Sin fecha límite</span>
                                         }
                                     </td>
                                    
@@ -336,7 +342,7 @@
                                         @Html.DisplayFor(modelItem => item.FechaFin)
                                     </td>
                                     <td>
-                                        @Html.DisplayFor(modelItem => item.Arancel.Nombre)
+                                        @(item.Arancel?.Nombre ?? "Sin arancel")
                                     </td>
                                     <td>
                                         @Html.DisplayFor(modelItem => item.Porcentaje)%

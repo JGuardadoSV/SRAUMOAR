@@ -21,13 +21,22 @@ namespace SRAUMOAR.Pages.aranceles
             _context = context;
         }
 
-        public IList<Arancel> Arancel { get;set; } = default!;
+        public IList<Arancel> ArancelesObligatorios { get; set; } = default!;
+        public IList<Arancel> ArancelesNoObligatorios { get; set; } = default!;
+        public IList<Arancel> Arancel { get; set; } = default!; // Mantener para compatibilidad
 
         public async Task OnGetAsync()
         {
-            Ciclo cicloactual=await _context.Ciclos.Where(x=>x.Activo).FirstAsync();
-            Arancel = await _context.Aranceles.Where(x => x.Ciclo.Id == cicloactual.Id)
+            Ciclo cicloactual = await _context.Ciclos.Where(x => x.Activo).FirstAsync();
+            var todosLosAranceles = await _context.Aranceles.Where(x => x.Ciclo.Id == cicloactual.Id)
                 .Include(a => a.Ciclo).ToListAsync();
+
+            // Separar aranceles por tipo
+            ArancelesObligatorios = todosLosAranceles.Where(a => a.Obligatorio).ToList();
+            ArancelesNoObligatorios = todosLosAranceles.Where(a => !a.Obligatorio).ToList();
+            
+            // Mantener la lista completa para compatibilidad
+            Arancel = todosLosAranceles;
         }
     }
 }

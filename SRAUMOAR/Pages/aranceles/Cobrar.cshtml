@@ -366,76 +366,154 @@
         </div>
     </div>
 
-    <!-- Tabla de Aranceles -->
+    <!-- Tabla de Aranceles con Radio Buttons -->
     <div class="aranceles-container">
         <form method="post">
             <input type="hidden" name="alumnoId" value="@alumno?.AlumnoId" />
 
-            @{
-                int checkboxCount = 0;
-            }
-
-            <div class="table-responsive">
-                <table class="table table-professional">
-                    <thead class="table-header">
-                        <tr>
-                            <th><i class="bi bi-check-square me-2"></i>Seleccionar</th>
-                            <th><i class="bi bi-tag me-2"></i>@Html.DisplayNameFor(model => model.Arancel[0].Nombre)</th>
-                            <th><i class="bi bi-currency-dollar me-2"></i>@Html.DisplayNameFor(model => model.Arancel[0].Costo)</th>
-                            <th><i class="bi bi-toggle-on me-2"></i>@Html.DisplayNameFor(model => model.Arancel[0].Activo)</th>
-                            <th><i class="bi bi-calendar-event me-2"></i>@Html.DisplayNameFor(model => model.Arancel[0].FechaInicio)</th>
-                            <th><i class="bi bi-calendar-x me-2"></i>@Html.DisplayNameFor(model => model.Arancel[0].FechaFin)</th>
-                            <th><i class="bi bi-mortarboard me-2"></i>@Html.DisplayNameFor(model => model.Arancel[0].Ciclo)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var item in Model.Arancel)
-                        {
-                            <tr class="table-row">
-                                <td class="text-center">
-                                    @if (!Model.AlumnoHaPagado(item.ArancelId, @alumno.AlumnoId))
-                                    {
-                                        checkboxCount++;
-                                        <input type="checkbox" name="selectedAranceles" value="@item.ArancelId" class="checkbox-professional" />
-                                    }
-                                    else
-                                    {
-                                        <a asp-page="/aranceles/Facturas" asp-route-arancelId="@item.ArancelId" asp-route-alumnoId="@alumno?.AlumnoId" class="btn btn-recibo">
-                                            <i class="bi bi-receipt me-1"></i>Ver Recibo
-                                        </a>
-                                    }
-                                </td>
-                                <td class="fw-semibold">@Html.DisplayFor(modelItem => item.Nombre)</td>
-                                <td><span class="costo-amount">$@Html.DisplayFor(modelItem => item.Costo)</span></td>
-                                <td>
-                                    @if (item.Activo)
-                                    {
-                                        <span class="status-activo">
-                                            <i class="bi bi-check-circle me-1"></i>Activo
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <span class="status-inactivo">
-                                            <i class="bi bi-x-circle me-1"></i>Inactivo
-                                        </span>
-                                    }
-                                </td>
-                                <td>@Html.DisplayFor(modelItem => item.FechaInicio)</td>
-                                <td>@Html.DisplayFor(modelItem => item.FechaFin)</td>
-                                <td>
-                                    <span class="ciclo-info">
-                                        <i class="bi bi-calendar3 me-1"></i>
-                                        @Html.DisplayFor(modelItem => item.Ciclo.NCiclo) / @Html.DisplayFor(modelItem => item.Ciclo.anio)
-                                    </span>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+            <!-- Radio Buttons para elegir el tipo de arancel -->
+            <div style="display: flex; gap: 2rem; align-items: center; margin-bottom: 1.5rem;">
+                <label style="font-weight: 600;">
+                    <input type="radio" name="tipoArancel" value="obligatorios" checked onclick="mostrarTabla('obligatorios')" style="margin-right: 0.5rem;" />
+                    Aranceles del ciclo
+                </label>
+                <label style="font-weight: 600;">
+                    <input type="radio" name="tipoArancel" value="no-obligatorios" onclick="mostrarTabla('no-obligatorios')" style="margin-right: 0.5rem;" />
+                    Otros aranceles (no obligatorios)
+                </label>
             </div>
 
-            @if (checkboxCount > 0)
+            <!-- TABLA OBLIGATORIOS -->
+            <div class="tabla-aranceles" id="tabla-obligatorios">
+                <div class="table-responsive">
+                    <table class="table table-professional">
+                        <thead class="table-header">
+                            <tr>
+                                <th><i class="bi bi-check-square me-2"></i>Seleccionar</th>
+                                <th><i class="bi bi-tag me-2"></i>@Html.DisplayNameFor(model => model.Arancel[0].Nombre)</th>
+                                <th><i class="bi bi-currency-dollar me-2"></i>@Html.DisplayNameFor(model => model.Arancel[0].Costo)</th>
+                                <th><i class="bi bi-toggle-on me-2"></i>@Html.DisplayNameFor(model => model.Arancel[0].Activo)</th>
+                                <th><i class="bi bi-calendar-event me-2"></i>@Html.DisplayNameFor(model => model.Arancel[0].FechaInicio)</th>
+                                <th><i class="bi bi-calendar-x me-2"></i>@Html.DisplayNameFor(model => model.Arancel[0].FechaFin)</th>
+                                <th><i class="bi bi-mortarboard me-2"></i>@Html.DisplayNameFor(model => model.Arancel[0].Ciclo)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.ArancelesObligatorios)
+                            {
+                                <tr class="table-row">
+                                    <td class="text-center">
+                                        @if (!Model.AlumnoHaPagado(item.ArancelId, @alumno.AlumnoId))
+                                        {
+                                            <input type="checkbox" name="selectedAranceles" value="@item.ArancelId" class="checkbox-professional" />
+                                        }
+                                        else
+                                        {
+                                            <a asp-page="/aranceles/Facturas" asp-route-arancelId="@item.ArancelId" asp-route-alumnoId="@alumno?.AlumnoId" class="btn btn-recibo">
+                                                <i class="bi bi-receipt me-1"></i>Ver Recibo
+                                            </a>
+                                        }
+                                    </td>
+                                    <td class="fw-semibold">@Html.DisplayFor(modelItem => item.Nombre)</td>
+                                    <td><span class="costo-amount">$@Html.DisplayFor(modelItem => item.Costo)</span></td>
+                                    <td>
+                                        @if (item.Activo)
+                                        {
+                                            <span class="status-activo">
+                                                <i class="bi bi-check-circle me-1"></i>Activo
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="status-inactivo">
+                                                <i class="bi bi-x-circle me-1"></i>Inactivo
+                                            </span>
+                                        }
+                                    </td>
+                                    <td>@Html.DisplayFor(modelItem => item.FechaInicio)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.FechaFin)</td>
+                                    <td>
+                                        <span class="ciclo-info">
+                                            <i class="bi bi-calendar3 me-1"></i>
+                                            @Html.DisplayFor(modelItem => item.Ciclo.NCiclo) / @Html.DisplayFor(modelItem => item.Ciclo.anio)
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TABLA NO OBLIGATORIOS -->
+            <div class="tabla-aranceles" id="tabla-no-obligatorios" style="display:none;">
+                <div class="table-responsive">
+                    <table class="table table-professional">
+                        <thead class="table-header">
+                            <tr>
+                                <th><i class="bi bi-check-square me-2"></i>Seleccionar</th>
+                                <th><i class="bi bi-tag me-2"></i>@Html.DisplayNameFor(model => model.Arancel[0].Nombre)</th>
+                                <th><i class="bi bi-currency-dollar me-2"></i>@Html.DisplayNameFor(model => model.Arancel[0].Costo)</th>
+                                <th><i class="bi bi-toggle-on me-2"></i>@Html.DisplayNameFor(model => model.Arancel[0].Activo)</th>
+                                <th><i class="bi bi-calendar-event me-2"></i>@Html.DisplayNameFor(model => model.Arancel[0].FechaInicio)</th>
+                                <th><i class="bi bi-calendar-x me-2"></i>@Html.DisplayNameFor(model => model.Arancel[0].FechaFin)</th>
+                                <th><i class="bi bi-mortarboard me-2"></i>@Html.DisplayNameFor(model => model.Arancel[0].Ciclo)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.ArancelesNoObligatorios)
+                            {
+                                <tr class="table-row">
+                                    <td class="text-center">
+                                        @if (!Model.AlumnoHaPagado(item.ArancelId, @alumno.AlumnoId))
+                                        {
+                                            <input type="checkbox" name="selectedAranceles" value="@item.ArancelId" class="checkbox-professional" />
+                                        }
+                                        else
+                                        {
+                                            <a asp-page="/aranceles/Facturas" asp-route-arancelId="@item.ArancelId" asp-route-alumnoId="@alumno?.AlumnoId" class="btn btn-recibo">
+                                                <i class="bi bi-receipt me-1"></i>Ver Recibo
+                                            </a>
+                                        }
+                                    </td>
+                                    <td class="fw-semibold">@Html.DisplayFor(modelItem => item.Nombre)</td>
+                                    <td><span class="costo-amount">$@Html.DisplayFor(modelItem => item.Costo)</span></td>
+                                    <td>
+                                        @if (item.Activo)
+                                        {
+                                            <span class="status-activo">
+                                                <i class="bi bi-check-circle me-1"></i>Activo
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="status-inactivo">
+                                                <i class="bi bi-x-circle me-1"></i>Inactivo
+                                            </span>
+                                        }
+                                    </td>
+                                    <td>@Html.DisplayFor(modelItem => item.FechaInicio)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.FechaFin)</td>
+                                    <td>
+                                        <span class="ciclo-info">
+                                            <i class="bi bi-calendar3 me-1"></i>
+                                            @Html.DisplayFor(modelItem => item.Ciclo.NCiclo) / @Html.DisplayFor(modelItem => item.Ciclo.anio)
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            @{
+                // Contar si hay algún arancel pendiente en ambas listas
+                bool hayPendientes = Model.ArancelesObligatorios.Any(a => !Model.AlumnoHaPagado(a.ArancelId, alumno.AlumnoId)) ||
+                                    Model.ArancelesNoObligatorios.Any(a => !Model.AlumnoHaPagado(a.ArancelId, alumno.AlumnoId));
+            }
+
+            @if (hayPendientes)
             {
                 <div class="action-container">
                     <button type="submit" class="btn btn-cobrar-principal">
@@ -460,4 +538,13 @@
             }
         </form>
     </div>
+
+    <script>
+        function mostrarTabla(tab) {
+            document.getElementById('tabla-obligatorios').style.display = (tab === 'obligatorios') ? '' : 'none';
+            document.getElementById('tabla-no-obligatorios').style.display = (tab === 'no-obligatorios') ? '' : 'none';
+        }
+        // Inicializar mostrando la tabla de obligatorios
+        mostrarTabla('obligatorios');
+    </script>
 </div>

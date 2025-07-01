@@ -24,32 +24,28 @@ namespace SRAUMOAR.Pages.aranceles
             _context = context;
         }
 
-        public IList<Arancel> Arancel { get;set; } = default!;
+        public IList<Arancel> Arancel { get; set; } = default!;
+        public IList<Arancel> ArancelesObligatorios { get; set; } = default!;
+        public IList<Arancel> ArancelesNoObligatorios { get; set; } = default!;
 
         public async Task OnGetAsync(int? id)
         {
-
             ViewData["Alumno"] = await _context.Alumno.FirstOrDefaultAsync(m => m.AlumnoId == id);
-
-            Ciclo cicloactual=await _context.Ciclos.Where(x=>x.Activo).FirstAsync();
+            Ciclo cicloactual = await _context.Ciclos.Where(x => x.Activo).FirstAsync();
 
             // Obtener los IDs de los aranceles que ya pagó el alumno
             var arancelesPagados = await _context.CobrosArancel
-      .Where(c => c.AlumnoId == id)
-      .SelectMany(c => c.DetallesCobroArancel.DefaultIfEmpty())
-      .Select(dc => dc.ArancelId)
-      .ToListAsync();
-
+                .Where(c => c.AlumnoId == id)
+                .SelectMany(c => c.DetallesCobroArancel.DefaultIfEmpty())
+                .Select(dc => dc.ArancelId)
+                .ToListAsync();
 
             Arancel = await _context.Aranceles.Where(x => x.Ciclo.Id == cicloactual.Id)
                 .Include(a => a.Ciclo).ToListAsync();
 
-
-            var arancelesConEstado = Arancel.Select(a => new
-            {
-                Arancel = a,
-                YaPago = arancelesPagados.Contains(a.ArancelId) // Verificar si el arancel está en los pagados
-            }).ToList();
+            // Separar aranceles obligatorios y no obligatorios
+            ArancelesObligatorios = Arancel.Where(a => a.Obligatorio).ToList();
+            ArancelesNoObligatorios = Arancel.Where(a => !a.Obligatorio).ToList();
         }
 
         public IActionResult OnPost(List<int> selectedAranceles, int alumnoId)

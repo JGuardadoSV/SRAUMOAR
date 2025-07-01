@@ -23,7 +23,13 @@ namespace SRAUMOAR.Pages.aranceles
 
         public IActionResult OnGet()
         {
-        ViewData["CicloId"] = new SelectList(_context.Ciclos.Where(x=>x.Activo==true), "Id", "NCiclo");
+            ViewData["CicloId"] = new SelectList(
+        _context.Ciclos
+            .Where(x => x.Activo == true)
+            .Select(x => new { x.Id, NombreCiclo = x.NCiclo + " - " + x.anio }),
+        "Id",
+        "NombreCiclo"
+    );
             return Page();
         }
 
@@ -33,8 +39,23 @@ namespace SRAUMOAR.Pages.aranceles
         // To protect from overposting attacks, see https://aka.ms/RazorPagesCRUD
         public async Task<IActionResult> OnPostAsync()
         {
+            // Validación condicional: si no es obligatorio, los campos de ciclo y fechas son opcionales
+            if (!Arancel.Obligatorio)
+            {
+                // Remover errores de validación para campos opcionales cuando no es obligatorio
+                ModelState.Remove("Arancel.CicloId");
+                ModelState.Remove("Arancel.FechaInicio");
+                ModelState.Remove("Arancel.FechaFin");
+                
+                // Establecer valores null para campos opcionales
+                Arancel.CicloId = null;
+                Arancel.FechaInicio = null;
+                Arancel.FechaFin = null;
+            }
+
             if (!ModelState.IsValid)
             {
+                ViewData["CicloId"] = new SelectList(_context.Ciclos.Where(x=>x.Activo==true), "Id", "NCiclo");
                 return Page();
             }
 

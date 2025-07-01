@@ -587,6 +587,92 @@
             }).on('blur', function() {
                 $(this).parent().removeClass('focused');
             });
+
+            // Prevenir doble clic y mostrar ventana de espera
+            $('form').on('submit', function(e) {
+                var submitButton = $(this).find('button[type="submit"]');
+                var originalText = submitButton.html();
+                
+                // Si ya está procesando, prevenir envío
+                if (submitButton.hasClass('processing')) {
+                    e.preventDefault();
+                    return false;
+                }
+                
+                // Marcar como procesando
+                submitButton.addClass('processing');
+                submitButton.prop('disabled', true);
+                submitButton.html('<i class="bi bi-hourglass-split me-2"></i>Procesando...');
+                
+                // Mostrar overlay de carga
+                showLoadingOverlay();
+                
+                // Permitir el envío del formulario
+                return true;
+            });
         });
+
+        // Función para mostrar overlay de carga
+        function showLoadingOverlay() {
+            // Crear overlay si no existe
+            if ($('#loadingOverlay').length === 0) {
+                $('body').append(`
+                    <div id="loadingOverlay" style="
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0, 0, 0, 0.7);
+                        z-index: 9999;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        backdrop-filter: blur(3px);
+                    ">
+                        <div style="
+                            background: white;
+                            padding: 2rem;
+                            border-radius: 12px;
+                            text-align: center;
+                            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+                            max-width: 400px;
+                            width: 90%;
+                        ">
+                            <div style="
+                                width: 60px;
+                                height: 60px;
+                                border: 4px solid #e3e3e3;
+                                border-top: 4px solid #195e2c;
+                                border-radius: 50%;
+                                animation: spin 1s linear infinite;
+                                margin: 0 auto 1rem;
+                            "></div>
+                            <h4 style="color: #195e2c; margin-bottom: 0.5rem; font-weight: 600;">
+                                <i class="bi bi-gear-fill me-2"></i>Procesando Cobro
+                            </h4>
+                            <p style="color: #6c757d; margin: 0; font-size: 0.9rem;">
+                                Generando factura electrónica y procesando pago...
+                            </p>
+                            <p style="color: #dc3545; margin: 0.5rem 0 0 0; font-size: 0.8rem; font-weight: 500;">
+                                <i class="bi bi-exclamation-triangle me-1"></i>No cierre esta ventana
+                            </p>
+                        </div>
+                    </div>
+                `);
+                
+                // Agregar estilos CSS para la animación
+                $('head').append(`
+                    <style>
+                        @@keyframes spin {
+                            0% { transform: rotate(0deg); }
+                            100% { transform: rotate(360deg); }
+                        }
+                    </style>
+                `);
+            } else {
+                $('#loadingOverlay').show();
+            }
+        }
     </script>
 }

@@ -295,25 +295,35 @@
                             </div>
                         </div>
                     </div>
+                    <div class="form-group">
+                        <div class="form-check-container">
+                            <div class="form-check">
+                                <input class="form-check-input" asp-for="Arancel.Obligatorio" type="checkbox" />
+                                <label class="form-check-label">
+                                    @Html.DisplayNameFor(model => model.Arancel.Obligatorio)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="form-row">
+                <div class="form-row" id="fechasContainer">
                     <div class="form-group">
                         <label asp-for="Arancel.FechaInicio" class="control-label">Fecha de Inicio</label>
-                        <input asp-for="Arancel.FechaInicio" class="form-control" type="date" />
+                        <input asp-for="Arancel.FechaInicio" class="form-control" type="date" id="fechaInicio" />
                         <span asp-validation-for="Arancel.FechaInicio" class="text-danger"></span>
                     </div>
 
                     <div class="form-group">
                         <label asp-for="Arancel.FechaFin" class="control-label">Fecha de Fin</label>
-                        <input asp-for="Arancel.FechaFin" class="form-control" type="date" />
+                        <input asp-for="Arancel.FechaFin" class="form-control" type="date" id="fechaFin" />
                         <span asp-validation-for="Arancel.FechaFin" class="text-danger"></span>
                     </div>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group" id="cicloContainer">
                     <label asp-for="Arancel.CicloId" class="control-label">Ciclo</label>
-                    <select asp-for="Arancel.CicloId" class="form-control" asp-items="ViewBag.CicloId">
+                    <select asp-for="Arancel.CicloId" class="form-control" asp-items="ViewBag.CicloId" id="cicloSelect">
                         <option value="">-- Seleccione un ciclo --</option>
                     </select>
                     <span asp-validation-for="Arancel.CicloId" class="text-danger"></span>
@@ -349,6 +359,51 @@
                 container.style.backgroundColor = 'white';
             }
         });
+    });
+
+    // Control de campos obligatorios basado en el checkbox "Obligatorio"
+    document.addEventListener('DOMContentLoaded', function() {
+        const obligatorioCheckbox = document.getElementById('Arancel_Obligatorio');
+        const fechasContainer = document.getElementById('fechasContainer');
+        const cicloContainer = document.getElementById('cicloContainer');
+        const fechaInicio = document.getElementById('fechaInicio');
+        const fechaFin = document.getElementById('fechaFin');
+        const cicloSelect = document.getElementById('cicloSelect');
+
+        function toggleCamposObligatorios() {
+            const esObligatorio = obligatorioCheckbox.checked;
+            
+            if (esObligatorio) {
+                // Si es obligatorio, mostrar campos y hacerlos requeridos
+                fechasContainer.style.display = 'grid';
+                cicloContainer.style.display = 'block';
+                fechaInicio.required = true;
+                fechaFin.required = true;
+                cicloSelect.required = true;
+                
+                // Restaurar estilos normales
+                fechasContainer.style.opacity = '1';
+                cicloContainer.style.opacity = '1';
+            } else {
+                // Si no es obligatorio, ocultar campos y hacerlos opcionales
+                fechasContainer.style.display = 'none';
+                cicloContainer.style.display = 'none';
+                fechaInicio.required = false;
+                fechaFin.required = false;
+                cicloSelect.required = false;
+                
+                // Limpiar valores
+                fechaInicio.value = '';
+                fechaFin.value = '';
+                cicloSelect.value = '';
+            }
+        }
+
+        // Ejecutar al cargar la página
+        toggleCamposObligatorios();
+
+        // Ejecutar cuando cambie el checkbox
+        obligatorioCheckbox.addEventListener('change', toggleCamposObligatorios);
     });
 </script>
 

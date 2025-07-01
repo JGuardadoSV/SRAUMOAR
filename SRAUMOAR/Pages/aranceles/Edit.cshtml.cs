@@ -38,7 +38,13 @@ namespace SRAUMOAR.Pages.aranceles
                 return NotFound();
             }
             Arancel = arancel;
-           ViewData["CicloId"] = new SelectList(_context.Ciclos, "Id", "Id");
+           ViewData["CicloId"] = new SelectList(
+    _context.Ciclos
+        .Where(x => x.Activo == true)
+        .Select(x => new { x.Id, NombreCiclo = x.NCiclo + " - " + x.anio }),
+    "Id",
+    "NombreCiclo"
+);
             return Page();
         }
 

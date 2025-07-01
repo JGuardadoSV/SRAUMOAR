@@ -242,7 +242,7 @@ namespace SRAUMOAR.Pages.puntoventa
                     string correlativo = i.ToString().PadLeft(15, '0'); // Rellena con ceros a la izquierda para que tenga 15 caracteres
                                                                         // Generar número de control
 
-                    int numero = (int)await _correlativoService.ObtenerSiguienteCorrelativo("01", "00"); ;
+                    int numero = (int)await _correlativoService.ObtenerSiguienteCorrelativo("01", "01"); ;
                     string numeroFormateado = numero.ToString("D15");
                     string numeroControl = "DTE-" + "01" + "-" + "U0000001" + "-" + numeroFormateado;
 
@@ -477,7 +477,7 @@ namespace SRAUMOAR.Pages.puntoventa
                     Guid codigoGeneracion = Guid.NewGuid();
 
                     // Generar número de control
-                    int numero = (int)await _correlativoService.ObtenerSiguienteCorrelativo("02", "00");
+                    int numero = (int)await _correlativoService.ObtenerSiguienteCorrelativo("02", "01");
                     string numeroFormateado = numero.ToString("D15");
                     string numeroControl = "DTE-" + "02" + "-" + "U0000001" + "-" + numeroFormateado;
 
@@ -659,11 +659,11 @@ namespace SRAUMOAR.Pages.puntoventa
                     var requestUnificado = new
                     {
                         Usuario = _emisor.NIT,
-                        Password = _emisor.CLAVETESTAPI,
-                        Ambiente = "00",
+                        Password = _emisor.CLAVEPRODAPI,
+                        Ambiente = "01",
                         DteJson = dteJson,
                         Nit = _emisor.NIT,
-                        PasswordPrivado = _emisor.CLAVETESTCERTIFICADO,
+                        PasswordPrivado = _emisor.CLAVEPRODCERTIFICADO,
                         TipoDte = "02",
                         CodigoGeneracion = codigoGeneracion,
                         NumControl = numeroControl,
