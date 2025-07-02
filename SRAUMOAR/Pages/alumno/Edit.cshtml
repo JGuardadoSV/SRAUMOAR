@@ -802,7 +802,7 @@
                                     <div class="form-group">
                                         
                                         @* Sección visible solo para Administradores *@
-                                        @if (User.IsInRole("Administrador"))
+                                        @if (User.IsInRole("Administrador") || User.IsInRole("Contabilidad"))
                                         {
                                             <div class="admin-section">
                                                 <div class="admin-header">

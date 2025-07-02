@@ -366,6 +366,8 @@
         </div>
     </div>
 
+    <div>Exento de mora: @(alumno?.ExentoMora == true ? "Sí" : "No")</div>
+
     <!-- Tabla de Aranceles con Radio Buttons -->
     <div class="aranceles-container">
         <form method="post">
@@ -415,7 +417,21 @@
                                         }
                                     </td>
                                     <td class="fw-semibold">@Html.DisplayFor(modelItem => item.Nombre)</td>
-                                    <td><span class="costo-amount">$@Html.DisplayFor(modelItem => item.Costo)</span></td>
+                                    <td>
+                                        @if (!Model.AlumnoHaPagado(item.ArancelId, @alumno.AlumnoId) && item.EstaVencido && !(alumno?.ExentoMora ?? false))
+                                        {
+                                            <span class="costo-amount" style="color: #c0392b;">
+                                                $@item.TotalConMora
+                                                <span class="badge bg-danger ms-2">Incluye mora</span>
+                                            </span>
+                                            <br />
+                                            <small class="text-danger">Vencido</small>
+                                        }
+                                        else
+                                        {
+                                            <span class="costo-amount">$@item.Costo</span>
+                                        }
+                                    </td>
                                     <td>
                                         @if (item.Activo)
                                         {
@@ -477,7 +493,21 @@
                                         }
                                     </td>
                                     <td class="fw-semibold">@Html.DisplayFor(modelItem => item.Nombre)</td>
-                                    <td><span class="costo-amount">$@Html.DisplayFor(modelItem => item.Costo)</span></td>
+                                    <td>
+                                        @if (!Model.AlumnoHaPagado(item.ArancelId, @alumno.AlumnoId) && item.EstaVencido && !(alumno?.ExentoMora ?? false))
+                                        {
+                                            <span class="costo-amount" style="color: #c0392b;">
+                                                $@item.TotalConMora
+                                                <span class="badge bg-danger ms-2">Incluye mora</span>
+                                            </span>
+                                            <br />
+                                            <small class="text-danger">Vencido</small>
+                                        }
+                                        else
+                                        {
+                                            <span class="costo-amount">$@item.Costo</span>
+                                        }
+                                    </td>
                                     <td>
                                         @if (item.Activo)
                                         {
