@@ -26,7 +26,7 @@ namespace SRAUMOAR.Pages.aranceles
         private readonly SRAUMOAR.Modelos.Contexto _context;
         private readonly EmisorConfig _emisor;
         private readonly ICorrelativoService _correlativoService;
-
+        private int ambiente = 0;
         public FacturarModel(SRAUMOAR.Modelos.Contexto context, IOptions<EmisorConfig> emisorOptions, ICorrelativoService correlativoService)
         {
             _context = context;
@@ -79,7 +79,7 @@ namespace SRAUMOAR.Pages.aranceles
             string correlativo = i.ToString().PadLeft(15, '0'); // Rellena con ceros a la izquierda para que tenga 15 caracteres
                                                                 // Generar número de control
 
-            int numero =(int) await _correlativoService.ObtenerSiguienteCorrelativo("01", "01"); ;
+            int numero = (int)await _correlativoService.ObtenerSiguienteCorrelativo("01", ambiente == 1 ? "01" : "00");
             string numeroFormateado = numero.ToString("D15");
             string numeroControl = "DTE-" + "01" + "-" + "U0000001" + "-" + numeroFormateado;
 
@@ -108,7 +108,7 @@ namespace SRAUMOAR.Pages.aranceles
             var identificacion = new
             {
                 version = 1,
-                ambiente = "01",
+                ambiente = ambiente == 1 ? "01" : "00",
                 tipoDte = "01",
                 numeroControl = numeroControl,
                 codigoGeneracion = codigoGeneracion.ToString().ToUpper(),
@@ -277,11 +277,11 @@ namespace SRAUMOAR.Pages.aranceles
             var requestUnificado = new
             {
                 Usuario = _emisor.NIT,
-                Password = _emisor.CLAVEPRODAPI,
-                Ambiente = "01",
+                Password = ambiente == 1 ? _emisor.CLAVEPRODAPI: _emisor.CLAVETESTAPI,
+                Ambiente = ambiente == 1 ? "01" : "00",
                 DteJson = dteJson,
                 Nit = _emisor.NIT,
-                PasswordPrivado = _emisor.CLAVEPRODCERTIFICADO,
+                PasswordPrivado = ambiente == 1 ?  _emisor.CLAVEPRODCERTIFICADO: _emisor.CLAVETESTCERTIFICADO,
                 TipoDte = "01",
                 CodigoGeneracion = codigoGeneracion,
                 NumControl = numeroControl,

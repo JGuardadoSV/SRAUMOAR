@@ -266,7 +266,11 @@
                         <span asp-validation-for="Arancel.FechaFin" class="text-danger"></span>
                     </div>
                 </div>
-
+                <div class="form-group">
+                    <label asp-for="Arancel.ValorMora" class="control-label">Costo Mora</label>
+                    <input asp-for="Arancel.ValorMora" class="form-control" id="ValorMora" placeholder="0.00" />
+                    <span asp-validation-for="Arancel.ValorMora" class="text-danger"></span>
+                </div>
                 <div class="form-group">
                     <label asp-for="Arancel.CicloId" class="control-label">Ciclo</label>
                     <select asp-for="Arancel.CicloId" class="form-control" asp-items="ViewBag.CicloId">

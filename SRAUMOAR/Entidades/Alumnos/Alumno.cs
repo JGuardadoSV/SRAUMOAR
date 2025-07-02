@@ -108,7 +108,13 @@ namespace SRAUMOAR.Entidades.Alumnos
         public bool Casado { get; set; }
 
 
+        // Campo para permitir inscripción sin matrícula pagada
+        // Por defecto false = NO se permite inscripción sin pago
+        public bool PermiteInscripcionSinPago { get; set; } = false;
 
+        // Campo para permitir pago sin mora
+        // Por defecto false = NO se permite pago sin mora (se aplica mora)
+        public bool ExentoMora { get; set; } = false;
 
 
 

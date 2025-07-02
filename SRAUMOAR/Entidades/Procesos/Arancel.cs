@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SRAUMOAR.Entidades.Procesos
 {
-    [Table(name:"aranceles")]
+    [Table(name: "aranceles")]
     public class Arancel
     {
         [Key]
@@ -26,12 +26,29 @@ namespace SRAUMOAR.Entidades.Procesos
         public DateTime? FechaFin { get; set; }
 
         [Display(Name = "Ciclo")]
-        public int? CicloId { get; set; } // Llave foránea
-        public virtual Ciclo? Ciclo { get; set; } // Propiedad de navegación
+        public int? CicloId { get; set; }
+        public virtual Ciclo? Ciclo { get; set; }
 
         [DefaultValue(true)]
         public bool Exento { get; set; }
+
         [DefaultValue(false)]
         public bool Obligatorio { get; set; }
+
+        // Campo para valor de mora
+        [Display(Name = "Valor de Mora")]
+        [Column(TypeName = "decimal(18,2)")]
+        [DefaultValue(0)]
+        public decimal ValorMora { get; set; }
+
+        // Propiedad calculada para saber si está vencido
+        [NotMapped]
+        [Display(Name = "Está Vencido")]
+        public bool EstaVencido => FechaFin.HasValue && FechaFin.Value.Date < DateTime.Now.Date;
+
+        // Total con mora incluida
+        [NotMapped]
+        [Display(Name = "Total con Mora")]
+        public decimal TotalConMora => Costo + (EstaVencido ? ValorMora : 0);
     }
 }

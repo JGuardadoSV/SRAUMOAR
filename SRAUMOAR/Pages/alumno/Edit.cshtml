@@ -706,6 +706,54 @@
         outline: 2px solid var(--primary-color);
         outline-offset: 2px;
     }
+
+    .admin-section {
+        margin-top: 20px;
+        border: 2px solid #dc3545;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #fff5f5 0%, #ffe6e6 100%);
+        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.1);
+    }
+
+    .admin-header {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        padding: 10px 15px;
+        border-radius: 6px 6px 0 0;
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+    }
+
+        .admin-header i {
+            font-size: 1.1em;
+        }
+
+    .admin-content {
+        padding: 15px;
+    }
+
+    .admin-section .checkbox-item {
+        margin-bottom: 12px;
+        padding: 8px;
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 4px;
+        border-left: 3px solid #dc3545;
+    }
+
+        .admin-section .checkbox-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .admin-section .checkbox-item label {
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .admin-section .checkbox-item input[type="checkbox"] {
+            margin-right: 8px;
+            accent-color: #dc3545;
+        }
 </style>
 
 <div class="content-wrapper">
@@ -752,6 +800,33 @@
                                     </div>
 
                                     <div class="form-group">
+                                        
+                                        @* Sección visible solo para Administradores *@
+                                        @if (User.IsInRole("Administrador"))
+                                        {
+                                            <div class="admin-section">
+                                                <div class="admin-header">
+                                                    <i class="bi bi-shield-lock-fill me-2"></i>
+                                                    <h6 class="mb-0">Configuración Administrativa</h6>
+                                                </div>
+                                                <div class="admin-content">
+                                                    <div class="checkbox-item">
+                                                        <input type="checkbox" asp-for="Alumno.PermiteInscripcionSinPago" id="PermiteInscripcionSinPago" />
+                                                        <label for="PermiteInscripcionSinPago">
+                                                            <i class="bi bi-file-earmark-text me-2"></i>
+                                                            Permitir inscripción sin pago
+                                                        </label>
+                                                    </div>
+                                                    <div class="checkbox-item">
+                                                        <input type="checkbox" asp-for="Alumno.ExentoMora" id="ExentoMora" />
+                                                        <label for="ExentoMora">
+                                                            <i class="bi bi-clock-history me-2"></i>
+                                                            Omitir la mora en los aranceles
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
                                         <div class="checkbox-item">
                                             <input type="checkbox" asp-for="Alumno.IngresoPorEquivalencias" id="IngresoPorEquivalencias" />
                                             <label for="IngresoPorEquivalencias">
@@ -1126,7 +1201,7 @@
                                 </div>
 
                                 <!-- Fotografía -->
-                                <div class="form-section">
+                          @*       <div class="form-section">
                                     <div class="section-title">
                                         <i class="bi bi-camera"></i>
                                         Fotografía del Alumno
@@ -1158,7 +1233,7 @@
                                         </div>
                                         <span asp-validation-for="FotoUpload" class="text-danger validation-message"></span>
                                     </div>
-                                </div>
+                                </div> *@
 
                                 <!-- Botones de Acción -->
                                 <div class="row mt-4">
@@ -1241,92 +1316,92 @@
             }
         });
 
-        // Animación suave al hacer scroll
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
-        });
+        // // Animación suave al hacer scroll
+        // document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        //     anchor.addEventListener('click', function (e) {
+        //         e.preventDefault();
+        //         const target = document.querySelector(this.getAttribute('href'));
+        //         if (target) {
+        //             target.scrollIntoView({
+        //                 behavior: 'smooth',
+        //                 block: 'start'
+        //             });
+        //         }
+        //     });
+        // });
 
-        // Vista previa de imagen mejorada
-        document.getElementById('fotoInput').addEventListener('change', function(e) {
-            const previewContainer = document.getElementById('previewContainer');
-            const previewImage = document.getElementById('previewImage');
-            const fileError = document.getElementById('fileError');
-            const file = e.target.files[0];
+        // // Vista previa de imagen mejorada
+        // document.getElementById('fotoInput').addEventListener('change', function(e) {
+        //     const previewContainer = document.getElementById('previewContainer');
+        //     const previewImage = document.getElementById('previewImage');
+        //     const fileError = document.getElementById('fileError');
+        //     const file = e.target.files[0];
 
-            // Ocultar mensajes previos
-            fileError.style.display = 'none';
-            previewContainer.style.display = 'none';
+        //     // Ocultar mensajes previos
+        //     fileError.style.display = 'none';
+        //     previewContainer.style.display = 'none';
 
-            if (!file) return;
+        //     if (!file) return;
 
-            // Validar tipo de archivo
-            const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
-            if (!validTypes.includes(file.type)) {
-                fileError.textContent = 'Por favor, selecciona una imagen válida (JPG, PNG o GIF)';
-                fileError.style.display = 'block';
-                this.value = '';
-                return;
-            }
+        //     // Validar tipo de archivo
+        //     const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        //     if (!validTypes.includes(file.type)) {
+        //         fileError.textContent = 'Por favor, selecciona una imagen válida (JPG, PNG o GIF)';
+        //         fileError.style.display = 'block';
+        //         this.value = '';
+        //         return;
+        //     }
 
-            // Validar tamaño (máximo 5MB)
-            if (file.size > 5 * 1024 * 1024) {
-                fileError.textContent = 'La imagen no debe superar los 5MB';
-                fileError.style.display = 'block';
-                this.value = '';
-                return;
-            }
+        //     // Validar tamaño (máximo 5MB)
+        //     if (file.size > 5 * 1024 * 1024) {
+        //         fileError.textContent = 'La imagen no debe superar los 5MB';
+        //         fileError.style.display = 'block';
+        //         this.value = '';
+        //         return;
+        //     }
 
-            // Mostrar vista previa
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                previewImage.src = e.target.result;
-                previewContainer.style.display = 'block';
+        //     // Mostrar vista previa
+        //     const reader = new FileReader();
+        //     reader.onload = function(e) {
+        //         previewImage.src = e.target.result;
+        //         previewContainer.style.display = 'block';
 
-                // Animación de entrada
-                previewContainer.style.opacity = '0';
-                previewContainer.style.transform = 'scale(0.8)';
-                setTimeout(() => {
-                    previewContainer.style.transition = 'all 0.3s ease';
-                    previewContainer.style.opacity = '1';
-                    previewContainer.style.transform = 'scale(1)';
-                }, 10);
-            }
-            reader.onerror = function() {
-                fileError.textContent = 'Error al leer la imagen';
-                fileError.style.display = 'block';
-                previewContainer.style.display = 'none';
-            }
-            reader.readAsDataURL(file);
-        });
+        //         // Animación de entrada
+        //         previewContainer.style.opacity = '0';
+        //         previewContainer.style.transform = 'scale(0.8)';
+        //         setTimeout(() => {
+        //             previewContainer.style.transition = 'all 0.3s ease';
+        //             previewContainer.style.opacity = '1';
+        //             previewContainer.style.transform = 'scale(1)';
+        //         }, 10);
+        //     }
+        //     reader.onerror = function() {
+        //         fileError.textContent = 'Error al leer la imagen';
+        //         fileError.style.display = 'block';
+        //         previewContainer.style.display = 'none';
+        //     }
+        //     reader.readAsDataURL(file);
+        // });
 
         // Eliminar imagen
-        document.getElementById('removeImage').addEventListener('click', function() {
-            const previewContainer = document.getElementById('previewContainer');
-            const previewImage = document.getElementById('previewImage');
-            const fotoInput = document.getElementById('fotoInput');
-            const fileError = document.getElementById('fileError');
+        // document.getElementById('removeImage').addEventListener('click', function() {
+        //     const previewContainer = document.getElementById('previewContainer');
+        //     const previewImage = document.getElementById('previewImage');
+        //     const fotoInput = document.getElementById('fotoInput');
+        //     const fileError = document.getElementById('fileError');
 
-            // Animación de salida
-            previewContainer.style.transition = 'all 0.3s ease';
-            previewContainer.style.opacity = '0';
-            previewContainer.style.transform = 'scale(0.8)';
+        //     // Animación de salida
+        //     previewContainer.style.transition = 'all 0.3s ease';
+        //     previewContainer.style.opacity = '0';
+        //     previewContainer.style.transform = 'scale(0.8)';
 
-            setTimeout(() => {
-                previewImage.src = '#';
-                previewContainer.style.display = 'none';
-                fotoInput.value = '';
-                fileError.style.display = 'none';
-            }, 300);
-        });
+        //     setTimeout(() => {
+        //         previewImage.src = '#';
+        //         previewContainer.style.display = 'none';
+        //         fotoInput.value = '';
+        //         fileError.style.display = 'none';
+        //     }, 300);
+        // });
 
         // Prevenir envío del formulario si hay error en la imagen
         document.querySelector('form').addEventListener('submit', function(e) {

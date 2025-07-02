@@ -319,6 +319,11 @@
                         <input asp-for="Arancel.FechaFin" class="form-control" type="date" id="fechaFin" />
                         <span asp-validation-for="Arancel.FechaFin" class="text-danger"></span>
                     </div>
+                    <div class="form-group">
+                        <label asp-for="Arancel.ValorMora" class="control-label">Costo Mora</label>
+                        <input asp-for="Arancel.ValorMora" class="form-control" id="ValorMora" placeholder="0.00" />
+                        <span asp-validation-for="Arancel.ValorMora" class="text-danger"></span>
+                    </div>
                 </div>
 
                 <div class="form-group" id="cicloContainer">

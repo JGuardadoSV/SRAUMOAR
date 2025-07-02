@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SRAUMOAR.Modelos;
 
@@ -11,9 +12,11 @@ using SRAUMOAR.Modelos;
 namespace SRAUMOAR.Migrations
 {
     [DbContext(typeof(Contexto))]
-    partial class ContextoModelSnapshot : ModelSnapshot
+    [Migration("20250702160354_agregarMoraArancel")]
+    partial class agregarMoraArancel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -123,9 +126,6 @@ namespace SRAUMOAR.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("ExentoMora")
-                        .HasColumnType("bit");
-
                     b.Property<DateTime>("FechaDeNacimiento")
                         .HasColumnType("datetime2");
 
@@ -181,9 +181,6 @@ namespace SRAUMOAR.Migrations
                         .HasColumnType("bit");
 
                     b.Property<bool>("PTitulo")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("PermiteInscripcionSinPago")
                         .HasColumnType("bit");
 
                     b.Property<string>("TelefonoPrimario")
