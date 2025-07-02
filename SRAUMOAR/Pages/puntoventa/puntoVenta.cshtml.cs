@@ -247,11 +247,29 @@ namespace SRAUMOAR.Pages.puntoventa
                     string numeroControl = "DTE-" + "01" + "-" + "U0000001" + "-" + numeroFormateado;
 
                     // ESQUEMA PARA UN DTE DE CONSUMIDOR FINAL DTE 01
+                    string fecEmi = DateTime.Now.ToString("yyyy-MM-dd");
+                    string horEmi = DateTime.Now.ToString("HH:mm:ss");
+                    try
+                    {
+                        registroDTE registroDTE = new registroDTE();
+                        registroDTE.CodigoGeneracion = codigoGeneracion.ToString().ToUpper();
+                        registroDTE.NumControl = numeroControl;
+                        registroDTE.Fecha = DateOnly.Parse(fecEmi);
+                        registroDTE.Hora = TimeOnly.Parse(horEmi);
+                        registroDTE.Tipo = "01";
+                        _context.registroDTEs.Add(registroDTE);
+                        _context.SaveChanges();
+                    }
+                    catch (Exception)
+                    {
 
+                       // throw;
+                    }
+                   
                     var identificacion = new
                     {
                         version = 1,
-                        ambiente = "00",
+                        ambiente = "01",
                         tipoDte = "01",
                         numeroControl = numeroControl,
                         codigoGeneracion = codigoGeneracion.ToString().ToUpper(),
@@ -259,8 +277,8 @@ namespace SRAUMOAR.Pages.puntoventa
                         tipoOperacion = 1,
                         tipoContingencia = (string)null,
                         motivoContin = (string)null,
-                        fecEmi = DateTime.Now.ToString("yyyy-MM-dd"),
-                        horEmi = DateTime.Now.ToString("HH:mm:ss"),
+                        fecEmi = fecEmi,
+                        horEmi = horEmi,
                         tipoMoneda = "USD"
                     };
 
@@ -417,11 +435,11 @@ namespace SRAUMOAR.Pages.puntoventa
                     var requestUnificado = new
                     {
                         Usuario = _emisor.NIT,
-                        Password = _emisor.CLAVETESTAPI,
-                        Ambiente = "00",
+                        Password = _emisor.CLAVEPRODAPI,
+                        Ambiente = "01",
                         DteJson = dteJson,
                         Nit = _emisor.NIT,
-                        PasswordPrivado = _emisor.CLAVETESTCERTIFICADO,
+                        PasswordPrivado = _emisor.CLAVEPRODCERTIFICADO,
                         TipoDte = "01",
                         CodigoGeneracion = codigoGeneracion,
                         NumControl = numeroControl,
@@ -481,12 +499,29 @@ namespace SRAUMOAR.Pages.puntoventa
                     string numeroFormateado = numero.ToString("D15");
                     string numeroControl = "DTE-" + "02" + "-" + "U0000001" + "-" + numeroFormateado;
 
+                    string fecEmi = DateTime.Now.ToString("yyyy-MM-dd");
+                    string horEmi = DateTime.Now.ToString("HH:mm:ss");
+                    try
+                    {
+                        registroDTE registroDTE = new registroDTE();
+                        registroDTE.CodigoGeneracion = codigoGeneracion.ToString().ToUpper();
+                        registroDTE.NumControl = numeroControl;
+                        registroDTE.Fecha = DateOnly.Parse(fecEmi);
+                        registroDTE.Hora = TimeOnly.Parse(horEmi);
+                        registroDTE.Tipo = "02";
+                        _context.registroDTEs.Add(registroDTE);
+                        _context.SaveChanges();
+                    }
+                    catch (Exception ex)
+                    {
+
+                    }
                     // ESQUEMA PARA UN DTE DE CRÉDITO FISCAL DTE 02
 
                     var identificacion = new
                     {
                         version = 1,
-                        ambiente = "00",
+                        ambiente = "01",
                         tipoDte = "02",
                         numeroControl = numeroControl,
                         codigoGeneracion = codigoGeneracion.ToString().ToUpper(),
@@ -494,8 +529,8 @@ namespace SRAUMOAR.Pages.puntoventa
                         tipoOperacion = 1,
                         tipoContingencia = (string)null,
                         motivoContin = (string)null,
-                        fecEmi = DateTime.Now.ToString("yyyy-MM-dd"),
-                        horEmi = DateTime.Now.ToString("HH:mm:ss"),
+                        fecEmi = fecEmi,
+                        horEmi = horEmi,
                         tipoMoneda = "USD"
                     };
 

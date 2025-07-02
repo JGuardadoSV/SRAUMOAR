@@ -3,6 +3,29 @@
 
 namespace SRAUMOAR.Entidades
 {
+    public class registroDTE
+    {
+        [Key]
+        public int Id { get; set; }
+
+        [Required]
+        public string CodigoGeneracion { get; set; }
+
+        [Required]
+        public string NumControl { get; set; }
+
+        [Required]
+        public string Tipo { get; set; } = string.Empty;
+
+        [Required]
+        public DateOnly Fecha { get; set; }
+
+        [Required]
+        public TimeOnly Hora { get; set; }
+
+        // Constructor para inicializar el GUID automáticamente
+        
+    }
         public class Direccion
         {
             public string Departamento { get; set; } = string.Empty;

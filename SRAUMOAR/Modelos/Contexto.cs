@@ -9,6 +9,7 @@ using SRAUMOAR.Entidades.Accesos;
 using SRAUMOAR.Entidades.Procesos;
 using SRAUMOAR.Entidades.Colecturia;
 using SRAUMOAR.Entidades.Becas;
+using SRAUMOAR.Entidades;
 
 namespace SRAUMOAR.Modelos
 {
@@ -52,7 +53,7 @@ namespace SRAUMOAR.Modelos
         public DbSet<EntidadBeca> InstitucionesBeca { get; set; }
 
         public DbSet<Becados> Becados { get; set; }
-
+        public DbSet<registroDTE> registroDTEs { get; set; }
         public DbSet<Donantes> Donantes { get; set; }
         public DbSet<DteCorrelativo> DteCorrelativos { get; set; }
         public DbSet<Factura> Facturas { get; set; }
