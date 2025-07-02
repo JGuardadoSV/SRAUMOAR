@@ -790,6 +790,7 @@
                         </div>
                         <div class="card-body">
                             <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                                <input type="hidden" asp-for="Alumno.AlumnoId" />
                                 <div asp-validation-summary="ModelOnly" class="alert alert-danger d-flex align-items-center" role="alert"></div>
 
                                 <!-- Información Personal -->
