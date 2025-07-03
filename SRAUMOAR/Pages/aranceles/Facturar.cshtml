@@ -4,6 +4,7 @@
 @{
     ViewData["Title"] = "Registrar Cobro de Arancel";
     bool exentoMora = (ViewData["ExentoMora"] as bool?) ?? false;
+    var primerCiclo = Model.Aranceles?.FirstOrDefault(a => a.Ciclo != null)?.Ciclo;
 }
 
 <style>
@@ -454,23 +455,23 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var i in Model.Aranceles)
+                            @foreach (var arancel in Model.Aranceles)
                             {
-                                var vencido = i.EstaVencido;
-                                var totalConMora = i.TotalConMora;
+                                var vencido = arancel.EstaVencido;
+                                var totalConMora = arancel.TotalConMora;
                                 var mostrarMora = vencido && !exentoMora;
                                 <tr>
-                                    <input type="hidden" name="selectedAranceles[]" value="@i.ArancelId" />
-                                    <input type="hidden" name="arancelescostos[]" value="@(mostrarMora ? totalConMora : i.Costo)" />
+                                    <input type="hidden" name="selectedAranceles[]" value="@arancel.ArancelId" />
+                                    <input type="hidden" name="arancelescostos[]" value="@(mostrarMora ? totalConMora : arancel.Costo)" />
                                     <td class="fw-semibold">
-                                        @i.Nombre
+                                        @arancel.Nombre
                                         @if (mostrarMora)
                                         {
                                             <span class="badge bg-danger ms-2">con mora incluida</span>
                                         }
                                     </td>
                                     <td class="text-end amount-display">
-                                        @(mostrarMora ? totalConMora.ToString("C") : i.Costo.ToString("C"))
+                                        @(mostrarMora ? totalConMora.ToString("C") : arancel.Costo.ToString("C"))
                                     </td>
                                 </tr>
                             }
@@ -480,12 +481,15 @@
                                     <strong>
                                         @{
                                             decimal total = 0;
-                                            foreach (var i in Model.Aranceles)
+                                            if (Model.Aranceles != null)
                                             {
-                                                var vencido = i.EstaVencido;
-                                                var totalConMora = i.TotalConMora;
-                                                var mostrarMora = vencido && !exentoMora;
-                                                total += mostrarMora ? totalConMora : i.Costo;
+                                                foreach (var arancel in Model.Aranceles)
+                                                {
+                                                    var vencido = arancel.EstaVencido;
+                                                    var totalConMora = arancel.TotalConMora;
+                                                    var mostrarMora = vencido && !exentoMora;
+                                                    total += mostrarMora ? totalConMora : arancel.Costo;
+                                                }
                                             }
                                         }
                                         @total.ToString("C")
@@ -511,7 +515,7 @@
                             <label class="form-label-professional">
                                 <i class="bi bi-calendar3 me-1"></i>Ciclo Académico
                             </label>
-                            <input value="@Model.Aranceles[0].Ciclo.NCiclo - @Model.Aranceles[0].Ciclo.anio"
+                            <input value="@(primerCiclo != null ? primerCiclo.NCiclo + " - " + primerCiclo.anio : "No aplica")"
                                    class="form-control-professional form-control-readonly"
                                    readonly="readonly" />
                         </div>
@@ -520,7 +524,17 @@
                             <label class="form-label-professional">
                                 <i class="bi bi-currency-dollar me-1"></i>Monto Total
                             </label>
-                            <input value="@Model.Aranceles.Sum(a => a.Costo)"
+                            @{
+                                decimal totalConMoraInput = 0;
+                                foreach (var arancel in Model.Aranceles)
+                                {
+                                    var vencido = arancel.EstaVencido;
+                                    var totalMora = arancel.TotalConMora;
+                                    var mostrarMora = vencido && !exentoMora;
+                                    totalConMoraInput += mostrarMora ? totalMora : arancel.Costo;
+                                }
+                            }
+                            <input value="@totalConMoraInput.ToString("F2")"
                                    id="MontoArancel"
                                    class="form-control-professional form-control-readonly"
                                    readonly="readonly" />
@@ -554,8 +568,8 @@
                                    class="form-control-professional payment-input"
                                    type="number"
                                    step="0.01"
-                                   min="@Model.Aranceles.Sum(a => a.Costo)"
-                                   oninvalid="this.setCustomValidity('El efectivo recibido debe ser al menos @Model.Aranceles.Sum(a => a.Costo)')"
+                                   min="@totalConMoraInput.ToString("F2")"
+                                   oninvalid="this.setCustomValidity('El efectivo recibido debe ser al menos @totalConMoraInput.ToString("F2")')"
                                    oninput="this.setCustomValidity('')"
                                    required />
                             <span asp-validation-for="CobroArancel.EfectivoRecibido" class="validation-error"></span>
@@ -589,7 +603,7 @@
 
             <!-- Campos Ocultos -->
             <input asp-for="CobroArancel.AlumnoId" value="@ViewData["AlumnoId"]" type="hidden" />
-            <input asp-for="CobroArancel.CicloId" value="@Model.Aranceles[0].Ciclo.Id" type="hidden" />
+            <input asp-for="CobroArancel.CicloId" value="@(primerCiclo != null ? primerCiclo.Id.ToString() : "")" type="hidden" />
             <input asp-for="CobroArancel.Total" value="@Model.Aranceles.Sum(a => a.Costo)" type="hidden" />
         </form>
     </div>

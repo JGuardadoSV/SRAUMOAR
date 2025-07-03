@@ -37,12 +37,16 @@ namespace SRAUMOAR.Pages.aranceles
         //public async Task<IActionResult> OnGet(int alumnoId, int arancelId)
         public async Task<IActionResult> OnGetAsync(string arancelIds, int idalumno)
         {
-
-            var cicloId = await _context.Ciclos.Where(x => x.Activo == true).FirstAsync();
             var arancelIdsList = arancelIds.Split(',').Select(int.Parse).ToList();
             var alumno = await _context.Alumno.FirstOrDefaultAsync(m => m.AlumnoId == idalumno);
             var aranceles = await _context.Aranceles.Include(a => a.Ciclo).Where(a => arancelIdsList.Contains(a.ArancelId)).ToListAsync();
-            var ciclo = await _context.Ciclos.FirstOrDefaultAsync(c => c.Id == cicloId.Id);
+
+            // Obtener el ciclo solo si alguno de los aranceles tiene ciclo
+            Ciclo? ciclo = null;
+            if (aranceles.Any(a => a.Ciclo != null))
+            {
+                ciclo = aranceles.First(a => a.Ciclo != null).Ciclo;
+            }
 
             ViewData["Alumno"] = alumno;
             ViewData["AlumnoNombre"] = alumno.Nombres + " " + alumno.Apellidos;
@@ -50,7 +54,6 @@ namespace SRAUMOAR.Pages.aranceles
             ViewData["ExentoMora"] = alumno.ExentoMora;
             Aranceles = aranceles;
             ViewData["Ciclo"] = ciclo;
-
 
             return Page();
         }
@@ -172,37 +175,41 @@ namespace SRAUMOAR.Pages.aranceles
 
             // Crear el cuerpo del documento usando los datos enviados desde la vista
             var cuerpoDocumento = selectedAranceles
-                .Select((arancelId, index) => new
-                {
-                    numItem = index + 1,
-                    tipoItem = 1,
-                    numeroDocumento = (string)null,
-                    cantidad = 1,
-                    codigo = "0000" + index.ToString(),
-                    codTributo = (string)null,
-                    uniMedida = 59,
-                    descripcion = arancelesAPagar.First(a => a.ArancelId == arancelId).Nombre,
-                    precioUni = arancelescostos[index],
-                    montoDescu = 0.0,
-                    ventaNoSuj = 0.0,
-                    ventaExenta = arancelesAPagar.First(a => a.ArancelId == arancelId).Exento ? arancelescostos[index] : 0.0m,
-                    ventaGravada = !arancelesAPagar.First(a => a.ArancelId == arancelId).Exento ? arancelescostos[index] : 0.0m,
-                    tributos = (string)null,
-                    psv = arancelescostos[index],
-                    noGravado = 0.0,
-                    ivaItem = !arancelesAPagar.First(a => a.ArancelId == arancelId).Exento ? Math.Round(arancelescostos[index] - (arancelescostos[index] / 1.13m), 2) : 0.0m
-                })
-                .ToArray();
+     .Select((arancelId, index) => {
+         var arancel = arancelesAPagar.First(a => a.ArancelId == arancelId);
+         var cobroConMora = arancel.EstaVencido && !alumno.ExentoMora;
+         return new
+         {
+             numItem = index + 1,
+             tipoItem = 1,
+             numeroDocumento = (string)null,
+             cantidad = 1,
+             codigo = "0000" + index.ToString(),
+             codTributo = (string)null,
+             uniMedida = 59,
+             descripcion = arancel.Nombre + (cobroConMora ? " (con mora incluida)" : ""),
+             precioUni = arancelescostos[index],
+             montoDescu = 0.0,
+             ventaNoSuj = 0.0,
+             ventaExenta = arancel.Exento ? arancelescostos[index] : 0.0m,
+             ventaGravada = !arancel.Exento ? arancelescostos[index] : 0.0m,
+             tributos = (string)null,
+             psv = arancelescostos[index],
+             noGravado = 0.0,
+             ivaItem = !arancel.Exento ? Math.Round(arancelescostos[index] - (arancelescostos[index] / 1.13m), 2) : 0.0m
+         };
+     })
+     .ToArray();
 
             decimal totalVenta = 0;
             decimal totalVentaExenta = 0;
-            for (int i = 0; i < selectedAranceles.Count; i++)
+            for (int y = 0; y < selectedAranceles.Count; y++)
             {
-                var arancel = arancelesAPagar.First(a => a.ArancelId == selectedAranceles[i]);
+                var arancel = arancelesAPagar.First(a => a.ArancelId == selectedAranceles[y]);
                 if (arancel.Exento)
-                    totalVentaExenta += arancelescostos[i];
+                    totalVentaExenta += arancelescostos[y];
                 else
-                    totalVenta += arancelescostos[i];
+                    totalVenta += arancelescostos[y];
             }
             decimal subTotalVentas = totalVenta + totalVentaExenta;
             decimal subTotal = subTotalVentas;
@@ -332,16 +339,33 @@ namespace SRAUMOAR.Pages.aranceles
             //****************************************************
 
             List<DetallesCobroArancel> aranceles = new List<DetallesCobroArancel>();
-
+            bool algunConMora = false;
             for (int y = 0; y < selectedAranceles.Count; y++)
             {
+                var arancelDb = await _context.Aranceles.FindAsync(selectedAranceles[y]);
+                var vencido = arancelDb.EstaVencido;
+                var mostrarMora = vencido && !alumno.ExentoMora;
+                var costoFinal = mostrarMora ? arancelDb.TotalConMora : arancelDb.Costo;
+                if (mostrarMora)
+                {
+                    algunConMora = true;
+                }
                 DetallesCobroArancel arancel = new DetallesCobroArancel();
                 arancel.ArancelId = selectedAranceles[y];
-                arancel.costo = arancelescostos[y];
+                arancel.costo = costoFinal;
                 aranceles.Add(arancel);
-
             }
             CobroArancel.DetallesCobroArancel = aranceles;
+            // Agregar nota si algún arancel fue cobrado con mora
+            if (algunConMora)
+            {
+                if (string.IsNullOrWhiteSpace(CobroArancel.nota))
+                    CobroArancel.nota = "con mora incluida";
+                else if (!CobroArancel.nota.Contains("con mora incluida"))
+                    CobroArancel.nota += " (con mora incluida)";
+            }
+            // Asignar el total real cobrado (incluyendo mora si aplica)
+            CobroArancel.Total = aranceles.Sum(a => a.costo);
             CobroArancel.CodigoGeneracion = codigoGeneracion.ToString().ToUpper();
             CobroArancel.Fecha = DateTime.Now;
             _context.CobrosArancel.Add(CobroArancel);

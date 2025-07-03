@@ -7,6 +7,7 @@ using SRAUMOAR.Entidades.Colecturia;
 using SRAUMOAR.Entidades.Generales;
 using SRAUMOAR.Servicios;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace SRAUMOAR.Pages.puntoventa
 {
@@ -30,7 +31,13 @@ namespace SRAUMOAR.Pages.puntoventa
             // Aquí cargarías los datos del emisor desde tu fuente de datos
             CargarDatosEmisor();
         }
-
+        public string DeterminarTipoDocumento(string nit)
+        {
+            string nitLimpio = Regex.Replace(nit, @"[\s-]", "");
+            if (nitLimpio.Length == 9) return "13";  // DUI
+            if (nitLimpio.Length == 14) return "36"; // NIT
+            return "37"; // Otro
+        }
         public IActionResult OnPostAgregarProducto()
         {
             // Verificar que se haya seleccionado un tipo de documento
@@ -109,7 +116,7 @@ namespace SRAUMOAR.Pages.puntoventa
 
                 Factura.Productos.Add(nuevoProducto);
 
-                // Limpiar solo los campos del producto, no todo el ModelState
+                // Limpiar solo los campos del producto, no los de retención ni tipo de operación
                 ModelState.Remove("Factura.CodigoProducto");
                 ModelState.Remove("Factura.DescripcionProducto");
                 ModelState.Remove("Factura.CantidadProducto");
@@ -222,6 +229,29 @@ namespace SRAUMOAR.Pages.puntoventa
                 ModelState.AddModelError("", "Debe agregar al menos un producto antes de procesar la factura.");
                 CargarDatosEmisor();
                 return Page();
+            }
+
+            // Validar campos para Sujeto Excluido
+            if (Factura.TipoDocumento == "14")
+            {
+                if (string.IsNullOrEmpty(Factura.TipoOperacion))
+                {
+                    ModelState.AddModelError("Factura.TipoOperacion", "Debe seleccionar si es Bien o Servicio.");
+                    CargarDatosEmisor();
+                    return Page();
+                }
+                if (Factura.Retencion == null)
+                {
+                    Factura.Retencion = false;
+                }
+            }
+            else
+            {
+                // Limpiar valores si no es Sujeto Excluido
+                Factura.TipoOperacion = null;
+                Factura.Retencion = false;
+                ModelState.Remove("Factura.TipoOperacion");
+                ModelState.Remove("Factura.Retencion");
             }
 
             if (ModelState.IsValid)
@@ -499,9 +529,10 @@ namespace SRAUMOAR.Pages.puntoventa
                     Guid codigoGeneracion = Guid.NewGuid();
 
                     // Generar número de control
-                    int numero = (int)await _correlativoService.ObtenerSiguienteCorrelativo("02", "01");
+                  
+                    int numero = (int)await _correlativoService.ObtenerSiguienteCorrelativo("03", ambiente == 1 ? "01" : "00");
                     string numeroFormateado = numero.ToString("D15");
-                    string numeroControl = "DTE-" + "02" + "-" + "U0000001" + "-" + numeroFormateado;
+                    string numeroControl = "DTE-" + "03" + "-" + "U0000001" + "-" + numeroFormateado;
 
                     string fecEmi = DateTime.Now.ToString("yyyy-MM-dd");
                     string horEmi = DateTime.Now.ToString("HH:mm:ss");
@@ -524,9 +555,9 @@ namespace SRAUMOAR.Pages.puntoventa
 
                     var identificacion = new
                     {
-                        version = 1,
+                        version = 3,
                         ambiente = ambiente == 1 ? "01" : "00",
-                        tipoDte = "02",
+                        tipoDte = "03",
                         numeroControl = numeroControl,
                         codigoGeneracion = codigoGeneracion.ToString().ToUpper(),
                         tipoModelo = 1,
@@ -598,18 +629,10 @@ namespace SRAUMOAR.Pages.puntoventa
                             ventaNoSuj = 0.0,
                             ventaExenta = producto.EsExento ? producto.SubTotal : 0.0m,
                             ventaGravada = !producto.EsExento ? producto.SubTotal : 0.0m,
-                            tributos = new[]
-                            {
-                                new
-                                {
-                                    codigo = "20",
-                                    descripcion = "IVA",
-                                    valor = !producto.EsExento ? Math.Round(producto.SubTotal * 0.13m, 2) : 0.0m
-                                }
-                            },
+                            tributos = new[] { "20" },
                             psv = producto.PrecioUnitario,
-                            noGravado = 0.0,
-                            ivaItem = !producto.EsExento ? Math.Round(producto.SubTotal * 0.13m, 2) : 0.0m
+                            noGravado = 0.0
+                            
                         })
                         .ToArray();
 
@@ -636,22 +659,22 @@ namespace SRAUMOAR.Pages.puntoventa
                         porcentajeDescuento = 0,
                         totalDescu = 0.0,
                         tributos = new[]
-                        {
+                         {
                             new
                             {
                                 codigo = "20",
-                                descripcion = "IVA",
-                                valor = totalIva
+                                descripcion = "Impuesto al Valor Agregado 13%",
+                                valor = Math.Round(totalIva, 2)
                             }
                         },
                         subTotal = subTotal,
                         ivaRete1 = 0.00,
+                        ivaPerci1 = Math.Round(0.00, 2),
                         reteRenta = 0.0,
                         montoTotalOperacion = montoTotalOperacion,
                         totalNoGravado = 0.0,
                         totalPagar = totalPagar,
                         totalLetras = totalLetras,
-                        totalIva = totalIva,
                         saldoFavor = 0.0,
                         condicionOperacion = 1,
                         pagos = new[]
@@ -703,10 +726,10 @@ namespace SRAUMOAR.Pages.puntoventa
                         DteJson = dteJson,
                         Nit = _emisor.NIT,
                         PasswordPrivado = ambiente == 1 ? _emisor.CLAVEPRODCERTIFICADO : _emisor.CLAVETESTCERTIFICADO,
-                        TipoDte = "02",
+                        TipoDte = "03",
                         CodigoGeneracion = codigoGeneracion,
                         NumControl = numeroControl,
-                        VersionDte = 1,
+                        VersionDte = 3,
                         CorreoCliente = Factura.Receptor.Correo
                     };
 
@@ -751,7 +774,419 @@ namespace SRAUMOAR.Pages.puntoventa
                     //FIN CREACION DEL DTE
                     //****************************************************
                 }
+                
+                else if (Factura.TipoDocumento == "14")
+                {
+                    //SUJETO EXCLUIDO
+                    string dteJson = "";
+                    Guid codigoGeneracion = Guid.NewGuid();
 
+                    // Generar número de control
+
+                    int numero = (int)await _correlativoService.ObtenerSiguienteCorrelativo("14", ambiente == 1 ? "01" : "00");
+                    string numeroFormateado = numero.ToString("D15");
+                    string numeroControl = "DTE-" + "14" + "-" + "U0000001" + "-" + numeroFormateado;
+
+                    string fecEmi = DateTime.Now.ToString("yyyy-MM-dd");
+                    string horEmi = DateTime.Now.ToString("HH:mm:ss");
+                    try
+                    {
+                        registroDTE registroDTE = new registroDTE();
+                        registroDTE.CodigoGeneracion = codigoGeneracion.ToString().ToUpper();
+                        registroDTE.NumControl = numeroControl;
+                        registroDTE.Fecha = DateOnly.Parse(fecEmi);
+                        registroDTE.Hora = TimeOnly.Parse(horEmi);
+                        registroDTE.Tipo = "14";
+                        _context.registroDTEs.Add(registroDTE);
+                        _context.SaveChanges();
+                    }
+                    catch (Exception ex)
+                    {
+
+                    }
+                    // Crear el objeto para la identificación
+                    var identificacion = new
+                    {
+                        version = 1,
+                        ambiente = ambiente == 1 ? "01" : "00",
+                        tipoDte = "14", // Tipo 14 para Sujeto Excluido
+                        numeroControl = numeroControl,
+                        codigoGeneracion = codigoGeneracion.ToString().ToUpper(),
+                        tipoModelo = 1,
+                        tipoOperacion = 1,
+                        tipoContingencia = (string)null,
+                        motivoContin = (string)null,
+                        fecEmi = fecEmi,
+                        horEmi = horEmi,
+                        tipoMoneda = "USD"
+                    };
+
+                    // Crear el objeto para el emisor
+                    var emisor = new
+                    {
+                        nit = _emisor.NIT,
+                        nrc = _emisor.NRC,
+                        nombre = _emisor.NOMBRE,
+                        codActividad = _emisor.CODACTIVIDAD,
+                        descActividad = _emisor.GIRO,
+                        direccion = new
+                        {
+                            departamento = _emisor.DEPARTAMENTO,
+                            municipio = _emisor.DISTRITO,
+                            complemento = _emisor.DIRECCION
+                        },
+                        telefono = _emisor.TELEFONO,
+                        codEstableMH = (string)null,
+                        codEstable = (string)null, // Ejemplo: "F001"
+                        codPuntoVentaMH = (string)null,
+                        codPuntoVenta = (string)null, // Ejemplo: "C001"
+                        correo = _emisor.EMAIL
+                    };
+
+                    // Crear el objeto para el sujeto excluido
+                    var sujetoExcluido = new
+                    {
+                        tipoDocumento = DeterminarTipoDocumento(Factura.Receptor.Nit), // "13" para DUI
+                        numDocumento = Factura.Receptor.Nit,
+                        nombre = Factura.Receptor.Nombre,
+                        codActividad = (string)null,
+                        descActividad = (string)null,
+                        direccion = new
+                        {
+                            departamento = Factura.Receptor.CodigoDepartamento,
+                            municipio = Factura.Receptor.CodigoMunicipio,
+                            complemento = Factura.Receptor.Direccion.Complemento
+                        },
+                        telefono = Factura.Receptor.Telefono,
+                        correo = Factura.Receptor.Correo
+                    };
+
+                    // Crear el cuerpo del documento
+                    var cuerpoDocumento = Factura.Productos
+                        .Select((producto, index) => new
+                        {
+                            numItem = index + 1,
+                            tipoItem = 1,
+                            cantidad = producto.Cantidad,
+                            codigo = producto.Codigo,
+                            uniMedida = 59, // Unidad de medida estándar
+                            descripcion = producto.Descripcion,
+                            precioUni = producto.PrecioUnitario,
+                            montoDescu =0,
+                            compra = producto.Cantidad * producto.PrecioUnitario
+                        })
+                        .ToArray();
+                    bool retencion = Factura.Retencion;
+                    // Calcular totales
+                    decimal totalCompra = cuerpoDocumento.Sum(item => (decimal)item.compra);
+                    decimal totalDescuento = cuerpoDocumento.Sum(item => (decimal)item.montoDescu);
+                    decimal subTotal = totalCompra;
+                    decimal ivaRete1 = 0; // Para sujeto excluido generalmente es 0
+                    decimal reteRenta = retencion ? Math.Round(totalCompra * 0.10m, 2):0; // totalCompra*0.10; // Retención de renta si aplica
+                    decimal totalPagar = subTotal - reteRenta;
+                    string totalLetras = new Conversor().ConvertirNumeroALetras(totalPagar);
+
+                    // Crear el objeto resumen
+                    var resumen = new
+                    {
+                        totalCompra = totalCompra,
+                        descu = totalDescuento,
+                        totalDescu = totalDescuento,
+                        subTotal = subTotal,
+                        ivaRete1 = ivaRete1,
+                        reteRenta = reteRenta,
+                        totalPagar = totalPagar,
+                        totalLetras = totalLetras,
+                        condicionOperacion = 1, // 1 = Contado, 2 = Crédito
+                        pagos = new[]
+                        {
+        new
+        {
+            codigo = "01", // Código del tipo de pago
+            montoPago = totalPagar, // Monto total de la compra
+            referencia = "0000",
+            periodo = (string)null,
+            plazo = (string)null
+        }
+    },
+                        observaciones = (string)null
+                    };
+
+                    // Crear el apéndice (opcional)
+                    var apendice = (string)null;
+
+                    // Serializar el objeto JSON completo para DTE Sujeto Excluido
+                    dteJson = JsonSerializer.Serialize(new
+                    {
+                        identificacion,
+                        emisor,
+                        sujetoExcluido,
+                        cuerpoDocumento,
+                        resumen,
+                        apendice
+                    });
+
+                    //ENVIO A LA API
+                    var requestUnificado = new
+                    {
+                        Usuario = _emisor.NIT,
+                        Password = ambiente == 1 ? _emisor.CLAVEPRODAPI : _emisor.CLAVETESTAPI,
+                        Ambiente = ambiente == 1 ? "01" : "00",
+                        DteJson = dteJson,
+                        Nit = _emisor.NIT,
+                        PasswordPrivado = ambiente == 1 ? _emisor.CLAVEPRODCERTIFICADO : _emisor.CLAVETESTCERTIFICADO,
+                        TipoDte = "14",
+                        CodigoGeneracion = codigoGeneracion,
+                        NumControl = numeroControl,
+                        VersionDte = 1,
+                        CorreoCliente = Factura.Receptor.Correo
+                    };
+
+                    var selloRecibido = "";
+                    using (HttpClient client = new HttpClient())
+                    {
+                        // LLAMADA ÚNICA
+                        //var response = client.PostAsJsonAsync("http://207.58.153.147:7122/api/procesar-dte", requestUnificado).Result;
+                        var response = client.PostAsJsonAsync("https://localhost:7122/api/procesar-dte", requestUnificado).Result;
+                        var responseData = response.Content.ReadAsStringAsync().Result;
+
+                        if (!response.IsSuccessStatusCode)
+                            throw new Exception($"Error al procesar DTE: {responseData}");
+
+                        var resultado = JsonDocument.Parse(responseData).RootElement;
+                        var selloRecepcion = resultado.TryGetProperty("selloRecibido", out var sello)
+                            ? sello.GetString()
+                            : null;
+                        selloRecibido = selloRecepcion;
+                    }
+
+                    if (ambiente == 1)
+                    {
+                        //guardar la factura
+
+                        Factura factura = new Factura();
+                        factura.CodigoGeneracion = codigoGeneracion.ToString().ToUpper();
+                        factura.NumeroControl = numeroControl;
+                        factura.SelloRecepcion = selloRecibido;
+                        factura.JsonDte = dteJson;
+                        string fechaHoraString = $"{identificacion.fecEmi} {identificacion.horEmi}";
+                        DateTime fechaHora = DateTime.ParseExact(fechaHoraString, "yyyy-MM-dd HH:mm:ss", null);
+                        factura.Fecha = fechaHora;
+                        factura.TipoDTE = 2; // Crédito Fiscal
+                        factura.TotalGravado = 0;
+                        factura.TotalExento = 0;
+                        factura.TotalIva = 0;
+                        factura.TotalPagar = totalPagar;
+                        _context.Facturas.Add(factura);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+                else if (Factura.TipoDocumento == "15")
+                {
+                    //COMPROBANTE DE DONACIÓN
+                    string dteJson = "";
+                    Guid codigoGeneracion = Guid.NewGuid();
+
+                    // Generar número de control
+                    int numero = (int)await _correlativoService.ObtenerSiguienteCorrelativo("15", ambiente == 1 ? "01" : "00");
+                    string numeroFormateado = numero.ToString("D15");
+                    string numeroControl = "DTE-" + "15" + "-" + "U0000001" + "-" + numeroFormateado;
+
+                    string fecEmi = DateTime.Now.ToString("yyyy-MM-dd");
+                    string horEmi = DateTime.Now.ToString("HH:mm:ss");
+                    try
+                    {
+                        registroDTE registroDTE = new registroDTE();
+                        registroDTE.CodigoGeneracion = codigoGeneracion.ToString().ToUpper();
+                        registroDTE.NumControl = numeroControl;
+                        registroDTE.Fecha = DateOnly.Parse(fecEmi);
+                        registroDTE.Hora = TimeOnly.Parse(horEmi);
+                        registroDTE.Tipo = "15";
+                        _context.registroDTEs.Add(registroDTE);
+                        _context.SaveChanges();
+                    }
+                    catch (Exception ex)
+                    {
+
+                    }
+
+                    // Crear el objeto para la identificación
+                    var identificacion = new
+                    {
+                        version = 1,
+                        ambiente = ambiente == 1 ? "01" : "00",
+                        tipoDte = "15", // Tipo 15 para Comprobante de Donación
+                        numeroControl = numeroControl,
+                        codigoGeneracion = codigoGeneracion.ToString().ToUpper(),
+                        tipoModelo = 1,
+                        tipoOperacion = 1,
+                        fecEmi = fecEmi,
+                        horEmi = horEmi,
+                        tipoMoneda = "USD"
+                    };
+
+                    // Crear el objeto para el donatario (equivalente al emisor)
+                    var donatario = new
+                    {
+                        tipoDocumento = "36", // Tipo fijo para donatarios
+                        numDocumento = _emisor.NIT,
+                        nrc = _emisor.NRC,
+                        nombre = _emisor.NOMBRE,
+                        codActividad = _emisor.CODACTIVIDAD,
+                        descActividad = _emisor.GIRO,
+                        nombreComercial = _emisor.NOMBRECOMERCIAL,
+                        tipoEstablecimiento = "02",
+                        direccion = new
+                        {
+                            departamento = _emisor.DEPARTAMENTO,
+                            municipio = _emisor.DISTRITO,
+                            complemento = _emisor.DIRECCION
+                        },
+                        telefono = _emisor.TELEFONO,
+                        correo = _emisor.EMAIL,
+                        codEstableMH = (string)null,
+                        codEstable = (string)null,
+                        codPuntoVentaMH = (string)null,
+                        codPuntoVenta = (string)null
+                    };
+
+                    // Crear el objeto para el donante (equivalente al sujeto excluido)
+                    var donante = new
+                    {
+                        tipoDocumento = DeterminarTipoDocumento(Factura.Receptor.Nit), // "13" para DUI, etc.
+                        numDocumento = Factura.Receptor.Nit,
+                        nrc = (string)null,
+                        nombre = Factura.Receptor.Nombre,
+                        codActividad = (string)null,
+                        descActividad = (string)null,
+                        direccion = new
+                        {
+                            departamento = Factura.Receptor.CodigoDepartamento,
+                            municipio = Factura.Receptor.CodigoMunicipio,
+                            complemento = Factura.Receptor.Direccion.Complemento
+                        },
+                        telefono = Factura.Receptor.Telefono,
+                        correo = Factura.Receptor.Correo,
+                        codDomiciliado = 1,
+                        codPais = Factura.CodigoPais
+                    };
+
+                    // Crear otros documentos (opcional)
+                    var otrosDocumentos = new[]
+     {
+        new
+        {
+            codDocAsociado =1,
+            descDocumento ="DESCRIPCION DOCUMENTO",
+            detalleDocumento = "DETALLES DOCUMENTO"
+        }
+    };
+
+                    // Crear el cuerpo del documento
+                    var cuerpoDocumento = Factura.Productos
+                        .Select((producto, index) => new
+                        {
+                            numItem = index + 1,
+                            tipoDonacion = 1, // Tipo de donación por defecto
+                            cantidad = producto.Cantidad,
+                            codigo = producto.Codigo,
+                            uniMedida = 99, // Unidad de medida estándar
+                            descripcion = producto.Descripcion,
+                            depreciacion = 0,
+                            valorUni = producto.PrecioUnitario,
+                            valor = producto.Cantidad * producto.PrecioUnitario
+                        })
+                        .ToArray();
+
+                    // Calcular totales
+                    decimal valorTotal = cuerpoDocumento.Sum(item => (decimal)item.valor);
+                    string totalLetras = new Conversor().ConvertirNumeroALetras(valorTotal);
+
+                    // Crear el objeto resumen
+                    var resumen = new
+                    {
+                        valorTotal = valorTotal,
+                        totalLetras = totalLetras,
+                        pagos = new[]
+                        {
+            new
+            {
+                codigo = "01", // Código del tipo de pago
+                montoPago = valorTotal, // Monto total de la donación
+                referencia = "0000"
+            }
+        }
+                    };
+
+                    // Crear el apéndice (opcional)
+                    var apendice = (string)null;
+
+                    // Serializar el objeto JSON completo para DTE Comprobante de Donación
+                    dteJson = JsonSerializer.Serialize(new
+                    {
+                        identificacion,
+                        donatario,
+                        donante,
+                        otrosDocumentos,
+                        cuerpoDocumento,
+                        resumen,
+                        apendice
+                    });
+
+                    //ENVIO A LA API
+                    var requestUnificado = new
+                    {
+                        Usuario = _emisor.NIT,
+                        Password = ambiente == 1 ? _emisor.CLAVEPRODAPI : _emisor.CLAVETESTAPI,
+                        Ambiente = ambiente == 1 ? "01" : "00",
+                        DteJson = dteJson,
+                        Nit = _emisor.NIT,
+                        PasswordPrivado = ambiente == 1 ? _emisor.CLAVEPRODCERTIFICADO : _emisor.CLAVETESTCERTIFICADO,
+                        TipoDte = "15",
+                        CodigoGeneracion = codigoGeneracion,
+                        NumControl = numeroControl,
+                        VersionDte = 1,
+                        CorreoCliente = Factura.Receptor.Correo
+                    };
+
+                    var selloRecibido = "";
+                    using (HttpClient client = new HttpClient())
+                    {
+                        // LLAMADA ÚNICA
+                        //var response = client.PostAsJsonAsync("http://207.58.153.147:7122/api/procesar-dte", requestUnificado).Result;
+                        var response = client.PostAsJsonAsync("https://localhost:7122/api/procesar-dte", requestUnificado).Result;
+                        var responseData = response.Content.ReadAsStringAsync().Result;
+
+                        if (!response.IsSuccessStatusCode)
+                            throw new Exception($"Error al procesar DTE: {responseData}");
+
+                        var resultado = JsonDocument.Parse(responseData).RootElement;
+                        var selloRecepcion = resultado.TryGetProperty("selloRecibido", out var sello)
+                            ? sello.GetString()
+                            : null;
+                        selloRecibido = selloRecepcion;
+                    }
+
+                    if (ambiente == 1)
+                    {
+                        //guardar la factura
+                        Factura factura = new Factura();
+                        factura.CodigoGeneracion = codigoGeneracion.ToString().ToUpper();
+                        factura.NumeroControl = numeroControl;
+                        factura.SelloRecepcion = selloRecibido;
+                        factura.JsonDte = dteJson;
+                        string fechaHoraString = $"{identificacion.fecEmi} {identificacion.horEmi}";
+                        DateTime fechaHora = DateTime.ParseExact(fechaHoraString, "yyyy-MM-dd HH:mm:ss", null);
+                        factura.Fecha = fechaHora;
+                        factura.TipoDTE = 15; // Comprobante de Donación
+                        factura.TotalGravado = 0;
+                        factura.TotalExento = 0;
+                        factura.TotalIva = 0;
+                        factura.TotalPagar = valorTotal;
+                        _context.Facturas.Add(factura);
+                        await _context.SaveChangesAsync();
+                    }
+                }
                 TempData["Success"] = "Factura procesada exitosamente";
                 return RedirectToPage("../facturas/Index");
             }
@@ -789,7 +1224,11 @@ namespace SRAUMOAR.Pages.puntoventa
             {
                 Factura.Receptor = receptorActual;
             }
+
+
         }
+
+
     }
 }
 

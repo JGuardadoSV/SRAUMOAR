@@ -21,12 +21,15 @@
             string[] centenas = { "", "ciento", "doscientos", "trescientos", "cuatrocientos", "quinientos", "seiscientos", "setecientos", "ochocientos", "novecientos" };
 
             if (numero < 10) return unidades[numero];
+
             if (numero < 20) return especiales[numero - 10];
+
             if (numero < 100)
             {
                 int unidad = numero % 10;
                 return unidad == 0 ? decenas[numero / 10] : $"{decenas[numero / 10]} y {unidades[unidad]}";
             }
+
             if (numero < 1000)
             {
                 int centena = numero / 100;
@@ -34,6 +37,32 @@
                 if (numero == 100) return "cien";
                 return resto == 0 ? centenas[centena] : $"{centenas[centena]} {NumeroALetras(resto)}";
             }
+
+            if (numero < 1000000)
+            {
+                int miles = numero / 1000;
+                int resto = numero % 1000;
+
+                string textoMiles;
+                if (miles == 1)
+                {
+                    textoMiles = "mil";
+                }
+                else
+                {
+                    textoMiles = $"{NumeroALetras(miles)} mil";
+                }
+
+                if (resto == 0)
+                {
+                    return textoMiles;
+                }
+                else
+                {
+                    return $"{textoMiles} {NumeroALetras(resto)}";
+                }
+            }
+
             return "Número fuera de rango";
         }
     }

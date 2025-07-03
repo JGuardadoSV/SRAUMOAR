@@ -28,7 +28,8 @@ namespace SRAUMOAR.Pages.aranceles
         public async Task OnGetAsync()
         {
             Ciclo cicloactual = await _context.Ciclos.Where(x => x.Activo).FirstAsync();
-            var todosLosAranceles = await _context.Aranceles.Where(x => x.Ciclo.Id == cicloactual.Id)
+            var todosLosAranceles = await _context.Aranceles
+                .Where(x => (x.Ciclo != null && x.Ciclo.Id == cicloactual.Id) || (!x.Obligatorio && x.Ciclo == null))
                 .Include(a => a.Ciclo).ToListAsync();
 
             // Separar aranceles por tipo

@@ -40,7 +40,8 @@ namespace SRAUMOAR.Pages.aranceles
                 .Select(dc => dc.ArancelId)
                 .ToListAsync();
 
-            Arancel = await _context.Aranceles.Where(x => x.Ciclo.Id == cicloactual.Id)
+            Arancel = await _context.Aranceles
+                .Where(x => (x.Ciclo != null && x.Ciclo.Id == cicloactual.Id) || (!x.Obligatorio && x.Ciclo == null))
                 .Include(a => a.Ciclo).ToListAsync();
 
             // Separar aranceles obligatorios y no obligatorios

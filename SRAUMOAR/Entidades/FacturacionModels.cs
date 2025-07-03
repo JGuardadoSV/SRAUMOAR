@@ -66,6 +66,7 @@ namespace SRAUMOAR.Entidades
             // Campos para departamento y municipio
             public string CodigoDepartamento { get; set; } = string.Empty;
             public string CodigoMunicipio { get; set; } = string.Empty;
+            public bool Retencion { get; set; } = false;
         }
 
         public class ProductoVenta
@@ -126,6 +127,23 @@ namespace SRAUMOAR.Entidades
             }
             
             public decimal TotalGeneral => TotalExento + TotalGravado + IVA;
+
+            public bool Retencion { get; set; } = false;
+            public string TipoOperacion { get; set; } = string.Empty;
+
+            public decimal TotalGeneralConRetencion
+            {
+                get
+                {
+                    if (TipoDocumento == "14" && Retencion)
+                    {
+                        var totalSinRetencion = TotalExento + TotalGravado + IVA;
+                        var retencionMonto = Productos.Sum(p => p.Cantidad * p.PrecioUnitario) * 0.10m;
+                        return totalSinRetencion - retencionMonto;
+                    }
+                    return TotalExento + TotalGravado + IVA;
+                }
+            }
         }
 
         public static class TiposDocumento

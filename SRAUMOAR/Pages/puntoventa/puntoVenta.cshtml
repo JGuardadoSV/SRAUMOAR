@@ -38,7 +38,7 @@
                                         <option value="">Seleccione...</option>
                                         <option value="01">01 - Consumidor Final</option>
                                         <option value="02">02 - Crédito Fiscal</option>
-                                        <option value="11">11 - Sujeto Excluido</option>
+                                        <option value="14">11 - Sujeto Excluido</option>
                                         <option value="15">15 - Donación</option>
                                     </select>
                                     <small class="text-muted">* Seleccione el tipo de documento antes de agregar productos. El IVA solo se aplica para Crédito Fiscal.</small>
@@ -91,6 +91,33 @@
                                 </div>
                                 <div class="col-md-3">
                                     <span asp-validation-for="Factura.CodigoPais" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <!-- Campos para Sujeto Excluido (Bien/Servicio y Retención) -->
+                            <div class="row mt-2 campo-sujeto-excluido" style="display: none;">
+                                <div class="col-md-3">
+                                    <label class="mb-0"><strong>Tipo de Operación:</strong></label>
+                                </div>
+                                <div class="col-md-6">
+                                    <select class="form-control" asp-for="Factura.TipoOperacion" id="tipoOperacionSelect">
+                                        <option value="">Seleccione...</option>
+                                        <option value="Bien">Bien</option>
+                                        <option value="Servicio">Servicio</option>
+                                    </select>
+                                    <small class="text-muted">* Indique si el pago es por un bien o un servicio.</small>
+                                </div>
+                            </div>
+                            <div class="row mt-2 campo-sujeto-excluido" style="display: none;">
+                                <div class="col-md-3">
+                                    <label class="mb-0"><strong>Retención de Renta (10%):</strong></label>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" asp-for="Factura.Retencion" id="retencionRentaCheck" />
+                                        <label class="form-check-label" for="retencionRentaCheck">Aplicar retención de renta</label>
+                                    </div>
+                                    <small class="text-muted">* Si se activa, se retendrá el 10% del monto total.</small>
                                 </div>
                             </div>
                         </div>
@@ -396,6 +423,16 @@
                 </div>
             </div>
 
+@*             <!-- Debug de valores del modelo -->
+            <div class="row">
+                <div class="col-12">
+                    <p>DEBUG: TipoDocumento: @Model.Factura.TipoDocumento</p>
+                    <p>DEBUG: Retencion: @Model.Factura.Retencion</p>
+                    <p>DEBUG: TotalGeneral: @Model.Factura.TotalGeneral</p>
+                    <p>DEBUG: TotalGeneralConRetencion: @Model.Factura.TotalGeneralConRetencion</p>
+                </div>
+            </div> *@
+
             <!-- Totales -->
             @if (Model.Factura.Productos.Any())
             {
@@ -419,10 +456,18 @@
                                     <div class="col-6"><strong>IVA (13%):</strong></div>
                                     <div class="col-6 text-right">$@Model.Factura.IVA.ToString("N2")</div>
                                 </div>
+                                @* Mostrar retención solo si es Sujeto Excluido y está activada *@
+                                @if (Model.Factura.TipoDocumento == "14" && Model.Factura.Retencion == true)
+                                {
+                                    <div class="row">
+                                        <div class="col-6"><strong>Retención de Renta (10%):</strong></div>
+                                        <div class="col-6 text-right text-danger">-$@((Model.Factura.Productos.Sum(p => p.Cantidad * p.PrecioUnitario) * 0.10M).ToString("N2"))</div>
+                                    </div>
+                                }
                                 <hr>
                                 <div class="row">
                                     <div class="col-6"><strong>Total General:</strong></div>
-                                    <div class="col-6 text-right"><strong>$@Model.Factura.TotalGeneral.ToString("N2")</strong></div>
+                                    <div class="col-6 text-right"><strong>$@Model.Factura.TotalGeneralConRetencion.ToString("N2")</strong></div>
                                 </div>
                             </div>
                         </div>
@@ -527,6 +572,7 @@
                 var campoPais = $('.campo-pais');
                 var camposCreditoFiscal = $('.campos-credito-fiscal');
                 var alertaTipoDocumento = $('#alertaTipoDocumento');
+                var campoSujetoExcluido = $('.campo-sujeto-excluido');
                 
                 console.log('Tipo documento:', tipoDoc); // Debug
                 console.log('Botón encontrado:', btnAgregar.length); // Debug
@@ -570,6 +616,15 @@
                     btnAgregar.prop('disabled', true).removeClass('btn-success').addClass('btn-secondary');
                     console.log('Botón deshabilitado'); // Debug
                 }
+
+                // Mostrar/ocultar campos para Sujeto Excluido
+                if (tipoDoc === '14') {
+                    campoSujetoExcluido.show();
+                } else {
+                    campoSujetoExcluido.hide();
+                    $('#tipoOperacionSelect').val('');
+                    $('#retencionRentaCheck').prop('checked', false);
+                }
             }
             
             // Función para recalcular totales dinámicamente
@@ -606,8 +661,6 @@
                 $('.card-body .row:eq(0) .col-6:last').text('$' + totalExento.toFixed(2));
                 $('.card-body .row:eq(1) .col-6:last').text('$' + totalGravado.toFixed(2));
                 $('.iva-row .col-6:last').text('$' + iva.toFixed(2));
-                $('.card-body .row:last .col-6:last strong').text('$' + totalGeneral.toFixed(2));
-                
                 console.log('Totales recalculados:', { totalExento, totalGravado, iva, totalGeneral });
             }
             
