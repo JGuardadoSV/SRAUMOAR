@@ -97,6 +97,9 @@ namespace SRAUMOAR.Entidades
             // Campo para código de país (solo para donaciones)
             public string CodigoPais { get; set; } = string.Empty;
 
+            // Campo para tipo de donación (solo para donaciones)
+            public string TipoDonacion { get; set; } = string.Empty;
+
             public List<ProductoVenta> Productos { get; set; } = new List<ProductoVenta>();
 
             // Propiedades para el formulario de productos
@@ -177,6 +180,16 @@ namespace SRAUMOAR.Entidades
                 
                 // Europa
                 { "ES", "España" }
+            };
+        }
+
+        public static class TiposDonacion
+        {
+            public static readonly Dictionary<string, string> Tipos = new Dictionary<string, string>
+            {
+                { "1", "Efectivo" },
+                { "2", "Bien" },
+                { "3", "Servicios" }
             };
         }
 

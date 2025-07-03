@@ -56,6 +56,14 @@ namespace SRAUMOAR.Pages.puntoventa
                 return Page();
             }
 
+            // Validar tipo de donación para donaciones
+            if (Factura.TipoDocumento == "15" && string.IsNullOrEmpty(Factura.TipoDonacion))
+            {
+                ModelState.AddModelError("Factura.TipoDonacion", "Debe seleccionar un tipo de donación.");
+                CargarDatosEmisor();
+                return Page();
+            }
+
             // Validar campos requeridos para Crédito Fiscal
             if (Factura.TipoDocumento == "02")
             {
@@ -163,6 +171,7 @@ namespace SRAUMOAR.Pages.puntoventa
             ModelState.Remove("Factura.PrecioProducto");
             ModelState.Remove("Factura.ProductoExento");
             ModelState.Remove("Factura.CodigoPais");
+            ModelState.Remove("Factura.TipoDonacion");
 
             // Validar que se haya seleccionado un tipo de documento
             if (string.IsNullOrEmpty(Factura.TipoDocumento))
@@ -176,6 +185,14 @@ namespace SRAUMOAR.Pages.puntoventa
             if (Factura.TipoDocumento == "15" && string.IsNullOrEmpty(Factura.CodigoPais))
             {
                 ModelState.AddModelError("Factura.CodigoPais", "Debe seleccionar un código de país para documentos de donación.");
+                CargarDatosEmisor();
+                return Page();
+            }
+
+            // Validar tipo de donación para donaciones
+            if (Factura.TipoDocumento == "15" && string.IsNullOrEmpty(Factura.TipoDonacion))
+            {
+                ModelState.AddModelError("Factura.TipoDonacion", "Debe seleccionar un tipo de donación.");
                 CargarDatosEmisor();
                 return Page();
             }
@@ -1087,7 +1104,7 @@ namespace SRAUMOAR.Pages.puntoventa
                         .Select((producto, index) => new
                         {
                             numItem = index + 1,
-                            tipoDonacion = 1, // Tipo de donación por defecto
+                            tipoDonacion =int.Parse(Factura.TipoDonacion), // Tipo de donación por defecto
                             cantidad = producto.Cantidad,
                             codigo = producto.Codigo,
                             uniMedida = 99, // Unidad de medida estándar

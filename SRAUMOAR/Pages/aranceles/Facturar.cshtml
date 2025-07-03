@@ -4,7 +4,7 @@
 @{
     ViewData["Title"] = "Registrar Cobro de Arancel";
     bool exentoMora = (ViewData["ExentoMora"] as bool?) ?? false;
-    var primerCiclo = Model.Aranceles?.FirstOrDefault(a => a.Ciclo != null)?.Ciclo;
+    var primerCiclo = Model.Aranceles?.Where(a => a.Ciclo != null).FirstOrDefault()?.Ciclo;
 }
 
 <style>
@@ -603,8 +603,21 @@
 
             <!-- Campos Ocultos -->
             <input asp-for="CobroArancel.AlumnoId" value="@ViewData["AlumnoId"]" type="hidden" />
-            <input asp-for="CobroArancel.CicloId" value="@(primerCiclo != null ? primerCiclo.Id.ToString() : "")" type="hidden" />
-            <input asp-for="CobroArancel.Total" value="@Model.Aranceles.Sum(a => a.Costo)" type="hidden" />
+            <input asp-for="CobroArancel.CicloId" value="@(primerCiclo?.Id.ToString() ?? "")" type="hidden" />
+            @{
+                decimal totalCalculado = 0;
+                if (Model.Aranceles != null)
+                {
+                    foreach (var arancel in Model.Aranceles)
+                    {
+                        var vencido = arancel.EstaVencido;
+                        var totalConMora = arancel.TotalConMora;
+                        var mostrarMora = vencido && !exentoMora;
+                        totalCalculado += mostrarMora ? totalConMora : arancel.Costo;
+                    }
+                }
+            }
+            <input asp-for="CobroArancel.Total" value="@totalCalculado.ToString("F2")" type="hidden" />
         </form>
     </div>
 </div>

@@ -94,6 +94,25 @@
                                 </div>
                             </div>
 
+                            <!-- Campo de Tipo de Donación (solo para Donación) -->
+                            <div class="row mt-2 campo-tipo-donacion" style="display: none;">
+                                <div class="col-md-3">
+                                    <label class="mb-0"><strong>Tipo de Donación:</strong></label>
+                                </div>
+                                <div class="col-md-6">
+                                    <select class="form-control" asp-for="Factura.TipoDonacion" id="tipoDonacionSelect">
+                                        <option value="">Seleccione tipo de donación...</option>
+                                        <option value="1">1 - Efectivo</option>
+                                        <option value="2">2 - Bien</option>
+                                        <option value="3">3 - Servicios</option>
+                                    </select>
+                                    <small class="text-muted">* Indique el tipo de donación que se está realizando</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <span asp-validation-for="Factura.TipoDonacion" class="text-danger"></span>
+                                </div>
+                            </div>
+
                             <!-- Campos para Sujeto Excluido (Bien/Servicio y Retención) -->
                             <div class="row mt-2 campo-sujeto-excluido" style="display: none;">
                                 <div class="col-md-3">
@@ -497,6 +516,7 @@
             <input type="hidden" asp-for="Factura.Receptor.CodActividad" />
             <input type="hidden" asp-for="Factura.Receptor.DescActividad" />
             <input type="hidden" asp-for="Factura.CodigoPais" />
+            <input type="hidden" asp-for="Factura.TipoDonacion" />
         </form>
     </div>
 </section>
@@ -570,6 +590,7 @@
                 var ivaRow = $('.iva-row');
                 var btnAgregar = $('.btn-agregar-producto');
                 var campoPais = $('.campo-pais');
+                var campoTipoDonacion = $('.campo-tipo-donacion');
                 var camposCreditoFiscal = $('.campos-credito-fiscal');
                 var alertaTipoDocumento = $('#alertaTipoDocumento');
                 var campoSujetoExcluido = $('.campo-sujeto-excluido');
@@ -602,10 +623,15 @@
                 if (tipoDoc === '15') {
                     // Mostrar campo de país solo para Donación
                     campoPais.show();
+                    // Mostrar campo de tipo de donación solo para Donación
+                    campoTipoDonacion.show();
                 } else {
                     // Ocultar campo de país para otros tipos
                     campoPais.hide();
                     $('#Factura_CodigoPais').val(''); // Limpiar valor
+                    // Ocultar campo de tipo de donación para otros tipos
+                    campoTipoDonacion.hide();
+                    $('#Factura_TipoDonacion').val(''); // Limpiar valor
                 }
                 
                 // Habilitar/deshabilitar botón de agregar según tipo de documento
@@ -899,6 +925,14 @@
                         e.preventDefault();
                         alert('Por favor seleccione un código de país para documentos de donación.');
                         $('#Factura_CodigoPais').focus();
+                        return false;
+                    }
+                    
+                    var tipoDonacion = $('#Factura_TipoDonacion').val();
+                    if (!tipoDonacion) {
+                        e.preventDefault();
+                        alert('Por favor seleccione un tipo de donación.');
+                        $('#Factura_TipoDonacion').focus();
                         return false;
                     }
                 }

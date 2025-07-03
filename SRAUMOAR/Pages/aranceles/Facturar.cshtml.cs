@@ -39,7 +39,24 @@ namespace SRAUMOAR.Pages.aranceles
         {
             var arancelIdsList = arancelIds.Split(',').Select(int.Parse).ToList();
             var alumno = await _context.Alumno.FirstOrDefaultAsync(m => m.AlumnoId == idalumno);
-            var aranceles = await _context.Aranceles.Include(a => a.Ciclo).Where(a => arancelIdsList.Contains(a.ArancelId)).ToListAsync();
+            
+            // Usar una consulta más segura que maneje aranceles sin ciclo
+            var aranceles = await _context.Aranceles
+                .Where(a => arancelIdsList.Contains(a.ArancelId))
+                .ToListAsync();
+
+            // Cargar los ciclos por separado para evitar problemas con Include
+            var ciclosIds = aranceles.Where(a => a.CicloId.HasValue).Select(a => a.CicloId.Value).Distinct().ToList();
+            var ciclos = await _context.Ciclos.Where(c => ciclosIds.Contains(c.Id)).ToListAsync();
+            
+            // Asignar los ciclos a los aranceles
+            foreach (var arancel in aranceles)
+            {
+                if (arancel.CicloId.HasValue)
+                {
+                    arancel.Ciclo = ciclos.FirstOrDefault(c => c.Id == arancel.CicloId.Value);
+                }
+            }
 
             // Obtener el ciclo solo si alguno de los aranceles tiene ciclo
             Ciclo? ciclo = null;
@@ -64,6 +81,13 @@ namespace SRAUMOAR.Pages.aranceles
         // For more information, see https://aka.ms/RazorPagesCRUD.
         public async Task<IActionResult> OnPostAsync(List<int> selectedAranceles, List<decimal> arancelescostos, int idalumno)
         {
+            // Validar que los parámetros no sean null
+            if (selectedAranceles == null || arancelescostos == null)
+            {
+                ModelState.AddModelError("", "Los datos de aranceles son requeridos");
+                return Page();
+            }
+
             if (!ModelState.IsValid)
             {
                 return Page();
@@ -72,8 +96,8 @@ namespace SRAUMOAR.Pages.aranceles
             //****************************************************
             //CREACION DEL DTE
             //****************************************************
-            Alumno alumno = await _context.Alumno.FirstOrDefaultAsync(m => m.AlumnoId == idalumno);
-
+            Alumno alumno = await _context.Alumno.Include(c=>c.Carrera).FirstOrDefaultAsync(m => m.AlumnoId == idalumno);
+            string carnet = alumno.Email.Split('@')[0];
 
             string dteJson = "";
             Guid codigoGeneracion = Guid.NewGuid();
@@ -155,7 +179,7 @@ namespace SRAUMOAR.Pages.aranceles
                 tipoDocumento = "37",
                 numDocumento = (string)null,
                 nrc = (string)null,
-                nombre = alumno.Nombres + " " + alumno.Apellidos,
+                nombre = alumno.Nombres + " " + alumno.Apellidos + " " + alumno.Carnet,
                 codActividad = (string)null,
                 descActividad = (string)null,
                 direccion = new
@@ -168,10 +192,23 @@ namespace SRAUMOAR.Pages.aranceles
                 correo = alumno.Email
             };
 
+            // Usar una consulta más segura que maneje aranceles sin ciclo
             var arancelesAPagar = await _context.Aranceles
-      .Include(a => a.Ciclo)
-      .Where(a => selectedAranceles.Contains(a.ArancelId))
-      .ToListAsync();
+                .Where(a => selectedAranceles.Contains(a.ArancelId))
+                .ToListAsync();
+
+            // Cargar los ciclos por separado para evitar problemas con Include
+            var ciclosIds = arancelesAPagar.Where(a => a.CicloId.HasValue).Select(a => a.CicloId.Value).Distinct().ToList();
+            var ciclos = await _context.Ciclos.Where(c => ciclosIds.Contains(c.Id)).ToListAsync();
+            
+            // Asignar los ciclos a los aranceles
+            foreach (var arancel in arancelesAPagar)
+            {
+                if (arancel.CicloId.HasValue)
+                {
+                    arancel.Ciclo = ciclos.FirstOrDefault(c => c.Id == arancel.CicloId.Value);
+                }
+            }
 
             // Crear el cuerpo del documento usando los datos enviados desde la vista
             var cuerpoDocumento = selectedAranceles
@@ -295,13 +332,19 @@ namespace SRAUMOAR.Pages.aranceles
                 CodigoGeneracion = codigoGeneracion,
                 NumControl = numeroControl,
                 VersionDte = 1,
-                CorreoCliente = alumno.Email
+                CorreoCliente = alumno.Email,
+                Carrera = alumno.Carrera.NombreCarrera,
+                Observaciones= CobroArancel.nota
             };
             var selloRecibido = "";
             using (HttpClient client = new HttpClient())
             {
                 // LLAMADA ÚNICA
                 var response = client.PostAsJsonAsync("http://207.58.153.147:7122/api/procesar-dte", requestUnificado).Result;
+                if (ambiente == 0)
+                {
+                     response = client.PostAsJsonAsync("https://localhost:7122/api/procesar-dte", requestUnificado).Result;
+                }
                 var responseData = response.Content.ReadAsStringAsync().Result;
 
                 if (!response.IsSuccessStatusCode)
@@ -368,6 +411,13 @@ namespace SRAUMOAR.Pages.aranceles
             CobroArancel.Total = aranceles.Sum(a => a.costo);
             CobroArancel.CodigoGeneracion = codigoGeneracion.ToString().ToUpper();
             CobroArancel.Fecha = DateTime.Now;
+            
+            // Asignar el CicloId si existe un ciclo en los aranceles
+            var cicloDeAranceles = arancelesAPagar.FirstOrDefault(a => a.Ciclo != null)?.Ciclo;
+            if (cicloDeAranceles != null)
+            {
+                CobroArancel.CicloId = cicloDeAranceles.Id;
+            }
             _context.CobrosArancel.Add(CobroArancel);
             await _context.SaveChangesAsync();
 
