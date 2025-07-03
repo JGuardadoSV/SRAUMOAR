@@ -35,18 +35,19 @@ namespace SRAUMOAR.Pages.aranceles
         }
         public List<Arancel> Aranceles { get; set; }
         //public async Task<IActionResult> OnGet(int alumnoId, int arancelId)
-        public async Task<IActionResult> OnGetAsync(string arancelIds,int idalumno)
+        public async Task<IActionResult> OnGetAsync(string arancelIds, int idalumno)
         {
 
-            var  cicloId = await _context.Ciclos.Where(x => x.Activo==true).FirstAsync();
+            var cicloId = await _context.Ciclos.Where(x => x.Activo == true).FirstAsync();
             var arancelIdsList = arancelIds.Split(',').Select(int.Parse).ToList();
             var alumno = await _context.Alumno.FirstOrDefaultAsync(m => m.AlumnoId == idalumno);
-            var aranceles = await _context.Aranceles.Include(a => a.Ciclo).Where(a=>arancelIdsList.Contains(a.ArancelId)).ToListAsync();
+            var aranceles = await _context.Aranceles.Include(a => a.Ciclo).Where(a => arancelIdsList.Contains(a.ArancelId)).ToListAsync();
             var ciclo = await _context.Ciclos.FirstOrDefaultAsync(c => c.Id == cicloId.Id);
 
             ViewData["Alumno"] = alumno;
             ViewData["AlumnoNombre"] = alumno.Nombres + " " + alumno.Apellidos;
             ViewData["AlumnoId"] = alumno.AlumnoId;
+            ViewData["ExentoMora"] = alumno.ExentoMora;
             Aranceles = aranceles;
             ViewData["Ciclo"] = ciclo;
 
@@ -99,9 +100,9 @@ namespace SRAUMOAR.Pages.aranceles
             catch (Exception)
             {
 
-               // throw;
+                // throw;
             }
-           
+
 
             // ESQUEMA PARA UN DTE DE CONSUMIDOR FINAL DTE 01
 
@@ -169,9 +170,9 @@ namespace SRAUMOAR.Pages.aranceles
       .Where(a => selectedAranceles.Contains(a.ArancelId))
       .ToListAsync();
 
-            // Crear el cuerpo del documento usando los datos de los aranceles obtenidos
-            var cuerpoDocumento = arancelesAPagar
-                .Select((arancel, index) => new
+            // Crear el cuerpo del documento usando los datos enviados desde la vista
+            var cuerpoDocumento = selectedAranceles
+                .Select((arancelId, index) => new
                 {
                     numItem = index + 1,
                     tipoItem = 1,
@@ -180,34 +181,35 @@ namespace SRAUMOAR.Pages.aranceles
                     codigo = "0000" + index.ToString(),
                     codTributo = (string)null,
                     uniMedida = 59,
-                    descripcion = arancel.Nombre,
-                    precioUni = arancel.Costo,
+                    descripcion = arancelesAPagar.First(a => a.ArancelId == arancelId).Nombre,
+                    precioUni = arancelescostos[index],
                     montoDescu = 0.0,
                     ventaNoSuj = 0.0,
-                    ventaExenta = arancel.Exento  ? arancel.Costo : 0.0m,
-                    ventaGravada = !arancel.Exento ? arancel.Costo : 0.0m,
+                    ventaExenta = arancelesAPagar.First(a => a.ArancelId == arancelId).Exento ? arancelescostos[index] : 0.0m,
+                    ventaGravada = !arancelesAPagar.First(a => a.ArancelId == arancelId).Exento ? arancelescostos[index] : 0.0m,
                     tributos = (string)null,
-                    psv = arancel.Costo,
+                    psv = arancelescostos[index],
                     noGravado = 0.0,
-                    ivaItem = !arancel.Exento ? Math.Round(arancel.Costo - (arancel.Costo / 1.13m), 2) : 0.0m
+                    ivaItem = !arancelesAPagar.First(a => a.ArancelId == arancelId).Exento ? Math.Round(arancelescostos[index] - (arancelescostos[index] / 1.13m), 2) : 0.0m
                 })
                 .ToArray();
 
-            decimal totalVenta = arancelesAPagar.Where(a => a.Exento == false).Sum(a => a.Costo);
-            decimal totalVentaExenta = arancelesAPagar.Where(a => a.Exento == true).Sum(a => a.Costo);
-
-            //ivaItem = Math.Round(arancelescostos[index] - (arancelescostos[index] / 1.13m), 6)
-            // Crear el resumen
-            // Calcular las variables primero
-           // decimal totalVentaExenta = arancelescostos.Sum();
-         //   decimal totalVenta = 0;
-            decimal subTotalVentas = totalVenta+totalVentaExenta;
-            decimal subTotal = totalVenta+totalVentaExenta;
-            decimal montoTotalOperacion = totalVenta+ totalVentaExenta;
-            decimal totalPagar = totalVenta+totalVentaExenta;
+            decimal totalVenta = 0;
+            decimal totalVentaExenta = 0;
+            for (int i = 0; i < selectedAranceles.Count; i++)
+            {
+                var arancel = arancelesAPagar.First(a => a.ArancelId == selectedAranceles[i]);
+                if (arancel.Exento)
+                    totalVentaExenta += arancelescostos[i];
+                else
+                    totalVenta += arancelescostos[i];
+            }
+            decimal subTotalVentas = totalVenta + totalVentaExenta;
+            decimal subTotal = subTotalVentas;
+            decimal montoTotalOperacion = subTotalVentas;
+            decimal totalPagar = subTotalVentas;
             string totalLetras = new Conversor().ConvertirNumeroALetras(totalPagar);
-            decimal totalIva = cuerpoDocumento.Sum(item => item.ivaItem); 
-            //decimal totalIva = Math.Round(totalVenta - (totalVenta / 1.13m), 2);
+            decimal totalIva = cuerpoDocumento.Sum(item => item.ivaItem);
 
             // Crear el objeto resumen con las variables
             var resumen = new
@@ -277,18 +279,18 @@ namespace SRAUMOAR.Pages.aranceles
             var requestUnificado = new
             {
                 Usuario = _emisor.NIT,
-                Password = ambiente == 1 ? _emisor.CLAVEPRODAPI: _emisor.CLAVETESTAPI,
+                Password = ambiente == 1 ? _emisor.CLAVEPRODAPI : _emisor.CLAVETESTAPI,
                 Ambiente = ambiente == 1 ? "01" : "00",
                 DteJson = dteJson,
                 Nit = _emisor.NIT,
-                PasswordPrivado = ambiente == 1 ?  _emisor.CLAVEPRODCERTIFICADO: _emisor.CLAVETESTCERTIFICADO,
+                PasswordPrivado = ambiente == 1 ? _emisor.CLAVEPRODCERTIFICADO : _emisor.CLAVETESTCERTIFICADO,
                 TipoDte = "01",
                 CodigoGeneracion = codigoGeneracion,
                 NumControl = numeroControl,
                 VersionDte = 1,
-                CorreoCliente =alumno.Email
+                CorreoCliente = alumno.Email
             };
-            var selloRecibido="";
+            var selloRecibido = "";
             using (HttpClient client = new HttpClient())
             {
                 // LLAMADA ÚNICA
@@ -305,36 +307,39 @@ namespace SRAUMOAR.Pages.aranceles
                 selloRecibido = selloRecepcion;
             }
 
-            
-            Factura factura = new Factura();
-            factura.CodigoGeneracion = codigoGeneracion.ToString().ToUpper();
-            factura.NumeroControl = numeroControl;
-            factura.SelloRecepcion = selloRecibido;
-            factura.JsonDte = dteJson;
-            string fechaHoraString = $"{identificacion.fecEmi} {identificacion.horEmi}";
-            DateTime fechaHora = DateTime.ParseExact(fechaHoraString, "yyyy-MM-dd HH:mm:ss", null);
-            factura.Fecha = fechaHora;
-            factura.TipoDTE = identificacion.tipoDte == "01" ? 1 : 2; // Asumiendo que 01 es Factura y 03 CCF
-            factura.TotalGravado = totalVenta;
-            factura.TotalExento = totalVentaExenta;
-            factura.TotalIva = totalIva;
-            factura.TotalPagar = totalPagar;
-            _context.Facturas.Add(factura);
-            await _context.SaveChangesAsync();
+            if (ambiente == 1)
+            {
+                //guardar factura
 
+                Factura factura = new Factura();
+                factura.CodigoGeneracion = codigoGeneracion.ToString().ToUpper();
+                factura.NumeroControl = numeroControl;
+                factura.SelloRecepcion = selloRecibido;
+                factura.JsonDte = dteJson;
+                string fechaHoraString = $"{identificacion.fecEmi} {identificacion.horEmi}";
+                DateTime fechaHora = DateTime.ParseExact(fechaHoraString, "yyyy-MM-dd HH:mm:ss", null);
+                factura.Fecha = fechaHora;
+                factura.TipoDTE = identificacion.tipoDte == "01" ? 1 : 2; // Asumiendo que 01 es Factura y 03 CCF
+                factura.TotalGravado = totalVenta;
+                factura.TotalExento = totalVentaExenta;
+                factura.TotalIva = totalIva;
+                factura.TotalPagar = totalPagar;
+                _context.Facturas.Add(factura);
+                await _context.SaveChangesAsync();
+            }
             //****************************************************
             //FIN CREACION DEL DTE
             //****************************************************
 
             List<DetallesCobroArancel> aranceles = new List<DetallesCobroArancel>();
 
-           for (int y = 0; y < selectedAranceles.Count; y++)
+            for (int y = 0; y < selectedAranceles.Count; y++)
             {
                 DetallesCobroArancel arancel = new DetallesCobroArancel();
                 arancel.ArancelId = selectedAranceles[y];
                 arancel.costo = arancelescostos[y];
                 aranceles.Add(arancel);
-                
+
             }
             CobroArancel.DetallesCobroArancel = aranceles;
             CobroArancel.CodigoGeneracion = codigoGeneracion.ToString().ToUpper();

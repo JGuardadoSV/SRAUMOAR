@@ -15,7 +15,7 @@ namespace SRAUMOAR.Pages.puntoventa
         private int ambiente = 0;
 
         [BindProperty]
-            public FacturaViewModel Factura { get; set; } = new FacturaViewModel();
+        public FacturaViewModel Factura { get; set; } = new FacturaViewModel();
         private readonly ICorrelativoService _correlativoService;
         private readonly SRAUMOAR.Modelos.Contexto _context;
         private readonly EmisorConfig _emisor;
@@ -26,206 +26,206 @@ namespace SRAUMOAR.Pages.puntoventa
             _correlativoService = correlativoService;
         }
         public void OnGet()
+        {
+            // Aquí cargarías los datos del emisor desde tu fuente de datos
+            CargarDatosEmisor();
+        }
+
+        public IActionResult OnPostAgregarProducto()
+        {
+            // Verificar que se haya seleccionado un tipo de documento
+            if (string.IsNullOrEmpty(Factura.TipoDocumento))
             {
-                // Aquí cargarías los datos del emisor desde tu fuente de datos
+                ModelState.AddModelError("Factura.TipoDocumento", "Debe seleccionar un tipo de documento antes de agregar productos.");
                 CargarDatosEmisor();
+                return Page();
             }
 
-            public IActionResult OnPostAgregarProducto()
+            // Validar código de país para donaciones
+            if (Factura.TipoDocumento == "15" && string.IsNullOrEmpty(Factura.CodigoPais))
             {
-                // Verificar que se haya seleccionado un tipo de documento
-                if (string.IsNullOrEmpty(Factura.TipoDocumento))
+                ModelState.AddModelError("Factura.CodigoPais", "Debe seleccionar un código de país para documentos de donación.");
+                CargarDatosEmisor();
+                return Page();
+            }
+
+            // Validar campos requeridos para Crédito Fiscal
+            if (Factura.TipoDocumento == "02")
+            {
+                if (string.IsNullOrEmpty(Factura.Receptor.Nit))
                 {
-                    ModelState.AddModelError("Factura.TipoDocumento", "Debe seleccionar un tipo de documento antes de agregar productos.");
+                    ModelState.AddModelError("Factura.Receptor.Nit", "El NIT del receptor es requerido para Crédito Fiscal.");
                     CargarDatosEmisor();
                     return Page();
                 }
 
-                // Validar código de país para donaciones
-                if (Factura.TipoDocumento == "15" && string.IsNullOrEmpty(Factura.CodigoPais))
+                if (string.IsNullOrEmpty(Factura.Receptor.Nrc))
                 {
-                    ModelState.AddModelError("Factura.CodigoPais", "Debe seleccionar un código de país para documentos de donación.");
+                    ModelState.AddModelError("Factura.Receptor.Nrc", "El NRC del receptor es requerido para Crédito Fiscal.");
                     CargarDatosEmisor();
                     return Page();
                 }
 
-                // Validar campos requeridos para Crédito Fiscal
-                if (Factura.TipoDocumento == "02")
+                if (string.IsNullOrEmpty(Factura.Receptor.CodActividad))
                 {
-                    if (string.IsNullOrEmpty(Factura.Receptor.Nit))
-                    {
-                        ModelState.AddModelError("Factura.Receptor.Nit", "El NIT del receptor es requerido para Crédito Fiscal.");
-                        CargarDatosEmisor();
-                        return Page();
-                    }
-                    
-                    if (string.IsNullOrEmpty(Factura.Receptor.Nrc))
-                    {
-                        ModelState.AddModelError("Factura.Receptor.Nrc", "El NRC del receptor es requerido para Crédito Fiscal.");
-                        CargarDatosEmisor();
-                        return Page();
-                    }
-                    
-                    if (string.IsNullOrEmpty(Factura.Receptor.CodActividad))
-                    {
-                        ModelState.AddModelError("Factura.Receptor.CodActividad", "El código de actividad económica del receptor es requerido para Crédito Fiscal.");
-                        CargarDatosEmisor();
-                        return Page();
-                    }
-                    
-                    if (string.IsNullOrEmpty(Factura.Receptor.DescActividad))
-                    {
-                        ModelState.AddModelError("Factura.Receptor.DescActividad", "El giro del receptor es requerido para Crédito Fiscal.");
-                        CargarDatosEmisor();
-                        return Page();
-                    }
+                    ModelState.AddModelError("Factura.Receptor.CodActividad", "El código de actividad económica del receptor es requerido para Crédito Fiscal.");
+                    CargarDatosEmisor();
+                    return Page();
                 }
 
-                // Validar campos requeridos para Consumidor Final
-                if (Factura.TipoDocumento == "01")
+                if (string.IsNullOrEmpty(Factura.Receptor.DescActividad))
                 {
-                    if (string.IsNullOrEmpty(Factura.Receptor.Nombre))
-                    {
-                        ModelState.AddModelError("Factura.Receptor.Nombre", "El nombre del receptor es requerido para Consumidor Final.");
-                        CargarDatosEmisor();
-                        return Page();
-                    }
+                    ModelState.AddModelError("Factura.Receptor.DescActividad", "El giro del receptor es requerido para Crédito Fiscal.");
+                    CargarDatosEmisor();
+                    return Page();
                 }
-
-                if (!string.IsNullOrEmpty(Factura.CodigoProducto) &&
-                    !string.IsNullOrEmpty(Factura.DescripcionProducto) &&
-                    Factura.CantidadProducto > 0 &&
-                    Factura.PrecioProducto > 0)
-                {
-                    var nuevoProducto = new ProductoVenta
-                    {
-                        Id = Factura.Productos.Count + 1,
-                        Codigo = Factura.CodigoProducto,
-                        Descripcion = Factura.DescripcionProducto,
-                        Cantidad = Factura.CantidadProducto,
-                        PrecioUnitario = Factura.PrecioProducto,
-                        EsExento = Factura.ProductoExento
-                    };
-
-                    Factura.Productos.Add(nuevoProducto);
-
-                    // Limpiar solo los campos del producto, no todo el ModelState
-                    ModelState.Remove("Factura.CodigoProducto");
-                    ModelState.Remove("Factura.DescripcionProducto");
-                    ModelState.Remove("Factura.CantidadProducto");
-                    ModelState.Remove("Factura.PrecioProducto");
-                    ModelState.Remove("Factura.ProductoExento");
-
-                    // Limpiar el formulario para nuevos valores
-                    Factura.CodigoProducto = string.Empty;
-                    Factura.DescripcionProducto = string.Empty;
-                    Factura.CantidadProducto = 0;
-                    Factura.PrecioProducto = 0;
-                    Factura.ProductoExento = false;
-                }
-
-                return Page();
             }
 
-            public IActionResult OnPostEliminarProducto(int id)
+            // Validar campos requeridos para Consumidor Final
+            if (Factura.TipoDocumento == "01")
             {
-                // Preservar datos del receptor
-                var receptorActual = Factura.Receptor;
-                
-                var producto = Factura.Productos.FirstOrDefault(p => p.Id == id);
-                if (producto != null)
+                if (string.IsNullOrEmpty(Factura.Receptor.Nombre))
                 {
-                    Factura.Productos.Remove(producto);
+                    ModelState.AddModelError("Factura.Receptor.Nombre", "El nombre del receptor es requerido para Consumidor Final.");
+                    CargarDatosEmisor();
+                    return Page();
                 }
-
-                // Restaurar datos del receptor
-                if (receptorActual != null)
-                {
-                    Factura.Receptor = receptorActual;
-                }
-
-                return Page();
             }
 
-            public async Task<IActionResult> OnPostProcesarFacturaAsync()
+            if (!string.IsNullOrEmpty(Factura.CodigoProducto) &&
+                !string.IsNullOrEmpty(Factura.DescripcionProducto) &&
+                Factura.CantidadProducto > 0 &&
+                Factura.PrecioProducto > 0)
             {
-                // Limpiar campos de producto del ModelState ya que están vacíos porque los productos ya fueron agregados
+                var nuevoProducto = new ProductoVenta
+                {
+                    Id = Factura.Productos.Count + 1,
+                    Codigo = Factura.CodigoProducto,
+                    Descripcion = Factura.DescripcionProducto,
+                    Cantidad = Factura.CantidadProducto,
+                    PrecioUnitario = Factura.PrecioProducto,
+                    EsExento = Factura.ProductoExento
+                };
+
+                Factura.Productos.Add(nuevoProducto);
+
+                // Limpiar solo los campos del producto, no todo el ModelState
                 ModelState.Remove("Factura.CodigoProducto");
                 ModelState.Remove("Factura.DescripcionProducto");
                 ModelState.Remove("Factura.CantidadProducto");
                 ModelState.Remove("Factura.PrecioProducto");
                 ModelState.Remove("Factura.ProductoExento");
-                ModelState.Remove("Factura.CodigoPais");
 
-                // Validar que se haya seleccionado un tipo de documento
-                if (string.IsNullOrEmpty(Factura.TipoDocumento))
+                // Limpiar el formulario para nuevos valores
+                Factura.CodigoProducto = string.Empty;
+                Factura.DescripcionProducto = string.Empty;
+                Factura.CantidadProducto = 0;
+                Factura.PrecioProducto = 0;
+                Factura.ProductoExento = false;
+            }
+
+            return Page();
+        }
+
+        public IActionResult OnPostEliminarProducto(int id)
+        {
+            // Preservar datos del receptor
+            var receptorActual = Factura.Receptor;
+
+            var producto = Factura.Productos.FirstOrDefault(p => p.Id == id);
+            if (producto != null)
+            {
+                Factura.Productos.Remove(producto);
+            }
+
+            // Restaurar datos del receptor
+            if (receptorActual != null)
+            {
+                Factura.Receptor = receptorActual;
+            }
+
+            return Page();
+        }
+
+        public async Task<IActionResult> OnPostProcesarFacturaAsync()
+        {
+            // Limpiar campos de producto del ModelState ya que están vacíos porque los productos ya fueron agregados
+            ModelState.Remove("Factura.CodigoProducto");
+            ModelState.Remove("Factura.DescripcionProducto");
+            ModelState.Remove("Factura.CantidadProducto");
+            ModelState.Remove("Factura.PrecioProducto");
+            ModelState.Remove("Factura.ProductoExento");
+            ModelState.Remove("Factura.CodigoPais");
+
+            // Validar que se haya seleccionado un tipo de documento
+            if (string.IsNullOrEmpty(Factura.TipoDocumento))
+            {
+                ModelState.AddModelError("Factura.TipoDocumento", "Debe seleccionar un tipo de documento antes de procesar la factura.");
+                CargarDatosEmisor();
+                return Page();
+            }
+
+            // Validar código de país para donaciones
+            if (Factura.TipoDocumento == "15" && string.IsNullOrEmpty(Factura.CodigoPais))
+            {
+                ModelState.AddModelError("Factura.CodigoPais", "Debe seleccionar un código de país para documentos de donación.");
+                CargarDatosEmisor();
+                return Page();
+            }
+
+            // Validar campos requeridos para Crédito Fiscal
+            if (Factura.TipoDocumento == "02")
+            {
+                if (string.IsNullOrEmpty(Factura.Receptor.Nit))
                 {
-                    ModelState.AddModelError("Factura.TipoDocumento", "Debe seleccionar un tipo de documento antes de procesar la factura.");
+                    ModelState.AddModelError("Factura.Receptor.Nit", "El NIT del receptor es requerido para Crédito Fiscal.");
                     CargarDatosEmisor();
                     return Page();
                 }
 
-                // Validar código de país para donaciones
-                if (Factura.TipoDocumento == "15" && string.IsNullOrEmpty(Factura.CodigoPais))
+                if (string.IsNullOrEmpty(Factura.Receptor.Nrc))
                 {
-                    ModelState.AddModelError("Factura.CodigoPais", "Debe seleccionar un código de país para documentos de donación.");
+                    ModelState.AddModelError("Factura.Receptor.Nrc", "El NRC del receptor es requerido para Crédito Fiscal.");
                     CargarDatosEmisor();
                     return Page();
                 }
 
-                // Validar campos requeridos para Crédito Fiscal
-                if (Factura.TipoDocumento == "02")
+                if (string.IsNullOrEmpty(Factura.Receptor.CodActividad))
                 {
-                    if (string.IsNullOrEmpty(Factura.Receptor.Nit))
-                    {
-                        ModelState.AddModelError("Factura.Receptor.Nit", "El NIT del receptor es requerido para Crédito Fiscal.");
-                        CargarDatosEmisor();
-                        return Page();
-                    }
-                    
-                    if (string.IsNullOrEmpty(Factura.Receptor.Nrc))
-                    {
-                        ModelState.AddModelError("Factura.Receptor.Nrc", "El NRC del receptor es requerido para Crédito Fiscal.");
-                        CargarDatosEmisor();
-                        return Page();
-                    }
-                    
-                    if (string.IsNullOrEmpty(Factura.Receptor.CodActividad))
-                    {
-                        ModelState.AddModelError("Factura.Receptor.CodActividad", "El código de actividad económica del receptor es requerido para Crédito Fiscal.");
-                        CargarDatosEmisor();
-                        return Page();
-                    }
-                    
-                    if (string.IsNullOrEmpty(Factura.Receptor.DescActividad))
-                    {
-                        ModelState.AddModelError("Factura.Receptor.DescActividad", "El giro del receptor es requerido para Crédito Fiscal.");
-                        CargarDatosEmisor();
-                        return Page();
-                    }
-                }
-                
-                // Validar campos requeridos para Consumidor Final
-                if (Factura.TipoDocumento == "01")
-                {
-                    if (string.IsNullOrEmpty(Factura.Receptor.Nombre))
-                    {
-                        ModelState.AddModelError("Factura.Receptor.Nombre", "El nombre del receptor es requerido para Consumidor Final.");
-                        CargarDatosEmisor();
-                        return Page();
-                    }
-                }
-
-                // Validar que haya productos agregados
-                if (!Factura.Productos.Any())
-                {
-                    ModelState.AddModelError("", "Debe agregar al menos un producto antes de procesar la factura.");
+                    ModelState.AddModelError("Factura.Receptor.CodActividad", "El código de actividad económica del receptor es requerido para Crédito Fiscal.");
                     CargarDatosEmisor();
                     return Page();
                 }
 
-                if (ModelState.IsValid)
+                if (string.IsNullOrEmpty(Factura.Receptor.DescActividad))
                 {
+                    ModelState.AddModelError("Factura.Receptor.DescActividad", "El giro del receptor es requerido para Crédito Fiscal.");
+                    CargarDatosEmisor();
+                    return Page();
+                }
+            }
+
+            // Validar campos requeridos para Consumidor Final
+            if (Factura.TipoDocumento == "01")
+            {
+                if (string.IsNullOrEmpty(Factura.Receptor.Nombre))
+                {
+                    ModelState.AddModelError("Factura.Receptor.Nombre", "El nombre del receptor es requerido para Consumidor Final.");
+                    CargarDatosEmisor();
+                    return Page();
+                }
+            }
+
+            // Validar que haya productos agregados
+            if (!Factura.Productos.Any())
+            {
+                ModelState.AddModelError("", "Debe agregar al menos un producto antes de procesar la factura.");
+                CargarDatosEmisor();
+                return Page();
+            }
+
+            if (ModelState.IsValid)
+            {
                 if (Factura.TipoDocumento == "01")
                 {
                     // CONSUMIDOR FINAL
@@ -243,7 +243,7 @@ namespace SRAUMOAR.Pages.puntoventa
                     string correlativo = i.ToString().PadLeft(15, '0'); // Rellena con ceros a la izquierda para que tenga 15 caracteres
                                                                         // Generar número de control
 
-                    int numero = (int)await _correlativoService.ObtenerSiguienteCorrelativo("01",ambiente == 1 ? "01" : "00");
+                    int numero = (int)await _correlativoService.ObtenerSiguienteCorrelativo("01", ambiente == 1 ? "01" : "00");
                     string numeroFormateado = numero.ToString("D15");
                     string numeroControl = "DTE-" + "01" + "-" + "U0000001" + "-" + numeroFormateado;
 
@@ -264,9 +264,9 @@ namespace SRAUMOAR.Pages.puntoventa
                     catch (Exception)
                     {
 
-                       // throw;
+                        // throw;
                     }
-                   
+
                     var identificacion = new
                     {
                         version = 1,
@@ -326,7 +326,7 @@ namespace SRAUMOAR.Pages.puntoventa
                         correo = Factura.Receptor.Correo
                     };
 
-                    
+
 
                     // Crear el cuerpo del documento usando los datos de los aranceles obtenidos
                     var cuerpoDocumento = Factura.Productos
@@ -464,23 +464,26 @@ namespace SRAUMOAR.Pages.puntoventa
                         selloRecibido = selloRecepcion;
                     }
 
+                    if (ambiente == 1)
+                    {
+                        //guardar factura
 
-                    Factura factura = new Factura();
-                    factura.CodigoGeneracion = codigoGeneracion.ToString().ToUpper();
-                    factura.NumeroControl = numeroControl;
-                    factura.SelloRecepcion = selloRecibido;
-                    factura.JsonDte = dteJson;
-                    string fechaHoraString = $"{identificacion.fecEmi} {identificacion.horEmi}";
-                    DateTime fechaHora = DateTime.ParseExact(fechaHoraString, "yyyy-MM-dd HH:mm:ss", null);
-                    factura.Fecha = fechaHora;
-                    factura.TipoDTE = identificacion.tipoDte == "01" ? 1 : 2; // Asumiendo que 01 es Factura y 03 CCF
-                    factura.TotalGravado = totalVenta;
-                    factura.TotalExento = totalVentaExenta;
-                    factura.TotalIva = totalIva;
-                    factura.TotalPagar = totalPagar;
-                    _context.Facturas.Add(factura);
-                    await _context.SaveChangesAsync();
-
+                        Factura factura = new Factura();
+                        factura.CodigoGeneracion = codigoGeneracion.ToString().ToUpper();
+                        factura.NumeroControl = numeroControl;
+                        factura.SelloRecepcion = selloRecibido;
+                        factura.JsonDte = dteJson;
+                        string fechaHoraString = $"{identificacion.fecEmi} {identificacion.horEmi}";
+                        DateTime fechaHora = DateTime.ParseExact(fechaHoraString, "yyyy-MM-dd HH:mm:ss", null);
+                        factura.Fecha = fechaHora;
+                        factura.TipoDTE = identificacion.tipoDte == "01" ? 1 : 2; // Asumiendo que 01 es Factura y 03 CCF
+                        factura.TotalGravado = totalVenta;
+                        factura.TotalExento = totalVentaExenta;
+                        factura.TotalIva = totalIva;
+                        factura.TotalPagar = totalPagar;
+                        _context.Facturas.Add(factura);
+                        await _context.SaveChangesAsync();
+                    }
                     //****************************************************
                     //FIN CREACION DEL DTE
                     //****************************************************
@@ -724,22 +727,26 @@ namespace SRAUMOAR.Pages.puntoventa
                         selloRecibido = selloRecepcion;
                     }
 
-                    Factura factura = new Factura();
-                    factura.CodigoGeneracion = codigoGeneracion.ToString().ToUpper();
-                    factura.NumeroControl = numeroControl;
-                    factura.SelloRecepcion = selloRecibido;
-                    factura.JsonDte = dteJson;
-                    string fechaHoraString = $"{identificacion.fecEmi} {identificacion.horEmi}";
-                    DateTime fechaHora = DateTime.ParseExact(fechaHoraString, "yyyy-MM-dd HH:mm:ss", null);
-                    factura.Fecha = fechaHora;
-                    factura.TipoDTE = 2; // Crédito Fiscal
-                    factura.TotalGravado = totalVenta;
-                    factura.TotalExento = totalVentaExenta;
-                    factura.TotalIva = totalIva;
-                    factura.TotalPagar = totalPagar;
-                    _context.Facturas.Add(factura);
-                    await _context.SaveChangesAsync();
+                    if (ambiente == 1)
+                    {
+                        //guardar la factura
 
+                        Factura factura = new Factura();
+                        factura.CodigoGeneracion = codigoGeneracion.ToString().ToUpper();
+                        factura.NumeroControl = numeroControl;
+                        factura.SelloRecepcion = selloRecibido;
+                        factura.JsonDte = dteJson;
+                        string fechaHoraString = $"{identificacion.fecEmi} {identificacion.horEmi}";
+                        DateTime fechaHora = DateTime.ParseExact(fechaHoraString, "yyyy-MM-dd HH:mm:ss", null);
+                        factura.Fecha = fechaHora;
+                        factura.TipoDTE = 2; // Crédito Fiscal
+                        factura.TotalGravado = totalVenta;
+                        factura.TotalExento = totalVentaExenta;
+                        factura.TotalIva = totalIva;
+                        factura.TotalPagar = totalPagar;
+                        _context.Facturas.Add(factura);
+                        await _context.SaveChangesAsync();
+                    }
                     //****************************************************
                     //FIN CREACION DEL DTE
                     //****************************************************
@@ -749,40 +756,40 @@ namespace SRAUMOAR.Pages.puntoventa
                 return RedirectToPage("../facturas/Index");
             }
 
-                return Page();
-            }
+            return Page();
+        }
 
-            private void CargarDatosEmisor()
+        private void CargarDatosEmisor()
+        {
+            // Preservar datos del receptor si ya existen
+            var receptorActual = Factura.Receptor;
+
+            // Ejemplo de carga de datos del emisor
+            Factura.Emisor = new Emisor
             {
-                // Preservar datos del receptor si ya existen
-                var receptorActual = Factura.Receptor;
-                
-                // Ejemplo de carga de datos del emisor
-                Factura.Emisor = new Emisor
+                Nit = "04331410931010",
+                Nrc = "1029819",
+                Nombre = "Universidad Monseñor Oscar Arnulfo Romero",
+                CodActividad = "85499",
+                DescActividad = "Enseñanza superior universitaria",
+                NombreComercial = "UMOAR",
+                TipoEstablecimiento = "02",
+                Direccion = new Direccion
                 {
-                    Nit = "04331410931010",
-                    Nrc = "1029819",
-                    Nombre = "Universidad Monseñor Oscar Arnulfo Romero",
-                    CodActividad = "85499",
-                    DescActividad = "Enseñanza superior universitaria",
-                    NombreComercial = "UMOAR",
-                    TipoEstablecimiento = "02",
-                    Direccion = new Direccion
-                    {
-                        Departamento = "04",
-                        Municipio = "35",
-                        Complemento = "KM 52 1/2 CARRETERA TEJUTLA, CHAlATENANGO"
-                    },
-                    Telefono = "23021800",
-                    Correo = "umoar@enviosdte.email"
-                };
-                
-                // Restaurar datos del receptor si existían
-                if (receptorActual != null)
-                {
-                    Factura.Receptor = receptorActual;
-                }
+                    Departamento = "04",
+                    Municipio = "35",
+                    Complemento = "KM 52 1/2 CARRETERA TEJUTLA, CHAlATENANGO"
+                },
+                Telefono = "23021800",
+                Correo = "umoar@enviosdte.email"
+            };
+
+            // Restaurar datos del receptor si existían
+            if (receptorActual != null)
+            {
+                Factura.Receptor = receptorActual;
             }
         }
     }
+}
 

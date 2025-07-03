@@ -3,6 +3,7 @@
 
 @{
     ViewData["Title"] = "Registrar Cobro de Arancel";
+    bool exentoMora = (ViewData["ExentoMora"] as bool?) ?? false;
 }
 
 <style>
@@ -455,16 +456,41 @@
                         <tbody>
                             @foreach (var i in Model.Aranceles)
                             {
+                                var vencido = i.EstaVencido;
+                                var totalConMora = i.TotalConMora;
+                                var mostrarMora = vencido && !exentoMora;
                                 <tr>
                                     <input type="hidden" name="selectedAranceles[]" value="@i.ArancelId" />
-                                    <input type="hidden" name="arancelescostos[]" value="@i.Costo" />
-                                    <td class="fw-semibold">@i.Nombre</td>
-                                    <td class="text-end amount-display">@i.Costo.ToString("C")</td>
+                                    <input type="hidden" name="arancelescostos[]" value="@(mostrarMora ? totalConMora : i.Costo)" />
+                                    <td class="fw-semibold">
+                                        @i.Nombre
+                                        @if (mostrarMora)
+                                        {
+                                            <span class="badge bg-danger ms-2">con mora incluida</span>
+                                        }
+                                    </td>
+                                    <td class="text-end amount-display">
+                                        @(mostrarMora ? totalConMora.ToString("C") : i.Costo.ToString("C"))
+                                    </td>
                                 </tr>
                             }
                             <tr class="total-row">
                                 <td><strong><i class="bi bi-calculator me-2"></i>TOTAL A PAGAR:</strong></td>
-                                <td class="text-end"><strong>@Model.Aranceles.Sum(a => a.Costo).ToString("C")</strong></td>
+                                <td class="text-end">
+                                    <strong>
+                                        @{
+                                            decimal total = 0;
+                                            foreach (var i in Model.Aranceles)
+                                            {
+                                                var vencido = i.EstaVencido;
+                                                var totalConMora = i.TotalConMora;
+                                                var mostrarMora = vencido && !exentoMora;
+                                                total += mostrarMora ? totalConMora : i.Costo;
+                                            }
+                                        }
+                                        @total.ToString("C")
+                                    </strong>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
