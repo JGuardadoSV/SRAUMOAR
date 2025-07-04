@@ -13,7 +13,7 @@ namespace SRAUMOAR.Pages.puntoventa
 {
     public class puntoVentaModel : PageModel
     {
-        private int ambiente = 0;
+        private int ambiente = 1;
 
         [BindProperty]
         public FacturaViewModel Factura { get; set; } = new FacturaViewModel();
@@ -492,7 +492,9 @@ namespace SRAUMOAR.Pages.puntoventa
                         CodigoGeneracion = codigoGeneracion,
                         NumControl = numeroControl,
                         VersionDte = 1,
-                        CorreoCliente = Factura.Receptor.Correo
+                        CorreoCliente = Factura.Receptor.Correo,
+                        Carrera = "-",
+                        Observaciones = "-"
                     };
                     var selloRecibido = "";
                     using (HttpClient client = new HttpClient())
@@ -747,7 +749,9 @@ namespace SRAUMOAR.Pages.puntoventa
                         CodigoGeneracion = codigoGeneracion,
                         NumControl = numeroControl,
                         VersionDte = 3,
-                        CorreoCliente = Factura.Receptor.Correo
+                        CorreoCliente = Factura.Receptor.Correo,
+                        Carrera = "-",
+                        Observaciones = "-"
                     };
 
                     var selloRecibido = "";
@@ -956,7 +960,9 @@ namespace SRAUMOAR.Pages.puntoventa
                         CodigoGeneracion = codigoGeneracion,
                         NumControl = numeroControl,
                         VersionDte = 1,
-                        CorreoCliente = Factura.Receptor.Correo
+                        CorreoCliente = Factura.Receptor.Correo,
+                        Carrera = "-",
+                        Observaciones = "-"
                     };
 
                     var selloRecibido = "";
@@ -1163,7 +1169,9 @@ namespace SRAUMOAR.Pages.puntoventa
                         CodigoGeneracion = codigoGeneracion,
                         NumControl = numeroControl,
                         VersionDte = 1,
-                        CorreoCliente = Factura.Receptor.Correo
+                        CorreoCliente = Factura.Receptor.Correo,
+                        Carrera = "-",
+                        Observaciones = "-"
                     };
 
                     var selloRecibido = "";
