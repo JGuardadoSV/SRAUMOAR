@@ -30,6 +30,10 @@ namespace SRAUMOAR.Entidades.Procesos
         public int DocenteId { get; set; } // Llave foránea
         public virtual Docente? Docente { get; set; } // Propiedad de navegación
 
+        [Required(ErrorMessage = "El pensum es requerido")]
+        [Display(Name = "Pensum")]
+        public int PensumId { get; set; } // Llave foránea
+        public virtual Pensum? Pensum { get; set; } // Propiedad de navegación
         //propiedad de navegación MateriasGrupo
         public virtual ICollection<MateriasGrupo>? MateriasGrupos { get; set; }
 

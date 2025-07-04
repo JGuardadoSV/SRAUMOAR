@@ -1,87 +1,395 @@
 ﻿@page
 @model SRAUMOAR.Pages.grupos.IndexModel
-
 @{
-    ViewData["Title"] = "Administracion de grupos";
+    ViewData["Title"] = "Administración de grupos";
 }
 
-@if (User.IsInRole("Docentes"))
-{
-    <div class="container my-5">
-        <div class="row justify-content-center">
-            <div class="col-md-12">
-                <div class="card bg-light shadow-lg">
-                    <div class="card-body">
-                        <h1 class="display-4 text-center text-success fw-bold">Mis grupos para el ciclo actual</h1>
+<style>
+    :root {
+        --primary-green: #22c55e;
+        --secondary-green: #16a34a;
+        --dark-green: #15803d;
+        --light-green: #dcfce7;
+        --accent-green: #bbf7d0;
+        --text-dark: #1f2937;
+        --text-light: #6b7280;
+        --border-color: #d1d5db;
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
 
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-}
-else
-{
-    <div class="container my-5">
-        <div class="row justify-content-center">
-            <div class="col-md-12">
-                <div class="card bg-light shadow-lg">
-                    <div class="card-body">
-                        <h1 class="display-4 text-center text-success fw-bold">Grupos para el ciclo actual</h1>
-                       
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    body {
+        background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        min-height: 100vh;
+    }
 
+    .hero-section {
+        background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%);
+        color: white;
+        padding: 3rem 0;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
 
-}
-@if (User.IsInRole("Administrador") || User.IsInRole("Administracion"))
-{
-
-    <p class="text-center my-4">
-        <a asp-page="Create" class="btn btn-success btn-lg shadow">
-            <i class="bi bi-plus-lg me-2"></i>Registrar nuevo grupo
-        </a>
-    </p>
-
-}
-<table class="table table-hover table-bordered">
-    <thead class="table-dark table-success text-center">
-        <tr>
-            <th>@Html.DisplayNameFor(model => model.Grupo[0].Nombre)</th>
-            <th>@Html.DisplayNameFor(model => model.Grupo[0].Limite)</th>
-            <th>@Html.DisplayNameFor(model => model.Grupo[0].Activo)</th>
-            <th>@Html.DisplayNameFor(model => model.Grupo[0].Carrera)</th>
-            <th>@Html.DisplayNameFor(model => model.Grupo[0].Ciclo)</th>
-            <th>@Html.DisplayNameFor(model => model.Grupo[0].Docente)</th>
-            <th>Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model.Grupo)
-        {
-            <tr>
-                <td>@Html.DisplayFor(modelItem => item.Nombre)</td>
-                <td>@Html.DisplayFor(modelItem => item.Limite)</td>
-                <td>@Html.DisplayFor(modelItem => item.Activo)</td>
-                <td>@Html.DisplayFor(modelItem => item.Carrera.NombreCarrera)</td>
-                <td>@Html.DisplayFor(modelItem => item.Ciclo.NCiclo)-@Html.DisplayFor(modelItem => item.Ciclo.anio)</td>
-                <td>@Html.DisplayFor(modelItem => item.Docente.Nombres) @Html.DisplayFor(modelItem => item.Docente.Apellidos)</td>
-                <td class="text-center">
-                    @if (User.IsInRole("Administrador"))
-                    {
-                        <a asp-page="./Edit" asp-route-id="@item.GrupoId" class="btn btn-success">Editar</a>
-                        @*  <a asp-page="/materiasgrupo/Index" asp-route-id="@item.PensumId" class="btn btn-success">Materias</a> *@
-                    }
-                    else
-                    {
-                        <a asp-page="./Edit" asp-route-id="@item.GrupoId" class="btn btn-success">Administrar</a>
-                    }
-                </td>
-            </tr>
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
         }
-    </tbody>
-</table>
 
+    .hero-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .hero-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .hero-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        font-weight: 300;
+    }
+
+    .action-section {
+        background: white;
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .btn-primary-green {
+        background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow);
+    }
+
+        .btn-primary-green:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            color: white;
+        }
+
+    .btn-action {
+        background: var(--primary-green);
+        border: 1px solid var(--primary-green);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+        .btn-action:hover {
+            background: var(--secondary-green);
+            border-color: var(--secondary-green);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+    .table-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .table {
+        margin-bottom: 0;
+        font-size: 0.9rem;
+    }
+
+        .table thead th {
+            background: linear-gradient(135deg, var(--dark-green) 0%, var(--secondary-green) 100%);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.8rem;
+            padding: 1rem 0.75rem;
+            border: none;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .table tbody tr {
+            transition: all 0.3s ease;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+            .table tbody tr:hover {
+                background: var(--light-green);
+                transform: scale(1.01);
+                box-shadow: 0 2px 8px rgba(34, 197, 94, 0.1);
+            }
+
+        .table tbody td {
+            padding: 1rem 0.75rem;
+            vertical-align: middle;
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-active {
+        background: var(--accent-green);
+        color: var(--dark-green);
+    }
+
+    .status-inactive {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    .card-stats {
+        background: white;
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border-left: 4px solid var(--primary-green);
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary-green);
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        color: var(--text-light);
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .breadcrumb {
+        background: transparent;
+        padding: 0;
+        margin-bottom: 1rem;
+    }
+
+    .breadcrumb-item {
+        color: var(--text-light);
+        font-weight: 500;
+    }
+
+        .breadcrumb-item.active {
+            color: var(--primary-green);
+        }
+
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: "›";
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
+    .icon {
+        width: 1.25rem;
+        height: 1.25rem;
+        fill: currentColor;
+    }
+
+    @@media (max-width: 768px) {
+        .hero-title
+
+    {
+        font-size: 2rem;
+    }
+
+    .table-container {
+        margin: 0 -1rem;
+        border-radius: 0;
+    }
+
+    .table {
+        font-size: 0.8rem;
+    }
+
+        .table thead th,
+        .table tbody td {
+            padding: 0.75rem 0.5rem;
+        }
+
+    }
+</style>
+
+<div class="container-fluid px-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="#" class="text-decoration-none">Inicio</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Administración de Grupos</li>
+        </ol>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content text-center">
+            @if (User.IsInRole("Docentes"))
+            {
+                <h1 class="hero-title">Mis Grupos Académicos</h1>
+                <p class="hero-subtitle">Gestiona tus grupos para el ciclo académico actual</p>
+            }
+            else
+            {
+                <h1 class="hero-title">Administración de Grupos</h1>
+                <p class="hero-subtitle">Sistema integral de gestión académica</p>
+            }
+        </div>
+    </div>
+
+    <!-- Action Section -->
+    @if (User.IsInRole("Administrador") || User.IsInRole("Administracion"))
+    {
+        <div class="action-section text-center">
+            <a asp-page="Create" class="btn-primary-green">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z" />
+                </svg>
+                Registrar Nuevo Grupo
+            </a>
+        </div>
+    }
+
+    <!-- Statistics Card -->
+    <div class="card-stats">
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-number">@Model.Grupo.Count()</div>
+                <div class="stat-label">Total Grupos</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">@Model.Grupo.Count(g => g.Activo)</div>
+                <div class="stat-label">Grupos Activos</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">@Model.Grupo.Sum(g => g.Limite)</div>
+                <div class="stat-label">Capacidad Total</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Section -->
+    <div class="table-container">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>@Html.DisplayNameFor(model => model.Grupo[0].Nombre)</th>
+                        <th>@Html.DisplayNameFor(model => model.Grupo[0].Limite)</th>
+                        <th>@Html.DisplayNameFor(model => model.Grupo[0].Activo)</th>
+                        <th>@Html.DisplayNameFor(model => model.Grupo[0].Carrera)</th>
+                        <th>@Html.DisplayNameFor(model => model.Grupo[0].Ciclo)</th>
+                        <th>@Html.DisplayNameFor(model => model.Grupo[0].Docente)</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Grupo)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@Html.DisplayFor(modelItem => item.Nombre)</strong>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark">@Html.DisplayFor(modelItem => item.Limite) estudiantes</span>
+                            </td>
+                            <td>
+                                @if (item.Activo)
+                                {
+                                    <span class="status-badge status-active">Activo</span>
+                                }
+                                else
+                                {
+                                    <span class="status-badge status-inactive">Inactivo</span>
+                                }
+                            </td>
+                            <td>@Html.DisplayFor(modelItem => item.Carrera.NombreCarrera)</td>
+                            <td>
+                                <span class="badge bg-secondary">
+                                    @Html.DisplayFor(modelItem => item.Ciclo.NCiclo)-@Html.DisplayFor(modelItem => item.Ciclo.anio)
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-placeholder me-2" style="width: 32px; height: 32px; background: var(--accent-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--dark-green); font-weight: 600; font-size: 0.8rem;">
+                                        @(item.Docente.Nombres.FirstOrDefault())@(item.Docente.Apellidos.FirstOrDefault())
+                                    </div>
+                                    <div>
+                                        <strong>@Html.DisplayFor(modelItem => item.Docente.Nombres)</strong>
+                                        <strong>@Html.DisplayFor(modelItem => item.Docente.Apellidos)</strong>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                @if (User.IsInRole("Administrador"))
+                                {
+                                    <a asp-page="./Edit" asp-route-id="@item.GrupoId" class="btn-action">
+                                        <svg class="icon" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 4px;">
+                                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+                                        </svg>
+                                        Editar
+                                    </a>
+                                }
+                                else
+                                {
+                                    <a asp-page="./Edit" asp-route-id="@item.GrupoId" class="btn-action">
+                                        <svg class="icon" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 4px;">
+                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                                        </svg>
+                                        Administrar
+                                    </a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

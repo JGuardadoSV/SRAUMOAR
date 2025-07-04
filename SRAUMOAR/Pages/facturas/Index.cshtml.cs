@@ -16,6 +16,8 @@ using Newtonsoft.Json;
 using iText.Kernel.Pdf;
 using iText.Layout.Element;
 using iText.Layout;
+using SRAUMOAR.Entidades.Alumnos;
+using Newtonsoft.Json.Linq;
 namespace SRAUMOAR.Pages.facturas
 {
     public class IndexModel : PageModel
@@ -114,17 +116,37 @@ namespace SRAUMOAR.Pages.facturas
         {
             try
             {
-                // Aquí puedes agregar tu lógica para obtener el JSON y sello
-                // Por ahora uso valores de ejemplo
-                Factura cobroArancel = await _context.Facturas
+                
+                
+                Factura factura1 = await _context.Facturas
                     .FirstOrDefaultAsync(c => c.FacturaId == id);
-                Factura factura = await _context.Facturas.FirstOrDefaultAsync(f => f.CodigoGeneracion == cobroArancel.CodigoGeneracion);
+                Factura factura = await _context.Facturas.FirstOrDefaultAsync(f => f.CodigoGeneracion == factura1.CodigoGeneracion);
                 if (string.IsNullOrWhiteSpace(factura?.JsonDte))
                 {
 
                     return OnGetGenerarPDFSinDatos();
                 }
 
+                CobroArancel cobroArancel = await _context.CobrosArancel
+                 .Include(c => c.Alumno).ThenInclude(a => a.Carrera)
+                 .Include(c => c.Ciclo)
+                 .FirstOrDefaultAsync(c => c.CodigoGeneracion == factura1.CodigoGeneracion);
+
+                bool existeCobro = cobroArancel != null;
+                Alumno alumno=new Alumno();
+                if (existeCobro)
+                {
+                     alumno = cobroArancel.Alumno;
+                    // Continúa con tu lógica...
+                }
+                else
+                {
+                    var jsonObj = JObject.Parse(factura.JsonDte); // OBTENER EL JSON ORIGINAL PARA LEERLO EN CADA SECCION
+                                                                  // Sección de Emisor
+                    string correo = jsonObj?["receptor"]?["correo"]?.ToString() ?? "";
+
+                    alumno = _context.Alumno.FirstOrDefault(a => a.Email.Equals(correo));
+                }
 
                 var dteJson = factura.JsonDte; // Reemplazar con tu lógica
                 var selloRecibido = factura.SelloRecepcion; // Reemplazar con tu lógica
@@ -136,8 +158,8 @@ namespace SRAUMOAR.Pages.facturas
                     dteJson = dteJson,
                     selloRecibido = selloRecibido,
                     tipoDte = tipo,
-                    carrera =  "-",
-                    observacion = "-",
+                    carrera = alumno?.Carrera?.NombreCarrera ?? "-",
+                    observacion = cobroArancel?.nota??"-"
                 };
 
                 var json = JsonConvert.SerializeObject(requestData);

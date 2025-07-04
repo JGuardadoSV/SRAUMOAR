@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SRAUMOAR.Entidades.Generales;
+using SRAUMOAR.Entidades.Materias;
 using SRAUMOAR.Entidades.Procesos;
 using SRAUMOAR.Modelos;
 
@@ -24,10 +25,13 @@ namespace SRAUMOAR.Pages.grupos
         public IActionResult OnGet()
         {
             var carreras = _context.Carreras.ToList();
+            var pensums = _context.Pensums.ToList();
             carreras.Insert(0, new Carrera { CarreraId = 0, NombreCarrera = "Seleccione una carrera" });
+            pensums.Insert(0, new Pensum { PensumId = 0, NombrePensum = "Seleccione un pensum" });
             ViewData["CarreraId"] = new SelectList(carreras, "CarreraId", "NombreCarrera");
-            
-            
+            ViewData["PensumId"] = new SelectList(pensums, "PensumId", "NombrePensum");
+
+
             ViewData["CicloId"] = new SelectList(
                 _context.Ciclos
                 .Where(x => x.Activo == true)

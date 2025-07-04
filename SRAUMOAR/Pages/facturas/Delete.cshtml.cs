@@ -25,7 +25,19 @@ namespace SRAUMOAR.Pages.facturas
             _context = context;
             _emisor = emisorOptions.Value;
         }
-
+        public static DateTime ObtenerFechaHoraElSalvador()
+        {
+            try
+            {
+                var timeZoneElSalvador = TimeZoneInfo.FindSystemTimeZoneById("Central America Standard Time");
+                return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneElSalvador);
+            }
+            catch (TimeZoneNotFoundException)
+            {
+                // Fallback si no se encuentra la zona horaria
+                return DateTime.UtcNow.AddHours(-6);
+            }
+        }
         [BindProperty]
         public Factura Factura { get; set; } = default!;
 
@@ -66,13 +78,17 @@ namespace SRAUMOAR.Pages.facturas
                 var jsonObj = JObject.Parse(venta.JsonDte); // OBTENER EL JSON ORIGINAL PARA LEERLO EN CADA SECCION
 
                 // Sección de Identificación
+                // Opción 1: Usando TimeZoneInfo (recomendado)
+                var timeZoneElSalvador = TimeZoneInfo.FindSystemTimeZoneById("Central America Standard Time");
+                var fechaHoraElSalvador = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneElSalvador);
+
                 var identificacion = new
                 {
                     version = 2,
                     ambiente = jsonObj["identificacion"]["ambiente"].ToString(),
                     codigoGeneracion = Guid.NewGuid().ToString().ToUpper(),
-                    fecAnula = DateTime.Now.ToString("yyyy-MM-dd"),
-                    horAnula = DateTime.Now.ToString("HH:mm:ss")
+                    fecAnula = fechaHoraElSalvador.ToString("yyyy-MM-dd"),
+                    horAnula = fechaHoraElSalvador.ToString("HH:mm:ss")
                 };
 
                 // Sección de Emisor

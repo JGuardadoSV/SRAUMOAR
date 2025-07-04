@@ -1,88 +1,357 @@
 ﻿@page
 @model SRAUMOAR.Pages.grupos.CreateModel
-
 @{
     ViewData["Title"] = "Registro de grupo";
 }
 
-<h1 class=" text-primary fw-bold mb-4 display-5">Registro de nuevo grupo</h1>
+<style>
+    :root {
+        --primary-green: #22c55e;
+        --secondary-green: #16a34a;
+        --light-green: #f0fdf4;
+        --text-dark: #1f2937;
+        --text-light: #6b7280;
+        --border-color: #e5e7eb;
+        --error-color: #ef4444;
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
 
+    body {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        padding: 1rem 0;
+    }
 
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form method="post" class="p-4 border rounded-3 shadow-sm bg-light">
-            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+    .compact-header {
+        background: linear-gradient(135deg, var(--primary-green), var(--secondary-green));
+        color: white;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        border-radius: 8px;
+        text-align: center;
+        box-shadow: var(--shadow-sm);
+    }
 
-            <div class="form-group mb-3">
-                <label asp-for="Grupo.Nombre" class="form-label"></label>
-                <input asp-for="Grupo.Nombre" class="form-control" />
-                <span asp-validation-for="Grupo.Nombre" class="text-danger"></span>
-            </div>
+        .compact-header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+        }
 
-            <div class="form-group mb-3">
-                <label asp-for="Grupo.Limite" class="form-label"></label>
-                <input asp-for="Grupo.Limite" class="form-control" />
-                <span asp-validation-for="Grupo.Limite" class="text-danger"></span>
-            </div>
+    .compact-form {
+        background: white;
+        border-radius: 12px;
+        box-shadow: var(--shadow-sm);
+        padding: 1.5rem;
+        border: 1px solid var(--border-color);
+        max-width: 900px;
+        margin: 0 auto;
+    }
 
-            <div class="form-group form-check mb-3">
-                <input class="form-check-input" asp-for="Grupo.Activo" />
-                <label class="form-check-label" asp-for="Grupo.Activo"></label>
-            </div>
+    .form-grid {
+        display: grid;
+        gap: 1rem;
+    }
 
-            <div class="form-group mb-3">
-                <label asp-for="Grupo.CarreraId" class="form-label"></label>
-                <select id="carreraSelect" asp-for="Grupo.CarreraId" class="form-select" asp-items="ViewBag.CarreraId"></select>
-            </div>
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
 
-            <div class="form-group mb-3">
-                <label asp-for="Grupo.CicloId" class="form-label"></label>
-                <select asp-for="Grupo.CicloId" class="form-select" asp-items="ViewBag.CicloId"></select>
-            </div>
+    .form-group {
+        margin-bottom: 0;
+    }
 
-            <div class="form-group mb-3">
-                <label asp-for="Grupo.DocenteId" class="form-label"></label>
-                <select asp-for="Grupo.DocenteId" class="form-select" asp-items="ViewBag.DocenteId"></select>
-            </div>
+    .form-label {
+        color: var(--text-dark);
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+        display: block;
+        font-size: 0.875rem;
+    }
 
-            <div class="form-group text-center">
-                <input type="submit" value="Registrar grupo" class="btn btn-success btn-lg me-2" />
-                <a asp-page="Index" class="btn btn-outline-secondary btn-lg">Volver</a>
+    .form-control,
+    .form-select {
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+        transition: border-color 0.2s ease;
+        width: 100%;
+    }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--primary-green);
+            box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.1);
+            outline: none;
+        }
+
+    .form-check-container {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        background: var(--light-green);
+        border-radius: 6px;
+        border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+
+    .form-check-input {
+        width: 1rem;
+        height: 1rem;
+        margin: 0;
+    }
+
+    .form-check-label {
+        color: var(--text-dark);
+        font-weight: 500;
+        font-size: 0.875rem;
+        margin: 0;
+    }
+
+    .btn-compact {
+        padding: 0.5rem 1.5rem;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: var(--primary-green);
+        color: white;
+    }
+
+        .btn-primary:hover {
+            background: var(--secondary-green);
+            transform: translateY(-1px);
+        }
+
+    .btn-secondary {
+        background: transparent;
+        color: var(--text-light);
+        border: 1px solid var(--border-color);
+    }
+
+        .btn-secondary:hover {
+            border-color: var(--primary-green);
+            color: var(--primary-green);
+        }
+
+    .button-group {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+        margin-top: 1.5rem;
+    }
+
+    .text-danger {
+        color: var(--error-color);
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+        display: block;
+    }
+
+    .validation-summary {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 6px;
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+        color: var(--error-color);
+        font-size: 0.875rem;
+    }
+
+        .validation-summary ul {
+            margin: 0;
+            padding-left: 1rem;
+        }
+
+    .breadcrumb {
+        background: transparent;
+        padding: 0;
+        margin-bottom: 1rem;
+        font-size: 0.875rem;
+    }
+
+    .breadcrumb-item {
+        color: var(--text-light);
+    }
+
+        .breadcrumb-item.active {
+            color: var(--primary-green);
+        }
+
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: "›";
+            color: var(--text-light);
+        }
+
+    .icon {
+        width: 1rem;
+        height: 1rem;
+        fill: currentColor;
+    }
+
+    @@media (max-width: 576px) {
+        .form-row
+
+    {
+        grid-template-columns: 1fr;
+    }
+
+    .compact-form {
+        margin: 0 1rem;
+        padding: 1rem;
+    }
+
+    .button-group {
+        flex-direction: column;
+    }
+
+    .btn-compact {
+        width: 100%;
+        justify-content: center;
+    }
+
+    }
+</style>
+
+<div class="container-fluid px-3">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a class="text-decoration-none">Inicio</a></li>
+            <li class="breadcrumb-item"><a asp-page="Index" class="text-decoration-none">Grupos</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Registro</li>
+        </ol>
+    </nav>
+
+    <!-- Compact Header -->
+    <div class="compact-header">
+        <h1>Nuevo Grupo</h1>
+    </div>
+
+    <!-- Compact Form -->
+    <div class="compact-form">
+        <form method="post">
+            <!-- Validation Summary -->
+            <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+
+            <div class="form-grid">
+                <!-- Primera fila: Nombre y Límite -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label asp-for="Grupo.Nombre" class="form-label">Nombre del Grupo</label>
+                        <input asp-for="Grupo.Nombre" class="form-control" placeholder="Ej: Grupo A" />
+                        <span asp-validation-for="Grupo.Nombre" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Grupo.Limite" class="form-label">Límite Estudiantes</label>
+                        <input asp-for="Grupo.Limite" class="form-control" placeholder="Ej: 30" />
+                        <span asp-validation-for="Grupo.Limite" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <!-- Segunda fila: Carrera y Pensum -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label asp-for="Grupo.CarreraId" class="form-label">Carrera</label>
+                        <select id="carreraSelect" asp-for="Grupo.CarreraId" class="form-select" asp-items="ViewBag.CarreraId">
+                            <option value="">Seleccionar...</option>
+                        </select>
+                        <span asp-validation-for="Grupo.CarreraId" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Grupo.PensumId" class="form-label">Pensum</label>
+                        <select id="pensumSelect" asp-for="Grupo.PensumId" class="form-select" asp-items="ViewBag.PensumId">
+                            <option value="">Seleccionar...</option>
+                        </select>
+                        <span asp-validation-for="Grupo.PensumId" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <!-- Tercera fila: Ciclo y Docente -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label asp-for="Grupo.CicloId" class="form-label">Ciclo</label>
+                        <select asp-for="Grupo.CicloId" class="form-select" asp-items="ViewBag.CicloId">
+                            <option value="">Seleccionar...</option>
+                        </select>
+                        <span asp-validation-for="Grupo.CicloId" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Grupo.DocenteId" class="form-label">Docente</label>
+                        <select asp-for="Grupo.DocenteId" class="form-select" asp-items="ViewBag.DocenteId">
+                            <option value="">Seleccionar...</option>
+                        </select>
+                        <span asp-validation-for="Grupo.DocenteId" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <!-- Estado Activo -->
+                <div class="form-group">
+                    <div class="form-check-container">
+                        <input class="form-check-input" asp-for="Grupo.Activo" />
+                        <label class="form-check-label" asp-for="Grupo.Activo">
+                            Grupo Activo
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="button-group">
+                    <input type="submit" value="Registrar" class="btn-compact btn-primary">
+                    <a asp-page="Index" class="btn-compact btn-secondary">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+                        </svg>
+                        Volver
+                    </a>
+                </div>
             </div>
         </form>
-
     </div>
 </div>
 
-<div>
-   
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }
-
 
 <script>
     document.getElementById("carreraSelect").addEventListener("change", function () {
         var carreraId = this.value;
         var pensumSelect = document.getElementById("pensumSelect");
 
-        // Limpiar el combo de pensum
-        pensumSelect.innerHTML = '<option value="">Seleccione un pensum</option>';
+        if (pensumSelect) {
+            // Limpiar el combo de pensum
+            pensumSelect.innerHTML = '<option value="">Seleccionar...</option>';
 
-        if (carreraId) {
-            fetch(`/vistasParciales/cboPensums?handler=PensumsByCarrera&carreraId=` + carreraId)
-                .then(response => response.json())
-                .then(data => {
-                    data.forEach(pensum => {
-                        var option = document.createElement("option");
-                        option.value = pensum.pensumId;
-                        option.text = pensum.nombrePensum;
-                        pensumSelect.add(option);
+            if (carreraId) {
+                fetch(`/vistasParciales/cboPensums?handler=PensumsByCarrera&carreraId=` + carreraId)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(pensum => {
+                            var option = document.createElement("option");
+                            option.value = pensum.pensumId;
+                            option.text = pensum.nombrePensum;
+                            pensumSelect.add(option);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error al cargar los pensums:', error);
                     });
-                });
+            }
         }
     });
 </script>
