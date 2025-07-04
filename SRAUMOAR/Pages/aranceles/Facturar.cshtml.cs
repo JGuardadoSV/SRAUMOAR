@@ -34,6 +34,20 @@ namespace SRAUMOAR.Pages.aranceles
             _correlativoService = correlativoService;
         }
         public List<Arancel> Aranceles { get; set; }
+        
+        // Método para cargar datos de la vista (reutilizable)
+        private async Task CargarDatosParaVista(int idalumno)
+        {
+            var alumno = await _context.Alumno.FirstOrDefaultAsync(m => m.AlumnoId == idalumno);
+            if (alumno != null)
+            {
+                ViewData["Alumno"] = alumno;
+                ViewData["AlumnoNombre"] = alumno.Nombres + " " + alumno.Apellidos;
+                ViewData["AlumnoId"] = alumno.AlumnoId;
+                ViewData["ExentoMora"] = alumno.ExentoMora;
+            }
+        }
+        
         //public async Task<IActionResult> OnGet(int alumnoId, int arancelId)
         public async Task<IActionResult> OnGetAsync(string arancelIds, int idalumno)
         {
@@ -65,10 +79,7 @@ namespace SRAUMOAR.Pages.aranceles
                 ciclo = aranceles.First(a => a.Ciclo != null).Ciclo;
             }
 
-            ViewData["Alumno"] = alumno;
-            ViewData["AlumnoNombre"] = alumno.Nombres + " " + alumno.Apellidos;
-            ViewData["AlumnoId"] = alumno.AlumnoId;
-            ViewData["ExentoMora"] = alumno.ExentoMora;
+            await CargarDatosParaVista(idalumno);
             Aranceles = aranceles;
             ViewData["Ciclo"] = ciclo;
 
@@ -88,8 +99,27 @@ namespace SRAUMOAR.Pages.aranceles
                 return Page();
             }
 
+            // Validar que el efectivo recibido sea suficiente
+            if (CobroArancel.EfectivoRecibido <= 0)
+            {
+                ModelState.AddModelError("CobroArancel.EfectivoRecibido", "Debe ingresar el monto de efectivo recibido");
+                await CargarDatosParaVista(idalumno);
+                return Page();
+            }
+
+            // Calcular el total a cobrar
+            decimal totalACobrar = arancelescostos.Sum();
+            if (CobroArancel.EfectivoRecibido < totalACobrar)
+            {
+                ModelState.AddModelError("CobroArancel.EfectivoRecibido", 
+                    $"El efectivo recibido (${CobroArancel.EfectivoRecibido:F2}) es insuficiente. Se requiere al menos ${totalACobrar:F2}");
+                await CargarDatosParaVista(idalumno);
+                return Page();
+            }
+
             if (!ModelState.IsValid)
             {
+                await CargarDatosParaVista(idalumno);
                 return Page();
             }
 
@@ -333,8 +363,8 @@ namespace SRAUMOAR.Pages.aranceles
                 NumControl = numeroControl,
                 VersionDte = 1,
                 CorreoCliente = alumno.Email,
-                Carrera = alumno.Carrera.NombreCarrera,
-                Observaciones= CobroArancel.nota
+                Carrera = string.IsNullOrEmpty(alumno.Carrera?.NombreCarrera) ? "-" : alumno.Carrera.NombreCarrera,
+                Observaciones = string.IsNullOrEmpty(CobroArancel.nota) ? "-" : CobroArancel.nota
             };
             var selloRecibido = "";
             using (HttpClient client = new HttpClient())

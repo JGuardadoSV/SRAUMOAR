@@ -280,12 +280,31 @@
         text-decoration: none;
     }
 
-        .btn-cancel-invoice:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
-            color: white;
-            text-decoration: none;
-        }
+            .btn-cancel-invoice:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 0.6rem 1.5rem;
+        color: white;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .btn-secondary:hover {
+        transform: none;
+        box-shadow: none;
+        opacity: 0.6;
+    }
 
     .payment-layout {
         display: grid;
@@ -565,14 +584,18 @@
                                 <i class="bi bi-cash-stack me-1"></i>Efectivo Recibido
                             </label>
                             <input asp-for="CobroArancel.EfectivoRecibido"
+                                   id="EfectivoRecibido"
                                    class="form-control-professional payment-input"
                                    type="number"
                                    step="0.01"
                                    min="@totalConMoraInput.ToString("F2")"
-                                   oninvalid="this.setCustomValidity('El efectivo recibido debe ser al menos @totalConMoraInput.ToString("F2")')"
-                                   oninput="this.setCustomValidity('')"
+                                   placeholder="Ingrese el monto recibido"
                                    required />
                             <span asp-validation-for="CobroArancel.EfectivoRecibido" class="validation-error"></span>
+                            <div id="efectivoValidation" class="validation-error" style="display: none;">
+                                <i class="bi bi-exclamation-triangle me-1"></i>
+                                <span id="efectivoValidationText"></span>
+                            </div>
                         </div>
 
                         <div class="form-group">
@@ -580,10 +603,15 @@
                                 <i class="bi bi-arrow-return-left me-1"></i>Cambio a Entregar
                             </label>
                             <input asp-for="CobroArancel.Cambio"
+                                   id="CambioCalculado"
                                    class="form-control-professional form-control-readonly payment-result"
                                    type="number"
                                    step="0.01"
                                    readonly />
+                            <div id="cambioValidation" class="validation-error" style="display: none;">
+                                <i class="bi bi-exclamation-triangle me-1"></i>
+                                <span id="cambioValidationText"></span>
+                            </div>
                         </div>
 
                         <!-- Botones de Acción -->
@@ -592,7 +620,7 @@
                                 <i class="bi bi-x-circle me-1"></i>
                                 Cancelar
                             </a>
-                            <button type="submit" class="btn-save-invoice">
+                            <button type="submit" id="btnProcesarCobro" class="btn-save-invoice" disabled>
                                 <i class="bi bi-check-circle me-1"></i>
                                 Procesar Cobro
                             </button>
@@ -626,23 +654,77 @@
     <partial name="_ValidationScriptsPartial" />
     <script>
         $(document).ready(function() {
-            // Calcular cambio automáticamente
-            $('#CobroArancel_EfectivoRecibido').on('input', function() {
-                var efectivoRecibido = parseFloat($(this).val()) || 0;
-                var montoArancel = parseFloat($('#MontoArancel').val()) || 0;
+            var montoArancel = parseFloat($('#MontoArancel').val()) || 0;
+            
+            // Función para validar el efectivo recibido
+            function validarEfectivoRecibido() {
+                var efectivoRecibido = parseFloat($('#EfectivoRecibido').val()) || 0;
                 var cambio = Math.max(0, efectivoRecibido - montoArancel);
-                $('#CobroArancel_Cambio').val(cambio.toFixed(2));
+                var isValid = true;
+                var validationMessage = '';
+                
+                // Ocultar mensajes de validación anteriores
+                $('#efectivoValidation').hide();
+                $('#cambioValidation').hide();
+                
+                // Validar que se haya ingresado un monto
+                if (efectivoRecibido <= 0) {
+                    validationMessage = 'Debe ingresar el monto de efectivo recibido';
+                    $('#efectivoValidationText').text(validationMessage);
+                    $('#efectivoValidation').show();
+                    isValid = false;
+                }
+                // Validar que el efectivo sea suficiente
+                else if (efectivoRecibido < montoArancel) {
+                    validationMessage = 'El efectivo recibido ($' + efectivoRecibido.toFixed(2) + ') es insuficiente. Se requiere al menos $' + montoArancel.toFixed(2);
+                    $('#efectivoValidationText').text(validationMessage);
+                    $('#efectivoValidation').show();
+                    isValid = false;
+                }
+                // Si el cambio es muy alto, mostrar advertencia
+                else if (cambio > montoArancel * 0.5) {
+                    validationMessage = 'El cambio a entregar ($' + cambio.toFixed(2) + ') es muy alto. Verifique el monto ingresado.';
+                    $('#cambioValidationText').text(validationMessage);
+                    $('#cambioValidation').show();
+                    // No invalidar el formulario, solo mostrar advertencia
+                }
+                
+                // Actualizar el campo de cambio
+                $('#CambioCalculado').val(cambio.toFixed(2));
+                
+                // Habilitar/deshabilitar el botón de procesar
+                if (isValid && efectivoRecibido >= montoArancel) {
+                    $('#btnProcesarCobro').prop('disabled', false);
+                    $('#btnProcesarCobro').removeClass('btn-secondary').addClass('btn-save-invoice');
+                } else {
+                    $('#btnProcesarCobro').prop('disabled', true);
+                    $('#btnProcesarCobro').removeClass('btn-save-invoice').addClass('btn-secondary');
+                }
+                
+                return isValid;
+            }
+            
+            // Calcular cambio automáticamente y validar
+            $('#EfectivoRecibido').on('input', function() {
+                validarEfectivoRecibido();
             });
-
+            
             // Efecto visual en el campo de efectivo recibido
-            $('#CobroArancel_EfectivoRecibido').on('focus', function() {
+            $('#EfectivoRecibido').on('focus', function() {
                 $(this).parent().addClass('focused');
             }).on('blur', function() {
                 $(this).parent().removeClass('focused');
+                validarEfectivoRecibido();
             });
 
             // Prevenir doble clic y mostrar ventana de espera
             $('form').on('submit', function(e) {
+                // Validar antes de enviar
+                if (!validarEfectivoRecibido()) {
+                    e.preventDefault();
+                    return false;
+                }
+                
                 var submitButton = $(this).find('button[type="submit"]');
                 var originalText = submitButton.html();
                 

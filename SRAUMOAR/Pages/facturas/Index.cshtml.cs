@@ -135,7 +135,9 @@ namespace SRAUMOAR.Pages.facturas
                 {
                     dteJson = dteJson,
                     selloRecibido = selloRecibido,
-                    tipoDte = tipo
+                    tipoDte = tipo,
+                    carrera =  "-",
+                    observacion = "-",
                 };
 
                 var json = JsonConvert.SerializeObject(requestData);

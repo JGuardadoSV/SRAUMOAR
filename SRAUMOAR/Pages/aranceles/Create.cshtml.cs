@@ -46,7 +46,7 @@ namespace SRAUMOAR.Pages.aranceles
                 ModelState.Remove("Arancel.CicloId");
                 ModelState.Remove("Arancel.FechaInicio");
                 ModelState.Remove("Arancel.FechaFin");
-                
+                ModelState.Remove("Arancel.ValorMora");
                 // Establecer valores null para campos opcionales
                 Arancel.CicloId = null;
                 Arancel.FechaInicio = null;

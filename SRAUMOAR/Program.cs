@@ -23,7 +23,7 @@ builder.Services.AddDbContext<Contexto>(
 builder.Services.AddScoped<ICorrelativoService, CorrelativoService>();
 
 builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
-// Agregar después de AddRazorPages()
+// Agregar despuï¿½s de AddRazorPages()
 builder.Services.AddScoped<PdfService>();
 // En Program.cs
 builder.Services.Configure<EmisorConfig>(
@@ -50,7 +50,7 @@ builder.Services.AddAuthorization(options =>
 var app = builder.Build();
 
 
-//qué otras configuraciones hacen falta
+//quï¿½ otras configuraciones hacen falta
 
 
 
@@ -73,7 +73,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapRazorPages();
-app.MapControllers(); // Añade esta línea si usas controladores
+app.MapControllers(); // Aï¿½ade esta lï¿½nea si usas controladores
 
 
 app.Run();

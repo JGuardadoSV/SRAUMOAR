@@ -14,6 +14,8 @@ using Newtonsoft.Json;
 using iText.Kernel.Pdf;
 using iText.Layout.Element;
 using iText.Layout;
+using SRAUMOAR.Entidades.Alumnos;
+using SRAUMOAR.Entidades.Generales;
 
 namespace SRAUMOAR.Pages.aranceles
 {
@@ -103,9 +105,12 @@ namespace SRAUMOAR.Pages.aranceles
                 // Aquí puedes agregar tu lógica para obtener el JSON y sello
                 // Por ahora uso valores de ejemplo
                 CobroArancel cobroArancel = await _context.CobrosArancel
-                    .Include(c => c.Alumno)
+                    .Include(c => c.Alumno).ThenInclude(a => a.Carrera)
                     .Include(c => c.Ciclo)
                     .FirstOrDefaultAsync(c => c.CobroArancelId == id);
+
+                Alumno alumno = cobroArancel.Alumno;
+
                 Factura factura = await _context.Facturas.FirstOrDefaultAsync(f => f.CodigoGeneracion == cobroArancel.CodigoGeneracion);
                 if (string.IsNullOrWhiteSpace(factura?.JsonDte))
                 {
@@ -123,7 +128,9 @@ namespace SRAUMOAR.Pages.aranceles
                 {
                     dteJson = dteJson,
                     selloRecibido = selloRecibido,
-                    tipoDte =tipo
+                    tipoDte =tipo,
+                    carrera= alumno?.Carrera?.NombreCarrera ?? "-",
+                    observacion=cobroArancel.nota ?? "-",
                 };
 
                 var json = JsonConvert.SerializeObject(requestData);

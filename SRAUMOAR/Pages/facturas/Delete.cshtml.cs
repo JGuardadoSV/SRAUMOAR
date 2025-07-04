@@ -222,6 +222,13 @@ namespace SRAUMOAR.Pages.facturas
                 _context.Entry(Factura).Property(f => f.SelloAnulacion).IsModified = true;
                 _context.Entry(Factura).Property(f => f.Anulada).IsModified = true;
 
+
+                var arancel = await _context.CobrosArancel.FirstOrDefaultAsync(c => c.CodigoGeneracion == jsonObj["identificacion"]["codigoGeneracion"].ToString());
+                if (arancel != null)
+                {
+                    _context.CobrosArancel.Remove(arancel);
+                }
+
                 await _context.SaveChangesAsync();
             }
 
