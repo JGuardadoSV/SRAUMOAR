@@ -25,7 +25,7 @@ namespace SRAUMOAR.Pages.generales.materias
         {
             idPensum = id.Value;
             Materia = await _context.Materias
-                .Include(m => m.Pensum).Where(x => x.Pensum.CarreraId == id).ToListAsync();
+                .Include(m => m.Pensum).Where(x => x.Pensum.PensumId == id).ToListAsync();
         }
     }
 }

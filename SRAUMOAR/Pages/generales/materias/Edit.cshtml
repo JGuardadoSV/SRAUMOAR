@@ -2,227 +2,466 @@
 @model SRAUMOAR.Pages.generales.materias.EditModel
 
 @{
-    ViewData["Title"] = "Editar";
+    ViewData["Title"] = "Editar Materia";
+    Layout = "_Layout";
 }
 
-<!DOCTYPE html>
-<html lang="es">
-<body>
-    <header class="bg-primary text-white text-center py-3 mb-4">
-        <h1>Edición Materia</h1>
-    </header>
-    <hr />
-    <div class="container mt-5">
-        <div class="card shadow-lg">
-            <div class="card-header bg-dark text-white text-center">
-                <h4 class="fs-4 fw-semibold text-white formal-text">Materia</h4>
+<style>
+    .form-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+
+    .form-card:hover {
+        box-shadow: 0 0 30px rgba(0,0,0,0.15);
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%);
+        color: white;
+        border-radius: 15px 15px 0 0 !important;
+        padding: 1.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .input-group {
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+    }
+
+    .input-group:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .input-group-text {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        color: #1B5E20;
+    }
+
+    .form-control {
+        border: 1px solid #e9ecef;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        border-color: #1B5E20;
+        box-shadow: 0 0 0 0.2rem rgba(27, 94, 32, 0.15);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%);
+        border: none;
+        padding: 0.75rem 2rem;
+        font-weight: 500;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(27, 94, 32, 0.3);
+    }
+
+    .btn-secondary {
+        background: #f8f9fa;
+        color: #2c3e50;
+        border: 1px solid #e9ecef;
+        padding: 0.75rem 2rem;
+        font-weight: 500;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-secondary:hover {
+        background: #e9ecef;
+        transform: translateY(-2px);
+    }
+
+    .custom-checkbox {
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+    }
+
+    .custom-control-input:checked ~ .custom-control-label::before {
+        background-color: #1B5E20;
+        border-color: #1B5E20;
+    }
+
+    .validation-message {
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
+    .breadcrumb {
+        background: transparent;
+        padding: 0;
+    }
+
+    .breadcrumb-item a {
+        color: #1B5E20;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .breadcrumb-item a:hover {
+        color: #2E7D32;
+    }
+
+    .breadcrumb-item.active {
+        color: #6c757d;
+    }
+</style>
+
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-4">
+                <div class="col-sm-6">
+                    <h1 class="m-0">
+                        <i class="bi bi-pencil-square text-success me-2"></i>
+                        Editar Materia
+                    </h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a asp-page="/Index">Inicio</a></li>
+                        <li class="breadcrumb-item"><a asp-page="Index">Materias</a></li>
+                        <li class="breadcrumb-item active">Editar</li>
+                    </ol>
+                </div>
             </div>
-            <div class="container mt-1">
-                <div class="row justify-content-center">
-                    <div class="col-md-5">
-                        <div class="card-body">
-                            <form method="post">
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <div class="card form-card">
+                        <div class="card-header">
+                            <h3 class="card-title mb-0">
+                                <i class="bi bi-pencil-square me-2"></i> Información de la Materia
+                            </h3>
+                        </div>
+                        <div class="card-body p-4">
+                            <form method="post" class="needs-validation" novalidate>
                                 <div asp-validation-summary="ModelOnly" class="alert alert-danger d-flex align-items-center" role="alert"></div>
                                 <input type="hidden" asp-for="Materia.MateriaId" />
-                                <div class="mb-3">
-                                    <label asp-for="Materia.NombreMateria" class="form-label fs-4 fw-semibold text-dark formal-text">Nombre de la Materia</label>
-                                    <br>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-journal"></i></span>
-                                        <input asp-for="Materia.NombreMateria" class="form-control" placeholder="Ingrese el nombre de la Materia" />
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label asp-for="Materia.NombreMateria" class="form-label">
+                                                <i class="bi bi-book me-2"></i> Nombre de la Materia
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-journal"></i></span>
+                                                <input asp-for="Materia.NombreMateria" class="form-control" placeholder="Ingrese el nombre de la Materia" />
+                                            </div>
+                                            <span asp-validation-for="Materia.NombreMateria" class="text-danger validation-message"></span>
+                                        </div>
                                     </div>
-                                    <br>
-                                    <span asp-validation-for="Materia.NombreMateria" class="text-danger"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label asp-for="Materia.CodigoMateria" class="form-label fs-4 fw-semibold text-dark formal-text">Codigo de la Materia</label>
-                                    <br>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-journal"></i></span>
-                                        <input asp-for="Materia.CodigoMateria" class="form-control" placeholder="Ingrese codigo de la Carrera" />
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label asp-for="Materia.CodigoMateria" class="form-label">
+                                                <i class="bi bi-hash me-2"></i> Código de la Materia
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-journal-text"></i></span>
+                                                <input asp-for="Materia.CodigoMateria" class="form-control" placeholder="Ingrese código de la Materia" />
+                                            </div>
+                                            <span asp-validation-for="Materia.CodigoMateria" class="text-danger validation-message"></span>
+                                        </div>
                                     </div>
-                                    <br>
-                                    <span asp-validation-for="Materia.CodigoMateria" class="text-danger"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label asp-for="Materia.Ciclo" class="form-label fs-4 fw-semibold text-dark formal-text">Ciclo</label>
-                                    <br>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-journal"></i></span>
-                                        <input asp-for="Materia.Ciclo" class="form-control" placeholder="Ingrese el ciclo" />
-                                    </div>
-                                    <br>
-                                    <span asp-validation-for="Materia.Ciclo" class="text-danger"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label asp-for="Materia.Correlativo" class="form-label fs-4 fw-semibold text-dark formal-text">Correlativo</label>
-                                    <br>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-journal"></i></span>
-                                        <input asp-for="Materia.Correlativo" class="form-control" placeholder="Ingrese Correlativo" />
-                                    </div>
-                                    <br>
-                                    <span asp-validation-for="Materia.Correlativo" class="text-danger"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label asp-for="Materia.uv" class="form-label fs-4 fw-semibold text-dark formal-text">UV</label>
-                                    <br>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-journal"></i></span>
-                                        <input asp-for="Materia.uv" class="form-control" placeholder="Unidades Valorativas" />
-                                    </div>
-                                    <br>
-                                    <span asp-validation-for="Materia.uv" class="text-danger"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label asp-for="Materia.PensumId" class="form-label fs-4 fw-semibold text-dark formal-text">Pensum</label>
-                                    <br>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-mortarboard"></i></span>
-                                        <select asp-for="Materia.PensumId" class="form-control" asp-items="ViewBag.PensumId"></select>
-                                    </div>
-                                    <br>
-                                    <span asp-validation-for="Materia.PensumId" class="text-danger"></span>
-                                </div>
-                                <div class="form-group form-check">
-                                    <label class="form-check-label">
-                                        <input class="form-check-input" asp-for="Materia.RequisitoBachillerato" /> @Html.DisplayNameFor(model => model.Materia.RequisitoBachillerato)
-                                    </label>
                                 </div>
 
-                                <!-- Sección de Prerrequisitos -->
-                                <div class="mb-3" id="seccionPrerrequisitos">
-                                    <label class="form-label fs-4 fw-semibold text-dark formal-text">
-                                        <i class="bi bi-link-45deg me-2"></i> Prerrequisitos de la Materia
-                                    </label>
-                                    <div class="card border-success">
-                                        <div class="card-body">
-                                            <p class="text-muted mb-3">
-                                                <i class="bi bi-info-circle me-2"></i>
-                                                Seleccione las materias que deben ser aprobadas antes de cursar esta materia:
-                                            </p>
-                                            <div id="listaPrerrequisitos" class="row">
-                                                <!-- Los prerrequisitos se cargarán dinámicamente aquí -->
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label asp-for="Materia.Ciclo" class="form-label">
+                                                <i class="bi bi-arrow-repeat me-2"></i> Ciclo
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-123"></i></span>
+                                                <input asp-for="Materia.Ciclo" class="form-control" placeholder="Ingrese el ciclo" />
                                             </div>
-                                            <div class="mt-3">
-                                                <button type="button" class="btn btn-outline-success btn-sm" id="agregarPrerrequisito">
-                                                    <i class="bi bi-plus-circle me-2"></i> Agregar Otro Prerrequisito
-                                                </button>
+                                            <span asp-validation-for="Materia.Ciclo" class="text-danger validation-message"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label asp-for="Materia.Correlativo" class="form-label">
+                                                <i class="bi bi-sort-numeric-down me-2"></i> Correlativo
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-123"></i></span>
+                                                <input asp-for="Materia.Correlativo" class="form-control" placeholder="Ingrese correlativo" />
+                                            </div>
+                                            <span asp-validation-for="Materia.Correlativo" class="text-danger validation-message"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label asp-for="Materia.uv" class="form-label">
+                                                <i class="bi bi-star me-2"></i> Unidades Valorativas
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-123"></i></span>
+                                                <input asp-for="Materia.uv" class="form-control" placeholder="Ingrese UV" />
+                                            </div>
+                                            <span asp-validation-for="Materia.uv" class="text-danger validation-message"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label asp-for="Materia.PensumId" class="form-label">
+                                                <i class="bi bi-mortarboard me-2"></i> Pensum
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-book"></i></span>
+                                                <select asp-for="Materia.PensumId" class="form-control" asp-items="ViewBag.PensumId" id="pensumSelect">
+                                                    <option value="">Seleccione un pensum</option>
+                                                </select>
+                                            </div>
+                                            <span asp-validation-for="Materia.PensumId" class="text-danger validation-message"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <div class="custom-control custom-checkbox">
+                                                <input type="checkbox" class="custom-control-input" id="requisitoBachillerato" asp-for="Materia.RequisitoBachillerato">
+                                                <label class="custom-control-label" for="requisitoBachillerato">
+                                                    <i class="bi bi-check2-square me-2"></i>
+                                                    @Html.DisplayNameFor(model => model.Materia.RequisitoBachillerato)
+                                                </label>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                <br>
-                                <div class="d-grid gap-2">
-                                    <button type="submit" class="btn btn-primary btn-lg">
-                                        <i class="bi bi-arrow-clockwise"></i> Actualizar
-                                    </button>
+
+                                <!-- Sección de Prerrequisitos -->
+                                <div class="row" id="seccionPrerrequisitos">
+                                    <div class="col-12">
+                                        <div class="card border-success">
+                                            <div class="card-header bg-success text-white">
+                                                <h5 class="mb-0">
+                                                    <i class="bi bi-link-45deg me-2"></i> Prerrequisitos de la Materia
+                                                </h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <p class="text-muted mb-3">
+                                                    <i class="bi bi-info-circle me-2"></i>
+                                                    Seleccione las materias que deben ser aprobadas antes de cursar esta materia:
+                                                </p>
+                                                <div id="listaPrerrequisitos" class="row">
+                                                    <!-- Los prerrequisitos se cargarán dinámicamente aquí -->
+                                                </div>
+                                                <div class="mt-3">
+                                                    <button type="button" class="btn btn-outline-success btn-sm" id="agregarPrerrequisito">
+                                                        <i class="bi bi-plus-circle me-2"></i> Agregar Otro Prerrequisito
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <br>
+
+                                <div class="row mt-4">
+                                    <div class="col-12">
+                                        <div class="d-flex justify-content-between">
+                                            <a asp-page="Index" class="btn btn-secondary">
+                                                <i class="bi bi-arrow-left me-2"></i> Volver a la lista
+                                            </a>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="bi bi-check-circle me-2"></i> Actualizar Materia
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </form>
                         </div>
-                        <br>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    <div class="text-center mt-3">
-        <a asp-page="Index" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left"></i> Volver a la lista
-        </a>
-    </div>
-    @section Scripts {
-        @{
-            await Html.RenderPartialAsync("_ValidationScriptsPartial");
-        }
-        <script>
-            // Funcionalidad para prerrequisitos en edición
-            let contadorPrerrequisitos = 0;
-            let materiasDisponibles = [];
-            let prerrequisitosExistentes = @Html.Raw(Json.Serialize(Model.PrerrequisitosExistentes));
+    </section>
+</div>
 
-            // Cargar materias cuando se carga la página
-            document.addEventListener('DOMContentLoaded', function() {
-                const pensumId = document.querySelector('select[name="Materia.PensumId"]').value;
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        // Activar validación de Bootstrap
+        (function () {
+            'use strict'
+            var forms = document.querySelectorAll('.needs-validation')
+            Array.prototype.slice.call(forms).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+                    form.classList.add('was-validated')
+                }, false)
+            })
+        })()
+
+        // Animación suave al hacer scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Funcionalidad para prerrequisitos en edición
+        let contadorPrerrequisitos = 0;
+        let materiasDisponibles = [];
+        let prerrequisitosExistentes = @Html.Raw(Json.Serialize(Model.PrerrequisitosExistentes));
+
+        // Cargar materias cuando se carga la página
+        document.addEventListener('DOMContentLoaded', function() {
+            const pensumSelect = document.getElementById('pensumSelect');
+            if (pensumSelect) {
+                const pensumId = pensumSelect.value;
                 if (pensumId) {
                     cargarMateriasDelPensum(pensumId);
                 }
-            });
-
-            // Cargar materias del pensum seleccionado
-            async function cargarMateriasDelPensum(pensumId) {
-                try {
-                    const materiaActualId = @Model.Materia.MateriaId;
-                    const response = await fetch(`?handler=MateriasDelPensum&pensumId=${pensumId}&materiaActualId=${materiaActualId}`);
-                    if (response.ok) {
-                        materiasDisponibles = await response.json();
-                        cargarPrerrequisitosExistentes();
+                
+                // También escuchar cambios en el pensum
+                pensumSelect.addEventListener('change', function() {
+                    const pensumId = this.value;
+                    if (pensumId) {
+                        cargarMateriasDelPensum(pensumId);
+                    } else {
+                        const container = document.getElementById('listaPrerrequisitos');
+                        container.innerHTML = `
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    Seleccione un pensum para ver las materias disponibles como prerrequisitos.
+                                </div>
+                            </div>
+                        `;
+                        contadorPrerrequisitos = 0;
                     }
-                } catch (error) {
-                    console.error('Error al cargar materias:', error);
-                }
-            }
-
-            // Cargar prerrequisitos existentes
-            function cargarPrerrequisitosExistentes() {
-                const container = document.getElementById('listaPrerrequisitos');
-                container.innerHTML = '';
-
-                if (prerrequisitosExistentes && prerrequisitosExistentes.length > 0) {
-                    prerrequisitosExistentes.forEach((prerrequisito, index) => {
-                        agregarPrerrequisito(prerrequisito.prerrequisoMateriaId);
-                    });
-                } else {
-                    // Agregar un prerrequisito vacío si no hay existentes
-                    agregarPrerrequisito();
-                }
-            }
-
-            // Agregar un nuevo prerrequisito
-            function agregarPrerrequisito(prerrequisitoIdSeleccionado = null) {
-                const container = document.getElementById('listaPrerrequisitos');
-                const prerrequisitoDiv = document.createElement('div');
-                prerrequisitoDiv.className = 'col-md-6 mb-3';
-                prerrequisitoDiv.id = `prerrequisito-${contadorPrerrequisitos}`;
-
-                let options = '<option value="">Seleccione una materia</option>';
-                materiasDisponibles.forEach(materia => {
-                    const selected = prerrequisitoIdSeleccionado === materia.materiaId ? 'selected' : '';
-                    options += `<option value="${materia.materiaId}" ${selected}>${materia.nombre}</option>`;
                 });
+            }
+        });
 
-                prerrequisitoDiv.innerHTML = `
-                    <div class="input-group">
-                        <span class="input-group-text">
-                            <i class="bi bi-link-45deg"></i>
-                        </span>
-                        <select name="PrerrequisitosSeleccionados" class="form-control prerrequisito-select">
-                            ${options}
-                        </select>
-                        <button type="button" class="btn btn-outline-danger" onclick="eliminarPrerrequisito(${contadorPrerrequisitos})">
-                            <i class="bi bi-trash"></i>
-                        </button>
+        // Cargar materias del pensum seleccionado
+        async function cargarMateriasDelPensum(pensumId) {
+            try {
+                const materiaActualId = @Model.Materia.MateriaId;
+                const response = await fetch(`?handler=MateriasDelPensum&pensumId=${pensumId}&materiaActualId=${materiaActualId}`);
+                
+                if (response.ok) {
+                    materiasDisponibles = await response.json();
+                    cargarPrerrequisitosExistentes();
+                } else {
+                    console.error('Error en la respuesta del servidor:', response.status);
+                    const container = document.getElementById('listaPrerrequisitos');
+                    container.innerHTML = `
+                        <div class="col-12">
+                            <div class="alert alert-danger">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                Error al cargar las materias del pensum.
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error al cargar materias:', error);
+                const container = document.getElementById('listaPrerrequisitos');
+                container.innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Error de conexión al cargar las materias.
+                        </div>
                     </div>
                 `;
-
-                container.appendChild(prerrequisitoDiv);
-                contadorPrerrequisitos++;
             }
+        }
 
-            // Eliminar un prerrequisito
-            function eliminarPrerrequisito(index) {
-                const prerrequisitoDiv = document.getElementById(`prerrequisito-${index}`);
-                if (prerrequisitoDiv) {
-                    prerrequisitoDiv.remove();
-                }
-            }
+        // Cargar prerrequisitos existentes
+        function cargarPrerrequisitosExistentes() {
+            const container = document.getElementById('listaPrerrequisitos');
+            container.innerHTML = '';
 
-            // Agregar prerrequisito cuando se hace clic en el botón
-            document.getElementById('agregarPrerrequisito').addEventListener('click', function() {
+            if (prerrequisitosExistentes && prerrequisitosExistentes.length > 0) {
+                prerrequisitosExistentes.forEach((prerrequisito, index) => {
+                    agregarPrerrequisito(prerrequisito.prerrequisoMateriaId);
+                });
+            } else {
+                // Agregar un prerrequisito vacío si no hay existentes
                 agregarPrerrequisito();
+            }
+        }
+
+        // Agregar un nuevo prerrequisito
+        function agregarPrerrequisito(prerrequisitoIdSeleccionado = null) {
+            const container = document.getElementById('listaPrerrequisitos');
+            const prerrequisitoDiv = document.createElement('div');
+            prerrequisitoDiv.className = 'col-md-6 mb-3';
+            prerrequisitoDiv.id = `prerrequisito-${contadorPrerrequisitos}`;
+
+            let options = '<option value="">Seleccione una materia</option>';
+            materiasDisponibles.forEach(materia => {
+                const selected = prerrequisitoIdSeleccionado === materia.materiaId ? 'selected' : '';
+                options += `<option value="${materia.materiaId}" ${selected}>${materia.nombre}</option>`;
             });
-        </script>
-    }
-</body>
-</html>
+
+            prerrequisitoDiv.innerHTML = `
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="bi bi-link-45deg"></i>
+                    </span>
+                    <select name="PrerrequisitosSeleccionados" class="form-control prerrequisito-select">
+                        ${options}
+                    </select>
+                    <button type="button" class="btn btn-outline-danger" onclick="eliminarPrerrequisito(${contadorPrerrequisitos})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            `;
+
+            container.appendChild(prerrequisitoDiv);
+            contadorPrerrequisitos++;
+        }
+
+        // Eliminar un prerrequisito
+        function eliminarPrerrequisito(index) {
+            const prerrequisitoDiv = document.getElementById(`prerrequisito-${index}`);
+            if (prerrequisitoDiv) {
+                prerrequisitoDiv.remove();
+            }
+        }
+
+        // Agregar prerrequisito cuando se hace clic en el botón
+        document.getElementById('agregarPrerrequisito').addEventListener('click', function() {
+            agregarPrerrequisito();
+        });
+    </script>
+}

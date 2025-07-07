@@ -26,7 +26,7 @@ namespace SRAUMOAR.Pages.generales.materias
         [BindProperty]
         public List<int> PrerrequisitosSeleccionados { get; set; } = new List<int>();
 
-        public List<MateriaPrerequisito> PrerrequisitosExistentes { get; set; } = new List<MateriaPrerequisito>();
+        public List<object> PrerrequisitosExistentes { get; set; } = new List<object>();
 
         public async Task<IActionResult> OnGetAsync(int? id)
         {
@@ -47,8 +47,18 @@ namespace SRAUMOAR.Pages.generales.materias
             }
 
             Materia = materia;
-            PrerrequisitosExistentes = materia.Prerrequisitos?.ToList() ?? new List<MateriaPrerequisito>();
-            PrerrequisitosSeleccionados = PrerrequisitosExistentes.Select(p => p.PrerrequisoMateriaId).ToList();
+            
+            // Crear objetos anónimos para evitar ciclos de referencia en JSON
+            PrerrequisitosExistentes = materia.Prerrequisitos?
+                .Select(p => new { 
+                    prerrequisoMateriaId = p.PrerrequisoMateriaId,
+                    nombreMateria = p.PrerrequisoMateria?.NombreMateria ?? "",
+                    codigoMateria = p.PrerrequisoMateria?.CodigoMateria ?? ""
+                })
+                .Cast<object>()
+                .ToList() ?? new List<object>();
+                
+            PrerrequisitosSeleccionados = materia.Prerrequisitos?.Select(p => p.PrerrequisoMateriaId).ToList() ?? new List<int>();
 
             ViewData["PensumId"] = new SelectList(_context.Pensums.Where(x => x.PensumId == materia.PensumId), "PensumId", "CodigoPensum");
             return Page();

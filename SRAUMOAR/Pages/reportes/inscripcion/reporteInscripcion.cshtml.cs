@@ -13,6 +13,7 @@ using SRAUMOAR.Entidades.Alumnos;
 using SRAUMOAR.Entidades.Procesos;
 using SRAUMOAR.Servicios;
 using Microsoft.EntityFrameworkCore;
+using SRAUMOAR.Entidades.Materias;
 namespace SRAUMOAR.Pages.reportes.inscripcion
 {
     public class reporteInscripcionModel : PageModel
@@ -145,6 +146,20 @@ namespace SRAUMOAR.Pages.reportes.inscripcion
                 foreach(var mat in MateriasInscritas)
                 
                 {
+
+                    var prerrequisitos = _context.MateriasPrerrequisitos
+                    .Where(p => p.MateriaId == mat.MateriasGrupo.MateriaId)
+                    .Select(p => new {
+                        p.PrerrequisoMateria.MateriaId,
+                        p.PrerrequisoMateria.CodigoMateria,
+                        p.PrerrequisoMateria.NombreMateria,
+                        p.PrerrequisoMateria.Ciclo,
+                        p.PrerrequisoMateria.uv,
+                        PensumNombre = p.PrerrequisoMateria.Pensum.NombrePensum
+                    })
+                    .ToList();
+
+
                     i++;           
                     
                     tablaAsignaturas.AddCell(new Cell().Add(new Paragraph(i.ToString())
@@ -170,13 +185,16 @@ namespace SRAUMOAR.Pages.reportes.inscripcion
                     var preReqDataTable = new Table(2);
                     preReqDataTable.SetWidth(UnitValue.CreatePercentValue(100));
 
-                    preReqDataTable.AddCell(new Cell().Add(new Paragraph("-")
-                        .SetFontSize(10)) // Tamaño de fuente
+                    // Código final recomendado
+                    preReqDataTable.AddCell(new Cell().Add(new Paragraph(
+                        prerrequisitos.Any() ? prerrequisitos.First().CodigoMateria : "-")
+                        .SetFontSize(10))
                         .SetTextAlignment(TextAlignment.CENTER)
                         .SetBorder(Border.NO_BORDER));
 
-                    preReqDataTable.AddCell(new Cell().Add(new Paragraph("-")
-                        .SetFontSize(10)) // Tamaño de fuente
+                    preReqDataTable.AddCell(new Cell().Add(new Paragraph(
+                        prerrequisitos.Any() ? prerrequisitos.First().NombreMateria : "-")
+                        .SetFontSize(10))
                         .SetBorder(Border.NO_BORDER));
 
                     tablaAsignaturas.AddCell(new Cell().Add(preReqDataTable).SetBorder(Border.NO_BORDER));
