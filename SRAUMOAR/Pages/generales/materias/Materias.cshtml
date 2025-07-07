@@ -74,7 +74,7 @@
         <a href="~/descargas/pensum/pensumpdf.pdf" target="_blank" class="btn btn-info">PDF <i class="bi bi-filetype-pdf"></i></a>
     </header>
     <div class="container-fluid mt-4">
-        <a asp-page="./Create" class="btn btn-primary btn-custom">
+        <a asp-page="./Create" asp-route-id="@Model.idPensum" class="btn btn-primary btn-custom">
             <i class="bi bi-plus-circle btn-icon"></i>
             Nueva Materia
         </a>

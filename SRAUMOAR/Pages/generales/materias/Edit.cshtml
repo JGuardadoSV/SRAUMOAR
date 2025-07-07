@@ -89,6 +89,29 @@
                                         <input class="form-check-input" asp-for="Materia.RequisitoBachillerato" /> @Html.DisplayNameFor(model => model.Materia.RequisitoBachillerato)
                                     </label>
                                 </div>
+
+                                <!-- Sección de Prerrequisitos -->
+                                <div class="mb-3" id="seccionPrerrequisitos">
+                                    <label class="form-label fs-4 fw-semibold text-dark formal-text">
+                                        <i class="bi bi-link-45deg me-2"></i> Prerrequisitos de la Materia
+                                    </label>
+                                    <div class="card border-success">
+                                        <div class="card-body">
+                                            <p class="text-muted mb-3">
+                                                <i class="bi bi-info-circle me-2"></i>
+                                                Seleccione las materias que deben ser aprobadas antes de cursar esta materia:
+                                            </p>
+                                            <div id="listaPrerrequisitos" class="row">
+                                                <!-- Los prerrequisitos se cargarán dinámicamente aquí -->
+                                            </div>
+                                            <div class="mt-3">
+                                                <button type="button" class="btn btn-outline-success btn-sm" id="agregarPrerrequisito">
+                                                    <i class="bi bi-plus-circle me-2"></i> Agregar Otro Prerrequisito
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                                 <br>
                                 <div class="d-grid gap-2">
                                     <button type="submit" class="btn btn-primary btn-lg">
@@ -113,6 +136,93 @@
         @{
             await Html.RenderPartialAsync("_ValidationScriptsPartial");
         }
+        <script>
+            // Funcionalidad para prerrequisitos en edición
+            let contadorPrerrequisitos = 0;
+            let materiasDisponibles = [];
+            let prerrequisitosExistentes = @Html.Raw(Json.Serialize(Model.PrerrequisitosExistentes));
+
+            // Cargar materias cuando se carga la página
+            document.addEventListener('DOMContentLoaded', function() {
+                const pensumId = document.querySelector('select[name="Materia.PensumId"]').value;
+                if (pensumId) {
+                    cargarMateriasDelPensum(pensumId);
+                }
+            });
+
+            // Cargar materias del pensum seleccionado
+            async function cargarMateriasDelPensum(pensumId) {
+                try {
+                    const materiaActualId = @Model.Materia.MateriaId;
+                    const response = await fetch(`?handler=MateriasDelPensum&pensumId=${pensumId}&materiaActualId=${materiaActualId}`);
+                    if (response.ok) {
+                        materiasDisponibles = await response.json();
+                        cargarPrerrequisitosExistentes();
+                    }
+                } catch (error) {
+                    console.error('Error al cargar materias:', error);
+                }
+            }
+
+            // Cargar prerrequisitos existentes
+            function cargarPrerrequisitosExistentes() {
+                const container = document.getElementById('listaPrerrequisitos');
+                container.innerHTML = '';
+
+                if (prerrequisitosExistentes && prerrequisitosExistentes.length > 0) {
+                    prerrequisitosExistentes.forEach((prerrequisito, index) => {
+                        agregarPrerrequisito(prerrequisito.prerrequisoMateriaId);
+                    });
+                } else {
+                    // Agregar un prerrequisito vacío si no hay existentes
+                    agregarPrerrequisito();
+                }
+            }
+
+            // Agregar un nuevo prerrequisito
+            function agregarPrerrequisito(prerrequisitoIdSeleccionado = null) {
+                const container = document.getElementById('listaPrerrequisitos');
+                const prerrequisitoDiv = document.createElement('div');
+                prerrequisitoDiv.className = 'col-md-6 mb-3';
+                prerrequisitoDiv.id = `prerrequisito-${contadorPrerrequisitos}`;
+
+                let options = '<option value="">Seleccione una materia</option>';
+                materiasDisponibles.forEach(materia => {
+                    const selected = prerrequisitoIdSeleccionado === materia.materiaId ? 'selected' : '';
+                    options += `<option value="${materia.materiaId}" ${selected}>${materia.nombre}</option>`;
+                });
+
+                prerrequisitoDiv.innerHTML = `
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="bi bi-link-45deg"></i>
+                        </span>
+                        <select name="PrerrequisitosSeleccionados" class="form-control prerrequisito-select">
+                            ${options}
+                        </select>
+                        <button type="button" class="btn btn-outline-danger" onclick="eliminarPrerrequisito(${contadorPrerrequisitos})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                `;
+
+                container.appendChild(prerrequisitoDiv);
+                contadorPrerrequisitos++;
+            }
+
+            // Eliminar un prerrequisito
+            function eliminarPrerrequisito(index) {
+                const prerrequisitoDiv = document.getElementById(`prerrequisito-${index}`);
+                if (prerrequisitoDiv) {
+                    prerrequisitoDiv.remove();
+                }
+            }
+
+            // Agregar prerrequisito cuando se hace clic en el botón
+            document.getElementById('agregarPrerrequisito').addEventListener('click', function() {
+                agregarPrerrequisito();
+            });
+        </script>
     }
 </body>
 </html>

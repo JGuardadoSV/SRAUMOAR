@@ -20,9 +20,10 @@ namespace SRAUMOAR.Pages.generales.materias
         }
 
         public IList<Materia> Materia { get;set; } = default!;
-
+        public int idPensum { get; set; }
         public async Task OnGetAsync(int? id)
         {
+            idPensum = id.Value;
             Materia = await _context.Materias
                 .Include(m => m.Pensum).Where(x => x.Pensum.CarreraId == id).ToListAsync();
         }

@@ -26,7 +26,7 @@ namespace SRAUMOAR.Pages.aranceles
         private readonly SRAUMOAR.Modelos.Contexto _context;
         private readonly EmisorConfig _emisor;
         private readonly ICorrelativoService _correlativoService;
-        private int ambiente = 0;
+        private int ambiente = 1;
         public FacturarModel(SRAUMOAR.Modelos.Contexto context, IOptions<EmisorConfig> emisorOptions, ICorrelativoService correlativoService)
         {
             _context = context;

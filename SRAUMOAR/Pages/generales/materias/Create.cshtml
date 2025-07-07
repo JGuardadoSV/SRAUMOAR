@@ -238,7 +238,7 @@
                                             </label>
                                             <div class="input-group">
                                                 <span class="input-group-text"><i class="bi bi-book"></i></span>
-                                                <select asp-for="Materia.PensumId" class="form-control" asp-items="ViewBag.PensumId">
+                                                <select asp-for="Materia.PensumId" class="form-control" asp-items="ViewBag.PensumId" id="pensumSelect">
                                                     <option value="">Seleccione un pensum</option>
                                                 </select>
                                             </div>
@@ -253,6 +253,38 @@
                                                     <i class="bi bi-check2-square me-2"></i>
                                                     @Html.DisplayNameFor(model => model.Materia.RequisitoBachillerato)
                                                 </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Sección de Prerrequisitos -->
+                                <div class="row" id="seccionPrerrequisitos">
+                                    <div class="col-12">
+                                        <div class="card border-success">
+                                            <div class="card-header bg-success text-white">
+                                                <h5 class="mb-0">
+                                                    <i class="bi bi-link-45deg me-2"></i> Prerrequisitos de la Materia
+                                                </h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <p class="text-muted mb-3">
+                                                    <i class="bi bi-info-circle me-2"></i>
+                                                    Seleccione las materias que deben ser aprobadas antes de cursar esta materia:
+                                                </p>
+                                                <div id="listaPrerrequisitos" class="row">
+                                                    <div class="col-12">
+                                                        <div class="alert alert-info">
+                                                            <i class="bi bi-info-circle me-2"></i>
+                                                            Seleccione un pensum para ver las materias disponibles como prerrequisitos.
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="mt-3">
+                                                    <button type="button" class="btn btn-outline-success btn-sm" id="agregarPrerrequisito">
+                                                        <i class="bi bi-plus-circle me-2"></i> Agregar Otro Prerrequisito
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -306,5 +338,126 @@
                 });
             });
         });
+
+        // Funcionalidad para prerrequisitos
+        let contadorPrerrequisitos = 0;
+        let materiasDisponibles = [];
+
+        // Cargar materias cuando se selecciona un pensum
+        document.addEventListener('DOMContentLoaded', function() {
+            const pensumSelect = document.getElementById('pensumSelect');
+            if (pensumSelect) {
+                pensumSelect.addEventListener('change', function() {
+                    const pensumId = this.value;
+                    console.log('Pensum seleccionado:', pensumId);
+                    if (pensumId) {
+                        cargarMateriasDelPensum(pensumId);
+                    } else {
+                        // Mostrar mensaje cuando no hay pensum seleccionado
+                        const container = document.getElementById('listaPrerrequisitos');
+                        container.innerHTML = `
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    Seleccione un pensum para ver las materias disponibles como prerrequisitos.
+                                </div>
+                            </div>
+                        `;
+                        contadorPrerrequisitos = 0;
+                    }
+                });
+            }
+        });
+
+        // Cargar materias del pensum seleccionado
+        async function cargarMateriasDelPensum(pensumId) {
+            try {
+                console.log('Cargando materias para pensum:', pensumId);
+                const response = await fetch(`?handler=MateriasDelPensum&pensumId=${pensumId}`);
+                console.log('Respuesta del servidor:', response.status);
+                
+                if (response.ok) {
+                    materiasDisponibles = await response.json();
+                    console.log('Materias cargadas:', materiasDisponibles);
+                    
+                    if (materiasDisponibles && materiasDisponibles.length > 0) {
+                        // Agregar el primer prerrequisito automáticamente
+                        agregarPrerrequisito();
+                    } else {
+                        // Mostrar mensaje si no hay materias en el pensum
+                        const container = document.getElementById('listaPrerrequisitos');
+                        container.innerHTML = `
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    No hay materias disponibles en este pensum para establecer como prerrequisitos.
+                                </div>
+                            </div>
+                        `;
+                    }
+                } else {
+                    console.error('Error en la respuesta del servidor:', response.status);
+                    const container = document.getElementById('listaPrerrequisitos');
+                    container.innerHTML = `
+                        <div class="col-12">
+                            <div class="alert alert-danger">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                Error al cargar las materias del pensum.
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error al cargar materias:', error);
+                const container = document.getElementById('listaPrerrequisitos');
+                container.innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Error de conexión al cargar las materias.
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Agregar un nuevo prerrequisito
+        function agregarPrerrequisito() {
+            const container = document.getElementById('listaPrerrequisitos');
+            const prerrequisitoDiv = document.createElement('div');
+            prerrequisitoDiv.className = 'col-md-6 mb-3';
+            prerrequisitoDiv.id = `prerrequisito-${contadorPrerrequisitos}`;
+
+            prerrequisitoDiv.innerHTML = `
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="bi bi-link-45deg"></i>
+                    </span>
+                    <select name="PrerrequisitosSeleccionados" class="form-control prerrequisito-select" required>
+                        <option value="">Seleccione una materia</option>
+                        ${materiasDisponibles.map(materia => 
+                            `<option value="${materia.materiaId}">${materia.nombre}</option>`
+                        ).join('')}
+                    </select>
+                    <button type="button" class="btn btn-outline-danger" onclick="eliminarPrerrequisito(${contadorPrerrequisitos})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            `;
+
+            container.appendChild(prerrequisitoDiv);
+            contadorPrerrequisitos++;
+        }
+
+        // Eliminar un prerrequisito
+        function eliminarPrerrequisito(index) {
+            const prerrequisitoDiv = document.getElementById(`prerrequisito-${index}`);
+            if (prerrequisitoDiv) {
+                prerrequisitoDiv.remove();
+            }
+        }
+
+        // Agregar prerrequisito cuando se hace clic en el botón
+        document.getElementById('agregarPrerrequisito').addEventListener('click', agregarPrerrequisito);
     </script>
 }

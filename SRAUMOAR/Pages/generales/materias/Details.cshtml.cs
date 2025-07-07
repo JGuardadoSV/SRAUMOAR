@@ -20,6 +20,7 @@ namespace SRAUMOAR.Pages.generales.materias
         }
 
         public Materia Materia { get; set; } = default!;
+        public List<MateriaPrerequisito> Prerrequisitos { get; set; } = new List<MateriaPrerequisito>();
 
         public async Task<IActionResult> OnGetAsync(int? id)
         {
@@ -28,15 +29,20 @@ namespace SRAUMOAR.Pages.generales.materias
                 return NotFound();
             }
 
-            var materia = await _context.Materias.FirstOrDefaultAsync(m => m.MateriaId == id);
+            var materia = await _context.Materias
+                .Include(m => m.Pensum)
+                .Include(m => m.Prerrequisitos)
+                .ThenInclude(p => p.PrerrequisoMateria)
+                .FirstOrDefaultAsync(m => m.MateriaId == id);
+
             if (materia == null)
             {
                 return NotFound();
             }
-            else
-            {
-                Materia = materia;
-            }
+
+            Materia = materia;
+            Prerrequisitos = materia.Prerrequisitos?.ToList() ?? new List<MateriaPrerequisito>();
+
             return Page();
         }
     }

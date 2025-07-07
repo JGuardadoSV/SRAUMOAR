@@ -41,10 +41,78 @@
                         @Html.DisplayNameFor(model => model.Materia.Pensum)
                     </dt>
                     <dd class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-info-circle">
-                        @Html.DisplayFor(model => model.Materia.Pensum.CodigoPensum) @*REVISAR*@
+                        @Html.DisplayFor(model => model.Materia.Pensum.CodigoPensum)
                     </dd>
                 </dl>
             </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-arrow-repeat me-2">
+                        @Html.DisplayNameFor(model => model.Materia.Ciclo)
+                    </dt>
+                    <dd class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-info-circle">
+                        @Html.DisplayFor(model => model.Materia.Ciclo)
+                    </dd>
+                </dl>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-star me-2">
+                        @Html.DisplayNameFor(model => model.Materia.uv)
+                    </dt>
+                    <dd class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-info-circle">
+                        @Html.DisplayFor(model => model.Materia.uv)
+                    </dd>
+                </dl>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-check2-square me-2">
+                        @Html.DisplayNameFor(model => model.Materia.RequisitoBachillerato)
+                    </dt>
+                    <dd class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-info-circle">
+                        @(Model.Materia.RequisitoBachillerato ? "Sí" : "No")
+                    </dd>
+                </dl>
+            </div>
+
+            <!-- Sección de Prerrequisitos -->
+            @if (Model.Prerrequisitos.Any())
+            {
+                <div class="card-body border-top">
+                    <h5 class="text-success mb-3">
+                        <i class="bi bi-link-45deg me-2"></i> Prerrequisitos
+                    </h5>
+                    <div class="row">
+                        @foreach (var prerrequisito in Model.Prerrequisitos)
+                        {
+                            <div class="col-md-6 mb-2">
+                                <div class="card border-success">
+                                    <div class="card-body py-2">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-arrow-right-circle text-success me-2"></i>
+                                            <div>
+                                                <strong>@prerrequisito.PrerrequisoMateria?.CodigoMateria</strong>
+                                                <br>
+                                                <small class="text-muted">@prerrequisito.PrerrequisoMateria?.NombreMateria</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="card-body border-top">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Esta materia no tiene prerrequisitos establecidos.
+                    </div>
+                </div>
+            }
             <div class="card-footer text-end">
                 <a asp-page="./Edit" asp-route-id="@Model.Materia.MateriaId" class="btn btn-primary">
                     <i class="bi bi-pencil-square"></i> Editar

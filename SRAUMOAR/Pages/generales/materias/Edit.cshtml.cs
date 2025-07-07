@@ -23,6 +23,11 @@ namespace SRAUMOAR.Pages.generales.materias
         [BindProperty]
         public Materia Materia { get; set; } = default!;
 
+        [BindProperty]
+        public List<int> PrerrequisitosSeleccionados { get; set; } = new List<int>();
+
+        public List<MateriaPrerequisito> PrerrequisitosExistentes { get; set; } = new List<MateriaPrerequisito>();
+
         public async Task<IActionResult> OnGetAsync(int? id)
         {
             if (id == null)
@@ -30,22 +35,30 @@ namespace SRAUMOAR.Pages.generales.materias
                 return NotFound();
             }
 
-            var materia =  await _context.Materias.FirstOrDefaultAsync(m => m.MateriaId == id);
+            var materia = await _context.Materias
+                .Include(pe=>pe.Pensum)
+                .Include(m => m.Prerrequisitos)
+                .ThenInclude(p => p.PrerrequisoMateria)
+                .FirstOrDefaultAsync(m => m.MateriaId == id);
+
             if (materia == null)
             {
                 return NotFound();
             }
+
             Materia = materia;
-           ViewData["PensumId"] = new SelectList(_context.Pensums, "PensumId", "CodigoPensum");
+            PrerrequisitosExistentes = materia.Prerrequisitos?.ToList() ?? new List<MateriaPrerequisito>();
+            PrerrequisitosSeleccionados = PrerrequisitosExistentes.Select(p => p.PrerrequisoMateriaId).ToList();
+
+            ViewData["PensumId"] = new SelectList(_context.Pensums.Where(x => x.PensumId == materia.PensumId), "PensumId", "CodigoPensum");
             return Page();
         }
 
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see https://aka.ms/RazorPagesCRUD.
         public async Task<IActionResult> OnPostAsync()
         {
             if (!ModelState.IsValid)
             {
+                ViewData["PensumId"] = new SelectList(_context.Pensums, "PensumId", "CodigoPensum");
                 return Page();
             }
 
@@ -53,6 +66,26 @@ namespace SRAUMOAR.Pages.generales.materias
 
             try
             {
+                // Eliminar prerrequisitos existentes
+                var prerrequisitosExistentes = await _context.MateriasPrerrequisitos
+                    .Where(p => p.MateriaId == Materia.MateriaId)
+                    .ToListAsync();
+                _context.MateriasPrerrequisitos.RemoveRange(prerrequisitosExistentes);
+
+                // Agregar nuevos prerrequisitos
+                if (PrerrequisitosSeleccionados != null && PrerrequisitosSeleccionados.Any())
+                {
+                    foreach (var prerrequisitoId in PrerrequisitosSeleccionados)
+                    {
+                        var materiaPrerrequisito = new MateriaPrerequisito
+                        {
+                            MateriaId = Materia.MateriaId,
+                            PrerrequisoMateriaId = prerrequisitoId
+                        };
+                        _context.MateriasPrerrequisitos.Add(materiaPrerrequisito);
+                    }
+                }
+
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
@@ -68,6 +101,17 @@ namespace SRAUMOAR.Pages.generales.materias
             }
 
             return RedirectToPage("./Index");
+        }
+
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> OnGetMateriasDelPensumAsync(int pensumId, int materiaActualId)
+        {
+            var materias = await _context.Materias
+                .Where(m => m.PensumId == pensumId && m.MateriaId != materiaActualId)
+                .Select(m => new { m.MateriaId, Nombre = $"{m.CodigoMateria} - {m.NombreMateria}" })
+                .ToListAsync();
+
+            return new JsonResult(materias);
         }
 
         private bool MateriaExists(int id)
