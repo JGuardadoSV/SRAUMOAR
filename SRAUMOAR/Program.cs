@@ -6,9 +6,19 @@ using Microsoft.EntityFrameworkCore;
 using SRAUMOAR.Modelos;
 using SRAUMOAR.Servicios;
 using SRAUMOAR.Entidades.Generales;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
+var culture = new CultureInfo("es-SV"); // El Salvador
+culture.NumberFormat.CurrencySymbol = "$";
+culture.NumberFormat.CurrencyDecimalSeparator = ".";
+culture.NumberFormat.CurrencyGroupSeparator = ",";
+culture.NumberFormat.CurrencyDecimalDigits = 2;
+
+CultureInfo.DefaultThreadCurrentCulture = culture;
+CultureInfo.DefaultThreadCurrentUICulture = culture;
 
 // Registrar el servicio de alumnos
 builder.Services.AddScoped<IAlumnoService, AlumnoService>();

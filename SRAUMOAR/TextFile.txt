@@ -1,6 +1,7 @@
 ﻿207.58.153.147
 Dwa3qWrkEAQRzQF2
 
+./montarsistema.sh
 
 docker run -d -p 8080:80 -e ASPNETCORE_URLS=http://0.0.0.0:80 prehack77/sraumoar:latest
 

@@ -1,4 +1,5 @@
 ﻿@page
+@using SRAUMOAR.Entidades.Procesos
 @model SRAUMOAR.Pages.grupos.EditModel
 
 @{
@@ -35,6 +36,10 @@
             <div class="form-group mb-3">
                 <label asp-for="Grupo.CarreraId" class="form-label"></label>
                 <select id="carreraSelect" asp-for="Grupo.CarreraId" class="form-select" asp-items="ViewBag.CarreraId"></select>
+            </div>
+            <div class="form-group mb-3">
+                <label asp-for="Grupo.PensumId" class="form-label"></label>
+                <select id="carreraSelect" asp-for="Grupo.PensumId" class="form-select" asp-items="ViewBag.PensumId"></select>
             </div>
 
             <div class="form-group mb-3">
@@ -74,17 +79,24 @@
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" id="formulario2" value="0" />
             <div class="row">
-                <div class="form-group col-4">
+                <div class="form-group col-3">
                     <label asp-for="MateriasGrupo.Aula" class="form-label"></label>
                     <input asp-for="MateriasGrupo.Aula" class="form-control" />
                     <span asp-validation-for="MateriasGrupo.Aula" class="text-danger"></span>
                 </div>
-                <div class="form-group col-4">
+                <div class="form-group col-3">
+                    <label asp-for="MateriasGrupo.Dia" class="form-label"></label>
+                    <select asp-for="MateriasGrupo.Dia" class="form-control" asp-items="Html.GetEnumSelectList<DiaSemana>()">
+                        <option value="">-- Selecciona un día --</option>
+                    </select>
+                    <span asp-validation-for="MateriasGrupo.Dia" class="text-danger"></span>
+                </div>
+                <div class="form-group col-3">
                     <label asp-for="MateriasGrupo.HoraInicio" class="form-label"></label>
                     <input asp-for="MateriasGrupo.HoraInicio" class="form-control" />
                     <span asp-validation-for="MateriasGrupo.HoraInicio" class="text-danger"></span>
                 </div>
-                <div class="form-group col-4">
+                <div class="form-group col-3">
                     <label asp-for="MateriasGrupo.HoraFin" class="form-label"></label>
                     <input asp-for="MateriasGrupo.HoraFin" class="form-control" />
                     <span asp-validation-for="MateriasGrupo.HoraFin" class="text-danger"></span>
@@ -149,7 +161,7 @@
                             @Html.DisplayFor(modelItem => item.Docente.Nombres) @Html.DisplayFor(modelItem => item.Docente.Apellidos)
                         </td>
                         <td>
-                            @item.FormatearHora12Horas(item.HoraInicio) - @item.FormatearHora12Horas(item.HoraFin)
+                            @Html.DisplayFor(m => item.Dia) @item.FormatearHora12Horas(item.HoraInicio) - @item.FormatearHora12Horas(item.HoraFin)
                         </td>
                         <td>
                             @Html.DisplayFor(modelItem => item.TotalInscritos)

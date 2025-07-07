@@ -26,31 +26,57 @@ namespace SRAUMOAR.Pages.inscripcion
         public List<int> MateriasSeleccionadas { get; set; } = new List<int>();
 
         [BindProperty]
+        public int GrupoSeleccionado { get; set; } 
+
+        [BindProperty]
         public MateriasInscritas MateriasInscritas { get; set; } = default!;
 
-        public IActionResult OnGet(int id)
+        public IActionResult OnGet(int id, int? GrupoSeleccionado)
         {
-            Alumno = _context.Alumno.Where(x => x.AlumnoId == id).FirstOrDefault() ?? new Alumno();
-            ViewData["AlumnoId"] = new SelectList(_context.Alumno.Where(x => x.AlumnoId == id)
+            Alumno = _context.Alumno.Include(a => a.Carrera).Where(x => x.AlumnoId == id).FirstOrDefault() ?? new Alumno();
+            ViewData["AlumnoId"] = new SelectList(_context.Alumno.Include(a => a.Carrera).Where(x => x.AlumnoId == id)
                 .Select(a => new { AlumnoId = a.AlumnoId, Nombre = a.Nombres + " " + a.Apellidos })
                 , "AlumnoId", "Nombre");
 
             var cicloActual = _context.Ciclos.FirstOrDefault(c => c.Activo).Id;
 
-            ViewData["MateriasGrupoId"] = new SelectList(
-                _context.MateriasGrupo
-                    .Include(mg => mg.Materia)
-                    .Include(mg => mg.Grupo)
-                    .Where(mg => mg.Grupo.CicloId == cicloActual)
-                    .Select(mg => new
-                    {
-                        MateriasGrupoId = mg.MateriasGrupoId,
-                        NombreCompleto = $"{mg.Materia.NombreMateria} - {mg.Grupo.Nombre}"
-                    })
-                    .ToList(),
-                "MateriasGrupoId",
-                "NombreCompleto"
-            );
+            // Filtrar materias solo por el grupo seleccionado si existe
+            if (GrupoSeleccionado.HasValue && GrupoSeleccionado.Value > 0)
+            {
+                ViewData["MateriasGrupoId"] = new SelectList(
+                    _context.MateriasGrupo
+                        .Include(mg => mg.Materia)
+                        .Include(mg => mg.Grupo)
+                        .Where(mg => mg.Grupo.GrupoId == GrupoSeleccionado.Value && mg.Grupo.CicloId == cicloActual && mg.Materia.PensumId == mg.Grupo.PensumId)
+                        .Select(mg => new
+                        {
+                            MateriasGrupoId = mg.MateriasGrupoId,
+                            NombreCompleto = $"{mg.Materia.NombreMateria} - {mg.Grupo.Nombre}"
+                        })
+                        .ToList(),
+                    "MateriasGrupoId",
+                    "NombreCompleto"
+                );
+                this.GrupoSeleccionado = GrupoSeleccionado.Value;
+            }
+            else
+            {
+                ViewData["MateriasGrupoId"] = new SelectList(new List<object>(), "MateriasGrupoId", "NombreCompleto");
+            }
+
+            ViewData["GrupoId"] = new SelectList(
+               _context.Grupo
+                   .Where(mg => mg.CicloId == cicloActual && mg.CarreraId == Alumno.CarreraId)
+                   .Select(mg => new
+                   {
+                       GrupoId = mg.GrupoId,
+                       Nombre = $"{mg.Nombre}"
+                   })
+                   .ToList(),
+               "GrupoId",
+               "Nombre",
+               GrupoSeleccionado
+           );
 
             return Page();
         }

@@ -9,15 +9,41 @@ using iText.Layout.Borders;
 using iText.Kernel.Font;
 using iText.IO.Font.Constants;
 using System.Globalization;
-
+using SRAUMOAR.Entidades.Alumnos;
+using SRAUMOAR.Entidades.Procesos;
+using SRAUMOAR.Servicios;
+using Microsoft.EntityFrameworkCore;
 namespace SRAUMOAR.Pages.reportes.inscripcion
 {
     public class reporteInscripcionModel : PageModel
     {
-        public IActionResult OnGet()
+        public Alumno Alumno { get; set; }
+        public IList<MateriasInscritas> MateriasInscritas { get; set; } = default!;
+        private readonly SRAUMOAR.Modelos.Contexto _context;
+        public reporteInscripcionModel(SRAUMOAR.Modelos.Contexto context)
+        {
+            _context = context;
+        }
+        public IActionResult OnGet(int? id)
         {
             try
             {
+
+                var cicloactual = _context.Ciclos.Where(x => x.Activo == true).FirstOrDefault()?.Id ?? 0;
+                Alumno = _context.Alumno.Include(a => a.Carrera).ThenInclude(c => c.Facultad).Where(x => x.AlumnoId == id).FirstOrDefault() ?? new Alumno();
+
+                MateriasInscritas = _context.MateriasInscritas
+                    .Include(mi => mi.MateriasGrupo)
+                        .ThenInclude(mg => mg.Materia)
+                    .Include(mi => mi.MateriasGrupo)
+                        .ThenInclude(mg => mg.Docente)
+                    .Include(mi => mi.MateriasGrupo)
+                        .ThenInclude(mg => mg.Grupo)
+                        .ThenInclude(ps => ps.Pensum)
+                    .Where(mi => mi.MateriasGrupo.Grupo.CicloId == cicloactual &&
+                                 mi.Alumno.AlumnoId == Alumno.AlumnoId)
+                    .ToList();
+
                 using var memoryStream = new MemoryStream();
                 using var writer = new PdfWriter(memoryStream);
                 using var pdf = new PdfDocument(writer);
@@ -37,7 +63,7 @@ namespace SRAUMOAR.Pages.reportes.inscripcion
                 var textCell = new Cell().SetBorder(Border.NO_BORDER);
                 textCell.Add(new Paragraph("UNIVERSIDAD MONSEÑOR OSCAR ARNULFO ROMERO").SetFontSize(14).SetTextAlignment(TextAlignment.CENTER));
                 textCell.Add(new Paragraph("ADMINISTRACION DE REGISTRO ACADÉMICO").SetFontSize(12).SetTextAlignment(TextAlignment.CENTER));
-                textCell.Add(new Paragraph("INSCRIPCION DE MATERIAS CICLO 01-2025").SetFontSize(11).SetTextAlignment(TextAlignment.CENTER));
+                textCell.Add(new Paragraph("INSCRIPCION DE MATERIAS CICLO 02-2025").SetFontSize(11).SetTextAlignment(TextAlignment.CENTER));
                 headerTable.AddCell(textCell);
 
                 document.Add(headerTable);
@@ -50,19 +76,21 @@ namespace SRAUMOAR.Pages.reportes.inscripcion
 
                 // Columna izquierda
                 var columnaIzq = new Cell();
-                columnaIzq.Add(new Paragraph("Carnet: ").SetFontSize(13));
-                columnaIzq.Add(new Paragraph("Nombre: ").SetFontSize(13));
-                columnaIzq.Add(new Paragraph("Facultad: ").SetFontSize(13));
-                columnaIzq.Add(new Paragraph("Carrera: ").SetFontSize(13));
-                columnaIzq.Add(new Paragraph("Plan: ").SetFontSize(13));
+                columnaIzq.Add(new Paragraph("Carnet: " + (string.IsNullOrEmpty(Alumno.Carnet) ?
+    (string.IsNullOrEmpty(Alumno.Email) ? "-" : Alumno.Email.Split('@')[0]) :
+    Alumno.Carnet)).SetFontSize(13));
+                columnaIzq.Add(new Paragraph("Nombre: " + Alumno.Nombres + " " + Alumno.Apellidos).SetFontSize(11));
+                columnaIzq.Add(new Paragraph("Facultad: " + Alumno.Carrera.Facultad.NombreFacultad).SetFontSize(11));
+                columnaIzq.Add(new Paragraph("Carrera: " + Alumno.Carrera.NombreCarrera).SetFontSize(11));
+                columnaIzq.Add(new Paragraph("Plan: " + MateriasInscritas.First().MateriasGrupo.Grupo.Pensum.NombrePensum).SetFontSize(11));
                 columnaIzq.SetBorder(Border.NO_BORDER);
 
                 // Columna derecha
                 var columnaDer = new Cell();
-                columnaDer.Add(new Paragraph("Dirección: ").SetFontSize(13));
-                columnaDer.Add(new Paragraph("Ciclo a cursar: ").SetFontSize(13));
-                columnaDer.Add(new Paragraph("Teléfono fijo: ").SetFontSize(13));
-                columnaDer.Add(new Paragraph("Teléfono móvil: ").SetFontSize(13));
+                columnaDer.Add(new Paragraph("Dirección: "+Alumno.DireccionDeResidencia).SetFontSize(11));
+                columnaDer.Add(new Paragraph("Ciclo a cursar: 02-25").SetFontSize(11));
+                columnaDer.Add(new Paragraph("Teléfono fijo: " + (Alumno.TelefonoPrimario ?? "-")).SetFontSize(11));
+                columnaDer.Add(new Paragraph("Teléfono móvil: " + (Alumno.TelefonoSecundario ?? "-")).SetFontSize(11));
                 columnaDer.SetBorder(Border.NO_BORDER);
 
                 datosTable.AddCell(columnaIzq);
@@ -111,26 +139,28 @@ namespace SRAUMOAR.Pages.reportes.inscripcion
                             .SetBorder(new SolidBorder(1)));
                     }
                 }
-
-                for (int i = 1; i <= 5; i++)
+                var i = 0;
+                foreach(var mat in MateriasInscritas)
+                
                 {
-                    // N°
+                    i++;           
+                    
                     tablaAsignaturas.AddCell(new Cell().Add(new Paragraph(i.ToString())
                         .SetFontSize(10)) // Tamaño de fuente
                         .SetTextAlignment(TextAlignment.CENTER).SetBorder(Border.NO_BORDER));
 
                     // Código
-                    tablaAsignaturas.AddCell(new Cell().Add(new Paragraph($"MAT{100 + i}")
+                    tablaAsignaturas.AddCell(new Cell().Add(new Paragraph(mat.MateriasGrupo.Materia.CodigoMateria)
                         .SetFontSize(10)) // Tamaño de fuente
                         .SetBorder(Border.NO_BORDER));
 
                     // Nombre asignatura
-                    tablaAsignaturas.AddCell(new Cell().Add(new Paragraph($"Matemática {i}")
+                    tablaAsignaturas.AddCell(new Cell().Add(new Paragraph(mat.MateriasGrupo.Materia.NombreMateria)
                         .SetFontSize(10)) // Tamaño de fuente
                         .SetBorder(Border.NO_BORDER));
 
                     // Matrícula
-                    tablaAsignaturas.AddCell(new Cell().Add(new Paragraph("$25.00")
+                    tablaAsignaturas.AddCell(new Cell().Add(new Paragraph("")
                         .SetFontSize(10)) // Tamaño de fuente
                         .SetTextAlignment(TextAlignment.RIGHT).SetBorder(Border.NO_BORDER));
 
@@ -138,29 +168,31 @@ namespace SRAUMOAR.Pages.reportes.inscripcion
                     var preReqDataTable = new Table(2);
                     preReqDataTable.SetWidth(UnitValue.CreatePercentValue(100));
 
-                    preReqDataTable.AddCell(new Cell().Add(new Paragraph($"BACH001")
+                    preReqDataTable.AddCell(new Cell().Add(new Paragraph("-")
                         .SetFontSize(10)) // Tamaño de fuente
                         .SetTextAlignment(TextAlignment.CENTER)
                         .SetBorder(Border.NO_BORDER));
 
-                    preReqDataTable.AddCell(new Cell().Add(new Paragraph("Matematica")
+                    preReqDataTable.AddCell(new Cell().Add(new Paragraph("-")
                         .SetFontSize(10)) // Tamaño de fuente
                         .SetBorder(Border.NO_BORDER));
 
                     tablaAsignaturas.AddCell(new Cell().Add(preReqDataTable).SetBorder(Border.NO_BORDER));
 
                     // Día
-                    tablaAsignaturas.AddCell(new Cell().Add(new Paragraph("Lunes")
+                    tablaAsignaturas.AddCell(new Cell().Add(new Paragraph(((DiaSemana)mat.MateriasGrupo.Dia).ToString()
+)
                         .SetFontSize(10)) // Tamaño de fuente
                         .SetBorder(Border.NO_BORDER));
 
                     // Hora
-                    tablaAsignaturas.AddCell(new Cell().Add(new Paragraph("8:00-9:00")
+                    string horaFormateada = mat.MateriasGrupo.FormatearHora12Horas(mat.MateriasGrupo.HoraInicio) + " - " + mat.MateriasGrupo.FormatearHora12Horas(mat.MateriasGrupo.HoraFin);
+                    tablaAsignaturas.AddCell(new Cell().Add(new Paragraph(horaFormateada)
                         .SetFontSize(10)) // Tamaño de fuente
                         .SetBorder(Border.NO_BORDER));
 
                     // Grupo
-                    tablaAsignaturas.AddCell(new Cell().Add(new Paragraph("A")
+                    tablaAsignaturas.AddCell(new Cell().Add(new Paragraph(mat.MateriasGrupo.Grupo.Nombre)
                         .SetFontSize(10)) // Tamaño de fuente
                         .SetTextAlignment(TextAlignment.CENTER).SetBorder(Border.NO_BORDER));
                 }

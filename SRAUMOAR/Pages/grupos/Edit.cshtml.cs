@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SRAUMOAR.Entidades.Generales;
+using SRAUMOAR.Entidades.Materias;
 using SRAUMOAR.Entidades.Procesos;
 using SRAUMOAR.Modelos;
 
@@ -45,11 +46,14 @@ namespace SRAUMOAR.Pages.grupos
             }
             Grupo = grupo;
             var carreras = _context.Carreras.Where(x=>x.CarreraId==grupo.CarreraId).ToList();
-
+            var pensums = _context.Pensums.Where(x => x.PensumId == grupo.PensumId).ToList();
 
             carreras.Insert(0, new Carrera { CarreraId = 0, NombreCarrera = "Seleccione una carrera" });   //para el select
             ViewData["CarreraId"] = new SelectList(carreras, "CarreraId", "NombreCarrera");//para el select
-
+            pensums.Insert(0, new Pensum { PensumId = 0, NombrePensum = "Seleccione un pensum" });
+            ViewData["PensumId"] = new SelectList(pensums, "PensumId", "NombrePensum");
+            
+            
             ViewData["CicloId"] = new SelectList(
                   _context.Ciclos
                   .Where(x => x.Activo == true).Where(x => x.Id == grupo.CicloId) //el ciclo que seleccionó al registrar el grupo
