@@ -1,0 +1,125 @@
+@page
+@model SRAUMOAR.Pages.arancelesBecados.IndexModel
+@{
+    ViewData["Title"] = "Aranceles de Alumnos Becados";
+}
+
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0">Aranceles de Alumnos Becados</h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="#">Inicio</a></li>
+                    <li class="breadcrumb-item active">Aranceles Becados</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Listado de Aranceles Personalizados para Alumnos Becados</h3>
+                        <div class="card-tools">
+                            <a asp-page="Create" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus"></i> Nuevo Arancel Becado
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Alumno</th>
+                                    <th>Entidad Beca</th>
+                                    <th>Ciclo</th>
+                                    <th>Arancel</th>
+                                    <th>Precio Original</th>
+                                    <th>Precio Personalizado</th>
+                                    <th>Ahorro</th>
+                                    <th>Descuento</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.ArancelesBecados)
+                                {
+                                    <tr>
+                                        <td>
+                                            @if (item.Becado?.Alumno != null)
+                                            {
+                                                @($"{item.Becado.Alumno.Nombres} {item.Becado.Alumno.Apellidos}")
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (item.Becado?.EntidadBeca != null)
+                                            {
+                                                @item.Becado.EntidadBeca.Nombre
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (item.Becado?.Ciclo != null)
+                                            {
+                                                @($"Ciclo {item.Becado.Ciclo.NCiclo} - {item.Becado.Ciclo.anio}")
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (item.Arancel != null)
+                                            {
+                                                @item.Arancel.Nombre
+                                            }
+                                        </td>
+                                        <td class="text-right">
+                                            @if (item.Arancel != null)
+                                            {
+                                                @item.Arancel.Costo.ToString("C")
+                                            }
+                                        </td>
+                                        <td class="text-right">
+                                            @item.PrecioPersonalizado.ToString("C")
+                                        </td>
+                                        <td class="text-right text-success">
+                                            @item.Ahorro.ToString("C")
+                                        </td>
+                                        <td class="text-right">
+                                            @item.DescuentoAplicado.ToString("F1")%
+                                        </td>
+                                        <td>
+                                            @if (item.Activo)
+                                            {
+                                                <span class="badge badge-success">Activo</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge badge-danger">Inactivo</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <a asp-page="./Edit" asp-route-id="@item.ArancelBecadoId" class="btn btn-warning btn-sm">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a asp-page="./Details" asp-route-id="@item.ArancelBecadoId" class="btn btn-info btn-sm">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a asp-page="./Delete" asp-route-id="@item.ArancelBecadoId" class="btn btn-danger btn-sm">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section> 

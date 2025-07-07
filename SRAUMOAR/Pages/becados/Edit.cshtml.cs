@@ -25,6 +25,10 @@ namespace SRAUMOAR.Pages.becados
         [BindProperty]
         public Becados Becados { get; set; } = default!;
 
+        // Propiedades para mostrar información del alumno
+        public string NombreAlumno { get; set; } = "";
+        public string CarreraAlumno { get; set; } = "";
+
         public async Task<IActionResult> OnGetAsync(int? id)
         {
             if (id == null)
@@ -32,15 +36,34 @@ namespace SRAUMOAR.Pages.becados
                 return NotFound();
             }
 
-            var becados =  await _context.Becados.FirstOrDefaultAsync(m => m.BecadosId == id);
+            var becados = await _context.Becados
+                .Include(b => b.Alumno)
+                .ThenInclude(a => a.Carrera)
+                .FirstOrDefaultAsync(m => m.BecadosId == id);
+                
             if (becados == null)
             {
                 return NotFound();
             }
+            
             Becados = becados;
-           ViewData["AlumnoId"] = new SelectList(_context.Alumno, "AlumnoId", "Apellidos");
-           ViewData["CicloId"] = new SelectList(_context.Ciclos, "Id", "Id");
-           ViewData["EntidadBecaId"] = new SelectList(_context.InstitucionesBeca, "EntidadBecaId", "Email");
+            
+            // Cargar información del alumno para mostrar
+            if (becados.Alumno != null)
+            {
+                NombreAlumno = $"{becados.Alumno.Apellidos}, {becados.Alumno.Nombres}";
+                CarreraAlumno = becados.Alumno.Carrera?.NombreCarrera ?? "No especificada";
+            }
+
+            // Solo cargar los dropdowns necesarios (no el de alumnos)
+            ViewData["CicloId"] = new SelectList(_context.Ciclos
+                .Select(c => new {
+                    Id = c.Id,
+                    Display = $"Ciclo {c.NCiclo} - {c.anio}"
+                }), "Id", "Display");
+                
+            ViewData["EntidadBecaId"] = new SelectList(_context.InstitucionesBeca, "EntidadBecaId", "Nombre");
+            
             return Page();
         }
 
@@ -50,6 +73,15 @@ namespace SRAUMOAR.Pages.becados
         {
             if (!ModelState.IsValid)
             {
+                // Recargar los datos necesarios si hay errores de validación
+                ViewData["CicloId"] = new SelectList(_context.Ciclos
+                    .Select(c => new {
+                        Id = c.Id,
+                        Display = $"Ciclo {c.NCiclo} - {c.anio}"
+                    }), "Id", "Display");
+                    
+                ViewData["EntidadBecaId"] = new SelectList(_context.InstitucionesBeca, "EntidadBecaId", "Nombre");
+                
                 return Page();
             }
 

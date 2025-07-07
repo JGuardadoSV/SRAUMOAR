@@ -5,72 +5,719 @@
     ViewData["Title"] = "Administración de alumnos becados";
 }
 
-<div class="container-fluid py-4">
-    <div class="card shadow-sm">
-        <div class="card-header bg-primary bg-gradient text-white d-flex justify-content-between align-items-center">
-            <h1 class="h3 mb-0">
-                <i class="bi bi-mortarboard-fill me-2"></i>
-                Administración de alumnos becados
-            </h1>
-            <a asp-page="Create" class="btn btn-light">
-                <i class="bi bi-plus-circle me-2"></i>
-                Asignar nueva beca
+<style>
+    :root {
+        --primary-green: #188526;
+        --primary-green-light: #22a332;
+        --primary-green-dark: #0f5c1a;
+        --secondary-green: #e8f5e8;
+        --border-color: #ddd;
+        --shadow-color: rgba(24, 133, 38, 0.1);
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--primary-green), var(--primary-green-light));
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0 0 15px 15px;
+        box-shadow: 0 4px 15px var(--shadow-color);
+    }
+
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 600;
+        margin: 0;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .page-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin: 0.5rem 0 0 0;
+    }
+
+    .stats-container {
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border: 1px solid var(--border-color);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+
+    .stat-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+    }
+
+    .stat-card.total::before {
+        background: linear-gradient(90deg, var(--primary-green), var(--primary-green-light));
+    }
+
+    .stat-card.complete::before {
+        background: linear-gradient(90deg, #28a745, #20c997);
+    }
+
+    .stat-card.partial::before {
+        background: linear-gradient(90deg, #ffc107, #fd7e14);
+    }
+
+    .stat-card.active::before {
+        background: linear-gradient(90deg, #17a2b8, #6f42c1);
+    }
+
+    .stat-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        opacity: 0.8;
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        font-size: 1rem;
+        color: #6c757d;
+        font-weight: 500;
+    }
+
+    .filters-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid var(--border-color);
+    }
+
+    .filters-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--secondary-green);
+    }
+
+    .filters-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--primary-green-dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .filters-title::before {
+        content: "🔍";
+        margin-right: 0.75rem;
+        font-size: 1.5rem;
+    }
+
+    .filters-form {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        align-items: end;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .filter-label {
+        font-weight: 600;
+        color: var(--primary-green-dark);
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+    }
+
+    .filter-select {
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background-color: #fafafa;
+        width: 100%;
+    }
+
+    .filter-select:focus {
+        border-color: var(--primary-green);
+        box-shadow: 0 0 0 0.2rem rgba(24, 133, 38, 0.25);
+        background-color: white;
+        outline: none;
+    }
+
+    .filter-select:hover {
+        border-color: var(--primary-green-light);
+        background-color: white;
+    }
+
+    .filters-actions {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-filter {
+        background: linear-gradient(135deg, var(--primary-green), var(--primary-green-light));
+        border: none;
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(24, 133, 38, 0.3);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: white;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .btn-filter:hover {
+        background: linear-gradient(135deg, var(--primary-green-dark), var(--primary-green));
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(24, 133, 38, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-clear {
+        background: #6c757d;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        color: white;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .btn-clear:hover {
+        background: #5a6268;
+        color: white;
+        text-decoration: none;
+        transform: translateY(-2px);
+    }
+
+    .active-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e0e0e0;
+    }
+
+    .active-filter-badge {
+        background: var(--secondary-green);
+        color: var(--primary-green-dark);
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        border: 1px solid var(--primary-green);
+    }
+
+    .remove-filter {
+        background: var(--primary-green);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .remove-filter:hover {
+        background: var(--primary-green-dark);
+        transform: scale(1.1);
+    }
+
+    .table-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+    }
+
+    .table-header {
+        background: linear-gradient(135deg, var(--primary-green), var(--primary-green-light));
+        color: white;
+        padding: 1.5rem;
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .table-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .table-title::before {
+        content: "🎓";
+        margin-right: 0.75rem;
+        font-size: 1.8rem;
+    }
+
+    .btn-create {
+        background: rgba(255, 255, 255, 0.2);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .btn-create:hover {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.5);
+        color: white;
+        text-decoration: none;
+        transform: translateY(-2px);
+    }
+
+    .btn-create::before {
+        content: "➕";
+        margin-right: 0.5rem;
+        font-size: 1.2rem;
+    }
+
+    .table {
+        margin: 0;
+    }
+
+    .table thead th {
+        background: var(--secondary-green);
+        border: none;
+        padding: 1rem;
+        font-weight: 600;
+        color: var(--primary-green-dark);
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .table tbody td {
+        padding: 1rem;
+        border-bottom: 1px solid #f0f0f0;
+        vertical-align: middle;
+    }
+
+    .table tbody tr:hover {
+        background-color: var(--secondary-green);
+    }
+
+    .student-name {
+        font-weight: 600;
+        color: var(--primary-green-dark);
+    }
+
+    .badge-beca {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .badge-completa {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+    }
+
+    .badge-parcial {
+        background: linear-gradient(135deg, #ffc107, #fd7e14);
+        color: white;
+    }
+
+    .badge-estado {
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .badge-activo {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .badge-inactivo {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .btn-group {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-action {
+        padding: 0.5rem;
+        border-radius: 6px;
+        border: none;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 35px;
+        height: 35px;
+    }
+
+    .btn-edit {
+        background: var(--primary-green);
+        color: white;
+    }
+
+    .btn-edit:hover {
+        background: var(--primary-green-dark);
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .btn-details {
+        background: #17a2b8;
+        color: white;
+    }
+
+    .btn-details:hover {
+        background: #138496;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .btn-delete {
+        background: #dc3545;
+        color: white;
+    }
+
+    .btn-delete:hover {
+        background: #c82333;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #6c757d;
+    }
+
+    .empty-state::before {
+        content: "📚";
+        font-size: 4rem;
+        display: block;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    @@media (max-width: 768px) {
+        .page-title {
+            font-size: 2rem;
+        }
+
+        .filters-form {
+            grid-template-columns: 1fr;
+        }
+
+        .filters-actions {
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .btn-filter, .btn-clear {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .table-header {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .btn-group {
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .btn-action {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .table-responsive {
+            font-size: 0.9rem;
+        }
+    }
+</style>
+
+<div class="page-header">
+    <div class="container">
+        <h1 class="page-title">🎓 Administración de Becados</h1>
+        <p class="page-subtitle">Gestiona las becas asignadas a los estudiantes</p>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Estadísticas -->
+    <div class="stats-container">
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <div class="stat-card total">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-number">@Model.Becados.Count</div>
+                    <div class="stat-label">Total de Becas</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="stat-card complete">
+                    <div class="stat-icon">🏆</div>
+                    <div class="stat-number">@Model.Becados.Count(x => x.TipoBeca == 1)</div>
+                    <div class="stat-label">Becas Completas</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="stat-card partial">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-number">@Model.Becados.Count(x => x.TipoBeca == 2)</div>
+                    <div class="stat-label">Becas Parciales</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="stat-card active">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-number">@Model.Becados.Count(x => x.Estado)</div>
+                    <div class="stat-label">Becas Activas</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filters-container">
+        <div class="filters-header">
+            <h3 class="filters-title">Filtros de Búsqueda</h3>
+        </div>
+        
+        <form method="get" class="filters-form">
+            <div class="filter-group">
+                <label class="filter-label">🎓 Carrera</label>
+                <select name="CarreraId" class="filter-select">
+                    <option value="">-- Todas las carreras --</option>
+                    @foreach (var carrera in Model.Carreras)
+                    {
+                        if (Model.CarreraId?.ToString() == carrera.Value)
+                        {
+                            <option value="@carrera.Value" selected>@carrera.Text</option>
+                        }
+                        else
+                        {
+                            <option value="@carrera.Value">@carrera.Text</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">🏢 Institución de Beca</label>
+                <select name="EntidadBecaId" class="filter-select">
+                    <option value="">-- Todas las instituciones --</option>
+                    @foreach (var entidad in Model.EntidadesBeca)
+                    {
+                        if (Model.EntidadBecaId?.ToString() == entidad.Value)
+                        {
+                            <option value="@entidad.Value" selected>@entidad.Text</option>
+                        }
+                        else
+                        {
+                            <option value="@entidad.Value">@entidad.Text</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">🎯 Tipo de Beca</label>
+                <select name="TipoBeca" class="filter-select">
+                    <option value="">-- Todos los tipos --</option>
+                    @if (Model.TipoBeca == "Completa")
+                    {
+                        <option value="Completa" selected>Beca Completa</option>
+                    }
+                    else
+                    {
+                        <option value="Completa">Beca Completa</option>
+                    }
+                    @if (Model.TipoBeca == "Parcial")
+                    {
+                        <option value="Parcial" selected>Beca Parcial</option>
+                    }
+                    else
+                    {
+                        <option value="Parcial">Beca Parcial</option>
+                    }
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">✅ Estado</label>
+                <select name="Estado" class="filter-select">
+                    <option value="">-- Todos los estados --</option>
+                    @if (Model.Estado == "Activo")
+                    {
+                        <option value="Activo" selected>Activo</option>
+                    }
+                    else
+                    {
+                        <option value="Activo">Activo</option>
+                    }
+                    @if (Model.Estado == "Inactivo")
+                    {
+                        <option value="Inactivo" selected>Inactivo</option>
+                    }
+                    else
+                    {
+                        <option value="Inactivo">Inactivo</option>
+                    }
+                </select>
+            </div>
+
+            <div class="filters-actions">
+                <button type="submit" class="btn-filter">
+                    🔍 Aplicar Filtros
+                </button>
+                <a href="@Url.Page("Index")" class="btn-clear">
+                    🗑️ Limpiar Filtros
+                </a>
+            </div>
+        </form>
+
+        @if (Model.CarreraId.HasValue || Model.EntidadBecaId.HasValue || !string.IsNullOrEmpty(Model.TipoBeca) || !string.IsNullOrEmpty(Model.Estado))
+        {
+            <div class="active-filters">
+                <span class="active-filter-badge">
+                    Filtros activos:
+                    <button type="button" class="remove-filter" onclick="window.location.href='@Url.Page("Index")'">×</button>
+                </span>
+                
+                @if (Model.CarreraId.HasValue)
+                {
+                    var carrera = Model.Carreras.FirstOrDefault(c => c.Value == Model.CarreraId.ToString());
+                    if (carrera != null)
+                    {
+                        <span class="active-filter-badge">
+                            Carrera: @carrera.Text
+                            <a href="@Url.Page("Index", new { EntidadBecaId = Model.EntidadBecaId, TipoBeca = Model.TipoBeca, Estado = Model.Estado })" class="remove-filter">×</a>
+                        </span>
+                    }
+                }
+                
+                @if (Model.EntidadBecaId.HasValue)
+                {
+                    var entidad = Model.EntidadesBeca.FirstOrDefault(e => e.Value == Model.EntidadBecaId.ToString());
+                    if (entidad != null)
+                    {
+                        <span class="active-filter-badge">
+                            Institución: @entidad.Text
+                            <a href="@Url.Page("Index", new { CarreraId = Model.CarreraId, TipoBeca = Model.TipoBeca, Estado = Model.Estado })" class="remove-filter">×</a>
+                        </span>
+                    }
+                }
+                
+                @if (!string.IsNullOrEmpty(Model.TipoBeca))
+                {
+                    <span class="active-filter-badge">
+                        Tipo: @Model.TipoBeca
+                        <a href="@Url.Page("Index", new { CarreraId = Model.CarreraId, EntidadBecaId = Model.EntidadBecaId, Estado = Model.Estado })" class="remove-filter">×</a>
+                    </span>
+                }
+                
+                @if (!string.IsNullOrEmpty(Model.Estado))
+                {
+                    <span class="active-filter-badge">
+                        Estado: @Model.Estado
+                        <a href="@Url.Page("Index", new { CarreraId = Model.CarreraId, EntidadBecaId = Model.EntidadBecaId, TipoBeca = Model.TipoBeca })" class="remove-filter">×</a>
+                    </span>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- Tabla de Becados -->
+    <div class="table-container">
+        <div class="table-header">
+            <h2 class="table-title">Listado de Becados</h2>
+            <a asp-page="Create" class="btn-create">
+                Asignar Nueva Beca
             </a>
         </div>
 
-        <div class="card-body">
-            <div class="container my-4">
-                <div class="row">
-                    <div class="col-md-4 mb-4">
-                        <div class="card text-center bg-primary text-white">
-                            <div class="card-body">
-                                <h5 class="card-title">Total de Becas</h5>
-                                <p class="card-text">@Model.Becados.Count</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-4">
-                        <div class="card text-center bg-success text-white">
-                            <div class="card-body">
-                                <h5 class="card-title">Becas Completas</h5>
-                                <p class="card-text">@Model.Becados.Count(x => x.TipoBeca == 1)</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-4">
-                        <div class="card text-center bg-warning text-white">
-                            <div class="card-body">
-                                <h5 class="card-title">Becas Parciales</h5>
-                                <p class="card-text">@Model.Becados.Count(x => x.TipoBeca == 2)</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="table-light">
+        <div class="table-responsive">
+            @if (Model.Becados.Any())
+            {
+                <table class="table">
+                    <thead>
                         <tr>
-                            
-                            <th>
-                                <i class="bi bi-person me-1"></i>
-                                @Html.DisplayNameFor(model => model.Becados[0].Alumno)
-                            </th>
-                            <th>
-                                <i class="bi bi-award me-1"></i>
-                                @Html.DisplayNameFor(model => model.Becados[0].TipoBeca)
-                            </th>
-                           
-                            <th>
-                                <i class="bi bi-building me-1"></i>
-                                Otorgante
-                            </th>
-                            <th>
-                                <i class="bi bi-clock-history me-1"></i>
-                                @Html.DisplayNameFor(model => model.Becados[0].Ciclo)
-                            </th>
-                            <th class="text-center">Acciones</th>
+                            <th>👨‍🎓 Estudiante</th>
+                            <th>🎓 Tipo de Beca</th>
+                            <th>🏢 Entidad Otorgante</th>
+                            <th>📚 Ciclo Académico</th>
+                            <th>📅 Fecha Registro</th>
+                            <th>✅ Estado</th>
+                            <th class="text-center">⚙️ Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -78,46 +725,64 @@
                         {
                             <tr>
                                 <td>
-                                    @Html.DisplayFor(modelItem => item.Alumno.Nombres) @Html.DisplayFor(modelItem => item.Alumno.Apellidos)
+                                    <div class="student-name">
+                                        @Html.DisplayFor(modelItem => item.Alumno.Nombres) @Html.DisplayFor(modelItem => item.Alumno.Apellidos)
+                                    </div>
                                 </td>
-                                
                                 <td>
-
                                     @{
                                         var tipoBeca = item.TipoBeca == 1 ? "Completa" : "Parcial";
+                                        var badgeClass = item.TipoBeca == 1 ? "badge-completa" : "badge-parcial";
                                     }
-                                    <span>@tipoBeca</span>
+                                    <span class="badge-beca @badgeClass">@tipoBeca</span>
                                 </td>
-                               
                                 <td>
                                     @Html.DisplayFor(modelItem => item.EntidadBeca.Nombre)
                                 </td>
                                 <td>
-                                    @Html.DisplayFor(modelItem => item.Ciclo.NCiclo)/@Html.DisplayFor(modelItem => item.Ciclo.anio)
+                                    <strong>Ciclo @Html.DisplayFor(modelItem => item.Ciclo.NCiclo)/@Html.DisplayFor(modelItem => item.Ciclo.anio)</strong>
                                 </td>
                                 <td>
-                                    <div class="btn-group btn-group-sm">
+                                    @item.FechaRegistro.ToString("dd/MM/yyyy")
+                                </td>
+                                <td>
+                                    @{
+                                        var estadoClass = item.Estado ? "badge-activo" : "badge-inactivo";
+                                        var estadoText = item.Estado ? "Activo" : "Inactivo";
+                                    }
+                                    <span class="badge-estado @estadoClass">@estadoText</span>
+                                </td>
+                                <td>
+                                    <div class="btn-group">
                                         <a asp-page="./Edit" asp-route-id="@item.BecadosId"
-                                           class="btn btn-outline-primary" title="Editar">
-                                            <i class="bi bi-pencil-square"></i>
+                                           class="btn-action btn-edit" title="Editar">
+                                            ✏️
                                         </a>
                                         <a asp-page="./Details" asp-route-id="@item.BecadosId"
-                                           class="btn btn-outline-info" title="Detalles">
-                                            <i class="bi bi-info-circle"></i>
+                                           class="btn-action btn-details" title="Detalles">
+                                            ℹ️
                                         </a>
                                         <a asp-page="./Delete" asp-route-id="@item.BecadosId"
-                                           class="btn btn-outline-danger" title="Eliminar">
-                                            <i class="bi bi-trash"></i>
+                                           class="btn-action btn-delete" title="Eliminar">
+                                            🗑️
                                         </a>
                                     </div>
                                 </td>
                             </tr>
                         }
-                        <!--Totalizar cuantos hay, cuantos parcial y cuantos total-->
-                       
                     </tbody>
                 </table>
-            </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <h3>No hay becados registrados</h3>
+                    <p>Comienza asignando la primera beca a un estudiante.</p>
+                    <a asp-page="Create" class="btn-create" style="margin-top: 1rem;">
+                        Asignar Primera Beca
+                    </a>
+                </div>
+            }
         </div>
     </div>
 </div>

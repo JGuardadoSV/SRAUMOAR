@@ -53,6 +53,7 @@ namespace SRAUMOAR.Modelos
         public DbSet<EntidadBeca> InstitucionesBeca { get; set; }
 
         public DbSet<Becados> Becados { get; set; }
+        public DbSet<ArancelBecado> ArancelesBecados { get; set; }
         public DbSet<registroDTE> registroDTEs { get; set; }
         public DbSet<Donantes> Donantes { get; set; }
         public DbSet<DteCorrelativo> DteCorrelativos { get; set; }

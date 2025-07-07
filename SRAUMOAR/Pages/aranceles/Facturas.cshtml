@@ -127,6 +127,8 @@
         color: white;
     }
 
+
+
     .pagination-container {
         background: white;
         border-radius: var(--border-radius);
@@ -437,8 +439,15 @@
 <div class="container-fluid mt-4">
     <!-- Page Header -->
     <div class="page-header">
-        <h1>Cobros Realizados</h1>
-        <p class="mb-0 text-white-50">Gestión y seguimiento de pagos de aranceles</p>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1>Cobros Realizados</h1>
+                <p class="mb-0 text-white-50">Gestión y seguimiento de pagos de aranceles</p>
+            </div>
+            <div>
+              
+            </div>
+        </div>
     </div>
 
     <!-- Filtros -->
@@ -466,7 +475,13 @@
                     <a href="@Url.Page("./Facturas")" class="btn btn-reset">
                         <i class="fas fa-undo me-2"></i>Limpiar
                     </a>
-                </div>
+                    </div>
+                    <div class="form-group">
+                        <a asp-page="./RegistroManual" class="btn btn-primary">
+                            <i class="fas fa-plus-circle me-2"></i>
+                            Registrar manualmente un pago
+                        </a>
+                    </div>
             </div>
         </form>
     </div>
@@ -786,6 +801,8 @@
                     this.style.transform = 'translateY(0) scale(1)';
                 });
             });
+
+
         });
     </script>
 }

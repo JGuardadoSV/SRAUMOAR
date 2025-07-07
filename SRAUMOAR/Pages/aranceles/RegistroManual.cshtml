@@ -1,0 +1,734 @@
+@page
+@model SRAUMOAR.Pages.aranceles.RegistroManualModel
+@{
+    ViewData["Title"] = "Registro Manual de Aranceles";
+}
+
+<style>
+    :root {
+        --primary-green: #188526;
+        --primary-green-light: #22a332;
+        --primary-green-dark: #0f5c1a;
+        --secondary-green: #e8f5e8;
+        --border-color: #ddd;
+        --shadow-color: rgba(24, 133, 38, 0.1);
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--primary-green), var(--primary-green-light));
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0 0 15px 15px;
+        box-shadow: 0 4px 15px var(--shadow-color);
+    }
+
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 600;
+        margin: 0;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .page-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin: 0.5rem 0 0 0;
+    }
+
+    .form-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        border: 1px solid var(--border-color);
+    }
+
+    .form-section {
+        margin-bottom: 2rem;
+    }
+
+    .section-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--primary-green-dark);
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--secondary-green);
+        display: flex;
+        align-items: center;
+    }
+
+    .section-title::before {
+        margin-right: 0.75rem;
+        font-size: 1.5rem;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .control-label {
+        font-weight: 600;
+        color: var(--primary-green-dark);
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+        display: block;
+    }
+
+    .form-control {
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background-color: #fafafa;
+        width: 100%;
+    }
+
+    .form-control:focus {
+        border-color: var(--primary-green);
+        box-shadow: 0 0 0 0.2rem rgba(24, 133, 38, 0.25);
+        background-color: white;
+        outline: none;
+    }
+
+    .form-control:hover {
+        border-color: var(--primary-green-light);
+        background-color: white;
+    }
+
+    .student-info-card {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border: 2px solid var(--primary-green);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+        display: none;
+    }
+
+    .student-info-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-green), var(--primary-green-light));
+    }
+
+    .student-info-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--primary-green-dark);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .student-info-title::before {
+        content: "👨‍🎓";
+        margin-right: 0.5rem;
+        font-size: 1.4rem;
+    }
+
+    .student-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .student-detail {
+        background: white;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+    }
+
+    .student-detail-label {
+        font-size: 0.85rem;
+        color: #6c757d;
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+    }
+
+    .student-detail-value {
+        font-size: 1rem;
+        color: var(--primary-green-dark);
+        font-weight: 600;
+    }
+
+    .aranceles-container {
+        background: white;
+        border: 2px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .arancel-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+        background: #fafafa;
+        transition: all 0.3s ease;
+    }
+
+    .arancel-item:hover {
+        background: var(--secondary-green);
+        border-color: var(--primary-green);
+    }
+
+    .arancel-checkbox {
+        margin-right: 1rem;
+        transform: scale(1.2);
+        accent-color: var(--primary-green);
+    }
+
+    .arancel-info {
+        flex: 1;
+    }
+
+    .arancel-nombre {
+        font-weight: 600;
+        color: var(--primary-green-dark);
+        margin-bottom: 0.25rem;
+    }
+
+    .arancel-detalles {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
+    .arancel-precio {
+        font-weight: 600;
+        color: var(--primary-green);
+        font-size: 1.1rem;
+    }
+
+    .badge-beca {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-left: 0.5rem;
+    }
+
+    .badge-mora {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-left: 0.5rem;
+    }
+
+    .total-section {
+        background: var(--secondary-green);
+        border: 2px solid var(--primary-green);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+        text-align: center;
+    }
+
+    .total-label {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--primary-green-dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .total-amount {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary-green);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-green), var(--primary-green-light));
+        border: none;
+        padding: 0.875rem 2rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(24, 133, 38, 0.3);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, var(--primary-green-dark), var(--primary-green));
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(24, 133, 38, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        border: none;
+        padding: 0.875rem 2rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        color: white;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-secondary:hover {
+        background: #5a6268;
+        color: white;
+        text-decoration: none;
+        transform: translateY(-2px);
+    }
+
+    .text-danger {
+        color: #dc3545;
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-top: 0.25rem;
+    }
+
+    .validation-summary {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+    }
+
+    .loading {
+        display: none;
+        text-align: center;
+        padding: 2rem;
+        color: var(--primary-green);
+    }
+
+    .loading::before {
+        content: "⏳";
+        font-size: 2rem;
+        display: block;
+        margin-bottom: 1rem;
+        animation: spin 1s linear infinite;
+    }
+
+    .filtro-container {
+        position: relative;
+        margin-bottom: 1rem;
+    }
+
+    .filtro-estudiante {
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background-color: #fafafa;
+        width: 100%;
+    }
+
+    .filtro-estudiante:focus {
+        border-color: var(--primary-green);
+        box-shadow: 0 0 0 0.2rem rgba(24, 133, 38, 0.25);
+        background-color: white;
+        outline: none;
+    }
+
+    .filtro-estudiante::placeholder {
+        color: #6c757d;
+        font-style: italic;
+    }
+
+    .select-container {
+        position: relative;
+    }
+
+    .select-container select {
+        transition: all 0.3s ease;
+    }
+
+    .select-container select:focus {
+        border-color: var(--primary-green);
+        box-shadow: 0 0 0 0.2rem rgba(24, 133, 38, 0.25);
+    }
+
+    @@keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    @@media (max-width: 768px) {
+        .form-container {
+            padding: 1.5rem;
+            margin: 1rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+
+        .student-details {
+            grid-template-columns: 1fr;
+        }
+
+        .arancel-item {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .arancel-checkbox {
+            margin-bottom: 0.5rem;
+        }
+    }
+</style>
+
+<div class="page-header">
+    <div class="container">
+        <h1 class="page-title">💰 Registro Manual de Aranceles</h1>
+        <p class="page-subtitle">Registra pagos de aranceles realizados por otros medios</p>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+            <div class="form-container">
+                <form method="post" id="registroForm">
+                    <div asp-validation-summary="ModelOnly" class="text-danger validation-summary"></div>
+
+                    <!-- Información del Alumno -->
+                    <div class="form-section">
+                        <h3 class="section-title">👨‍🎓 Selección del Estudiante</h3>
+                        
+                        <div class="form-group">
+                            <label class="control-label">🔍 Buscar Estudiante</label>
+                            <div class="filtro-container">
+                                <input type="text" class="form-control filtro-estudiante" id="filtroEstudiante" placeholder="Buscar por nombre, apellido o carnet..." />
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="control-label">Estudiante</label>
+                            <select asp-for="CobroArancel.AlumnoId" class="form-control" id="alumnoSelect">
+                                <option value="">-- Selecciona un estudiante --</option>
+                                @foreach (var alumno in Model.Alumnos)
+                                {
+                                    <option value="@alumno.Value" data-nombre="@alumno.Text" data-carnet="@alumno.Text">@alumno.Text</option>
+                                }
+                            </select>
+                            <small id="contadorEstudiantes" class="text-muted" style="font-size: 0.875rem; margin-top: 0.25rem;">
+                                Total de estudiantes: @Model.Alumnos.Count()
+                            </small>
+                            <span asp-validation-for="CobroArancel.AlumnoId" class="text-danger"></span>
+                        </div>
+
+                        <!-- Información del estudiante seleccionado -->
+                        <div id="studentInfoCard" class="student-info-card">
+                            <div class="student-info-title">Información del Estudiante</div>
+                            <div class="student-details">
+                                <div class="student-detail">
+                                    <div class="student-detail-label">Nombre Completo</div>
+                                    <div class="student-detail-value" id="studentName">-</div>
+                                </div>
+                                <div class="student-detail">
+                                    <div class="student-detail-label">Carrera</div>
+                                    <div class="student-detail-value" id="studentCarrera">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Información del Pago -->
+                    <div class="form-section">
+                        <h3 class="section-title">📋 Información del Pago</h3>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="control-label">Fecha de Pago</label>
+                                <input asp-for="FechaPago" class="form-control" type="date" />
+                                <span asp-validation-for="FechaPago" class="text-danger"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="control-label">Código de Generación</label>
+                                <input asp-for="CodigoGeneracion" class="form-control" placeholder="Ingrese el código de factura" />
+                                <span asp-validation-for="CodigoGeneracion" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="control-label">Nota (Opcional)</label>
+                            <textarea asp-for="CobroArancel.nota" class="form-control" rows="3" placeholder="Observaciones adicionales..."></textarea>
+                            <span asp-validation-for="CobroArancel.nota" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <!-- Selección de Aranceles -->
+                    <div class="form-section">
+                        <h3 class="section-title">🎓 Aranceles a Registrar</h3>
+                        
+                        <div class="loading" id="loadingAranceles">
+                            Cargando aranceles disponibles...
+                        </div>
+
+                        <div id="arancelesContainer" class="aranceles-container" style="display: none;">
+                            <!-- Los aranceles se cargarán dinámicamente aquí -->
+                        </div>
+                    </div>
+
+                    <!-- Total -->
+                    <div class="total-section">
+                        <div class="total-label">Total a Registrar</div>
+                        <div class="total-amount" id="totalAmount">$0.00</div>
+                    </div>
+
+                    <div class="form-group text-center" style="margin-top: 2rem;">
+                        <button type="submit" class="btn btn-primary">
+                            💾 Registrar Pago Manual
+                        </button>
+                        <a asp-page="./Facturas" class="btn-secondary" style="margin-left: 1rem;">
+                            🔙 Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let selectedAranceles = [];
+            let arancelesData = [];
+            let todosLosAlumnos = [];
+
+            // Cargar todos los alumnos al inicio
+            const selectAlumnos = document.getElementById('alumnoSelect');
+            Array.from(selectAlumnos.options).forEach(option => {
+                if (option.value) {
+                    todosLosAlumnos.push({
+                        value: option.value,
+                        text: option.text,
+                        nombre: option.dataset.nombre || option.text,
+                        carnet: option.dataset.carnet || option.text
+                    });
+                }
+            });
+
+            // Manejar filtro de estudiantes
+            document.getElementById('filtroEstudiante').addEventListener('input', function() {
+                const filtro = this.value.toLowerCase().trim();
+                filtrarEstudiantes(filtro);
+            });
+
+            // Función para filtrar estudiantes
+            function filtrarEstudiantes(filtro) {
+                const selectAlumnos = document.getElementById('alumnoSelect');
+                
+                // Limpiar opciones existentes (mantener la primera opción)
+                const primeraOpcion = selectAlumnos.options[0];
+                selectAlumnos.innerHTML = '';
+                selectAlumnos.appendChild(primeraOpcion);
+
+                if (filtro === '') {
+                    // Mostrar todos los estudiantes
+                    todosLosAlumnos.forEach(alumno => {
+                        const option = document.createElement('option');
+                        option.value = alumno.value;
+                        option.text = alumno.text;
+                        option.dataset.nombre = alumno.nombre;
+                        option.dataset.carnet = alumno.carnet;
+                        selectAlumnos.appendChild(option);
+                    });
+                } else {
+                    // Filtrar estudiantes
+                    const estudiantesFiltrados = todosLosAlumnos.filter(alumno => 
+                        alumno.text.toLowerCase().includes(filtro) ||
+                        alumno.nombre.toLowerCase().includes(filtro) ||
+                        alumno.carnet.toLowerCase().includes(filtro)
+                    );
+
+                    estudiantesFiltrados.forEach(alumno => {
+                        const option = document.createElement('option');
+                        option.value = alumno.value;
+                        option.text = alumno.text;
+                        option.dataset.nombre = alumno.nombre;
+                        option.dataset.carnet = alumno.carnet;
+                        selectAlumnos.appendChild(option);
+                    });
+                }
+
+                // Limpiar selección actual
+                selectAlumnos.value = '';
+                ocultarInformacionAlumno();
+
+                // Actualizar contador
+                const contador = document.getElementById('contadorEstudiantes');
+                if (filtro === '') {
+                    contador.textContent = `Total de estudiantes: ${todosLosAlumnos.length}`;
+                } else {
+                    const estudiantesFiltrados = todosLosAlumnos.filter(alumno => 
+                        alumno.text.toLowerCase().includes(filtro) ||
+                        alumno.nombre.toLowerCase().includes(filtro) ||
+                        alumno.carnet.toLowerCase().includes(filtro)
+                    );
+                    contador.textContent = `Estudiantes encontrados: ${estudiantesFiltrados.length} de ${todosLosAlumnos.length}`;
+                }
+            }
+
+            // Manejar cambio de alumno
+            document.getElementById('alumnoSelect').addEventListener('change', function() {
+                const alumnoId = this.value;
+                if (alumnoId) {
+                    cargarInformacionAlumno(alumnoId);
+                } else {
+                    ocultarInformacionAlumno();
+                }
+            });
+
+            function cargarInformacionAlumno(alumnoId) {
+                document.getElementById('loadingAranceles').style.display = 'block';
+                document.getElementById('arancelesContainer').style.display = 'none';
+
+                fetch(`?handler=AlumnoInfo&alumnoId=${alumnoId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Mostrar información del alumno
+                        document.getElementById('studentName').textContent = `${data.alumno.nombres} ${data.alumno.apellidos}`;
+                        document.getElementById('studentCarrera').textContent = data.alumno.carrera || 'No especificada';
+                        document.getElementById('studentInfoCard').style.display = 'block';
+
+                        // Guardar datos de aranceles
+                        arancelesData = data.aranceles;
+                        
+                        // Renderizar aranceles
+                        renderizarAranceles(data.aranceles, data.tieneBecaParcial);
+                        
+                        document.getElementById('loadingAranceles').style.display = 'none';
+                        document.getElementById('arancelesContainer').style.display = 'block';
+                    })
+                    .catch(error => {
+                        alert('Error al cargar la información del alumno');
+                        document.getElementById('loadingAranceles').style.display = 'none';
+                    });
+            }
+
+            function ocultarInformacionAlumno() {
+                document.getElementById('studentInfoCard').style.display = 'none';
+                document.getElementById('arancelesContainer').style.display = 'none';
+                selectedAranceles = [];
+                actualizarTotal();
+            }
+
+            function renderizarAranceles(aranceles, tieneBecaParcial) {
+                const container = document.getElementById('arancelesContainer');
+                container.innerHTML = '';
+
+                aranceles.forEach(function(arancel) {
+                    const precioFinal = arancel.precioPersonalizado || arancel.costoConMora;
+                    const precioOriginal = arancel.precioPersonalizado || arancel.costo;
+                    
+                    const arancelHtml = `
+                        <div class="arancel-item">
+                            <input type="checkbox" class="arancel-checkbox" value="${arancel.id}" 
+                                   data-precio="${precioFinal}" data-nombre="${arancel.nombre}">
+                            <div class="arancel-info">
+                                <div class="arancel-nombre">
+                                    ${arancel.nombre}
+                                    ${arancel.precioPersonalizado ? '<span class="badge-beca">Beca</span>' : ''}
+                                    ${arancel.estaVencido ? '<span class="badge-mora">Mora</span>' : ''}
+                                </div>
+                                <div class="arancel-detalles">
+                                    ${arancel.ciclo} | 
+                                    Precio: $${precioOriginal.toFixed(2)}
+                                    ${arancel.precioPersonalizado ? ` | Con descuento: $${arancel.precioPersonalizado.toFixed(2)}` : ''}
+                                    ${arancel.estaVencido ? ` | Mora: $${arancel.valorMora.toFixed(2)}` : ''}
+                                </div>
+                            </div>
+                            <div class="arancel-precio">
+                                $${precioFinal.toFixed(2)}
+                            </div>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', arancelHtml);
+                });
+
+                // Manejar cambios en checkboxes
+                document.addEventListener('change', function(e) {
+                    if (e.target.classList.contains('arancel-checkbox')) {
+                        const arancelId = parseInt(e.target.value);
+                        const precio = parseFloat(e.target.dataset.precio);
+                        
+                        if (e.target.checked) {
+                            if (!selectedAranceles.includes(arancelId)) {
+                                selectedAranceles.push(arancelId);
+                            }
+                        } else {
+                            selectedAranceles = selectedAranceles.filter(id => id !== arancelId);
+                        }
+                        
+                        actualizarTotal();
+                    }
+                });
+            }
+
+            function actualizarTotal() {
+                let total = 0;
+                document.querySelectorAll('.arancel-checkbox:checked').forEach(function(checkbox) {
+                    total += parseFloat(checkbox.dataset.precio);
+                });
+                
+                document.getElementById('totalAmount').textContent = `$${total.toFixed(2)}`;
+            }
+
+            // Manejar envío del formulario
+            document.getElementById('registroForm').addEventListener('submit', function(e) {
+                if (selectedAranceles.length === 0) {
+                    e.preventDefault();
+                    alert('Debe seleccionar al menos un arancel');
+                    return false;
+                }
+
+                // Agregar aranceles seleccionados al formulario
+                selectedAranceles.forEach(function(arancelId) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'SelectedAranceles';
+                    input.value = arancelId;
+                    document.getElementById('registroForm').appendChild(input);
+                });
+            });
+        });
+    </script>
+} 

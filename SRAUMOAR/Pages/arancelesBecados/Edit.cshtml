@@ -1,0 +1,119 @@
+@page
+@model SRAUMOAR.Pages.arancelesBecados.EditModel
+@{
+    ViewData["Title"] = "Editar Arancel para Alumno Becado";
+}
+
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0">Editar Arancel para Alumno Becado</h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="#">Inicio</a></li>
+                    <li class="breadcrumb-item"><a asp-page="./Index">Aranceles Becados</a></li>
+                    <li class="breadcrumb-item active">Editar</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Editar Arancel Personalizado</h3>
+                    </div>
+                    <form method="post">
+                        <div class="card-body">
+                            @if (!ViewData.ModelState.IsValid)
+                            {
+                                <div class="alert alert-danger">
+                                    <ul>
+                                        @foreach (var modelError in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                        {
+                                            <li>@modelError.ErrorMessage</li>
+                                        }
+                                    </ul>
+                                </div>
+                            }
+
+                            <input type="hidden" asp-for="ArancelBecado.ArancelBecadoId" />
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label asp-for="ArancelBecado.BecadosId" class="control-label">Alumno Becado</label>
+                                        <select asp-for="ArancelBecado.BecadosId" class="form-control" asp-items="Model.AlumnosBecadosList">
+                                            <option value="">-- Seleccionar Alumno Becado --</option>
+                                        </select>
+                                        <span asp-validation-for="ArancelBecado.BecadosId" class="text-danger"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label asp-for="ArancelBecado.ArancelId" class="control-label">Arancel</label>
+                                        <select asp-for="ArancelBecado.ArancelId" class="form-control" asp-items="Model.ArancelesList">
+                                            <option value="">-- Seleccionar Arancel --</option>
+                                        </select>
+                                        <span asp-validation-for="ArancelBecado.ArancelId" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label asp-for="ArancelBecado.PrecioPersonalizado" class="control-label">Precio Personalizado</label>
+                                        <input asp-for="ArancelBecado.PrecioPersonalizado" class="form-control" type="number" step="0.01" min="0" />
+                                        <span asp-validation-for="ArancelBecado.PrecioPersonalizado" class="text-danger"></span>
+                                        <small class="form-text text-muted">Ingrese el precio personalizado para este alumno becado</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label asp-for="ArancelBecado.PorcentajeDescuento" class="control-label">Porcentaje de Descuento</label>
+                                        <input asp-for="ArancelBecado.PorcentajeDescuento" class="form-control" type="number" step="0.01" min="0" max="100" />
+                                        <span asp-validation-for="ArancelBecado.PorcentajeDescuento" class="text-danger"></span>
+                                        <small class="form-text text-muted">Porcentaje de descuento aplicado (opcional)</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="ArancelBecado.Observaciones" class="control-label">Observaciones</label>
+                                <textarea asp-for="ArancelBecado.Observaciones" class="form-control" rows="3" maxlength="500"></textarea>
+                                <span asp-validation-for="ArancelBecado.Observaciones" class="text-danger"></span>
+                                <small class="form-text text-muted">Observaciones sobre el descuento aplicado</small>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="custom-control custom-checkbox">
+                                    <input asp-for="ArancelBecado.Activo" class="custom-control-input" />
+                                    <label asp-for="ArancelBecado.Activo" class="custom-control-label">Activo</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Guardar Cambios
+                            </button>
+                            <a asp-page="./Index" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Volver
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+} 

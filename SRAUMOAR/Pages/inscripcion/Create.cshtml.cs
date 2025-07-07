@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using SRAUMOAR.Entidades.Alumnos;
 using SRAUMOAR.Entidades.Procesos;
 using SRAUMOAR.Modelos;
 
@@ -25,6 +26,7 @@ namespace SRAUMOAR.Pages.inscripcion
         public IActionResult OnGet(int id, int cicloelegido=0)
         {
            idalumno = id;
+            Alumno alumno = _context.Alumno.Where(x => x.AlumnoId == id).FirstOrDefault() ?? new Alumno(); // Obtener el alumno
             var cicloactual = _context.Ciclos.Where(x => x.Activo == true).FirstOrDefault()?.Id ?? 0;
 
             EstaInscrito =  _context.Inscripciones
@@ -37,6 +39,10 @@ namespace SRAUMOAR.Pages.inscripcion
                 .Include(x => x.DetallesCobroArancel)
                 .Any(x => x.CicloId == cicloactual && x.DetallesCobroArancel.FirstOrDefault().Arancel.Nombre == "Matricula" && x.AlumnoId == idalumno);
 
+            if (alumno.PermiteInscripcionSinPago)
+            {
+                YaPago = true;
+            }
 
             var carreraid = _context.Alumno.Where(x => x.AlumnoId == id).FirstOrDefault()?.CarreraId??0;
 

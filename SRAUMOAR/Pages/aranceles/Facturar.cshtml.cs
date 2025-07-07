@@ -26,7 +26,7 @@ namespace SRAUMOAR.Pages.aranceles
         private readonly SRAUMOAR.Modelos.Contexto _context;
         private readonly EmisorConfig _emisor;
         private readonly ICorrelativoService _correlativoService;
-        private int ambiente = 1;
+        private int ambiente = 0;
         public FacturarModel(SRAUMOAR.Modelos.Contexto context, IOptions<EmisorConfig> emisorOptions, ICorrelativoService correlativoService)
         {
             _context = context;
@@ -54,10 +54,33 @@ namespace SRAUMOAR.Pages.aranceles
             var arancelIdsList = arancelIds.Split(',').Select(int.Parse).ToList();
             var alumno = await _context.Alumno.FirstOrDefaultAsync(m => m.AlumnoId == idalumno);
             
-            // Usar una consulta más segura que maneje aranceles sin ciclo
+            // Obtener aranceles seleccionados
             var aranceles = await _context.Aranceles
                 .Where(a => arancelIdsList.Contains(a.ArancelId))
                 .ToListAsync();
+
+            // Verificar si el alumno tiene beca parcial
+            var becaAlumno = await _context.Becados
+                .Where(b => b.AlumnoId == idalumno && b.Estado && b.TipoBeca == 2)
+                .FirstOrDefaultAsync();
+
+            if (becaAlumno != null)
+            {
+                // Obtener aranceles personalizados activos para este becado
+                var arancelesPersonalizados = await _context.ArancelesBecados
+                    .Where(ab => ab.BecadosId == becaAlumno.BecadosId && ab.Activo)
+                    .ToListAsync();
+
+                // Reemplazar el costo de los aranceles seleccionados por el personalizado si existe
+                foreach (var arancel in aranceles)
+                {
+                    var personalizado = arancelesPersonalizados.FirstOrDefault(ab => ab.ArancelId == arancel.ArancelId);
+                    if (personalizado != null)
+                    {
+                        arancel.Costo = personalizado.PrecioPersonalizado;
+                    }
+                }
+            }
 
             // Cargar los ciclos por separado para evitar problemas con Include
             var ciclosIds = aranceles.Where(a => a.CicloId.HasValue).Select(a => a.CicloId.Value).Distinct().ToList();
@@ -99,6 +122,32 @@ namespace SRAUMOAR.Pages.aranceles
                 return Page();
             }
 
+            // Obtener el alumno
+            var alumno = await _context.Alumno.FirstOrDefaultAsync(m => m.AlumnoId == idalumno);
+            if (alumno == null)
+            {
+                ModelState.AddModelError("", "Alumno no encontrado");
+                return Page();
+            }
+
+            // Verificar si el alumno tiene beca parcial y obtener precios personalizados
+            var becaAlumno = await _context.Becados
+                .Where(b => b.AlumnoId == idalumno && b.Estado && b.TipoBeca == 2)
+                .FirstOrDefaultAsync();
+
+            Dictionary<int, decimal> preciosPersonalizados = new Dictionary<int, decimal>();
+            if (becaAlumno != null)
+            {
+                var arancelesPersonalizados = await _context.ArancelesBecados
+                    .Where(ab => ab.BecadosId == becaAlumno.BecadosId && ab.Activo)
+                    .ToListAsync();
+
+                foreach (var personalizado in arancelesPersonalizados)
+                {
+                    preciosPersonalizados[personalizado.ArancelId] = personalizado.PrecioPersonalizado;
+                }
+            }
+
             // Validar que el efectivo recibido sea suficiente
             if (CobroArancel.EfectivoRecibido <= 0)
             {
@@ -107,8 +156,24 @@ namespace SRAUMOAR.Pages.aranceles
                 return Page();
             }
 
-            // Calcular el total a cobrar
-            decimal totalACobrar = arancelescostos.Sum();
+            // Calcular el total a cobrar usando los precios correctos
+            decimal totalACobrar = 0;
+            for (int x = 0; x < selectedAranceles.Count; x++)
+            {
+                var arancelId = selectedAranceles[x];
+                var precioOriginal = arancelescostos[x];
+                
+                // Si el alumno tiene beca parcial y hay precio personalizado, usar ese
+                if (preciosPersonalizados.ContainsKey(arancelId))
+                {
+                    totalACobrar += preciosPersonalizados[arancelId];
+                }
+                else
+                {
+                    totalACobrar += precioOriginal;
+                }
+            }
+
             if (CobroArancel.EfectivoRecibido < totalACobrar)
             {
                 ModelState.AddModelError("CobroArancel.EfectivoRecibido", 
@@ -126,7 +191,7 @@ namespace SRAUMOAR.Pages.aranceles
             //****************************************************
             //CREACION DEL DTE
             //****************************************************
-            Alumno alumno = await _context.Alumno.Include(c=>c.Carrera).FirstOrDefaultAsync(m => m.AlumnoId == idalumno);
+             alumno = await _context.Alumno.Include(c=>c.Carrera).FirstOrDefaultAsync(m => m.AlumnoId == idalumno);
             string carnet = alumno.Email.Split('@')[0];
 
             string dteJson = "";
@@ -420,11 +485,26 @@ namespace SRAUMOAR.Pages.aranceles
                 var arancelDb = await _context.Aranceles.FindAsync(selectedAranceles[y]);
                 var vencido = arancelDb.EstaVencido;
                 var mostrarMora = vencido && !alumno.ExentoMora;
-                var costoFinal = mostrarMora ? arancelDb.TotalConMora : arancelDb.Costo;
+                
+                // Determinar el costo base (precio personalizado si existe, sino el original)
+                decimal costoBase;
+                if (preciosPersonalizados.ContainsKey(selectedAranceles[y]))
+                {
+                    costoBase = preciosPersonalizados[selectedAranceles[y]];
+                }
+                else
+                {
+                    costoBase = arancelDb.Costo;
+                }
+                
+                // Aplicar mora si es necesario
+                var costoFinal = mostrarMora ? costoBase + arancelDb.ValorMora : costoBase;
+                
                 if (mostrarMora)
                 {
                     algunConMora = true;
                 }
+                
                 DetallesCobroArancel arancel = new DetallesCobroArancel();
                 arancel.ArancelId = selectedAranceles[y];
                 arancel.costo = costoFinal;

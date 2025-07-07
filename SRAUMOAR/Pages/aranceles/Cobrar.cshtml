@@ -339,6 +339,31 @@
         content: "👨‍🎓";
         margin-right: 0.5rem;
     }
+
+    .discount-badge {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        color: #155724;
+        padding: 0.2rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-block;
+        margin-left: 0.5rem;
+    }
+
+    .original-price {
+        text-decoration: line-through;
+        color: #6c757d;
+        font-size: 0.85rem;
+    }
+
+    .discount-info {
+        background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);
+        border: 1px solid #c3e6cb;
+        border-radius: 8px;
+        padding: 0.5rem;
+        margin-top: 0.5rem;
+    }
 </style>
 
 <div class="header-professional">
@@ -366,7 +391,25 @@
         </div>
     </div>
 
-    <div>Exento de mora: @(alumno?.ExentoMora == true ? "Sí" : "No")</div>
+    <div class="alumno-info">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="alumno-label">Exento de mora</div>
+                <div class="alumno-name">@(alumno?.ExentoMora == true ? "Sí" : "No")</div>
+            </div>
+            @if (Model.AlumnoTieneBecaParcial)
+            {
+                <div class="col-md-6">
+                    <div class="alumno-label">Estado de Beca</div>
+                    <div class="alumno-name text-success">
+                        <i class="bi bi-award me-2"></i>Beca Parcial Activa
+                        <br />
+                        <small class="text-muted">Aranceles personalizados: @Model.CantidadArancelesPersonalizados()</small>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
 
     <!-- Tabla de Aranceles con Radio Buttons -->
     <div class="aranceles-container">
@@ -418,10 +461,16 @@
                                     </td>
                                     <td class="fw-semibold">@Html.DisplayFor(modelItem => item.Nombre)</td>
                                     <td>
+                                        @{
+                                            var precioConDescuento = Model.ObtenerPrecioConDescuento(item, alumno.AlumnoId);
+                                            var precioConDescuentoYMora = Model.ObtenerPrecioConDescuentoYMora(item, alumno.AlumnoId);
+                                            var porcentajeDescuento = Model.ObtenerPorcentajeDescuento(item.ArancelId);
+                                        }
+                                        
                                         @if (!Model.AlumnoHaPagado(item.ArancelId, @alumno.AlumnoId) && item.EstaVencido && !(alumno?.ExentoMora ?? false))
                                         {
                                             <span class="costo-amount" style="color: #c0392b;">
-                                                $@item.TotalConMora
+                                                $@precioConDescuentoYMora
                                                 <span class="badge bg-danger ms-2">Incluye mora</span>
                                             </span>
                                             <br />
@@ -429,7 +478,34 @@
                                         }
                                         else
                                         {
-                                            <span class="costo-amount">$@item.Costo</span>
+                                            <span class="costo-amount">$@precioConDescuento</span>
+                                        }
+                                        
+                                        @if (Model.AlumnoTieneBecaParcial)
+                                        {
+                                            @if (Model.TienePrecioPersonalizado(item.ArancelId))
+                                            {
+                                                <div class="discount-info">
+                                                    <small class="text-success fw-bold">
+                                                        <i class="bi bi-percent"></i> @porcentajeDescuento% descuento aplicado
+                                                    </small>
+                                                    @if (item.Costo != precioConDescuento)
+                                                    {
+                                                        <br />
+                                                        <small class="original-price">
+                                                            Precio original: $@item.Costo
+                                                        </small>
+                                                    }
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="discount-info" style="background: #fff3cd; border-color: #ffeaa7;">
+                                                    <small class="text-warning fw-bold">
+                                                        <i class="bi bi-exclamation-triangle"></i> Sin precio personalizado
+                                                    </small>
+                                                </div>
+                                            }
                                         }
                                     </td>
                                     <td>
@@ -494,10 +570,16 @@
                                     </td>
                                     <td class="fw-semibold">@Html.DisplayFor(modelItem => item.Nombre)</td>
                                     <td>
+                                        @{
+                                            var precioConDescuento = Model.ObtenerPrecioConDescuento(item, alumno.AlumnoId);
+                                            var precioConDescuentoYMora = Model.ObtenerPrecioConDescuentoYMora(item, alumno.AlumnoId);
+                                            var porcentajeDescuento = Model.ObtenerPorcentajeDescuento(item.ArancelId);
+                                        }
+                                        
                                         @if (!Model.AlumnoHaPagado(item.ArancelId, @alumno.AlumnoId) && item.EstaVencido && !(alumno?.ExentoMora ?? false))
                                         {
                                             <span class="costo-amount" style="color: #c0392b;">
-                                                $@item.TotalConMora
+                                                $@precioConDescuentoYMora
                                                 <span class="badge bg-danger ms-2">Incluye mora</span>
                                             </span>
                                             <br />
@@ -505,7 +587,34 @@
                                         }
                                         else
                                         {
-                                            <span class="costo-amount">$@item.Costo</span>
+                                            <span class="costo-amount">$@precioConDescuento</span>
+                                        }
+                                        
+                                        @if (Model.AlumnoTieneBecaParcial)
+                                        {
+                                            @if (Model.TienePrecioPersonalizado(item.ArancelId))
+                                            {
+                                                <div class="discount-info">
+                                                    <small class="text-success fw-bold">
+                                                        <i class="bi bi-percent"></i> @porcentajeDescuento% descuento aplicado
+                                                    </small>
+                                                    @if (item.Costo != precioConDescuento)
+                                                    {
+                                                        <br />
+                                                        <small class="original-price">
+                                                            Precio original: $@item.Costo
+                                                        </small>
+                                                    }
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="discount-info" style="background: #fff3cd; border-color: #ffeaa7;">
+                                                    <small class="text-warning fw-bold">
+                                                        <i class="bi bi-exclamation-triangle"></i> Sin precio personalizado
+                                                    </small>
+                                                </div>
+                                            }
                                         }
                                     </td>
                                     <td>

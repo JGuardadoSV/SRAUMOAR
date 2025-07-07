@@ -13,7 +13,7 @@ namespace SRAUMOAR.Pages.puntoventa
 {
     public class puntoVentaModel : PageModel
     {
-        private int ambiente = 1;
+        private int ambiente = 0;
 
         [BindProperty]
         public FacturaViewModel Factura { get; set; } = new FacturaViewModel();

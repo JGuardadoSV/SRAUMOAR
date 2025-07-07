@@ -1,66 +1,388 @@
 ﻿@page
 @model SRAUMOAR.Pages.becados.EditModel
-
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Editar Becado";
 }
 
-<h1>Edit</h1>
+<style>
+    :root {
+        --primary-green: #188526;
+        --primary-green-light: #22a332;
+        --primary-green-dark: #0f5c1a;
+        --secondary-green: #e8f5e8;
+        --border-color: #ddd;
+        --shadow-color: rgba(24, 133, 38, 0.1);
+    }
 
-<h4>Becados</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Becados.BecadosId" />
-            <div class="form-group">
-                
-                <label asp-for="Becados.FechaRegistro" class="control-label"></label>
-                <input asp-for="Becados.FechaRegistro" class="form-control" />
-                <span asp-validation-for="Becados.FechaRegistro" class="text-danger"></span>
-            </div>
-            <div class="form-group form-check">
-                
-                <label class="form-check-label">
-                    <input class="form-check-input" asp-for="Becados.Estado" /> @Html.DisplayNameFor(model => model.Becados.Estado)
-                </label>
-            </div>
-            <div class="form-group">
-                
-                <label asp-for="Becados.TipoBeca" class="control-label"></label>
-                <input asp-for="Becados.TipoBeca" class="form-control" />
-                <span asp-validation-for="Becados.TipoBeca" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                
-                <label asp-for="Becados.AlumnoId" class="control-label"></label>
-                <select asp-for="Becados.AlumnoId" class="form-control" asp-items="ViewBag.AlumnoId"></select>
-                <span asp-validation-for="Becados.AlumnoId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                
-                <label asp-for="Becados.EntidadBecaId" class="control-label"></label>
-                <select asp-for="Becados.EntidadBecaId" class="form-control" asp-items="ViewBag.EntidadBecaId"></select>
-                <span asp-validation-for="Becados.EntidadBecaId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                
-                <label asp-for="Becados.CicloId" class="control-label"></label>
-                <select asp-for="Becados.CicloId" class="form-control" asp-items="ViewBag.CicloId"></select>
-                <span asp-validation-for="Becados.CicloId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
+    .page-header {
+        background: linear-gradient(135deg, var(--primary-green), var(--primary-green-light));
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0 0 15px 15px;
+        box-shadow: 0 4px 15px var(--shadow-color);
+    }
+
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 600;
+        margin: 0;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .page-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin: 0.5rem 0 0 0;
+    }
+
+    .form-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        border: 1px solid var(--border-color);
+    }
+
+    .student-info-card {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border: 2px solid var(--primary-green);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .student-info-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-green), var(--primary-green-light));
+    }
+
+    .student-info-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--primary-green-dark);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .student-info-title::before {
+        content: "👨‍🎓";
+        margin-right: 0.5rem;
+        font-size: 1.4rem;
+    }
+
+    .student-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .student-detail {
+        background: white;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+    }
+
+    .student-detail-label {
+        font-size: 0.85rem;
+        color: #6c757d;
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+    }
+
+    .student-detail-value {
+        font-size: 1rem;
+        color: var(--primary-green-dark);
+        font-weight: 600;
+    }
+
+    .form-section {
+        margin-bottom: 2rem;
+    }
+
+    .section-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--primary-green-dark);
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--secondary-green);
+        display: flex;
+        align-items: center;
+    }
+
+    .section-title::before {
+        margin-right: 0.75rem;
+        font-size: 1.5rem;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .control-label {
+        font-weight: 600;
+        color: var(--primary-green-dark);
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+        display: block;
+    }
+
+    .form-control {
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background-color: #fafafa;
+        width: 100%;
+    }
+
+    .form-control:focus {
+        border-color: var(--primary-green);
+        box-shadow: 0 0 0 0.2rem rgba(24, 133, 38, 0.25);
+        background-color: white;
+        outline: none;
+    }
+
+    .form-control:hover {
+        border-color: var(--primary-green-light);
+        background-color: white;
+    }
+
+    .form-check {
+        background: var(--secondary-green);
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid #d4edda;
+        margin-top: 1rem;
+    }
+
+    .form-check-input {
+        transform: scale(1.2);
+        margin-right: 0.75rem;
+        accent-color: var(--primary-green);
+    }
+
+    .form-check-label {
+        font-weight: 500;
+        color: var(--primary-green-dark);
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-green), var(--primary-green-light));
+        border: none;
+        padding: 0.875rem 2rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(24, 133, 38, 0.3);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, var(--primary-green-dark), var(--primary-green));
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(24, 133, 38, 0.4);
+    }
+
+    .btn-primary:active {
+        transform: translateY(0);
+    }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        color: var(--primary-green);
+        text-decoration: none;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+        background: var(--secondary-green);
+        border: 1px solid transparent;
+    }
+
+    .back-link:hover {
+        background: var(--primary-green);
+        color: white;
+        text-decoration: none;
+        border-color: var(--primary-green);
+    }
+
+    .back-link::before {
+        content: "←";
+        margin-right: 0.5rem;
+        font-weight: bold;
+    }
+
+    .text-danger {
+        color: #dc3545;
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-top: 0.25rem;
+    }
+
+    .validation-summary {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+    }
+
+    .input-group {
+        position: relative;
+    }
+
+    .input-icon {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--primary-green);
+        font-size: 1.1rem;
+    }
+
+    @@media (max-width: 768px) {
+        .form-container {
+            padding: 1.5rem;
+            margin: 1rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+        }
+
+        .student-details {
+            grid-template-columns: 1fr;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="page-header">
+    <div class="container">
+        <h1 class="page-title">✏️ Editar Becado</h1>
+        <p class="page-subtitle">Modifica la información del registro de beca</p>
     </div>
 </div>
 
-<div>
-    <a asp-page="./Index">Back to List</a>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+            <div class="form-container">
+                <form method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger validation-summary"></div>
+                    <input type="hidden" asp-for="Becados.BecadosId" />
+                    <input type="hidden" asp-for="Becados.AlumnoId" />
+
+                    <!-- Información del Alumno -->
+                    <div class="student-info-card">
+                        <div class="student-info-title">Información del Estudiante</div>
+                        <div class="student-details">
+                            <div class="student-detail">
+                                <div class="student-detail-label">Nombre Completo</div>
+                                <div class="student-detail-value">@Model.NombreAlumno</div>
+                            </div>
+                            <div class="student-detail">
+                                <div class="student-detail-label">Carrera</div>
+                                <div class="student-detail-value">@Model.CarreraAlumno</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Configuración de la Beca -->
+                    <div class="form-section">
+                        <h3 class="section-title">🎓 Configuración de la Beca</h3>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label asp-for="Becados.TipoBeca" class="control-label">Tipo de Beca</label>
+                                <div class="input-group">
+                                    <select asp-for="Becados.TipoBeca" class="form-control">
+                                        <option value="">-- Selecciona tipo de beca --</option>
+                                        <option value="1">Beca completa</option>
+                                        <option value="2">Beca parcial</option>
+                                    </select>
+                                </div>
+                                <span asp-validation-for="Becados.TipoBeca" class="text-danger"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="Becados.EntidadBecaId" class="control-label">Entidad Otorgante</label>
+                                <div class="input-group">
+                                    <select asp-for="Becados.EntidadBecaId" class="form-control" asp-items="ViewBag.EntidadBecaId" asp-option-label="-- Selecciona una entidad --"></select>
+                                </div>
+                                <span asp-validation-for="Becados.EntidadBecaId" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label asp-for="Becados.CicloId" class="control-label">Ciclo Académico</label>
+                                <div class="input-group">
+                                    <select asp-for="Becados.CicloId" class="form-control" asp-items="ViewBag.CicloId" asp-option-label="-- Selecciona un ciclo --"></select>
+                                </div>
+                                <span asp-validation-for="Becados.CicloId" class="text-danger"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="Becados.FechaRegistro" class="control-label">Fecha de Registro</label>
+                                <div class="input-group">
+                                    <input asp-for="Becados.FechaRegistro" class="form-control" type="date" />
+                                </div>
+                                <span asp-validation-for="Becados.FechaRegistro" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-check">
+                            <label class="form-check-label">
+                                <input class="form-check-input" asp-for="Becados.Estado" type="checkbox" />
+                                ✅ Beca activa
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group text-center" style="margin-top: 2rem;">
+                        <input type="submit" value="💾 Guardar Cambios" class="btn btn-primary" />
+                    </div>
+                </form>
+            </div>
+
+            <div class="text-center">
+                <a asp-page="./Index" class="back-link">Volver al listado</a>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

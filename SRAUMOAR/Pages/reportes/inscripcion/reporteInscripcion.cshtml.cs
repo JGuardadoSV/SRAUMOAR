@@ -71,7 +71,9 @@ namespace SRAUMOAR.Pages.reportes.inscripcion
                 document.Add(new Paragraph(" "));
 
                 // DATOS DEL ALUMNO
-                var datosTable = new Table(2);
+                float[] columnWidths = { 500f, 300f }; // Ambas columnas de 300 puntos
+
+                var datosTable = new Table(columnWidths);
                 datosTable.SetWidth(UnitValue.CreatePercentValue(100));
 
                 // Columna izquierda
@@ -160,7 +162,7 @@ namespace SRAUMOAR.Pages.reportes.inscripcion
                         .SetBorder(Border.NO_BORDER));
 
                     // Matrícula
-                    tablaAsignaturas.AddCell(new Cell().Add(new Paragraph("")
+                    tablaAsignaturas.AddCell(new Cell().Add(new Paragraph("1")
                         .SetFontSize(10)) // Tamaño de fuente
                         .SetTextAlignment(TextAlignment.RIGHT).SetBorder(Border.NO_BORDER));
 
@@ -206,7 +208,21 @@ namespace SRAUMOAR.Pages.reportes.inscripcion
 
                 //****************************
                 // SECCIÓN DE FIRMAS
-                #region FIRMAS
+              
+                //*****************************************************************
+                // Simulación de fecha obtenida de la base de datos
+                string fechaDB = DateTime.Now.ToString("yyyy-MM-dd");
+
+                // Extraer solo la parte de la fecha
+                DateTime fecha = DateTime.ParseExact(fechaDB.Substring(0, 10), "yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+                // Formatear al estilo deseado
+                string fechaTexto = fecha.ToString("dd 'de' MMMM 'de' yyyy", new CultureInfo("es-ES"));
+
+                // Agregar al documento
+                document.Add(new Paragraph($"Distrito de Tejutla, municipio de Chalatenango Centro, departamento de Chalatenango, {fechaTexto}"));
+                document.Add(new Paragraph(" "));
+                
                 var firmasTable = new Table(3);
                 firmasTable.SetWidth(UnitValue.CreatePercentValue(100));
 
@@ -243,23 +259,10 @@ namespace SRAUMOAR.Pages.reportes.inscripcion
                 document.Add(firmasTable);
                 document.Add(new Paragraph(" "));
                 document.Add(new Paragraph(" "));
-                //*****************************************************************
-                // Simulación de fecha obtenida de la base de datos
-                string fechaDB = "2024-12-13 19:45:50.9776656";
-
-                // Extraer solo la parte de la fecha
-                DateTime fecha = DateTime.ParseExact(fechaDB.Substring(0, 10), "yyyy-MM-dd", CultureInfo.InvariantCulture);
-
-                // Formatear al estilo deseado
-                string fechaTexto = fecha.ToString("dd 'de' MMMM 'de' yyyy", new CultureInfo("es-ES"));
-
-                // Agregar al documento
-                document.Add(new Paragraph($"Distrito de Tejutla, municipio de Chalatenango Centro, departamento de Chalatenango, {fechaTexto}"));
                 document.Add(new Paragraph(" "));
-                document.Add(new Paragraph(" "));
-                document.Add(new Paragraph("DESPUÉS DE SER REVISADO POR EL ASESOR, PRESENTAR ESTE FORMATO EN REGISTRO ACADÉMICO Y PARA CUALQUIER OBSERVACIÓN SE LO HARÁ EL DIRECTOR DE REGISTRO ACADÉMICO"));
+                document.Add(new Paragraph("DESPUÉS DE SER REVISADO POR EL ASESOR, PRESENTAR ESTE FORMATO EN REGISTRO ACADÉMICO Y PARA CUALQUIER OBSERVACIÓN SE LO HARÁ EL DIRECTOR DE REGISTRO ACADÉMICO").SetFontSize(10));
 
-                #endregion
+                
 
                 //********************************************************************
                 document.Close();
