@@ -187,7 +187,7 @@ namespace SRAUMOAR.Pages.reportes.inscripcion
 
                     // Código final recomendado
                     preReqDataTable.AddCell(new Cell().Add(new Paragraph(
-                        prerrequisitos.Any() ? prerrequisitos.First().CodigoMateria : "-")
+                        prerrequisitos.Any() ? prerrequisitos.First().CodigoMateria : mat.MateriasGrupo.Materia.RequisitoBachillerato?"Bachillerato":"-")
                         .SetFontSize(10))
                         .SetTextAlignment(TextAlignment.CENTER)
                         .SetBorder(Border.NO_BORDER));

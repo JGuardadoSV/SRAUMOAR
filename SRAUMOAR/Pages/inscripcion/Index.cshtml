@@ -22,7 +22,7 @@
                                 <option value="0" selected>Selecciona una carrera</option>
                                 @foreach (var grupo in ViewBag.GrupoId)
                                 {
-                                    <option value="@grupo.Value">@grupo.Text</option>
+                                    <option value="@grupo.Value" @(grupo.Value == Model.SelectedCarreraId ? "selected" : "")>@grupo.Text</option>
                                 }
                             </select>
                         </div>
@@ -77,18 +77,6 @@
 
 @section Scripts {
     <script>
-               // Obtener el elemento select por su ID
-        const grupoSelect = document.getElementById('grupoSelect');
-
-        // Al cargar la página, recuperar el valor del localStorage y seleccionarlo
-              window.onload = () => {
-            const selectedValue = localStorage.getItem('SelectedCarreraId');
-            grupoSelect.value = selectedValue || grupoSelect.options[0].value; // Selecciona el primer elemento si no hay valor
-        };
-
-        // Al cambiar la selección, guardar el nuevo valor en el localStorage
-        grupoSelect.addEventListener('change', () => {
-            localStorage.setItem('SelectedCarreraId', grupoSelect.value);
-        });
+        // Eliminado: No se guarda ni restaura selección
     </script>
 }

@@ -1,65 +1,303 @@
 ﻿@page
 @model SRAUMOAR.Pages.generales.pensum.IndexModel
-
 @{
-    ViewData["Title"] = "Administracion de pensums";
+    ViewData["Title"] = "Administración de Pensums";
 }
 
-<h1>Administracion de pensums</h1>
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-body bg-gradient-primary text-white rounded">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="mb-1 fw-bold">
+                                <i class="bi bi-mortarboard me-2"></i>
+                                Administración de Pensums Académicos
+                            </h2>
+                            <p class="mb-0 opacity-75">Gestión integral de planes de estudio y programas académicos</p>
+                        </div>
+                        <div class="text-end">
+                            <a asp-page="Create" class="btn btn-light btn-lg shadow-sm">
+                                <i class="bi bi-plus-circle-fill me-2"></i>
+                                Registrar Nuevo Pensum
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<p>
-    <a asp-page="Create" class="btn btn-primary">Registrar nuevo pensum <i class="bi bi-plus-circle-fill"></i></a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Pensum[0].NombrePensum)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Pensum[0].CodigoPensum)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Pensum[0].Anio)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Pensum[0].Activo)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Pensum[0].Carrera)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model.Pensum) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.NombrePensum)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CodigoPensum)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Anio)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Activo)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Carrera.CodigoCarrera)
-            </td>
-            <td>
-                    <a asp-page="/generales/materias/materias" asp-route-id="@item.CarreraId" class="btn btn-primary">Ver materias <i class="bi bi-journal"></i></a> |
-                    <a asp-page="./Edit" asp-route-id="@item.PensumId" class="btn btn-success">Editar <i class="bi bi-pencil-fill"></i></a> |
-                    <a href="~/descargas/pensum/pensumpdf.pdf" target="_blank" class="btn btn-info">PDF <i class="bi bi-filetype-pdf"></i></a>
-                    <!-- 
-                     |
-                <a asp-page="./Details" asp-route-id="@item.PensumId">Details</a> |
-                    <a asp-page="./Delete" asp-route-id="@item.PensumId">Delete</a>
-                 -->
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-primary mb-2">
+                        <i class="bi bi-collection display-4"></i>
+                    </div>
+                    <h5 class="card-title text-muted">Total Pensums</h5>
+                    <h3 class="text-primary fw-bold">@Model.Pensum.Count()</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-success mb-2">
+                        <i class="bi bi-check-circle display-4"></i>
+                    </div>
+                    <h5 class="card-title text-muted">Activos</h5>
+                    <h3 class="text-success fw-bold">@Model.Pensum.Count(p => p.Activo)</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-warning mb-2">
+                        <i class="bi bi-pause-circle display-4"></i>
+                    </div>
+                    <h5 class="card-title text-muted">Inactivos</h5>
+                    <h3 class="text-warning fw-bold">@Model.Pensum.Count(p => !p.Activo)</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-info mb-2">
+                        <i class="bi bi-calendar-event display-4"></i>
+                    </div>
+                    <h5 class="card-title text-muted">Año Actual</h5>
+                    <h3 class="text-info fw-bold">@DateTime.Now.Year</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 text-dark fw-semibold">
+                            <i class="bi bi-table me-2"></i>
+                            Listado de Pensums
+                        </h5>
+                        <div class="d-flex gap-2">
+                           @*  <button class="btn btn-outline-secondary btn-sm" onclick="exportToExcel()">
+                                <i class="bi bi-file-earmark-excel me-1"></i>
+                                Exportar Excel
+                            </button>
+                            <button class="btn btn-outline-primary btn-sm" onclick="window.print()">
+                                <i class="bi bi-printer me-1"></i>
+                                Imprimir
+                            </button> *@
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="border-0 fw-semibold text-uppercase small">
+                                        <i class="bi bi-bookmark me-1 text-primary"></i>
+                                        @Html.DisplayNameFor(model => model.Pensum[0].NombrePensum)
+                                    </th>
+                                    <th class="border-0 fw-semibold text-uppercase small">
+                                        <i class="bi bi-hash me-1 text-secondary"></i>
+                                        @Html.DisplayNameFor(model => model.Pensum[0].CodigoPensum)
+                                    </th>
+                                    <th class="border-0 fw-semibold text-uppercase small">
+                                        <i class="bi bi-calendar3 me-1 text-info"></i>
+                                        @Html.DisplayNameFor(model => model.Pensum[0].Anio)
+                                    </th>
+                                    <th class="border-0 fw-semibold text-uppercase small text-center">
+                                        <i class="bi bi-toggle-on me-1 text-success"></i>
+                                        @Html.DisplayNameFor(model => model.Pensum[0].Activo)
+                                    </th>
+                                    <th class="border-0 fw-semibold text-uppercase small">
+                                        <i class="bi bi-mortarboard me-1 text-warning"></i>
+                                        @Html.DisplayNameFor(model => model.Pensum[0].Carrera)
+                                    </th>
+                                    <th class="border-0 fw-semibold text-uppercase small text-center">
+                                        <i class="bi bi-gear me-1"></i>
+                                        Acciones
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.Pensum)
+                                {
+                                    <tr class="border-bottom">
+                                        <td class="px-3 py-3">
+                                            <div class="fw-semibold text-dark">
+                                                @Html.DisplayFor(modelItem => item.NombrePensum)
+                                            </div>
+                                        </td>
+                                        <td class="px-3 py-3">
+                                            <span class="badge bg-light text-dark border">
+                                                @Html.DisplayFor(modelItem => item.CodigoPensum)
+                                            </span>
+                                        </td>
+                                        <td class="px-3 py-3">
+                                            <span class="text-muted">
+                                                @Html.DisplayFor(modelItem => item.Anio)
+                                            </span>
+                                        </td>
+                                        <td class="px-3 py-3 text-center">
+                                            @if (item.Activo)
+                                            {
+                                                <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                                    <i class="bi bi-check-circle me-1"></i>
+                                                    Activo
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle">
+                                                    <i class="bi bi-pause-circle me-1"></i>
+                                                    Inactivo
+                                                </span>
+                                            }
+                                        </td>
+                                        <td class="px-3 py-3">
+                                            <div class="d-flex align-items-center">
+                                                <div class="bg-primary rounded-circle p-2 me-2" style="width: 35px; height: 35px;">
+                                                    <i class="bi bi-mortarboard text-white small"></i>
+                                                </div>
+                                                <span class="fw-medium">
+                                                    @Html.DisplayFor(modelItem => item.Carrera.CodigoCarrera)
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td class="px-3 py-3">
+                                            <div class="btn-group" role="group">
+                                                <a asp-page="/generales/materias/materias"
+                                                   asp-route-id="@item.PensumId"
+                                                   class="btn btn-primary btn-sm"
+                                                   data-bs-toggle="tooltip"
+                                                   title="Ver materias del pensum">
+                                                   Materias <i class="bi bi-journal"></i>
+                                                </a>
+                                                @* <a asp-page="./Edit"
+                                                   asp-route-id="@item.PensumId"
+                                                   class="btn btn-success btn-sm"
+                                                   data-bs-toggle="tooltip"
+                                                   title="Editar pensum">
+                                                    <i class="bi bi-pencil-fill"></i>
+                                                </a>
+                                                <a href="~/descargas/pensum/pensumpdf.pdf"
+                                                   target="_blank"
+                                                   class="btn btn-info btn-sm"
+                                                   data-bs-toggle="tooltip"
+                                                   title="Descargar PDF">
+                                                    <i class="bi bi-filetype-pdf"></i>
+                                                </a> *@
+                                              @*   <div class="btn-group">
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown">
+                                                        <i class="bi bi-three-dots-vertical"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu">
+                                                        <li>
+                                                            <a class="dropdown-item" asp-page="./Details" asp-route-id="@item.PensumId">
+                                                                <i class="bi bi-eye me-2"></i>Ver detalles
+                                                            </a>
+                                                        </li>
+                                                        <li><hr class="dropdown-divider"></li>
+                                                        <li>
+                                                            <a class="dropdown-item text-danger" asp-page="./Delete" asp-route-id="@item.PensumId">
+                                                                <i class="bi bi-trash me-2"></i>Eliminar
+                                                            </a>
+                                                        </li>
+                                                    </ul>
+                                                </div> *@
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                @if (!Model.Pensum.Any())
+                {
+                    <div class="card-body text-center py-5">
+                        <div class="text-muted">
+                            <i class="bi bi-inbox display-1 mb-3"></i>
+                            <h5>No hay pensums registrados</h5>
+                            <p class="mb-3">Comience registrando su primer pensum académico</p>
+                            <a asp-page="Create" class="btn btn-primary">
+                                <i class="bi bi-plus-circle me-2"></i>
+                                Registrar Primer Pensum
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CSS Personalizado -->
+<style>
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .card {
+        transition: transform 0.2s ease-in-out;
+    }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+    .table th {
+        font-weight: 600;
+        color: #495057;
+    }
+
+    .btn-group .btn {
+        border-radius: 0;
+    }
+
+        .btn-group .btn:first-child {
+            border-top-left-radius: 0.375rem;
+            border-bottom-left-radius: 0.375rem;
+        }
+
+        .btn-group .btn:last-child {
+            border-top-right-radius: 0.375rem;
+            border-bottom-right-radius: 0.375rem;
+        }
+
+    @@media print {
+        .btn, .card-header > div > div:last-child
+
+    {
+        display: none !important;
+    }
+
+    }
+</style>
+
+<!-- Scripts adicionales -->
+<script>
+    // Inicializar tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+
+    // Función para exportar a Excel (requiere implementación adicional)
+    function exportToExcel() {
+        // Implementar lógica de exportación
+        alert('Función de exportación a Excel - Implementar según necesidades');
+    }
+</script>

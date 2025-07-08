@@ -170,7 +170,9 @@ namespace SRAUMOAR.Pages.aranceles
 
             // Asignar el total real cobrado (incluyendo mora si aplica)
             CobroArancel.Total = aranceles.Sum(a => a.costo);
-
+            CobroArancel.Total = 0;
+            CobroArancel.EfectivoRecibido = 0;
+            CobroArancel.Cambio = 0;
             // Asignar el CicloId si existe un ciclo en los aranceles
             var cicloDeAranceles = await _context.Aranceles
                 .Where(a => SelectedAranceles.Contains(a.ArancelId) && a.CicloId.HasValue)
@@ -208,9 +210,9 @@ namespace SRAUMOAR.Pages.aranceles
 
             var tieneBecaParcial = becaAlumno != null;
 
-            // Obtener aranceles disponibles
+            // Obtener aranceles disponibles (solo obligatorios)
             var aranceles = await _context.Aranceles
-                .Where(a => a.Activo)
+                .Where(a => a.Activo && a.Obligatorio)
                 .Include(a => a.Ciclo)
                 .OrderBy(a => a.Nombre)
                 .ToListAsync();
@@ -228,6 +230,14 @@ namespace SRAUMOAR.Pages.aranceles
                     preciosPersonalizados[personalizado.ArancelId] = personalizado.PrecioPersonalizado;
                 }
             }
+
+            // Obtener IDs de aranceles ya pagados por el alumno
+            var arancelesPagados = await _context.CobrosArancel
+                .Where(c => c.AlumnoId == alumnoId)
+                .SelectMany(c => c.DetallesCobroArancel)
+                .Select(d => d.ArancelId)
+                .Distinct()
+                .ToListAsync();
 
             return new JsonResult(new
             {
@@ -249,7 +259,8 @@ namespace SRAUMOAR.Pages.aranceles
                     estaVencido = a.EstaVencido,
                     valorMora = a.ValorMora,
                     ciclo = a.Ciclo != null ? $"Ciclo {a.Ciclo.NCiclo} - {a.Ciclo.anio}" : "Sin ciclo"
-                }).ToList()
+                }).ToList(),
+                arancelesPagados = arancelesPagados
             });
         }
 

@@ -66,11 +66,191 @@
                 float: none;
             }
         }
+
+        
+        .header-compact {
+            background: linear-gradient(90deg, #196b20 0%, #2d8f35 100%);
+            color: white;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 10px rgba(25, 107, 32, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .header-compact h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .header-compact .subtitle {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin: 0;
+            font-weight: 400;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .btn-compact {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.85rem;
+            border: none;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            white-space: nowrap;
+        }
+
+        .btn-pdf-compact {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+            .btn-pdf-compact:hover {
+                background: rgba(255, 255, 255, 0.25);
+                color: white;
+                transform: translateY(-1px);
+            }
+
+        .container-actions-compact {
+            padding: 0.5rem 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn-nueva-materia-compact {
+            background: #196b20;
+            color: white;
+            border: 1px solid #155518;
+        }
+
+            .btn-nueva-materia-compact:hover {
+                background: #155518;
+                color: white;
+                transform: translateY(-1px);
+            }
+
+        .btn-compact i {
+            font-size: 0.9rem;
+        }
+
+        /* Responsive para móviles */
+            @@media (max-width: 768px) {
+            .header-compact
+
+        {
+            flex-direction: column;
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .header-info {
+            align-items: center;
+        }
+
+        .header-actions {
+            justify-content: center;
+        }
+
+        .container-actions-compact {
+            padding: 0.5rem 1rem;
+            text-align: center;
+        }
+
+        .header-compact h1 {
+            font-size: 1.3rem;
+        }
+
+        }
+
+        /* Versión ultra compacta */
+        .header-ultra-compact {
+            background: #196b20;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            box-shadow: 0 1px 3px rgba(25, 107, 32, 0.3);
+        }
+
+            .header-ultra-compact h1 {
+                font-size: 1.25rem;
+                font-weight: 600;
+                margin: 0;
+            }
+
+            .header-ultra-compact .subtitle-inline {
+                font-size: 0.8rem;
+                opacity: 0.8;
+                margin-left: 1rem;
+                font-weight: 300;
+            }
+
+        .btn-mini {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            border: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .btn-pdf-mini {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+            .btn-pdf-mini:hover {
+                background: rgba(255, 255, 255, 0.3);
+                color: white;
+            }
+
+        .btn-nueva-mini {
+            background: #22842a;
+            color: white;
+            margin-left: 0.5rem;
+        }
+
+            .btn-nueva-mini:hover {
+                background: #1e7e2a;
+                color: white;
+            }
+    
     </style>
 </head>
 <body>
     <header class="bg-primary text-white text-center py-3 mb-4">
         <h1>Pensum de Materias</h1>
+        <h3>@Model.Pensum.Carrera.NombreCarrera</h3>
+        <h3>@Model.Pensum.NombrePensum</h3>
         <a href="~/descargas/pensum/pensumpdf.pdf" target="_blank" class="btn btn-info">PDF <i class="bi bi-filetype-pdf"></i></a>
     </header>
     <div class="container-fluid mt-4">
@@ -121,7 +301,14 @@
                                 </div>
                                 <div class="row">
                                     <div class="col-6 border-end text-center">
-                                        <p class="mb-0 materia-uv">@materia.Correlativo</p>
+                                        <p class="mb-0 materia-uv">
+                                            @{
+                                                var prerrequisitos = Model.MateriasPrerrequisitos.ContainsKey(materia.MateriaId)
+                                                ? Model.MateriasPrerrequisitos[materia.MateriaId]
+                                                : new List<dynamic>();
+                                            }
+                                            @(prerrequisitos.Any() ? prerrequisitos.First().CodigoMateria : "-")
+                                        </p>
                                     </div>
                                     <div class="col-6 text-center">
                                         <p class="mb-0 materia-uv">@materia.uv UV</p>
@@ -146,6 +333,7 @@
                                 <th>@Html.DisplayNameFor(model => model.Materia[0].Ciclo)</th>
                                 <th>@Html.DisplayNameFor(model => model.Materia[0].Correlativo)</th>
                                 <th>@Html.DisplayNameFor(model => model.Materia[0].uv)</th>
+                                <th>Prerrequisito</th>
                                 <th>@Html.DisplayNameFor(model => model.Materia[0].Pensum)</th>
                                 <th class="text-center">Acciones</th>
                             </tr>
@@ -159,6 +347,14 @@
                                     <td>@Html.DisplayFor(modelItem => item.Ciclo)</td>
                                     <td>@Html.DisplayFor(modelItem => item.Correlativo)</td>
                                     <td>@Html.DisplayFor(modelItem => item.uv)</td>
+                                    <td>
+                                        @{
+                                            var prerrequisitos = Model.MateriasPrerrequisitos.ContainsKey(item.MateriaId)
+                                            ? Model.MateriasPrerrequisitos[item.MateriaId]
+                                            : new List<dynamic>();
+                                        }
+                                        @(prerrequisitos.Any() ? prerrequisitos.First().NombreMateria : "-")
+                                    </td>
                                     <td>@Html.DisplayFor(modelItem => item.Pensum!.CodigoPensum)</td>
                                     <td class="text-center">
                                         <div class="btn-group">

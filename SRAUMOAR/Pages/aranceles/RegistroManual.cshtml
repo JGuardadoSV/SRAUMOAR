@@ -631,9 +631,9 @@
 
                         // Guardar datos de aranceles
                         arancelesData = data.aranceles;
-                        
+                        let arancelesPagados = data.arancelesPagados || [];
                         // Renderizar aranceles
-                        renderizarAranceles(data.aranceles, data.tieneBecaParcial);
+                        renderizarAranceles(data.aranceles, data.tieneBecaParcial, arancelesPagados);
                         
                         document.getElementById('loadingAranceles').style.display = 'none';
                         document.getElementById('arancelesContainer').style.display = 'block';
@@ -651,23 +651,25 @@
                 actualizarTotal();
             }
 
-            function renderizarAranceles(aranceles, tieneBecaParcial) {
+            function renderizarAranceles(aranceles, tieneBecaParcial, arancelesPagados) {
                 const container = document.getElementById('arancelesContainer');
                 container.innerHTML = '';
 
                 aranceles.forEach(function(arancel) {
                     const precioFinal = arancel.precioPersonalizado || arancel.costoConMora;
                     const precioOriginal = arancel.precioPersonalizado || arancel.costo;
-                    
+                    const pagado = arancelesPagados.includes(arancel.id);
                     const arancelHtml = `
                         <div class="arancel-item">
                             <input type="checkbox" class="arancel-checkbox" value="${arancel.id}" 
-                                   data-precio="${precioFinal}" data-nombre="${arancel.nombre}">
+                                   data-precio="${precioFinal}" data-nombre="${arancel.nombre}"
+                                   ${pagado ? 'disabled' : ''}>
                             <div class="arancel-info">
                                 <div class="arancel-nombre">
                                     ${arancel.nombre}
                                     ${arancel.precioPersonalizado ? '<span class="badge-beca">Beca</span>' : ''}
                                     ${arancel.estaVencido ? '<span class="badge-mora">Mora</span>' : ''}
+                                    ${pagado ? '<span class="badge badge-success" style="margin-left:0.5rem;">Pagado</span>' : ''}
                                 </div>
                                 <div class="arancel-detalles">
                                     ${arancel.ciclo} | 

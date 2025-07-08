@@ -31,14 +31,19 @@ namespace SRAUMOAR.Pages.inscripcion
         {
             var cicloactual = _context.Ciclos.Where(x => x.Activo == true).FirstOrDefault()?.Id ?? 0;
             
-            // Obtener la primera carrera si no hay una seleccionada o si se seleccionó la opción 0
-            if (!SelectedCarreraId.HasValue || SelectedCarreraId == 0)
+            // Solo cargar datos si se seleccionó una carrera válida (no 0)
+            if (SelectedCarreraId.HasValue && SelectedCarreraId.Value > 0)
             {
-                var primeraCarrera = await _context.Carreras.FirstOrDefaultAsync();
-                if (primeraCarrera != null)
-                {
-                    SelectedCarreraId = primeraCarrera.CarreraId;
-                }
+                Inscripcion = await _context.Inscripciones
+                .Include(i => i.Alumno)
+                .Include(i => i.Ciclo).Where(x=>x.CicloId==cicloactual && x.Alumno.CarreraId==SelectedCarreraId).ToListAsync()?? new List<Inscripcion>();
+
+                ViewData["TotalAlumnosInscritos"] = Inscripcion.Count;
+            }
+            else
+            {
+                Inscripcion = new List<Inscripcion>();
+                ViewData["TotalAlumnosInscritos"] = 0;
             }
 
             ViewData["GrupoId"] = new SelectList(
@@ -48,23 +53,6 @@ namespace SRAUMOAR.Pages.inscripcion
                   Id = c.CarreraId,
                   Grupo = c.NombreCarrera 
               }), "Id", "Grupo", SelectedCarreraId);
-           
-            
-            if (SelectedCarreraId.HasValue)
-            {
-
-                Inscripcion = await _context.Inscripciones
-                .Include(i => i.Alumno)
-                .Include(i => i.Ciclo).Where(x=>x.CicloId==cicloactual && x.Alumno.CarreraId==SelectedCarreraId).ToListAsync()?? new List<Inscripcion>();
-
-                ViewData["TotalAlumnosInscritos"] = Inscripcion.Count;
-               
-                
-            }
-            else
-            {
-                Inscripcion= new List<Inscripcion>();
-            }
 
             ViewData["TotalInscripciones"] = _context.Inscripciones.Where(x => x.CicloId == cicloactual).Count();
         }

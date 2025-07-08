@@ -21,10 +21,21 @@ namespace SRAUMOAR.Pages.generales.pensum
 
         public IList<Pensum> Pensum { get;set; } = default!;
 
-        public async Task OnGetAsync()
+        public async Task OnGetAsync(int? id)
         {
-            Pensum = await _context.Pensums
-                .Include(p => p.Carrera).ToListAsync();
+            if (id == null)
+            {
+                Pensum = await _context.Pensums
+               .Include(p => p.Carrera).ToListAsync();
+            }
+            else
+            {
+                Pensum = await _context.Pensums
+                .Include(p => p.Carrera)
+                .Where(p => p.CarreraId == id)
+                .ToListAsync();
+            }
+           
         }
     }
 }
