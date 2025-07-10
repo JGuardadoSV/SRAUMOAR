@@ -1,0 +1,103 @@
+@page
+@model SRAUMOAR.Pages.inscripcion.DashboardModel
+@{
+    ViewData["Title"] = "Dashboard de Inscripciones";
+}
+<div class="container mt-5">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1 class="display-6 text-center">Dashboard de Inscripciones</h1>
+        </div>
+    </div>
+    <form method="get" class="row mb-4">
+        <div class="col-md-4">
+            <label for="carreraSelect" class="form-label">Carrera</label>
+            <select name="SelectedCarreraId" class="form-select" id="carreraSelect">
+                <option value="0" selected>Todas las carreras</option>
+                @{
+                    var selectedCarreraId = Model.SelectedCarreraId.HasValue ? Model.SelectedCarreraId.Value.ToString() : "0";
+                }
+                @foreach (var carrera in Model.Carreras)
+                {
+                    var isSelected = carrera.Value.ToString() == selectedCarreraId ? "selected" : "";
+                    @Html.Raw($"<option value=\"{carrera.Value}\" {isSelected}>{carrera.Text}</option>")
+                }
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label for="generoSelect" class="form-label">Género</label>
+            <select name="Genero" class="form-select" id="generoSelect">
+                @Html.Raw($"<option value=\"\" {(string.IsNullOrEmpty(Model.Genero) ? "selected" : "")}>Ambos</option>")
+                @Html.Raw($"<option value=\"0\" {(Model.Genero == "0" ? "selected" : "")}>Hombres</option>")
+                @Html.Raw($"<option value=\"1\" {(Model.Genero == "1" ? "selected" : "")}>Mujeres</option>")
+            </select>
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+            <button type="submit" class="btn btn-success w-100">Filtrar</button>
+        </div>
+    </form>
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Total Inscripciones</h5>
+                    <p class="card-text display-6">@Model.TotalInscripciones</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-info mb-3">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Hombres</h5>
+                    <p class="card-text display-6">@Model.TotalHombres</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-warning mb-3">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Mujeres</h5>
+                    <p class="card-text display-6">@Model.TotalMujeres</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-success text-white text-center">
+                    <h2 class="h5">Detalle de Inscripciones</h2>
+                </div>
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead class="bg-success text-white text-center">
+                            <tr>
+                                <th>#</th>
+                                <th>Fecha</th>
+                                <th>Alumno</th>
+                                <th>Carrera</th>
+                                <th>Género</th>
+                                <th>Ciclo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{ int correlativo = 1; }
+                            @foreach (var item in Model.Inscripciones)
+                            {
+                                <tr>
+                                    <td>@correlativo</td>
+                                    <td>@item.Fecha.ToShortDateString()</td>
+                                    <td>@item.Alumno.Nombres @item.Alumno.Apellidos</td>
+                                    <td>@item.Alumno.Carrera?.NombreCarrera</td>
+                                    <td>@(item.Alumno.Genero == 0 ? "Hombre" : item.Alumno.Genero == 1 ? "Mujer" : "Otro")</td>
+                                    <td>@item.Ciclo.NCiclo-@item.Ciclo.anio</td>
+                                </tr>
+                                correlativo++;
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

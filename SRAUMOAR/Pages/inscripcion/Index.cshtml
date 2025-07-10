@@ -20,9 +20,13 @@
                             </label>
                             <select name="SelectedCarreraId" class="form-select" id="grupoSelect" onchange="this.form.submit()">
                                 <option value="0" selected>Selecciona una carrera</option>
+                                @{
+                                    var selectedCarreraId = Model.SelectedCarreraId.HasValue ? Model.SelectedCarreraId.Value.ToString() : "0";
+                                }
                                 @foreach (var grupo in ViewBag.GrupoId)
                                 {
-                                    <option value="@grupo.Value" @(grupo.Value == Model.SelectedCarreraId ? "selected" : "")>@grupo.Text</option>
+                                    var isSelected = grupo.Value.ToString() == selectedCarreraId ? "selected" : "";
+                                    @Html.Raw($"<option value=\"{grupo.Value}\" {isSelected}>{grupo.Text}</option>")
                                 }
                             </select>
                         </div>
