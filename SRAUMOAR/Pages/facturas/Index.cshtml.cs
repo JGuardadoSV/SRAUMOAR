@@ -253,7 +253,7 @@ namespace SRAUMOAR.Pages.facturas
             try
             {
                 var facturas = await ObtenerFacturasFiltradasAsync();
-                
+
                 if (!facturas.Any())
                 {
                     return OnGetGenerarPDFSinDatos();
@@ -264,88 +264,304 @@ namespace SRAUMOAR.Pages.facturas
                 var pdf = new PdfDocument(writer);
                 var document = new Document(pdf);
 
-                // Configurar el documento
-                document.SetMargins(20, 20, 20, 20);
+                // Configurar el documento con márgenes profesionales
+                document.SetMargins(30, 30, 30, 30);
 
-                // Título del reporte
-                var titulo = new Paragraph("REPORTE DE FACTURAS")
-                    .SetFontSize(20)
+                // Encabezado corporativo
+                var titulo = new Paragraph("UNIVERSIDAD MONSEÑOR OSCAR ARNULFO ROMERO")
+                    .SetFontSize(18)
                     .SetTextAlignment(TextAlignment.CENTER)
-                    .SetMarginBottom(20);
+                    .SetFontColor(ColorConstants.DARK_GRAY)
+                    .SetMarginBottom(10);
+                document.Add(titulo);
+                 titulo = new Paragraph("REPORTE DE FACTURAS")
+                   .SetFontSize(18)
+                   .SetTextAlignment(TextAlignment.CENTER)
+                   .SetFontColor(ColorConstants.DARK_GRAY)
+                   .SetMarginBottom(10);
                 document.Add(titulo);
 
-                // Información del filtro
-                var filtroInfo = new Paragraph($"Período: {FechaInicio?.ToString("dd/MM/yyyy")} - {FechaFin?.ToString("dd/MM/yyyy")}")
-                    .SetFontSize(12)
+                // Línea decorativa
+                var linea = new Paragraph("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+                    .SetFontSize(8)
                     .SetTextAlignment(TextAlignment.CENTER)
+                    .SetFontColor(ColorConstants.GRAY)
+                    .SetMarginBottom(15);
+                document.Add(linea);
+
+                // Información del filtro con estilo profesional
+                var filtroInfo = new Paragraph($"Período de Consulta: {FechaInicio?.ToString("dd/MM/yyyy")} - {FechaFin?.ToString("dd/MM/yyyy")}")
+                    .SetFontSize(11)
+                    .SetTextAlignment(TextAlignment.CENTER)
+                    .SetFontColor(ColorConstants.DARK_GRAY)
                     .SetMarginBottom(20);
                 document.Add(filtroInfo);
 
-                // Crear tabla
-                var table = new Table(12).UseAllAvailableWidth();
-                
-                // Configurar encabezados
-                var headers = new[] { 
-                    "ID", "Estado", "Fecha", "Tipo DTE", "Código Generación", 
-                    "Número Control", "Sello Recepción", "Sello Anulación",
-                    "Total Gravado", "Total Exento", "IVA", "Total a Pagar"
-                };
+                // Crear tabla con bordes profesionales
+               // var table = new Table(12).UseAllAvailableWidth();
 
-                // Agregar encabezados
+                // Definir anchos relativos para cada columna (total debe sumar el número deseado)
+                // Crear tabla con anchos específicos directamente en el constructor
+                var columnWidths = new float[] {
+    0.5f,  // ID
+    1f,    // Estado
+    1.2f,  // Fecha
+    1f,    // Tipo DTE
+    1f,    // Código Gen.
+    1.2f,  // Número Control
+    0.5f,    // Sello Recep.
+    1f,    // Sello Anul.
+    1.5f,  // Total Gravado
+    1.5f,  // Total Exento
+    1f,    // IVA
+    1.5f   // Total a Pagar
+};
+                var table = new Table(new UnitValue[] {
+    UnitValue.CreatePointValue(25),   // ID - 25pt
+    UnitValue.CreatePointValue(50),   // Estado - 50pt
+    UnitValue.CreatePointValue(60),   // Fecha - 60pt
+    UnitValue.CreatePointValue(50),   // Tipo DTE - 50pt
+    UnitValue.CreatePointValue(50),   // Código Gen. - 50pt
+    UnitValue.CreatePointValue(70),   // Número Control - 70pt
+    UnitValue.CreatePointValue(30),   // Sello Recep. - 30pt (muy pequeño)
+    UnitValue.CreatePointValue(50),   // Sello Anul. - 50pt
+    UnitValue.CreatePointValue(70),   // Total Gravado - 70pt
+    UnitValue.CreatePointValue(70),   // Total Exento - 70pt
+    UnitValue.CreatePointValue(40),   // IVA - 40pt
+    UnitValue.CreatePointValue(70)    // Total a Pagar - 70pt
+}).UseAllAvailableWidth();
+
+                // Configurar encabezados con estilo profesional
+                var headers = new[] {
+    "ID", "Estado", "Fecha", "Tipo DTE", "Código Gen.",
+    "Número Control", "Sello Recep.", "Sello Anul.",
+    "Total Gravado", "Total Exento", "IVA", "Total a Pagar"
+};
+
+                // Agregar encabezados con estilo mejorado
                 foreach (var header in headers)
                 {
                     var cell = new Cell()
-                        .Add(new Paragraph(header))
-                        .SetBackgroundColor(ColorConstants.LIGHT_GRAY)
+                        .Add(new Paragraph(header)
+                            .SetFontSize(8)
+                            .SetFontColor(ColorConstants.WHITE))
+                        .SetBackgroundColor(new DeviceRgb(70, 70, 70))
                         .SetTextAlignment(TextAlignment.CENTER)
-                        .SetBorder(Border.NO_BORDER);
+                        .SetPadding(5)
+                        .SetBorder(new SolidBorder(ColorConstants.WHITE, 0.5f));
                     table.AddHeaderCell(cell);
                 }
 
-                // Agregar datos
+                // Agregar datos con estilo alternado
+                var isEvenRow = false;
+                var i = 0;
                 foreach (var factura in facturas)
                 {
-                    table.AddCell(new Cell().Add(new Paragraph(factura.FacturaId.ToString())).SetTextAlignment(TextAlignment.CENTER));
-                    table.AddCell(new Cell().Add(new Paragraph(factura.Anulada ? "Anulada" : "Activa")).SetTextAlignment(TextAlignment.CENTER));
-                    table.AddCell(new Cell().Add(new Paragraph(factura.Fecha.ToString("dd/MM/yyyy HH:mm"))).SetTextAlignment(TextAlignment.CENTER));
-                    table.AddCell(new Cell().Add(new Paragraph(ObtenerTipoDTETexto(factura.TipoDTE))).SetTextAlignment(TextAlignment.CENTER));
-                    table.AddCell(new Cell().Add(new Paragraph(factura.CodigoGeneracion)).SetFontSize(8));
-                    table.AddCell(new Cell().Add(new Paragraph(factura.NumeroControl)).SetFontSize(8));
-                    table.AddCell(new Cell().Add(new Paragraph(string.IsNullOrEmpty(factura.SelloRecepcion) ? "Pendiente" : "Recibido")).SetTextAlignment(TextAlignment.CENTER));
-                    table.AddCell(new Cell().Add(new Paragraph(string.IsNullOrEmpty(factura.SelloAnulacion) ? "—" : "Anulado")).SetTextAlignment(TextAlignment.CENTER));
-                    table.AddCell(new Cell().Add(new Paragraph($"${factura.TotalGravado:N2}")).SetTextAlignment(TextAlignment.RIGHT));
-                    table.AddCell(new Cell().Add(new Paragraph($"${factura.TotalExento:N2}")).SetTextAlignment(TextAlignment.RIGHT));
-                    table.AddCell(new Cell().Add(new Paragraph($"${factura.TotalIva:N2}")).SetTextAlignment(TextAlignment.RIGHT));
-                    table.AddCell(new Cell().Add(new Paragraph($"${factura.TotalPagar:N2}")).SetTextAlignment(TextAlignment.RIGHT));
+                        i++;
+                    var backgroundColor = isEvenRow ?
+                        new DeviceRgb(248, 248, 248) :
+                        ColorConstants.WHITE;
+
+                    // Configurar estilo de celda base
+                    var cellStyle = new Cell()
+                        .SetBackgroundColor(backgroundColor)
+                        .SetBorder(new SolidBorder(ColorConstants.LIGHT_GRAY, 0.5f))
+                        .SetPadding(3);
+
+                    table.AddCell(cellStyle.Clone(true)
+                        .Add(new Paragraph(i.ToString())
+                            .SetFontSize(8)
+                            .SetTextAlignment(TextAlignment.CENTER)));
+
+                    table.AddCell(cellStyle.Clone(true)
+                        .Add(new Paragraph(factura.Anulada ? "Anulada" : "Activa")
+                            .SetFontSize(8)
+                            .SetTextAlignment(TextAlignment.CENTER)
+                            .SetFontColor(ColorConstants.BLACK)));
+
+                    table.AddCell(cellStyle.Clone(true)
+                        .Add(new Paragraph(factura.Fecha.ToString("dd/MM/yyyy HH:mm"))
+                            .SetFontSize(8)
+                            .SetTextAlignment(TextAlignment.CENTER)));
+
+                    table.AddCell(cellStyle.Clone(true)
+                        .Add(new Paragraph(ObtenerTipoDTETexto(factura.TipoDTE))
+                            .SetFontSize(8)
+                            .SetTextAlignment(TextAlignment.CENTER)));
+
+                    table.AddCell(cellStyle.Clone(true)
+                        .Add(new Paragraph(factura.CodigoGeneracion)
+                            .SetFontSize(7)
+                            .SetTextAlignment(TextAlignment.CENTER)));
+
+                    table.AddCell(cellStyle.Clone(true)
+                        .Add(new Paragraph(factura.NumeroControl)
+                            .SetFontSize(7)
+                            .SetTextAlignment(TextAlignment.CENTER)));
+
+                    string selloTexto = string.IsNullOrEmpty(factura.SelloRecepcion) ? "-" : factura.SelloRecepcion;
+                    if (!string.IsNullOrEmpty(factura.SelloRecepcion) && factura.SelloRecepcion.Length > 20)
+                    {
+                        // Dividir cada 20 caracteres
+                        var lineas = new List<string>();
+                        for (int ii = 0; ii < factura.SelloRecepcion.Length; ii += 10)
+                        {
+                            lineas.Add(factura.SelloRecepcion.Substring(ii, Math.Min(10, factura.SelloRecepcion.Length - ii)));
+                        }
+                        selloTexto = string.Join("\n", lineas);
+                    }
+
+                    table.AddCell(cellStyle.Clone(true)
+                        .Add(new Paragraph(selloTexto)
+                            .SetFontSize(6)
+                            .SetTextAlignment(TextAlignment.CENTER)
+                            .SetFontColor(ColorConstants.BLACK)
+                            .SetFixedLeading(7)) // Espaciado entre líneas
+                        .SetPadding(2));
+
+                    selloTexto = string.IsNullOrEmpty(factura.SelloAnulacion) ? "-" : factura.SelloAnulacion;
+                    if (!string.IsNullOrEmpty(factura.SelloAnulacion) && factura.SelloAnulacion.Length > 20)
+                    {
+                        // Dividir cada 20 caracteres
+                        var lineas = new List<string>();
+                        for (int ii = 0; ii < factura.SelloAnulacion.Length; ii += 10)
+                        {
+                            lineas.Add(factura.SelloAnulacion.Substring(ii, Math.Min(10, factura.SelloAnulacion.Length - ii)));
+                        }
+                        selloTexto = string.Join("\n", lineas);
+                    }
+
+
+                    table.AddCell(cellStyle.Clone(true)
+                        .Add(new Paragraph(selloTexto)
+                            .SetFontSize(6)
+                            .SetTextAlignment(TextAlignment.CENTER)
+                            .SetFontColor(ColorConstants.BLACK)
+                            .SetFixedLeading(7)) // Espaciado entre líneas
+                        .SetPadding(2));
+
+                    table.AddCell(cellStyle.Clone(true)
+                        .Add(new Paragraph($"${factura.TotalGravado:N2}")
+                            .SetFontSize(8)
+                            .SetTextAlignment(TextAlignment.RIGHT)));
+
+                    table.AddCell(cellStyle.Clone(true)
+                        .Add(new Paragraph($"${factura.TotalExento:N2}")
+                            .SetFontSize(8)
+                            .SetTextAlignment(TextAlignment.RIGHT)));
+
+                    table.AddCell(cellStyle.Clone(true)
+                        .Add(new Paragraph($"${factura.TotalIva:N2}")
+                            .SetFontSize(8)
+                            .SetTextAlignment(TextAlignment.RIGHT)));
+
+                    table.AddCell(cellStyle.Clone(true)
+                        .Add(new Paragraph($"${factura.TotalPagar:N2}")
+                            .SetFontSize(8)
+                            .SetTextAlignment(TextAlignment.RIGHT)
+                            .SetFontColor(ColorConstants.BLACK)));
+
+                    isEvenRow = !isEvenRow;
                 }
 
                 document.Add(table);
 
-                // Agregar totales
+                // Sección de totales con estilo profesional
                 var totalGravado = facturas.Sum(f => f.TotalGravado);
                 var totalExento = facturas.Sum(f => f.TotalExento);
                 var totalIva = facturas.Sum(f => f.TotalIva);
                 var totalGeneral = facturas.Sum(f => f.TotalPagar);
 
-                document.Add(new Paragraph("").SetMarginTop(20));
-                
+                // Espaciado antes de totales
+                document.Add(new Paragraph("").SetMarginTop(15));
+
+                // Título de resumen
+                var tituloResumen = new Paragraph("RESUMEN FINANCIERO")
+                    .SetFontSize(12)
+                    .SetTextAlignment(TextAlignment.CENTER)
+                    .SetFontColor(ColorConstants.DARK_GRAY)
+                    .SetMarginBottom(10);
+                document.Add(tituloResumen);
+
+                // Tabla de totales con estilo profesional
                 var totalesTable = new Table(2).UseAllAvailableWidth();
-                totalesTable.AddCell(new Cell().Add(new Paragraph("Total Gravado:")));
-                totalesTable.AddCell(new Cell().Add(new Paragraph($"${totalGravado:N2}")).SetTextAlignment(TextAlignment.RIGHT));
-                totalesTable.AddCell(new Cell().Add(new Paragraph("Total Exento:")));
-                totalesTable.AddCell(new Cell().Add(new Paragraph($"${totalExento:N2}")).SetTextAlignment(TextAlignment.RIGHT));
-                totalesTable.AddCell(new Cell().Add(new Paragraph("Total IVA:")));
-                totalesTable.AddCell(new Cell().Add(new Paragraph($"${totalIva:N2}")).SetTextAlignment(TextAlignment.RIGHT));
-                totalesTable.AddCell(new Cell().Add(new Paragraph("TOTAL GENERAL:")));
-                totalesTable.AddCell(new Cell().Add(new Paragraph($"${totalGeneral:N2}")).SetTextAlignment(TextAlignment.RIGHT));
-                
+                totalesTable.SetWidth(300);
+                totalesTable.SetHorizontalAlignment(HorizontalAlignment.CENTER);
+
+                // Estilo para celdas de totales
+                var totalLabelStyle = new Cell()
+                    .SetBackgroundColor(new DeviceRgb(240, 240, 240))
+                    .SetBorder(new SolidBorder(ColorConstants.GRAY, 0.5f))
+                    .SetPadding(8);
+
+                var totalValueStyle = new Cell()
+                    .SetBackgroundColor(ColorConstants.WHITE)
+                    .SetBorder(new SolidBorder(ColorConstants.GRAY, 0.5f))
+                    .SetPadding(8);
+
+                // Agregar filas de totales
+                totalesTable.AddCell(totalLabelStyle.Clone(true)
+                    .Add(new Paragraph("Total Gravado:")
+                        .SetFontSize(10)
+                        .SetTextAlignment(TextAlignment.LEFT)));
+                totalesTable.AddCell(totalValueStyle.Clone(true)
+                    .Add(new Paragraph($"${totalGravado:N2}")
+                        .SetFontSize(10)
+                        .SetTextAlignment(TextAlignment.RIGHT)));
+
+                totalesTable.AddCell(totalLabelStyle.Clone(true)
+                    .Add(new Paragraph("Total Exento:")
+                        .SetFontSize(10)
+                        .SetTextAlignment(TextAlignment.LEFT)));
+                totalesTable.AddCell(totalValueStyle.Clone(true)
+                    .Add(new Paragraph($"${totalExento:N2}")
+                        .SetFontSize(10)
+                        .SetTextAlignment(TextAlignment.RIGHT)));
+
+                totalesTable.AddCell(totalLabelStyle.Clone(true)
+                    .Add(new Paragraph("Total IVA:")
+                        .SetFontSize(10)
+                        .SetTextAlignment(TextAlignment.LEFT)));
+                totalesTable.AddCell(totalValueStyle.Clone(true)
+                    .Add(new Paragraph($"${totalIva:N2}")
+                        .SetFontSize(10)
+                        .SetTextAlignment(TextAlignment.RIGHT)));
+
+                // Fila de total general con estilo destacado
+                totalesTable.AddCell(totalLabelStyle.Clone(true)
+                    .SetBackgroundColor(new DeviceRgb(70, 70, 70))
+                    .Add(new Paragraph("TOTAL GENERAL:")
+                        .SetFontSize(11)
+                        .SetFontColor(ColorConstants.WHITE)
+                        .SetTextAlignment(TextAlignment.LEFT)));
+                totalesTable.AddCell(totalValueStyle.Clone(true)
+                    .SetBackgroundColor(new DeviceRgb(70, 70, 70))
+                    .Add(new Paragraph($"${totalGeneral:N2}")
+                        .SetFontSize(11)
+                        .SetFontColor(ColorConstants.WHITE)
+                        .SetTextAlignment(TextAlignment.RIGHT)));
+
                 document.Add(totalesTable);
 
-                // Pie de página
-                document.Add(new Paragraph("").SetMarginTop(20));
+                // Pie de página profesional
+                document.Add(new Paragraph("").SetMarginTop(30));
+
+                var pieLinea = new Paragraph("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+                    .SetFontSize(8)
+                    .SetTextAlignment(TextAlignment.CENTER)
+                    .SetFontColor(ColorConstants.GRAY)
+                    .SetMarginBottom(5);
+                document.Add(pieLinea);
+
                 document.Add(new Paragraph($"Reporte generado el: {DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss")}")
-                    .SetFontSize(10)
-                    .SetTextAlignment(TextAlignment.CENTER));
+                    .SetFontSize(9)
+                    .SetTextAlignment(TextAlignment.CENTER)
+                    .SetFontColor(ColorConstants.GRAY));
+
+                document.Add(new Paragraph($"Total de registros: {facturas.Count()}")
+                    .SetFontSize(9)
+                    .SetTextAlignment(TextAlignment.CENTER)
+                    .SetFontColor(ColorConstants.GRAY));
 
                 document.Close();
 
@@ -410,11 +626,11 @@ namespace SRAUMOAR.Pages.facturas
 
                     worksheet.Cells[excelRow, 1].Value = factura.FacturaId;
                     worksheet.Cells[excelRow, 2].Value = factura.Anulada ? "Anulada" : "Activa";
-                    worksheet.Cells[excelRow, 3].Value = factura.Fecha;
+                    worksheet.Cells[excelRow, 3].Value = factura.Fecha.ToString("dd/MM/yyyy HH:mm");
                     worksheet.Cells[excelRow, 4].Value = ObtenerTipoDTETexto(factura.TipoDTE);
                     worksheet.Cells[excelRow, 5].Value = factura.CodigoGeneracion;
                     worksheet.Cells[excelRow, 6].Value = factura.NumeroControl;
-                    worksheet.Cells[excelRow, 7].Value = string.IsNullOrEmpty(factura.SelloRecepcion) ? "Pendiente" : "Recibido";
+                    worksheet.Cells[excelRow, 7].Value = string.IsNullOrEmpty(factura.SelloRecepcion) ? "Pendiente" : factura.SelloRecepcion;
                     worksheet.Cells[excelRow, 8].Value = string.IsNullOrEmpty(factura.SelloAnulacion) ? "" : "Anulado";
                     worksheet.Cells[excelRow, 9].Value = factura.TotalGravado;
                     worksheet.Cells[excelRow, 10].Value = factura.TotalExento;
@@ -437,10 +653,10 @@ namespace SRAUMOAR.Pages.facturas
 
                 // Agregar totales
                 var lastRow = facturas.Count + 2;
-                var totalGravado = facturas.Sum(f => f.TotalGravado);
-                var totalExento = facturas.Sum(f => f.TotalExento);
-                var totalIva = facturas.Sum(f => f.TotalIva);
-                var totalGeneral = facturas.Sum(f => f.TotalPagar);
+                var totalGravado = facturas.Where(f => !f.Anulada).Sum(f => f.TotalGravado);
+                var totalExento = facturas.Where(f => !f.Anulada).Sum(f => f.TotalExento);
+                var totalIva = facturas.Where(f => !f.Anulada).Sum(f => f.TotalIva);
+                var totalGeneral = facturas.Where(f => !f.Anulada).Sum(f => f.TotalPagar);
 
                 worksheet.Cells[lastRow + 1, 8].Value = "Total Gravado:";
                 worksheet.Cells[lastRow + 1, 8].Style.Font.Bold = true;

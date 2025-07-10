@@ -14,6 +14,8 @@ using SRAUMOAR.Entidades.Procesos;
 using SRAUMOAR.Servicios;
 using Microsoft.EntityFrameworkCore;
 using SRAUMOAR.Entidades.Materias;
+using iText.IO.Font;
+using iText.Kernel.Pdf.Canvas.Parser.Listener;
 namespace SRAUMOAR.Pages.reportes.inscripcion
 {
     public class reporteInscripcionModel : PageModel
@@ -21,14 +23,28 @@ namespace SRAUMOAR.Pages.reportes.inscripcion
         public Alumno Alumno { get; set; }
         public IList<MateriasInscritas> MateriasInscritas { get; set; } = default!;
         private readonly SRAUMOAR.Modelos.Contexto _context;
+        
+        // Fuentes con soporte UTF-8
+        private PdfFont _fontNormal;
+        private PdfFont _fontBold;
+        
         public reporteInscripcionModel(SRAUMOAR.Modelos.Contexto context)
         {
             _context = context;
         }
+        
+        private void InitializeFonts()
+        {
+            // Usar Times-Roman que tiene mejor soporte para caracteres especiales
+            _fontNormal = PdfFontFactory.CreateFont(StandardFonts.TIMES_ROMAN);
+            _fontBold = PdfFontFactory.CreateFont(StandardFonts.TIMES_BOLD);
+        }
+        
         public IActionResult OnGet(int? id)
         {
             try
             {
+                InitializeFonts();
 
                 var cicloactual = _context.Ciclos.Where(x => x.Activo == true).FirstOrDefault()?.Id ?? 0;
                 Alumno = _context.Alumno.Include(a => a.Carrera).ThenInclude(c => c.Facultad).Where(x => x.AlumnoId == id).FirstOrDefault() ?? new Alumno();
@@ -60,11 +76,11 @@ namespace SRAUMOAR.Pages.reportes.inscripcion
                 logo.SetWidth(60);
                 headerTable.AddCell(new Cell().Add(logo).SetBorder(Border.NO_BORDER));
 
-                // Texto centrado - 3 líneas
+                // Texto centrado - 3 lÃ­neas
                 var textCell = new Cell().SetBorder(Border.NO_BORDER);
-                textCell.Add(new Paragraph("UNIVERSIDAD MONSEÑOR OSCAR ARNULFO ROMERO").SetFontSize(14).SetTextAlignment(TextAlignment.CENTER));
-                textCell.Add(new Paragraph("ADMINISTRACION DE REGISTRO ACADÉMICO").SetFontSize(12).SetTextAlignment(TextAlignment.CENTER));
-                textCell.Add(new Paragraph("INSCRIPCION DE MATERIAS CICLO 02-2025").SetFontSize(11).SetTextAlignment(TextAlignment.CENTER));
+                textCell.Add(new Paragraph("UNIVERSIDAD MONSEÃ‘OR OSCAR ARNULFO ROMERO").SetFont(_fontBold).SetFontSize(14).SetTextAlignment(TextAlignment.CENTER));
+                textCell.Add(new Paragraph("ADMINISTRACION DE REGISTRO ACADEMICO").SetFont(_fontBold).SetFontSize(12).SetTextAlignment(TextAlignment.CENTER));
+                textCell.Add(new Paragraph("INSCRIPCION DE MATERIAS CICLO 02-2025").SetFont(_fontBold).SetFontSize(11).SetTextAlignment(TextAlignment.CENTER));
                 headerTable.AddCell(textCell);
 
                 document.Add(headerTable);
@@ -81,19 +97,19 @@ namespace SRAUMOAR.Pages.reportes.inscripcion
                 var columnaIzq = new Cell();
                 columnaIzq.Add(new Paragraph("Carnet: " + (string.IsNullOrEmpty(Alumno.Carnet) ?
     (string.IsNullOrEmpty(Alumno.Email) ? "-" : Alumno.Email.Split('@')[0]) :
-    Alumno.Carnet)).SetFontSize(13));
-                columnaIzq.Add(new Paragraph("Nombre: " + Alumno.Nombres + " " + Alumno.Apellidos).SetFontSize(11));
-                columnaIzq.Add(new Paragraph("Facultad: " + Alumno.Carrera.Facultad.NombreFacultad).SetFontSize(11));
-                columnaIzq.Add(new Paragraph("Carrera: " + Alumno.Carrera.NombreCarrera).SetFontSize(11));
-                columnaIzq.Add(new Paragraph("Plan: " + MateriasInscritas.First().MateriasGrupo.Grupo.Pensum.NombrePensum).SetFontSize(11));
+    Alumno.Carnet)).SetFont(_fontNormal).SetFontSize(13));
+                columnaIzq.Add(new Paragraph("Nombre: " + Alumno.Nombres + " " + Alumno.Apellidos).SetFont(_fontNormal).SetFontSize(11));
+                columnaIzq.Add(new Paragraph("Facultad: " + Alumno.Carrera.Facultad.NombreFacultad).SetFont(_fontNormal).SetFontSize(11));
+                columnaIzq.Add(new Paragraph("Carrera: " + Alumno.Carrera.NombreCarrera).SetFont(_fontNormal).SetFontSize(11));
+                columnaIzq.Add(new Paragraph("Plan: " + MateriasInscritas.First().MateriasGrupo.Grupo.Pensum.NombrePensum).SetFont(_fontNormal).SetFontSize(11));
                 columnaIzq.SetBorder(Border.NO_BORDER);
 
                 // Columna derecha
                 var columnaDer = new Cell();
-                columnaDer.Add(new Paragraph("Dirección: "+Alumno.DireccionDeResidencia).SetFontSize(11));
-                columnaDer.Add(new Paragraph("Ciclo a cursar: 02-25").SetFontSize(11));
-                columnaDer.Add(new Paragraph("Teléfono fijo: " + (Alumno.TelefonoPrimario ?? "-")).SetFontSize(11));
-                columnaDer.Add(new Paragraph("Teléfono móvil: " + (Alumno.TelefonoSecundario ?? "-")).SetFontSize(11));
+                columnaDer.Add(new Paragraph("DirecciÃ³n: "+Alumno.DireccionDeResidencia).SetFont(_fontNormal).SetFontSize(11));
+                columnaDer.Add(new Paragraph("Ciclo a cursar: 02-25").SetFont(_fontNormal).SetFontSize(11));
+                columnaDer.Add(new Paragraph("TelÃ©fono fijo: " + (Alumno.TelefonoPrimario ?? "-")).SetFont(_fontNormal).SetFontSize(11));
+                columnaDer.Add(new Paragraph("TelÃ©fono mÃ³vil: " + (Alumno.TelefonoSecundario ?? "-")).SetFont(_fontNormal).SetFontSize(11));
                 columnaDer.SetBorder(Border.NO_BORDER);
 
                 datosTable.AddCell(columnaIzq);
@@ -107,27 +123,27 @@ namespace SRAUMOAR.Pages.reportes.inscripcion
                 tablaAsignaturas.SetWidth(UnitValue.CreatePercentValue(100));
 
                 // HEADER con bordes - tratamiento especial para Pre-Requisito
-                string[] headers = { "N°", "Código", "Nombre de la asignatura", "Matrícula", "", "Día", "Hora", "Grupo" };
+                string[] headers = { "NÂº", "Codigo", "Nombre de la asignatura", "Matricula", "", "Dia", "Hora", "Grupo" };
                 for (int h = 0; h < headers.Length; h++)
                 {
                     if (h == 4) // Columna Pre-Requisito
                     {
                         var preReqHeaderCell = new Cell().SetBorder(Border.NO_BORDER);
 
-                        // Título "Pre-Requisito"
+                        // TÃ­tulo "Pre-Requisito"
                         preReqHeaderCell.Add(new Paragraph("Pre-Requisito")
                             .SetTextAlignment(TextAlignment.CENTER)
-                            .SetFont(PdfFontFactory.CreateFont(StandardFonts.HELVETICA_BOLD)));
+                            .SetFont(_fontBold));
 
                         // Subtabla COD y NOMBRE
                         var headerSubTable = new Table(2);
                         headerSubTable.AddCell(new Cell().SetBorder(Border.NO_BORDER).Add(new Paragraph("COD").SetBorder(Border.NO_BORDER))
                             .SetTextAlignment(TextAlignment.CENTER)
-                            .SetFont(PdfFontFactory.CreateFont(StandardFonts.HELVETICA_BOLD))
+                            .SetFont(_fontBold)
                             );
                         headerSubTable.AddCell(new Cell().SetBorder(Border.NO_BORDER).Add(new Paragraph("NOMBRE").SetBorder(Border.NO_BORDER))
                             .SetTextAlignment(TextAlignment.CENTER)
-                            .SetFont(PdfFontFactory.CreateFont(StandardFonts.HELVETICA_BOLD))
+                            .SetFont(_fontBold)
                             );
 
                         preReqHeaderCell.Add(headerSubTable);
@@ -138,7 +154,7 @@ namespace SRAUMOAR.Pages.reportes.inscripcion
                         tablaAsignaturas.AddHeaderCell(new Cell()
                             .Add(new Paragraph(headers[h]).SetFontSize(12)
                             .SetTextAlignment(TextAlignment.CENTER))
-                            .SetFont(PdfFontFactory.CreateFont(StandardFonts.HELVETICA_BOLD))
+                            .SetFont(_fontBold)
                             .SetBorder(new SolidBorder(1)));
                     }
                 }
@@ -163,29 +179,29 @@ namespace SRAUMOAR.Pages.reportes.inscripcion
                     i++;           
                     
                     tablaAsignaturas.AddCell(new Cell().Add(new Paragraph(i.ToString())
-                        .SetFontSize(10)) // Tamaño de fuente
+                        .SetFontSize(10)) // TamaÃ±o de fuente
                         .SetTextAlignment(TextAlignment.CENTER).SetBorder(Border.NO_BORDER));
 
-                    // Código
+                    // CÃ³digo
                     tablaAsignaturas.AddCell(new Cell().Add(new Paragraph(mat.MateriasGrupo.Materia.CodigoMateria)
-                        .SetFontSize(10)) // Tamaño de fuente
+                        .SetFontSize(10)) // TamaÃ±o de fuente
                         .SetBorder(Border.NO_BORDER));
 
                     // Nombre asignatura
                     tablaAsignaturas.AddCell(new Cell().Add(new Paragraph(mat.MateriasGrupo.Materia.NombreMateria)
-                        .SetFontSize(10)) // Tamaño de fuente
+                        .SetFontSize(10)) // TamaÃ±o de fuente
                         .SetBorder(Border.NO_BORDER));
 
-                    // Matrícula
+                    // MatrÃ­cula
                     tablaAsignaturas.AddCell(new Cell().Add(new Paragraph("1")
-                        .SetFontSize(10)) // Tamaño de fuente
+                        .SetFontSize(10)) // TamaÃ±o de fuente
                         .SetTextAlignment(TextAlignment.RIGHT).SetBorder(Border.NO_BORDER));
 
-                    // Pre-Requisito datos (solo COD y NOMBRE sin título)
+                    // Pre-Requisito datos (solo COD y NOMBRE sin tÃ­tulo)
                     var preReqDataTable = new Table(2);
                     preReqDataTable.SetWidth(UnitValue.CreatePercentValue(100));
 
-                    // Código final recomendado
+                    // CÃ³digo final recomendado
                     preReqDataTable.AddCell(new Cell().Add(new Paragraph(
                         prerrequisitos.Any() ? prerrequisitos.First().CodigoMateria : mat.MateriasGrupo.Materia.RequisitoBachillerato?"Bachillerato":"-")
                         .SetFontSize(10))
@@ -199,21 +215,21 @@ namespace SRAUMOAR.Pages.reportes.inscripcion
 
                     tablaAsignaturas.AddCell(new Cell().Add(preReqDataTable).SetBorder(Border.NO_BORDER));
 
-                    // Día
+                    // DÃ­a
                     tablaAsignaturas.AddCell(new Cell().Add(new Paragraph(((DiaSemana)mat.MateriasGrupo.Dia).ToString()
 )
-                        .SetFontSize(10)) // Tamaño de fuente
+                        .SetFontSize(10)) // TamaÃ±o de fuente
                         .SetBorder(Border.NO_BORDER));
 
                     // Hora
                     string horaFormateada = mat.MateriasGrupo.FormatearHora12Horas(mat.MateriasGrupo.HoraInicio) + " - " + mat.MateriasGrupo.FormatearHora12Horas(mat.MateriasGrupo.HoraFin);
                     tablaAsignaturas.AddCell(new Cell().Add(new Paragraph(horaFormateada)
-                        .SetFontSize(10)) // Tamaño de fuente
+                        .SetFontSize(10)) // TamaÃ±o de fuente
                         .SetBorder(Border.NO_BORDER));
 
                     // Grupo
                     tablaAsignaturas.AddCell(new Cell().Add(new Paragraph(mat.MateriasGrupo.Grupo.Nombre)
-                        .SetFontSize(10)) // Tamaño de fuente
+                        .SetFontSize(10)) // TamaÃ±o de fuente
                         .SetTextAlignment(TextAlignment.CENTER).SetBorder(Border.NO_BORDER));
                 }
 
@@ -225,10 +241,10 @@ namespace SRAUMOAR.Pages.reportes.inscripcion
 
 
                 //****************************
-                // SECCIÓN DE FIRMAS
+                // SECCIÃ“N DE FIRMAS
               
                 //*****************************************************************
-                // Simulación de fecha obtenida de la base de datos
+                // SimulaciÃ³n de fecha obtenida de la base de datos
                 string fechaDB = DateTime.Now.ToString("yyyy-MM-dd");
 
                 // Extraer solo la parte de la fecha
@@ -238,7 +254,7 @@ namespace SRAUMOAR.Pages.reportes.inscripcion
                 string fechaTexto = fecha.ToString("dd 'de' MMMM 'de' yyyy", new CultureInfo("es-ES"));
 
                 // Agregar al documento
-                document.Add(new Paragraph($"Distrito de Tejutla, municipio de Chalatenango Centro, departamento de Chalatenango, {fechaTexto}"));
+                document.Add(new Paragraph($"Distrito de Tejutla, municipio de Chalatenango Centro, departamento de Chalatenango, {fechaTexto}").SetFont(_fontNormal));
                 document.Add(new Paragraph(" "));
                 
                 var firmasTable = new Table(3);
@@ -252,7 +268,7 @@ namespace SRAUMOAR.Pages.reportes.inscripcion
                 firmasTable.AddCell(new Cell().Add(new Paragraph("\n\n\n"))
                    .SetBorder(Border.NO_BORDER));
 
-                // Líneas para firmar
+                // LÃ­neas para firmar
                 firmasTable.AddCell(new Cell().Add(new Paragraph("_".PadRight(30, '_')).SetFontSize(10))
                    .SetTextAlignment(TextAlignment.CENTER)
                    .SetBorder(Border.NO_BORDER));
@@ -278,7 +294,9 @@ namespace SRAUMOAR.Pages.reportes.inscripcion
                 document.Add(new Paragraph(" "));
                 document.Add(new Paragraph(" "));
                 document.Add(new Paragraph(" "));
-                document.Add(new Paragraph("DESPUÉS DE SER REVISADO POR EL ASESOR, PRESENTAR ESTE FORMATO EN REGISTRO ACADÉMICO Y PARA CUALQUIER OBSERVACIÓN SE LO HARÁ EL DIRECTOR DE REGISTRO ACADÉMICO").SetFontSize(10));
+
+                var leyenda = "DESPUES DE SER REVISADO POR EL ASESOR, PRESENTAR ESTE FORMATO EN REGISTRO ACADEMICO Y PARA CUALQUIER OBSERVACION SE LO HARA EL DIRECTOR DE REGISTRO ACADEMICO";
+                document.Add(new Paragraph($"{leyenda}").SetFont(_fontNormal).SetFontSize(10));
 
                 
 

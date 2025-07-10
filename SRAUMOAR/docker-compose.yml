@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   sraumoar:
@@ -10,7 +10,11 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:80;https://+:443
+      - LANG=es_SV.UTF-8
+      - LC_ALL=es_SV.UTF-8
+      - LANGUAGE=es_SV:es
+      - DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
     volumes:
       - ./appsettings.json:/app/appsettings.json
       - ./wwwroot:/app/wwwroot
-    restart: unless-stopped 
+    restart: unless-stopped
