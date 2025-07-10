@@ -7,6 +7,8 @@ using SRAUMOAR.Modelos;
 using SRAUMOAR.Servicios;
 using SRAUMOAR.Entidades.Generales;
 using System.Globalization;
+using NuGet.Packaging;
+using OfficeOpenXml;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +24,7 @@ CultureInfo.DefaultThreadCurrentUICulture = culture;
 
 // Registrar el servicio de alumnos
 builder.Services.AddScoped<IAlumnoService, AlumnoService>();
+
 
 
 // Add services to the container.

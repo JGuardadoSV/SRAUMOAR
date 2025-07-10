@@ -72,6 +72,81 @@
             box-shadow: 0 4px 8px rgba(22, 128, 38, 0.3);
         }
 
+    .export-buttons {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .export-buttons .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .export-buttons .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        text-decoration: none;
+    }
+
+    .export-buttons .btn-danger {
+        background: #dc3545;
+        border-color: #dc3545;
+        color: white;
+    }
+
+    .export-buttons .btn-danger:hover {
+        background: #c82333;
+        border-color: #bd2130;
+        color: white;
+    }
+
+    .export-buttons .btn-success {
+        background: #28a745;
+        border-color: #28a745;
+        color: white;
+    }
+
+    .export-buttons .btn-success:hover {
+        background: #218838;
+        border-color: #1e7e34;
+        color: white;
+    }
+
+    /* Estilos para alertas */
+    .alert {
+        border-radius: 8px;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 1.5rem;
+    }
+
+    .alert-danger {
+        background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+        color: #721c24;
+        border-left: 4px solid #dc3545;
+    }
+
+    .alert-success {
+        background: linear-gradient(135deg, #d4edda, #c3e6cb);
+        color: #155724;
+        border-left: 4px solid #28a745;
+    }
+
+    .alert .btn-close {
+        opacity: 0.7;
+    }
+
+    .alert .btn-close:hover {
+        opacity: 1;
+    }
+
     .search-box {
         position: relative;
         flex: 1;
@@ -382,6 +457,16 @@
             max-width: none;
         }
 
+        .export-buttons {
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .export-buttons .btn {
+            flex: 1;
+            min-width: 120px;
+        }
+
         .page-title {
             font-size: 2rem;
         }
@@ -448,7 +533,46 @@
             <i class="fas fa-search search-icon"></i>
             <input type="text" class="search-input" placeholder="Buscar por número de control, código o cliente..." id="searchInput">
         </div>
+
+        <!-- Botones de Exportación -->
+        <div class="export-buttons">
+            <a asp-page="./Index" asp-page-handler="GenerarReportePDF" 
+               asp-route-FechaInicio="@Model.FechaInicio?.ToString("yyyy-MM-dd")" 
+               asp-route-FechaFin="@Model.FechaFin?.ToString("yyyy-MM-dd")" 
+               asp-route-EstadoFiltro="@Model.EstadoFiltro"
+               class="btn btn-danger me-2" title="Exportar a PDF"
+               onclick="return confirmarGeneracionReporte('pdf')">
+                <i class="fas fa-file-pdf me-2"></i>PDF
+            </a>
+            <a asp-page="./Index" asp-page-handler="GenerarReporteExcel" 
+               asp-route-FechaInicio="@Model.FechaInicio?.ToString("yyyy-MM-dd")" 
+               asp-route-FechaFin="@Model.FechaFin?.ToString("yyyy-MM-dd")" 
+               asp-route-EstadoFiltro="@Model.EstadoFiltro"
+               class="btn btn-success" title="Exportar a Excel"
+               onclick="return confirmarGeneracionReporte('excel')">
+                <i class="fas fa-file-excel me-2"></i>Excel
+            </a>
+        </div>
     </div>
+
+    <!-- Mensajes de notificación -->
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
 
     <!-- Filtros -->
     <div class="filters-container" style="background: white; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid var(--border-color);">
@@ -834,6 +958,26 @@
                 button.innerHTML = originalText;
                 button.disabled = false;
             }, 2000);
+        }
+
+        // Función para mostrar mensaje de confirmación al generar reportes
+        function confirmarGeneracionReporte(tipo) {
+            const mensaje = tipo === 'pdf' ? 
+                '¿Está seguro que desea generar el reporte PDF?' : 
+                '¿Está seguro que desea generar el reporte Excel?';
+            
+            if (confirm(mensaje)) {
+                // Mostrar indicador de carga
+                const botones = document.querySelectorAll('.export-buttons .btn');
+                botones.forEach(btn => {
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
+                });
+
+                // El enlace se ejecutará automáticamente
+                return true;
+            }
+            return false;
         }
 </script>
 
