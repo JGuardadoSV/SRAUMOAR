@@ -83,17 +83,38 @@ namespace SRAUMOAR.Pages.grupos
                 .ToList();
 
             // Obtener las materias que no están registradas en el grupo
+            var materiasDisponibles = _context.Materias
+                .Include(x => x.Pensum)
+                .ThenInclude(x => x.Carrera)
+                .Where(x => x.Pensum.Activo == true && x.Pensum.CarreraId == grupo.CarreraId)
+                .Where(x => !materiasRegistradas.Contains(x.MateriaId)) // Filtrar materias no registradas
+                .Select(x => new
+                {
+                    MateriaId = x.MateriaId,
+                    NombreCompleto = x.NombreMateria + " - " + x.Pensum.CodigoPensum
+                })
+                .ToList();
+
+            // Agregar la materia actual de cada MateriasGrupo a la lista de materias disponibles
+            var materiasGrupoActuales = _context.MateriasGrupo
+                .Where(mg => mg.GrupoId == grupo.GrupoId)
+                .Select(mg => mg.Materia)
+                .Where(m => m != null)
+                .Select(m => new {
+                    MateriaId = m.MateriaId,
+                    NombreCompleto = m.NombreMateria + " - " + m.Pensum.CodigoPensum
+                })
+                .ToList();
+
+            // Unir ambas listas y eliminar duplicados
+            var materiasParaSelect = materiasDisponibles
+                .Union(materiasGrupoActuales)
+                .GroupBy(m => m.MateriaId)
+                .Select(g => g.First())
+                .ToList();
+
             ViewData["MateriaId"] = new SelectList(
-                _context.Materias
-                    .Include(x => x.Pensum)
-                    .ThenInclude(x => x.Carrera)
-                    .Where(x => x.Pensum.Activo == true && x.Pensum.CarreraId == grupo.CarreraId)
-                    .Where(x => !materiasRegistradas.Contains(x.MateriaId)) // Filtrar materias no registradas
-                    .Select(x => new
-                    {
-                        MateriaId = x.MateriaId,
-                        NombreCompleto = x.NombreMateria + " - " + x.Pensum.CodigoPensum
-                    }),
+                materiasParaSelect,
                 "MateriaId",
                 "NombreCompleto"
             );
@@ -190,6 +211,35 @@ namespace SRAUMOAR.Pages.grupos
 
 
             return RedirectToPage("./Edit", new { id = idredireccion });
+        }
+
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> OnPostEditarMateriaGrupoAsync()
+        {
+            int materiasGrupoId = int.Parse(Request.Form["MateriasGrupoId"]);
+            var materiaGrupo = await _context.MateriasGrupo.FindAsync(materiasGrupoId);
+            if (materiaGrupo == null)
+            {
+                return new JsonResult(new { success = false, message = "No se encontró la materia del grupo." });
+            }
+
+            // Actualizar campos
+            materiaGrupo.MateriaId = int.Parse(Request.Form["MateriaId"]);
+            materiaGrupo.Aula = Request.Form["Aula"];
+            materiaGrupo.Dia = Enum.TryParse(typeof(DiaSemana), Request.Form["Dia"], out var dia) ? (DiaSemana)dia : materiaGrupo.Dia;
+            materiaGrupo.HoraInicio = TimeSpan.Parse(Request.Form["HoraInicio"]);
+            materiaGrupo.HoraFin = TimeSpan.Parse(Request.Form["HoraFin"]);
+            materiaGrupo.DocenteId = int.Parse(Request.Form["DocenteId"]);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                return new JsonResult(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return new JsonResult(new { success = false, message = "Error al actualizar: " + ex.Message });
+            }
         }
 
         private bool GrupoExists(int id)

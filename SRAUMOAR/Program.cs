@@ -38,6 +38,7 @@ builder.Services.AddScoped<ICorrelativoService, CorrelativoService>();
 builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
 // Agregar despu�s de AddRazorPages()
 builder.Services.AddScoped<PdfService>();
+builder.Services.AddScoped<ReporteInscripcionesService>();
 // En Program.cs
 builder.Services.Configure<EmisorConfig>(
     builder.Configuration.GetSection("EMISOR"));

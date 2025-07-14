@@ -104,12 +104,13 @@
     <h2>Alumno: @Model.Alumno.Nombres @Model.Alumno.Apellidos</h2>
     <!-- Botón simplificado para PDF -->
     
-    <pre style="background: #f8f9fa; padding: 10px; border-radius: 4px; margin-top: 10px;">
-<button onclick="abrirPdfEnPopup('/reportes/inscripcion/reporteInscripcion?id=@Model.Alumno.AlumnoId')">
-    Imprimir hoja de inscripción
-</button></pre>
+    
+
     <p>
         <a  class="btn-create" asp-page="InscribirMaterias" asp-route-id="@Model.Alumno.AlumnoId">Inscribir materia</a>
+        <button class="btn btn-primary" onclick="abrirPdfEnPopup('/reportes/inscripcion/reporteInscripcion?id=@Model.Alumno.AlumnoId')">
+            Imprimir hoja de inscripción
+        </button>
     </p>
 
     <table class="table table-hover">
@@ -123,8 +124,7 @@
                 <th>Docente</th>
                 <th>Aula</th>
                 <th>Horario</th>
-               @*  <th>Estado</th>
-                <th>Acciones</th> *@
+                <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -140,16 +140,11 @@
 
                     <td>@Html.DisplayFor(modelItem => item.MateriasGrupo.Aula)</td>
                     <td>@Html.DisplayFor(m => item.MateriasGrupo.Dia) @item.MateriasGrupo.FormatearHora12Horas(item.MateriasGrupo.HoraInicio) - @item.MateriasGrupo.FormatearHora12Horas(item.MateriasGrupo.HoraInicio)</td>
-                    @* <td>
-                        <span class="@(item.Aprobada ? "status-approved" : "status-not-approved")">
-                            @(item.Aprobada ? "Aprobada" : "No Aprobada")
-                        </span>
+                    <td>
+                        <form method="post" asp-page-handler="Eliminar" asp-route-id="@item.MateriasInscritasId" style="display:inline;" onsubmit="return confirm('¿Está seguro de eliminar esta inscripción?');">
+                            <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                        </form>
                     </td>
-                    <td class="table-actions">
-                        <a asp-page="./Edit" asp-route-id="@item.MateriasInscritasId">Editar</a>
-                        <a asp-page="./Details" asp-route-id="@item.MateriasInscritasId">Detalles</a>
-                        <a asp-page="./Delete" asp-route-id="@item.MateriasInscritasId">Eliminar</a>
-                    </td> *@
                 </tr>
             }
             <tr>

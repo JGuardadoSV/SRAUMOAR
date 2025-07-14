@@ -3,101 +3,513 @@
 @{
     ViewData["Title"] = "Dashboard de Inscripciones";
 }
-<div class="container mt-5">
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <h1 class="display-6 text-center">Dashboard de Inscripciones</h1>
+
+<style>
+    :root {
+        --primary-color: #198754;
+        --secondary-color: #6c757d;
+        --light-bg: #f8f9fa;
+        --border-radius: 12px;
+        --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        --shadow-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        --shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+    }
+
+    body {
+        background-color: var(--light-bg);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .dashboard-header {
+        background: linear-gradient(135deg, var(--primary-color) 0%, #157347 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0 0 var(--border-radius) var(--border-radius);
+        box-shadow: var(--shadow-md);
+    }
+
+    .dashboard-title {
+        font-weight: 600;
+        font-size: 2.5rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .filter-card {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid #e9ecef;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        transition: box-shadow 0.3s ease;
+    }
+
+        .filter-card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+    .stats-card {
+        border-radius: var(--border-radius);
+        border: none;
+        box-shadow: var(--shadow-md);
+        transition: all 0.3s ease;
+        overflow: hidden;
+        position: relative;
+    }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stats-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 100%);
+        }
+
+    .stats-icon {
+        font-size: 2.5rem;
+        opacity: 0.8;
+        margin-bottom: 0.5rem;
+    }
+
+    .stats-number {
+        font-size: 3rem;
+        font-weight: 700;
+        line-height: 1;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .stats-label {
+        font-size: 1.1rem;
+        font-weight: 500;
+        opacity: 0.9;
+    }
+
+    .table-card {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-md);
+        border: none;
+        overflow: hidden;
+    }
+
+    .table-header {
+        background: linear-gradient(135deg, var(--primary-color) 0%, #157347 100%);
+        color: white;
+        padding: 1.5rem;
+        border: none;
+    }
+
+    .table-title {
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .custom-table {
+        table-layout: fixed;
+        width: 100%;
+        margin: 0;
+        font-size: 0.95rem;
+    }
+
+        .custom-table thead th {
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            padding: 1rem 0.75rem;
+            border: none;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+
+        .custom-table tbody tr {
+            transition: all 0.2s ease;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+            .custom-table tbody tr:hover {
+                background-color: #f8f9fa;
+                transform: scale(1.01);
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+
+        .custom-table td {
+            padding: 1rem 0.75rem;
+            vertical-align: middle;
+            border: none;
+        }
+
+    .action-btn {
+        padding: 0.5rem;
+        border-radius: 8px;
+        border: none;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-sm);
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .action-btn:hover {
+            transform: scale(1.1);
+            box-shadow: var(--shadow-md);
+        }
+
+    .carrera-container {
+        max-width: 100%;
+    }
+
+        .carrera-container .badge {
+            max-width: 100%;
+            display: inline-block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+    .filter-btn {
+        background: linear-gradient(135deg, var(--primary-color) 0%, #157347 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-sm);
+    }
+
+            .filter-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .report-btn {
+        background: linear-gradient(135deg, var(--primary-color) 0%, #157347 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-sm);
+        color: white;
+        text-decoration: none;
+    }
+
+    .report-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+        color: white;
+        text-decoration: none;
+    }
+
+    .report-btn.info {
+        background: linear-gradient(135deg, #0dcaf0 0%, #0aa2c0 100%);
+    }
+
+    .form-select, .form-control {
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        padding: 0.75rem;
+        transition: all 0.3s ease;
+    }
+
+        .form-select:focus, .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+        }
+
+    .form-label {
+        font-weight: 600;
+        color: var(--secondary-color);
+        margin-bottom: 0.5rem;
+    }
+
+    /* Animaciones */
+    @@keyframes fadeInUp {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+
+    .fade-in-up {
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+        .fade-in-up:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .fade-in-up:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .fade-in-up:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .dashboard-title
+
+    {
+        font-size: 2rem;
+    }
+
+    .stats-number {
+        font-size: 2.5rem;
+    }
+
+    .custom-table {
+        font-size: 0.85rem;
+    }
+
+        .custom-table td {
+            padding: 0.75rem 0.5rem;
+        }
+
+    }
+</style>
+
+<div class="dashboard-header">
+    <div class="container">
+        <div class="text-center">
+            <i class="bi bi-graph-up-arrow" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.8;"></i>
+            <h1 class="dashboard-title">Dashboard de Inscripciones</h1>
+            <p class="lead mb-0" style="opacity: 0.9;">Panel de control y monitoreo</p>
         </div>
     </div>
-    <form method="get" class="row mb-4">
-        <div class="col-md-4">
-            <label for="carreraSelect" class="form-label">Carrera</label>
-            <select name="SelectedCarreraId" class="form-select" id="carreraSelect">
-                <option value="0" selected>Todas las carreras</option>
-                @{
-                    var selectedCarreraId = Model.SelectedCarreraId.HasValue ? Model.SelectedCarreraId.Value.ToString() : "0";
-                }
-                @foreach (var carrera in Model.Carreras)
-                {
-                    var isSelected = carrera.Value.ToString() == selectedCarreraId ? "selected" : "";
-                    @Html.Raw($"<option value=\"{carrera.Value}\" {isSelected}>{carrera.Text}</option>")
-                }
-            </select>
-        </div>
-        <div class="col-md-4">
-            <label for="generoSelect" class="form-label">Género</label>
-            <select name="Genero" class="form-select" id="generoSelect">
-                @Html.Raw($"<option value=\"\" {(string.IsNullOrEmpty(Model.Genero) ? "selected" : "")}>Ambos</option>")
-                @Html.Raw($"<option value=\"0\" {(Model.Genero == "0" ? "selected" : "")}>Hombres</option>")
-                @Html.Raw($"<option value=\"1\" {(Model.Genero == "1" ? "selected" : "")}>Mujeres</option>")
-            </select>
-        </div>
-        <div class="col-md-4 d-flex align-items-end">
-            <button type="submit" class="btn btn-success w-100">Filtrar</button>
-        </div>
-    </form>
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card text-white bg-primary mb-3">
-                <div class="card-body text-center">
-                    <h5 class="card-title">Total Inscripciones</h5>
-                    <p class="card-text display-6">@Model.TotalInscripciones</p>
-                </div>
+</div>
+
+<div class="container">
+    <!-- Filtros -->
+    <div class="filter-card">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label for="carreraSelect" class="form-label">
+                    <i class="bi bi-mortarboard me-2"></i>Carrera
+                </label>
+                <select name="SelectedCarreraId" class="form-select" id="carreraSelect">
+                    <option value="0" selected>Todas las carreras</option>
+                    @{
+                        var selectedCarreraId = Model.SelectedCarreraId.HasValue ? Model.SelectedCarreraId.Value.ToString() : "0";
+                    }
+                    @foreach (var carrera in Model.Carreras)
+                    {
+                        var isSelected = carrera.Value.ToString() == selectedCarreraId ? "selected" : "";
+                        @Html.Raw($"<option value=\"{carrera.Value}\" {isSelected}>{carrera.Text}</option>")
+                    }
+                </select>
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card text-white bg-info mb-3">
-                <div class="card-body text-center">
-                    <h5 class="card-title">Hombres</h5>
-                    <p class="card-text display-6">@Model.TotalHombres</p>
-                </div>
+            <div class="col-md-4">
+                <label for="generoSelect" class="form-label">
+                    <i class="bi bi-people me-2"></i>Género
+                </label>
+                <select name="Genero" class="form-select" id="generoSelect">
+                    @Html.Raw($"<option value=\"\" {(string.IsNullOrEmpty(Model.Genero) ? "selected" : "")}>Ambos</option>")
+                    @Html.Raw($"<option value=\"0\" {(Model.Genero == "0" ? "selected" : "")}>Hombres</option>")
+                    @Html.Raw($"<option value=\"1\" {(Model.Genero == "1" ? "selected" : "")}>Mujeres</option>")
+                </select>
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card text-white bg-warning mb-3">
-                <div class="card-body text-center">
-                    <h5 class="card-title">Mujeres</h5>
-                    <p class="card-text display-6">@Model.TotalMujeres</p>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-success filter-btn w-100">
+                    <i class="bi bi-funnel me-2"></i>Filtrar
+                </button>
+            </div>
+        </form>
+        
+        <!-- Botones de reportes -->
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="?handler=GenerarReporteCompleto" class="report-btn">
+                        <i class="bi bi-file-earmark-pdf me-2"></i>Generar Reporte Completo
+                    </a>
+                    <a href="?handler=GenerarReporteFiltrado" class="report-btn info">
+                        <i class="bi bi-funnel me-2"></i>Generar Reporte Filtrado
+                    </a>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Estadísticas -->
+    <div class="row mb-5 g-4">
+        <div class="col-md-3 fade-in-up">
+            <div class="card stats-card text-white bg-primary h-100">
+                <div class="card-body text-center p-4">
+                    <i class="bi bi-clipboard-data stats-icon"></i>
+                    <div class="stats-number">@Model.TotalInscripciones</div>
+                    <div class="stats-label">Total Inscripciones</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 fade-in-up">
+            <div class="card stats-card text-white bg-info h-100">
+                <div class="card-body text-center p-4">
+                    <i class="bi bi-person-check stats-icon"></i>
+                    <div class="stats-number">@Model.TotalHombres</div>
+                    <div class="stats-label">Hombres</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 fade-in-up">
+            <div class="card stats-card text-white bg-warning h-100">
+                <div class="card-body text-center p-4">
+                    <i class="bi bi-person-heart stats-icon"></i>
+                    <div class="stats-number">@Model.TotalMujeres</div>
+                    <div class="stats-label">Mujeres</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 fade-in-up">
+            <div class="card stats-card text-white bg-success h-100">
+                <div class="card-body text-center p-4">
+                    <i class="bi bi-file-earmark-pdf stats-icon"></i>
+                    <div class="stats-label">Reportes PDF</div>
+                    <div class="mt-3">
+                        <a href="?handler=GenerarReporteCompleto" class="btn btn-light btn-sm me-2">
+                            <i class="bi bi-download me-1"></i>Completo
+                        </a>
+                        <a href="?handler=GenerarReporteFiltrado" class="btn btn-light btn-sm">
+                            <i class="bi bi-funnel me-1"></i>Filtrado
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de datos -->
     <div class="row">
-        <div class="col-md-12">
-            <div class="card shadow-lg border-0">
-                <div class="card-header bg-success text-white text-center">
-                    <h2 class="h5">Detalle de Inscripciones</h2>
+        <div class="col-12">
+            <div class="card table-card">
+                <div class="table-header">
+                    <h2 class="table-title">
+                        <i class="bi bi-table"></i>
+                        Detalle de Inscripciones
+                    </h2>
                 </div>
-                <div class="card-body">
-                    <table class="table table-striped">
-                        <thead class="bg-success text-white text-center">
-                            <tr>
-                                <th>#</th>
-                                <th>Fecha</th>
-                                <th>Alumno</th>
-                                <th>Carrera</th>
-                                <th>Género</th>
-                                <th>Ciclo</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @{ int correlativo = 1; }
-                            @foreach (var item in Model.Inscripciones)
-                            {
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table custom-table mb-0">
+                            <thead>
                                 <tr>
-                                    <td>@correlativo</td>
-                                    <td>@item.Fecha.ToShortDateString()</td>
-                                    <td>@item.Alumno.Nombres @item.Alumno.Apellidos</td>
-                                    <td>@item.Alumno.Carrera?.NombreCarrera</td>
-                                    <td>@(item.Alumno.Genero == 0 ? "Hombre" : item.Alumno.Genero == 1 ? "Mujer" : "Otro")</td>
-                                    <td>@item.Ciclo.NCiclo-@item.Ciclo.anio</td>
+                                    <th style="width: 5%;" class="text-center">#</th>
+                                    <th style="width: 12%;">
+                                        <i class="bi bi-calendar-date me-1"></i>Fecha
+                                    </th>
+                                    <th style="width: 30%;">
+                                        <i class="bi bi-person me-1"></i>Alumno
+                                    </th>
+                                    <th style="width: 25%;">
+                                        <i class="bi bi-mortarboard me-1"></i>Carrera
+                                    </th>
+                                    <th style="width: 10%;" class="text-center">
+                                        <i class="bi bi-gender-ambiguous me-1"></i>Género
+                                    </th>
+                                    <th style="width: 13%;" class="text-center">
+                                        <i class="bi bi-calendar3 me-1"></i>Ciclo
+                                    </th>
+                                    <th style="width: 5%;" class="text-center">
+                                        <i class="bi bi-gear"></i>
+                                    </th>
                                 </tr>
-                                correlativo++;
-                            }
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @{
+                                    int correlativo = 1;
+                                }
+                                @foreach (var item in Model.Inscripciones)
+                                {
+                                    <tr>
+                                        <td class="text-center fw-bold">@correlativo</td>
+                                        <td>
+                                            <span class="badge bg-light text-dark">
+                                                @item.Fecha.ToShortDateString()
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3"
+                                                     style="width: 40px; height: 40px; font-size: 1.2rem; color: white;">
+                                                    @item.Alumno.Nombres.Substring(0, 1)@item.Alumno.Apellidos.Substring(0, 1)
+                                                </div>
+                                                <div>
+                                                    <div class="fw-semibold">@item.Alumno.Nombres @item.Alumno.Apellidos</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="carrera-container" title="@item.Alumno.Carrera?.NombreCarrera">
+                                                <span class="badge bg-success bg-opacity-10 text-success text-truncate">
+                                                    @item.Alumno.Carrera?.NombreCarrera
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            @if (item.Alumno.Genero == 0)
+                                            {
+                                                <span class="badge bg-info">
+                                                    <i class="bi bi-person me-1"></i>Hombre
+                                                </span>
+                                            }
+                                            else if (item.Alumno.Genero == 1)
+                                            {
+                                                <span class="badge bg-warning">
+                                                    <i class="bi bi-person-heart me-1"></i>Mujer
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">Otro</span>
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-dark">
+                                                @item.Ciclo.NCiclo-@item.Ciclo.anio
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            <button class="btn btn-primary action-btn"
+                                                    onclick="abrirPdfEnPopup('/reportes/inscripcion/reporteInscripcion?id=@item.Alumno.AlumnoId')"
+                                                    title="Imprimir reporte">
+                                                <i class="bi bi-printer"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    correlativo++;
+                                }
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div> 
+</div>

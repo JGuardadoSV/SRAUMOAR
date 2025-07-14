@@ -204,7 +204,7 @@ namespace SRAUMOAR.Pages.aranceles
 
             int numero = (int)await _correlativoService.ObtenerSiguienteCorrelativo("01", ambiente == 1 ? "01" : "00");
             string numeroFormateado = numero.ToString("D15");
-            string numeroControl = "DTE-" + "01" + "-" + "U0000001" + "-" + numeroFormateado;
+            string numeroControl = "DTE-" + "01" + "-" + "U000M001" + "-" + numeroFormateado;
 
             string fecEmi = DateTime.Now.ToString("yyyy-MM-dd");
             string horEmi = DateTime.Now.ToString("HH:mm:ss");
@@ -432,26 +432,35 @@ namespace SRAUMOAR.Pages.aranceles
                 Observaciones = string.IsNullOrEmpty(CobroArancel.nota) ? "-" : CobroArancel.nota
             };
             var selloRecibido = "";
-            using (HttpClient client = new HttpClient())
+            //string selloRecibido = null;
+            int intentos = 0;
+            int maxIntentos = 3;
+
+            while (intentos < maxIntentos && string.IsNullOrEmpty(selloRecibido))
             {
-                // LLAMADA ÚNICA
+                intentos++;
+                try
+                {
+                    using (HttpClient client = new HttpClient())
+                    {
+                        var response = client.PostAsJsonAsync("http://207.58.153.147:7122/api/procesar-dte", requestUnificado).Result;
+                        var responseData = response.Content.ReadAsStringAsync().Result;
+                        if (!response.IsSuccessStatusCode)
+                            throw new Exception($"Error al procesar DTE: {responseData}");
+                        var resultado = JsonDocument.Parse(responseData).RootElement;
+                        var selloRecepcion = resultado.TryGetProperty("selloRecibido", out var sello)
+                            ? sello.GetString()
+                            : null;
+                        selloRecibido = selloRecepcion;
+                    }
+                }
+                catch (Exception)
+                {
 
-                string baseUrl = ambiente == 1
-     ? "http://207.58.153.147:7122/api/procesar-dte"  // Producción
-     : "https://localhost:7122/api/procesar-dte";       // Desarrollo (localhost)
+                }
 
-                var response = client.PostAsJsonAsync(baseUrl, requestUnificado).Result;
-
-                var responseData = response.Content.ReadAsStringAsync().Result;
-
-                if (!response.IsSuccessStatusCode)
-                    throw new Exception($"Error al procesar DTE: {responseData}");
-
-                var resultado = JsonDocument.Parse(responseData).RootElement;
-                var selloRecepcion = resultado.TryGetProperty("selloRecibido", out var sello)
-                    ? sello.GetString()
-                    : null;
-                selloRecibido = selloRecepcion;
+                if (string.IsNullOrEmpty(selloRecibido) && intentos < maxIntentos)
+                    Thread.Sleep(8000); // Esperar 8 segundos solo si va a reintentar
             }
 
             if (ambiente == 1)

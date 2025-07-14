@@ -8,15 +8,19 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SRAUMOAR.Entidades.Procesos;
 using SRAUMOAR.Entidades.Alumnos;
+using SRAUMOAR.Servicios;
 
 namespace SRAUMOAR.Pages.inscripcion
 {
     public class DashboardModel : PageModel
     {
         private readonly SRAUMOAR.Modelos.Contexto _context;
-        public DashboardModel(SRAUMOAR.Modelos.Contexto context)
+        private readonly ReporteInscripcionesService _reporteService;
+        
+        public DashboardModel(SRAUMOAR.Modelos.Contexto context, ReporteInscripcionesService reporteService)
         {
             _context = context;
+            _reporteService = reporteService;
         }
 
         public List<SelectListItem> Carreras { get; set; } = new List<SelectListItem>();
@@ -61,6 +65,38 @@ namespace SRAUMOAR.Pages.inscripcion
             TotalInscripciones = Inscripciones.Count;
             TotalHombres = Inscripciones.Count(i => i.Alumno.Genero == 0);
             TotalMujeres = Inscripciones.Count(i => i.Alumno.Genero == 1);
+        }
+
+        public async Task<IActionResult> OnGetGenerarReporteCompletoAsync()
+        {
+            try
+            {
+                var pdfBytes = await _reporteService.GenerarReporteCompletoAsync();
+                var fileName = $"ReporteInscripcionesCompleto_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                Response.Headers["Content-Disposition"] = $"inline; filename={fileName}";
+                return File(pdfBytes, "application/pdf");
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Error al generar reporte: {ex.Message}";
+                return RedirectToPage();
+            }
+        }
+
+        public async Task<IActionResult> OnGetGenerarReporteFiltradoAsync()
+        {
+            try
+            {
+                var pdfBytes = await _reporteService.GenerarReporteFiltradoAsync(SelectedCarreraId, Genero);
+                var fileName = $"ReporteInscripcionesFiltrado_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                Response.Headers["Content-Disposition"] = $"inline; filename={fileName}";
+                return File(pdfBytes, "application/pdf");
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Error al generar reporte: {ex.Message}";
+                return RedirectToPage();
+            }
         }
     }
 } 

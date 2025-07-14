@@ -102,7 +102,7 @@ namespace SRAUMOAR.Pages.alumno
             _context.Entry(Alumno).Property(a => a.Genero).IsModified = false;
             _context.Entry(Alumno).Property(a => a.UsuarioId).IsModified = false;
             _context.Entry(Alumno).Property(a => a.MunicipioId).IsModified = false;
-            _context.Entry(Alumno).Property(a => a.CarreraId).IsModified = false;
+            _context.Entry(Alumno).Property(a => a.CarreraId).IsModified = true;
             _context.Entry(Alumno).Property(a => a.PermiteInscripcionSinPago).IsModified = true;
             _context.Entry(Alumno).Property(a => a.ExentoMora).IsModified = true;
             // Solo marcar la foto como modificada si se subió una nueva

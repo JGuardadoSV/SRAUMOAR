@@ -53,6 +53,19 @@ namespace SRAUMOAR.Pages.inscripcion
         }
 
         // NUEVO método para generar PDF
-        
+        public IActionResult OnPostEliminar(int id)
+        {
+            var inscripcion = _context.MateriasInscritas.FirstOrDefault(x => x.MateriasInscritasId == id);
+            if (inscripcion != null)
+            {
+                int alumnoId = inscripcion.AlumnoId;
+                _context.MateriasInscritas.Remove(inscripcion);
+                _context.SaveChanges();
+                // Redirige al mismo resumen del alumno
+                return RedirectToPage(new { id = alumnoId });
+            }
+            // Si no se encuentra, recarga la página actual
+            return RedirectToPage();
+        }
     }
 }

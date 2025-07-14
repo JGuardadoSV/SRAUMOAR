@@ -171,11 +171,17 @@
                             @Html.DisplayFor(modelItem => item.Grupo.GrupoId)
                         </td> *@
                         <td>
+                            <button type="button" class="btn btn-warning edit-btn"
+                                    data-id="@item.MateriasGrupoId"
+                                    data-materia="@item.MateriaId"
+                                    data-aula="@item.Aula"
+                                    data-dia="@((int)item.Dia)"
+                                    data-horainicio="@item.HoraInicio.ToString()"
+                                    data-horafin="@item.HoraFin.ToString()"
+                                    data-docente="@item.DocenteId">
+                                <i class="bi bi-pencil"></i>
+                            </button>
                             <a asp-page="./EliminarMateriaDeGrupo" data-inscritos="@item.TotalInscritos" asp-route-id="@item.MateriasGrupoId" class="btn btn-danger delete-btn" data-id="@item.MateriasGrupoId"><i class="bi bi-trash"></i></a>
-
-                           @*  <a href="javascript:void(0);" data-id="@item.MateriasGrupoId" class="btn btn-danger delete-link">
-                                <i class="bi bi-trash"></i>
-                            </a> *@
                         </td>
 
 
@@ -186,6 +192,65 @@
     </div>
 </div>
 
+<!-- Modal de edición de materia -->
+<div class="modal fade" id="editMateriaModal" tabindex="-1" aria-labelledby="editMateriaModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="editMateriaForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editMateriaModalLabel">Editar Materia del Grupo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="editMateriasGrupoId" name="MateriasGrupoId" />
+          <div class="mb-3">
+            <label for="editMateriaId" class="form-label">Materia</label>
+            <select id="editMateriaId" name="MateriaId" class="form-select">
+              @foreach (var materia in ViewBag.MateriaId as SelectList)
+              {
+                  <option value="@materia.Value">@materia.Text</option>
+              }
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="editAula" class="form-label">Aula</label>
+            <input type="text" id="editAula" name="Aula" class="form-control" />
+          </div>
+          <div class="mb-3">
+            <label for="editDia" class="form-label">Día</label>
+            <select id="editDia" name="Dia" class="form-select">
+              @foreach (var dia in Html.GetEnumSelectList<DiaSemana>())
+              {
+                  <option value="@dia.Value">@dia.Text</option>
+              }
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="editHoraInicio" class="form-label">Hora Inicio</label>
+            <input type="time" id="editHoraInicio" name="HoraInicio" class="form-control" />
+          </div>
+          <div class="mb-3">
+            <label for="editHoraFin" class="form-label">Hora Fin</label>
+            <input type="time" id="editHoraFin" name="HoraFin" class="form-control" />
+          </div>
+          <div class="mb-3">
+            <label for="editDocenteId" class="form-label">Docente</label>
+            <select id="editDocenteId" name="DocenteId" class="form-select">
+              @foreach (var docente in ViewBag.DocenteId as SelectList)
+              {
+                  <option value="@docente.Value">@docente.Text</option>
+              }
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
 
 @section Scripts {
@@ -221,45 +286,44 @@
 
     <script>
         $(document).ready(function() {
-            $('.delete-btn').on('click', function(e) {
-                e.preventDefault(); // Evitar la navegación predeterminada
+            // Botón editar
+            $('.edit-btn').on('click', function() {
+                $('#editMateriasGrupoId').val($(this).data('id'));
+                $('#editMateriaId').val($(this).data('materia'));
+                $('#editAula').val($(this).data('aula'));
+                $('#editDia').val($(this).data('dia'));
+                // Convertir hora a formato HH:mm si es necesario
+                let horaInicio = $(this).data('horainicio');
+                let horaFin = $(this).data('horafin');
+                if(horaInicio && horaInicio.length > 5) horaInicio = horaInicio.substring(0,5);
+                if(horaFin && horaFin.length > 5) horaFin = horaFin.substring(0,5);
+                $('#editHoraInicio').val(horaInicio);
+                $('#editHoraFin').val(horaFin);
+                $('#editDocenteId').val($(this).data('docente'));
+                var modal = new bootstrap.Modal(document.getElementById('editMateriaModal'));
+                modal.show();
+            });
 
-                var id = $(this).data('id');
-                     var alumnosInscritos = $(this).data('inscritos');;
-
-        // Verificar número de alumnos antes de intentar eliminar
-        if (parseInt(alumnosInscritos) > 0) {
-          alert(`No se puede eliminar. Hay ${alumnosInscritos} alumnos inscritos.`);
-            return;
-        }
-                // Mostrar confirmación
-                if (confirm('¿Estás seguro de eliminar este registro?')) {
-                    $.ajax({
-                        url: '@Url.Page("./EliminarMateriaDeGrupo")', // URL de la página Delete
-                        type: 'POST',
-                        data: {
-                            id: id,
-                            // Añadir token de verificación de antifalsificación si es necesario
-                            __RequestVerificationToken: $('input:hidden[name="__RequestVerificationToken"]').val()
-                        },
-                        success: function(result) {
-                            if (result.success) {
-                                // Eliminar la fila de la tabla
-                                $(`[data-id="${id}"]`).closest('tr').remove();
-
-                                // Mostrar mensaje de éxito
-                                alert('Registro eliminado con éxito');
-                                window.location.reload();
-                            } else {
-                                // Mostrar mensaje de error
-                                alert(result.message || 'Error al eliminar el registro');
-                            }
-                        },
-                        error: function() {
-                            alert('Ocurrió un error al intentar eliminar el registro');
+            // Enviar formulario de edición
+            $('#editMateriaForm').on('submit', function(e) {
+                e.preventDefault();
+                var formData = $(this).serialize();
+                $.ajax({
+                    url: '?handler=EditarMateriaGrupo',
+                    type: 'POST',
+                    data: formData,
+                    success: function(result) {
+                        if (result.success) {
+                            alert('Materia actualizada correctamente');
+                            window.location.reload();
+                        } else {
+                            alert(result.message || 'Error al actualizar la materia');
                         }
-                    });
-                }
+                    },
+                    error: function() {
+                        alert('Ocurrió un error al intentar actualizar la materia');
+                    }
+                });
             });
         });
     </script>
