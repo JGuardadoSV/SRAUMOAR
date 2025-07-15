@@ -1,0 +1,70 @@
+@page
+@model SRAUMOAR.Pages.aranceles.HistorialPagosModel
+@{
+    ViewData["Title"] = "Historial de Aranceles Pagados";
+    var alumno = ViewData["Alumno"] as SRAUMOAR.Entidades.Alumnos.Alumno;
+    var pagosAgrupados = Model.Pagos
+        .GroupBy(p => p.CobroArancel.CodigoGeneracion)
+        .OrderByDescending(g => g.First().CobroArancel.Fecha)
+        .ToList();
+}
+
+<h2>Historial de Aranceles Pagados</h2>
+@if (alumno != null)
+{
+    <div class="mb-3">
+        <strong>Alumno:</strong> @alumno.Nombres @alumno.Apellidos (ID: @alumno.AlumnoId)
+    </div>
+}
+@if (!pagosAgrupados.Any())
+{
+    <div class="alert alert-info">Este alumno no tiene aranceles pagados.</div>
+}
+else
+{
+    <div class="accordion" id="accordionPagos">
+        @foreach (var grupo in pagosAgrupados)
+        {
+            var cobro = grupo.First().CobroArancel;
+            <div class="card mb-3 shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center" style="background: linear-gradient(90deg, #195e2c 0%, #2d7a41 100%); color: white;">
+                    <div>
+                        <strong>Código de Generación:</strong> @cobro.CodigoGeneracion
+                        <span class="badge bg-light text-dark ms-2">Cobro ID: @cobro.CobroArancelId</span>
+                        <span class="badge bg-success ms-2">Total: $@cobro.Total</span>
+                        <span class="badge bg-info ms-2">Fecha: @cobro.Fecha.ToString("dd/MM/yyyy")</span>
+                    </div>
+                    <form method="post" asp-page-handler="EliminarPago" style="display:inline;">
+                        <input type="hidden" name="codigoGeneracion" value="@cobro.CodigoGeneracion" />
+                        <input type="hidden" name="alumnoId" value="@alumno?.AlumnoId" />
+                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Está seguro de eliminar TODOS los pagos con este código de generación?');">
+                            <i class="bi bi-trash"></i> Eliminar grupo
+                        </button>
+                    </form>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-striped mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nombre Arancel</th>
+                                <th>Monto</th>
+                                <th>Ciclo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var pago in grupo)
+                        {
+                            <tr>
+                                <td>@pago.Arancel.Nombre</td>
+                                <td>$@pago.costo</td>
+                                <td>@(pago.Arancel.Ciclo != null ? pago.Arancel.Ciclo.NCiclo + "/" + pago.Arancel.Ciclo.anio : "-")</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+}
+<a class="btn btn-secondary mt-3" asp-page="/aranceles/Cobrar" asp-route-id="@alumno?.AlumnoId">Regresar a cobro</a> 

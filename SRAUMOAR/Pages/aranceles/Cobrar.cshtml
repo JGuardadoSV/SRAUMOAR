@@ -1,4 +1,4 @@
-﻿@page
+﻿@page 
 @model SRAUMOAR.Pages.aranceles.CobrarModel
 @{
     ViewData["Title"] = "Aranceles del ciclo";
@@ -377,6 +377,12 @@
 </div>
 
 <div class="container">
+    <!-- Botón para ir al historial de pagos -->
+    <div class="mb-3 text-end">
+        <a class="btn btn-outline-primary" asp-page="/aranceles/HistorialPagos" asp-route-alumnoId="@alumno?.AlumnoId">
+            <i class="bi bi-clock-history"></i> Ver historial de pagos
+        </a>
+    </div>
     <!-- Información del Alumno -->
     <div class="alumno-card">
         <div class="alumno-header">
@@ -457,6 +463,7 @@
                                             <a asp-page="/aranceles/Facturas" asp-route-arancelId="@item.ArancelId" asp-route-alumnoId="@alumno?.AlumnoId" class="btn btn-recibo">
                                                 <i class="bi bi-receipt me-1"></i>Ver Recibo
                                             </a>
+                                           
                                         }
                                     </td>
                                     <td class="fw-semibold">@Html.DisplayFor(modelItem => item.Nombre)</td>
@@ -566,6 +573,14 @@
                                             <a asp-page="/aranceles/Facturas" asp-route-arancelId="@item.ArancelId" asp-route-alumnoId="@alumno?.AlumnoId" class="btn btn-recibo">
                                                 <i class="bi bi-receipt me-1"></i>Ver Recibo
                                             </a>
+                                            <form method="post" asp-page-handler="EliminarPago" style="display:inline;">
+                                                <input type="hidden" name="arancelId" value="@item.ArancelId" />
+                                                <input type="hidden" name="alumnoId" value="@alumno?.AlumnoId" />
+                                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Está seguro de eliminar este pago?');">
+                                                    <i class="bi bi-trash"></i> Eliminar
+                                                </button>
+                                            </form>
+                                            <span style="color:red; font-size:0.9em;">[Depuración] AlumnoId: @alumno?.AlumnoId | ArancelId: @item.ArancelId</span>
                                         }
                                     </td>
                                     <td class="fw-semibold">@Html.DisplayFor(modelItem => item.Nombre)</td>

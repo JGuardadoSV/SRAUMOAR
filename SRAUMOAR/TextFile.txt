@@ -15,7 +15,7 @@ docker login
 (Te pedirá tu usuario y contraseña de DockerHub)
 Subir la imagen a DockerHub:
 Apply to Create.cshtm...
-docker push prehack77/sraumoar:latest
+    
 ¿Quieres que ejecute alguno de estos comandos por ti? También podemos verificar si Docker está instalado y funcionando correctamente antes de proceder.
 docker run -d -p 8080:80 -e ASPNETCORE_URLS=http://0.0.0.0:80 prehack77/sraumoar:latest
 

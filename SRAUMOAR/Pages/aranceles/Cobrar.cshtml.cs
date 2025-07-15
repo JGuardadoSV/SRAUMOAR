@@ -90,6 +90,45 @@ namespace SRAUMOAR.Pages.aranceles
             return RedirectToPage("./Facturar", new { arancelIds = string.Join(",", selectedAranceles),idalumno=alumnoId });
         }
 
+        public async Task<IActionResult> OnPostEliminarPago(int id, int? arancelId, int? alumnoId)
+        {
+            System.Diagnostics.Debug.WriteLine($"Handler ejecutado: id={id}, arancelId={arancelId}, alumnoId={alumnoId}");
+
+            if (arancelId == null || alumnoId == null)
+            {
+                ModelState.AddModelError(string.Empty, "Faltan parámetros requeridos para eliminar el pago.");
+                await OnGetAsync(id); // Usar el id de la ruta
+                return Page();
+            }
+
+            // Buscar el detalle de cobro correspondiente
+            var detalle = await _context.DetallesCobrosArancel
+                .Include(d => d.CobroArancel)
+                .FirstOrDefaultAsync(d => d.ArancelId == arancelId.Value && d.CobroArancel.AlumnoId == alumnoId.Value);
+
+            if (detalle != null)
+            {
+                // Eliminar el detalle
+                _context.DetallesCobrosArancel.Remove(detalle);
+
+                // Si el cobro no tiene más detalles, eliminar el cobro principal
+                var cobro = detalle.CobroArancel;
+                var otrosDetalles = _context.DetallesCobrosArancel
+                    .Where(d => d.CobroArancelId == cobro.CobroArancelId && d.ArancelId != arancelId.Value)
+                    .ToList();
+
+                if (!otrosDetalles.Any())
+                {
+                    _context.CobrosArancel.Remove(cobro);
+                }
+
+                await _context.SaveChangesAsync();
+            }
+
+            // Redirigir de nuevo a la página de cobro
+            return RedirectToPage(new { id = alumnoId.Value });
+        }
+
         public bool AlumnoHaPagado(int arancelId, int alumnoId) {
             return _context.DetallesCobrosArancel
                .Any(d => d.ArancelId == arancelId &&
