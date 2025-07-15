@@ -39,7 +39,7 @@ namespace SRAUMOAR.Pages.inscripcion
                 , "AlumnoId", "Nombre");
 
             var cicloActual = _context.Ciclos.FirstOrDefault(c => c.Activo).Id;
-
+            
             // Filtrar materias solo por el grupo seleccionado si existe
             if (GrupoSeleccionado.HasValue && GrupoSeleccionado.Value > 0)
             {
@@ -47,7 +47,7 @@ namespace SRAUMOAR.Pages.inscripcion
                     _context.MateriasGrupo
                         .Include(mg => mg.Materia)
                         .Include(mg => mg.Grupo)
-                        .Where(mg => mg.Grupo.GrupoId == GrupoSeleccionado.Value && mg.Grupo.CicloId == cicloActual && mg.Materia.PensumId == mg.Grupo.PensumId)
+                        .Where(mg => mg.Grupo.GrupoId == GrupoSeleccionado.Value && mg.Grupo.CicloId == cicloActual)
                         .Select(mg => new
                         {
                             MateriasGrupoId = mg.MateriasGrupoId,

@@ -28,7 +28,7 @@ namespace SRAUMOAR.Pages.inscripcion
            idalumno = id;
             Alumno alumno = _context.Alumno.Where(x => x.AlumnoId == id).FirstOrDefault() ?? new Alumno(); // Obtener el alumno
             var cicloactual = _context.Ciclos.Where(x => x.Activo == true).FirstOrDefault()?.Id ?? 0;
-
+            var becado= _context.Becados.Where(x => x.AlumnoId == id).FirstOrDefault();
             EstaInscrito =  _context.Inscripciones
               .Any(i => i.AlumnoId == idalumno && i.CicloId == cicloactual);
 
@@ -39,7 +39,7 @@ namespace SRAUMOAR.Pages.inscripcion
                 .Include(x => x.DetallesCobroArancel)
                 .Any(x => x.CicloId == cicloactual && x.DetallesCobroArancel.FirstOrDefault().Arancel.Nombre == "Matricula" && x.AlumnoId == idalumno);
 
-            if (alumno.PermiteInscripcionSinPago)
+            if (alumno.PermiteInscripcionSinPago || becado != null)
             {
                 YaPago = true;
             }

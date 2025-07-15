@@ -124,7 +124,7 @@
     }
 
         .table thead th {
-            background: linear-gradient(135deg, var(--dark-green) 0%, var(--secondary-green) 100%);
+            background: var(--dark-green);
             color: white;
             font-weight: 600;
             text-transform: uppercase;
@@ -313,6 +313,21 @@
             </div>
         </div>
     </div>
+
+    <!-- Filtro por carrera -->
+    <form method="get" class="mb-4">
+        <div class="row align-items-end">
+            <div class="col-md-4">
+                <label for="CarreraId" class="form-label">Filtrar por carrera</label>
+                <select asp-for="CarreraId" asp-items="@(new SelectList(Model.Carreras, "CarreraId", "NombreCarrera"))" class="form-select">
+                    <option value="">Todas las carreras</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary-green w-100">Filtrar</button>
+            </div>
+        </div>
+    </form>
 
     <!-- Table Section -->
     <div class="table-container">

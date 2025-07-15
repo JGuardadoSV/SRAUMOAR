@@ -347,10 +347,10 @@
         <div class="row mt-3">
             <div class="col-12">
                 <div class="d-flex justify-content-center gap-3">
-                    <a href="?handler=GenerarReporteCompleto" class="report-btn">
+                    <a href="?handler=GenerarReporteCompleto" class="report-btn" target="_blank">
                         <i class="bi bi-file-earmark-pdf me-2"></i>Generar Reporte Completo
                     </a>
-                    <a href="?handler=GenerarReporteFiltrado" class="report-btn info">
+                    <a href="?handler=GenerarReporteFiltrado" class="report-btn info" target="_blank">
                         <i class="bi bi-funnel me-2"></i>Generar Reporte Filtrado
                     </a>
                 </div>
@@ -501,6 +501,7 @@
                                                     title="Imprimir reporte">
                                                 <i class="bi bi-printer"></i>
                                             </button>
+                                            <a class="dropdown-item" asp-page="/inscripcion/MateriasInscritas" asp-route-id="@item.Alumno.AlumnoId">Administrar<i class="bi bi-arrow-right-circle"></i></a>
                                         </td>
                                     </tr>
                                     correlativo++;

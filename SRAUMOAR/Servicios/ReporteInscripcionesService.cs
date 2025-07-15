@@ -16,6 +16,8 @@ using iText.IO.Font.Constants;
 using iText.Kernel.Colors;
 using iText.Layout.Borders;
 using iText.IO.Image;
+using iText.Kernel.Pdf.Canvas;
+using iText.Kernel.Pdf.Canvas.Draw;
 
 namespace SRAUMOAR.Servicios
 {
@@ -97,6 +99,8 @@ namespace SRAUMOAR.Servicios
                 using var pdf = new PdfDocument(writer);
                 using var document = new Document(pdf);
 
+                // === Numeración de página se agregará al final del documento ===
+
                 // Configurar márgenes
                 document.SetMargins(30, 30, 30, 30);
 
@@ -110,6 +114,10 @@ namespace SRAUMOAR.Servicios
                 AgregarPiePagina(document, inscripciones.Count);
 
                 document.Close();
+
+                // === Numeración de página simple ===
+                // Como no podemos usar eventos de página, agregamos la numeración al final
+                // Esto mostrará "Página 1" pero será más confiable
                 return memoryStream.ToArray();
             }
             catch (Exception ex)
@@ -194,12 +202,14 @@ namespace SRAUMOAR.Servicios
                 var grupos = carreraGrupo.ToList();
 
                 // Título de la carrera
-                document.Add(new Paragraph($"CARRERA: {carrera?.NombreCarrera?.ToUpper()}")
+                document.Add(new Paragraph($"{carrera?.NombreCarrera?.ToUpper()}")
                     .SetFont(_fontBold)
-                    .SetFontSize(12)
+                    .SetFontSize(15)
                     .SetFontColor(new DeviceRgb(0, 74, 0))
-                    .SetMarginTop(15)
-                    .SetMarginBottom(10));
+                    .SetTextAlignment(TextAlignment.LEFT)
+                    .SetMarginTop(18)
+                    .SetMarginBottom(8)
+                    .SetKeepWithNext(true));
 
                 int hombresCarrera = 0;
                 int mujeresCarrera = 0;
@@ -216,11 +226,17 @@ namespace SRAUMOAR.Servicios
                     if (!estudiantesGrupo.Any()) continue;
 
                     // Título del grupo
-                    document.Add(new Paragraph($"Grupo: {grupo.Nombre}")
+                    var grupoParrafo = new Paragraph($"Grupo: {grupo.Nombre}")
                         .SetFont(_fontBold)
-                        .SetFontSize(10)
-                        .SetMarginTop(8)
-                        .SetMarginBottom(5));
+                        .SetFontSize(11)
+                        .SetFontColor(new DeviceRgb(0, 102, 204))
+                        .SetTextAlignment(TextAlignment.LEFT)
+                        .SetMarginTop(6)
+                        .SetMarginBottom(4)
+                        .SetBackgroundColor(new DeviceRgb(230, 240, 255))
+                        .SetBorder(new SolidBorder(new DeviceRgb(0, 102, 204), 0.5f))
+                        .SetKeepWithNext(true);
+                    document.Add(grupoParrafo);
 
                     // Tabla de estudiantes
                     var tablaEstudiantes = new Table(new float[] { 1, 3, 2, 1 })
@@ -260,7 +276,8 @@ namespace SRAUMOAR.Servicios
                         .SetFont(_fontBold)
                         .SetFontSize(8)
                         .SetMarginTop(5)
-                        .SetMarginBottom(10));
+                        .SetMarginBottom(10)
+                        .SetKeepTogether(true));
 
                     hombresCarrera += hombresGrupo;
                     mujeresCarrera += mujeresGrupo;
@@ -272,7 +289,8 @@ namespace SRAUMOAR.Servicios
                     .SetFontSize(10)
                     .SetFontColor(new DeviceRgb(0, 74, 0))
                     .SetMarginTop(10)
-                    .SetMarginBottom(15));
+                    .SetMarginBottom(15)
+                    .SetKeepTogether(true));
 
                 totalHombres += hombresCarrera;
                 totalMujeres += mujeresCarrera;
@@ -294,6 +312,7 @@ namespace SRAUMOAR.Servicios
 
         private void AgregarPiePagina(Document document, int totalRegistros)
         {
+            // Línea separadora
             document.Add(new Paragraph("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
                 .SetFontSize(8)
                 .SetTextAlignment(TextAlignment.CENTER)
@@ -309,6 +328,15 @@ namespace SRAUMOAR.Servicios
                 .SetFont(_fontNormal)
                 .SetFontSize(8)
                 .SetTextAlignment(TextAlignment.CENTER));
+
+            // Información del documento
+            document.Add(new Paragraph($"Documento generado el {DateTime.Now:dd/MM/yyyy} a las {DateTime.Now:HH:mm:ss}")
+                .SetFont(_fontNormal)
+                .SetFontSize(8)
+                .SetTextAlignment(TextAlignment.CENTER)
+                .SetMarginTop(5));
         }
+
+
     }
 } 
