@@ -82,146 +82,171 @@
             }
         }
     </style>
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 }
-<div class="main-full-width d-flex gap-4">
-    <div class="form-section flex-grow">
-        <form method="post" class="p-4 border rounded-3 shadow-sm bg-light">
-            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-            <input type="hidden" asp-for="Grupo.GrupoId" />
-            <div class="row">
-                <div class="form-group mb-3 col-12 col-md-4">
-                    <label asp-for="Grupo.Nombre" class="form-label"></label>
-                    <input asp-for="Grupo.Nombre" class="form-control" />
-                    <span asp-validation-for="Grupo.Nombre" class="text-danger"></span>
-                </div>
-                <div class="form-group mb-3 col-12 col-md-4">
-                    <label asp-for="Grupo.Limite" class="form-label"></label>
-                    <input asp-for="Grupo.Limite" class="form-control" />
-                    <span asp-validation-for="Grupo.Limite" class="text-danger"></span>
-                </div>
-                <div class="form-group form-check mb-3 col-12 col-md-4 d-flex align-items-center">
-                    <input class="form-check-input mt-1" asp-for="Grupo.Activo" />
-                    <label class="form-check-label ms-2" asp-for="Grupo.Activo">Activo</label>
-                </div>
-            </div>
-            <div class="form-group mb-3">
-                <label asp-for="Grupo.CarreraId" class="form-label"></label>
-                <select id="carreraSelect" asp-for="Grupo.CarreraId" class="form-select" asp-items="ViewBag.CarreraId"></select>
-            </div>
-            <div class="form-group mb-3">
-                <label asp-for="Grupo.PensumId" class="form-label"></label>
-                <select id="pensumSelect" asp-for="Grupo.PensumId" class="form-select" asp-items="ViewBag.PensumId"></select>
-            </div>
-            <div class="form-group mb-3">
-                <label asp-for="Grupo.CicloId" class="form-label"></label>
-                <select asp-for="Grupo.CicloId" class="form-select" asp-items="ViewBag.CicloId"></select>
-            </div>
-            @{
-                bool isDocente = User.IsInRole("Docentes");
-            }
-            <div class="form-group mb-3">
-                <label asp-for="Grupo.DocenteId" class="form-label"></label>
-                @if (isDocente)
-                {
-                    <select asp-for="Grupo.DocenteId" class="form-select" asp-items="ViewBag.DocenteId" disabled="disabled"></select>
-                    <input type="hidden" asp-for="Grupo.DocenteId" value="@Model.Grupo.DocenteId" />
-                }
-                else
-                {
-                    <select asp-for="Grupo.DocenteId" class="form-select" asp-items="ViewBag.DocenteId"></select>
-                }
-            </div>
-            <div class="form-group text-center">
-                <input type="submit" value="Actualizar grupo" class="btn btn-success btn-lg me-2" />
-                <a asp-page="Index" class="btn btn-outline-secondary btn-lg">Volver</a>
-            </div>
-        </form>
-    </div>
-    <div class="form-section flex-grow">
-        <form method="post" id="formMaterias" class="p-4 border rounded-3 shadow-sm bg-light">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" id="formulario2" value="0" />
-            <div class="row">
-                <div class="form-group col-12 col-md-3">
-                    <label asp-for="MateriasGrupo.Aula" class="form-label"></label>
-                    <input asp-for="MateriasGrupo.Aula" class="form-control" />
-                    <span asp-validation-for="MateriasGrupo.Aula" class="text-danger"></span>
-                </div>
-                <div class="form-group col-12 col-md-3">
-                    <label asp-for="MateriasGrupo.Dia" class="form-label"></label>
-                    <select asp-for="MateriasGrupo.Dia" class="form-control" asp-items="Html.GetEnumSelectList<DiaSemana>()">
-                        <option value="">-- Selecciona un día --</option>
-                    </select>
-                    <span asp-validation-for="MateriasGrupo.Dia" class="text-danger"></span>
-                </div>
-                <div class="form-group col-12 col-md-3">
-                    <label asp-for="MateriasGrupo.HoraInicio" class="form-label"></label>
-                    <input asp-for="MateriasGrupo.HoraInicio" class="form-control" />
-                    <span asp-validation-for="MateriasGrupo.HoraInicio" class="text-danger"></span>
-                </div>
-                <div class="form-group col-12 col-md-3">
-                    <label asp-for="MateriasGrupo.HoraFin" class="form-label"></label>
-                    <input asp-for="MateriasGrupo.HoraFin" class="form-control" />
-                    <span asp-validation-for="MateriasGrupo.HoraFin" class="text-danger"></span>
-                </div>
-            </div>
-            <div class="form-group">
-                <label asp-for="MateriasGrupo.MateriaId" class="control-label"></label>
-                <select asp-for="MateriasGrupo.MateriaId" class="form-control" asp-items="ViewBag.MateriaId"></select>
-            </div>
-            <div class="form-group">
-                <label asp-for="MateriasGrupo.DocenteId" class="control-label"></label>
-                <select asp-for="MateriasGrupo.DocenteId" class="form-control" asp-items="ViewBag.DocenteId"></select>
-            </div>
-            <input type="hidden" asp-for="MateriasGrupo.GrupoId" value="@Model.GrupoId" />
-            <div class="form-group text-center">
-                <button type="submit" class="btn btn-primary btn-lg mt-2 shadow-sm">
-                    <i class="bi bi-book"></i> Asignar Materia
-                </button>
-            </div>
-        </form>
-        <hr />
-        <h6 class="fw-bold mb-3">Materias del Grupo</h6>
-        <table class="table table-striped align-middle">
-            <thead>
-                <tr>
-                    <th>@Html.DisplayNameFor(model => model.ListadoMateriasGrupo[0].Materia)</th>
-                    <th>@Html.DisplayNameFor(model => model.ListadoMateriasGrupo[0].Aula)</th>
-                    <th>@Html.DisplayNameFor(model => model.ListadoMateriasGrupo[0].Docente)</th>
-                    <th>Horario</th>
-                    <th>Inscritos</th>
-                    <th></th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model.ListadoMateriasGrupo)
-                {
-                    <tr>
-                        <td>@Html.DisplayFor(modelItem => item.Materia.NombreMateria)</td>
-                        <td>@Html.DisplayFor(modelItem => item.Aula)</td>
-                        <td>@Html.DisplayFor(modelItem => item.Docente.Nombres) @Html.DisplayFor(modelItem => item.Docente.Apellidos)</td>
-                        <td>@Html.DisplayFor(m => item.Dia) @item.FormatearHora12Horas(item.HoraInicio) - @item.FormatearHora12Horas(item.HoraFin)</td>
-                        <td>@Html.DisplayFor(modelItem => item.TotalInscritos)</td>
-                        <td class="text-center">
-                            <button type="button" class="btn btn-warning edit-btn"
-                                    data-id="@item.MateriasGrupoId"
-                                    data-materia="@item.MateriaId"
-                                    data-aula="@item.Aula"
-                                    data-dia="@((int)item.Dia)"
-                                    data-horainicio="@item.HoraInicio.ToString()"
-                                    data-horafin="@item.HoraFin.ToString()"
-                                    data-docente="@item.DocenteId">
-                                <i class="bi bi-pencil"></i>
+<div class="main-full-width">
+    <ul class="nav nav-tabs mb-4" id="grupoTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="materias-tab" data-bs-toggle="tab" data-bs-target="#materias" type="button" role="tab" aria-controls="materias" aria-selected="true">
+                Asignar materia y materias asignadas
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="datos-tab" data-bs-toggle="tab" data-bs-target="#datos" type="button" role="tab" aria-controls="datos" aria-selected="false">
+                Datos del grupo
+            </button>
+        </li>
+    </ul>
+    <div class="tab-content" id="grupoTabContent">
+        <div class="tab-pane fade show active" id="materias" role="tabpanel" aria-labelledby="materias-tab">
+            <div class="d-flex gap-4 flex-wrap">
+                <div class="form-section flex-grow" style="min-width:320px;max-width:420px;">
+                    <h2 class="fw-bold mb-3">Asignar materia al grupo</h2>
+                    <form method="post" id="formMaterias" class="p-4 border rounded-3 shadow-sm bg-light">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" id="formulario2" value="0" />
+                        <div class="row">
+                            <div class="form-group col-12 col-md-12">
+                                <label asp-for="MateriasGrupo.Aula" class="form-label"></label>
+                                <input asp-for="MateriasGrupo.Aula" class="form-control" />
+                                <span asp-validation-for="MateriasGrupo.Aula" class="text-danger"></span>
+                            </div>
+                            <div class="form-group col-12 col-md-12">
+                                <label asp-for="MateriasGrupo.Dia" class="form-label"></label>
+                                <select asp-for="MateriasGrupo.Dia" class="form-control" asp-items="Html.GetEnumSelectList<DiaSemana>()">
+                                    <option value="">-- Selecciona un día --</option>
+                                </select>
+                                <span asp-validation-for="MateriasGrupo.Dia" class="text-danger"></span>
+                            </div>
+                            <div class="form-group col-12 col-md-12">
+                                <label asp-for="MateriasGrupo.HoraInicio" class="form-label"></label>
+                                <input asp-for="MateriasGrupo.HoraInicio" class="form-control" />
+                                <span asp-validation-for="MateriasGrupo.HoraInicio" class="text-danger"></span>
+                            </div>
+                            <div class="form-group col-12 col-md-12">
+                                <label asp-for="MateriasGrupo.HoraFin" class="form-label"></label>
+                                <input asp-for="MateriasGrupo.HoraFin" class="form-control" />
+                                <span asp-validation-for="MateriasGrupo.HoraFin" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="MateriasGrupo.MateriaId" class="control-label"></label>
+                            <select asp-for="MateriasGrupo.MateriaId" class="form-control select-buscable" asp-items="ViewBag.MateriaId"></select>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="MateriasGrupo.DocenteId" class="control-label"></label>
+                            <select asp-for="MateriasGrupo.DocenteId" class="form-control select-buscable" asp-items="ViewBag.DocenteId"></select>
+                        </div>
+                        <input type="hidden" asp-for="MateriasGrupo.GrupoId" value="@Model.GrupoId" />
+                        <div class="form-group text-center">
+                            <button type="submit" class="btn btn-primary btn-lg mt-2 shadow-sm">
+                                <i class="bi bi-book"></i> Asignar Materia
                             </button>
-                        </td>
-                        <td class="text-center">
-                            <a asp-page="./EliminarMateriaDeGrupo" data-inscritos="@item.TotalInscritos" asp-route-id="@item.MateriasGrupoId" class="btn btn-danger delete-btn" data-id="@item.MateriasGrupoId"><i class="bi bi-trash"></i></a>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+                        </div>
+                    </form>
+                </div>
+                <div class="form-section flex-grow" style="min-width:320px;">
+                    <h2 class="fw-bold mb-3">Materias asignadas al grupo</h2>
+                    <table class="table table-striped align-middle">
+                        <thead>
+                            <tr>
+                                <th>@Html.DisplayNameFor(model => model.ListadoMateriasGrupo[0].Materia)</th>
+                                <th>@Html.DisplayNameFor(model => model.ListadoMateriasGrupo[0].Aula)</th>
+                                <th>@Html.DisplayNameFor(model => model.ListadoMateriasGrupo[0].Docente)</th>
+                                <th>Horario</th>
+                                <th>Inscritos</th>
+                                <th></th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.ListadoMateriasGrupo)
+                            {
+                                <tr>
+                                    <td>@Html.DisplayFor(modelItem => item.Materia.NombreMateria)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.Aula)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.Docente.Nombres) @Html.DisplayFor(modelItem => item.Docente.Apellidos)</td>
+                                    <td>@Html.DisplayFor(m => item.Dia) @item.FormatearHora12Horas(item.HoraInicio) - @item.FormatearHora12Horas(item.HoraFin)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.TotalInscritos)</td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-warning edit-btn"
+                                                data-id="@item.MateriasGrupoId"
+                                                data-materia="@item.MateriaId"
+                                                data-aula="@item.Aula"
+                                                data-dia="@((int)item.Dia)"
+                                                data-horainicio="@item.HoraInicio.ToString()"
+                                                data-horafin="@item.HoraFin.ToString()"
+                                                data-docente="@item.DocenteId">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                    </td>
+                                    <td class="text-center">
+                                        <a asp-page="./EliminarMateriaDeGrupo" data-inscritos="@item.TotalInscritos" asp-route-id="@item.MateriasGrupoId" class="btn btn-danger delete-btn" data-id="@item.MateriasGrupoId"><i class="bi bi-trash"></i></a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="tab-pane fade" id="datos" role="tabpanel" aria-labelledby="datos-tab">
+            <div class="form-section">
+                <h2 class="fw-bold mb-3">Datos del grupo</h2>
+                <form method="post" class="p-4 border rounded-3 shadow-sm bg-light">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                    <input type="hidden" asp-for="Grupo.GrupoId" />
+                    <div class="row">
+                        <div class="form-group mb-3 col-12 col-md-4">
+                            <label asp-for="Grupo.Nombre" class="form-label"></label>
+                            <input asp-for="Grupo.Nombre" class="form-control" />
+                            <span asp-validation-for="Grupo.Nombre" class="text-danger"></span>
+                        </div>
+                        <div class="form-group mb-3 col-12 col-md-4">
+                            <label asp-for="Grupo.Limite" class="form-label"></label>
+                            <input asp-for="Grupo.Limite" class="form-control" />
+                            <span asp-validation-for="Grupo.Limite" class="text-danger"></span>
+                        </div>
+                        <div class="form-group form-check mb-3 col-12 col-md-4 d-flex align-items-center">
+                            <input class="form-check-input mt-1" asp-for="Grupo.Activo" />
+                            <label class="form-check-label ms-2" asp-for="Grupo.Activo">Activo</label>
+                        </div>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label asp-for="Grupo.CarreraId" class="form-label"></label>
+                        <select id="carreraSelect" asp-for="Grupo.CarreraId" class="form-select select-buscable" asp-items="ViewBag.CarreraId"></select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label asp-for="Grupo.PensumId" class="form-label"></label>
+                        <select id="pensumSelect" asp-for="Grupo.PensumId" class="form-select select-buscable" asp-items="ViewBag.PensumId"></select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label asp-for="Grupo.CicloId" class="form-label"></label>
+                        <select asp-for="Grupo.CicloId" class="form-select" asp-items="ViewBag.CicloId"></select>
+                    </div>
+                    @{
+                        bool isDocente = User.IsInRole("Docentes");
+                    }
+                    <div class="form-group mb-3">
+                        <label asp-for="Grupo.DocenteId" class="form-label"></label>
+                        @if (isDocente)
+                        {
+                            <select asp-for="Grupo.DocenteId" class="form-select select-buscable" asp-items="ViewBag.DocenteId" disabled="disabled"></select>
+                            <input type="hidden" asp-for="Grupo.DocenteId" value="@Model.Grupo.DocenteId" />
+                        }
+                        else
+                        {
+                            <select asp-for="Grupo.DocenteId" class="form-select select-buscable" asp-items="ViewBag.DocenteId"></select>
+                        }
+                    </div>
+                    <div class="form-group text-center">
+                        <input type="submit" value="Actualizar grupo" class="btn btn-success btn-lg me-2" />
+                        <a asp-page="Index" class="btn btn-outline-secondary btn-lg">Volver</a>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -238,7 +263,7 @@
           <input type="hidden" id="editMateriasGrupoId" name="MateriasGrupoId" />
           <div class="mb-3">
             <label for="editMateriaId" class="form-label">Materia</label>
-            <select id="editMateriaId" name="MateriaId" class="form-select">
+            <select id="editMateriaId" name="MateriaId" class="form-select select-buscable">
               @foreach (var materia in ViewBag.MateriaId as SelectList)
               {
                   <option value="@materia.Value">@materia.Text</option>
@@ -268,7 +293,7 @@
           </div>
           <div class="mb-3">
             <label for="editDocenteId" class="form-label">Docente</label>
-            <select id="editDocenteId" name="DocenteId" class="form-select">
+            <select id="editDocenteId" name="DocenteId" class="form-select select-buscable">
               @foreach (var docente in ViewBag.DocenteId as SelectList)
               {
                   <option value="@docente.Value">@docente.Text</option>
@@ -288,6 +313,8 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
   @*   <script>
 
@@ -319,6 +346,17 @@
 
     <script>
         $(document).ready(function() {
+            // Inicializar Select2 en los selects con buscador
+            $('.select-buscable').select2({
+                width: '100%',
+                placeholder: 'Seleccione una opción',
+                allowClear: true,
+                language: {
+                    noResults: function() {
+                        return "No hay resultados";
+                    }
+                }
+            });
             // Botón editar
             $('.edit-btn').on('click', function() {
                 $('#editMateriasGrupoId').val($(this).data('id'));
