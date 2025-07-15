@@ -8,30 +8,101 @@
 
 <h1 class=" text-primary fw-bold mb-4 display-5">Edición de grupo</h1>
 <hr />
-<div class="row">
-    <div class="col-md-4">
-       
+@section Styles {
+    <style>
+        .main-full-width {
+            width: 100%;
+            max-width: 100vw;
+            margin: 0 auto;
+        }
+        .form-section {
+            margin-bottom: 2rem;
+        }
+        .table thead th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        .table-striped > tbody > tr:nth-of-type(odd) {
+            background-color: #f2f2f2;
+        }
+        .btn-lg {
+            min-width: 140px;
+        }
+        .edit-btn, .delete-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .shadow-sm {
+            box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,.075)!important;
+        }
+        .border {
+            border: 1px solid #dee2e6!important;
+        }
+        .bg-light {
+            background-color: #f8f9fa!important;
+        }
+        .fw-bold {
+            font-weight: 700!important;
+        }
+        .display-5 {
+            font-size: 2.5rem;
+        }
+        .form-label {
+            font-weight: 500;
+        }
+        .form-control, .form-select {
+            border-radius: 0.5rem;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .table {
+            margin-bottom: 0;
+        }
+        .flex-grow {
+            flex: 1 1 0%;
+        }
+        .gap-4 {
+            gap: 2rem;
+        }
+        @@media (max-width: 768px) {
+            .main-full-width {
+                padding: 0 0.5rem;
+            }
+            .row, .d-flex {
+                flex-direction: column !important;
+            }
+            .form-section {
+                margin-bottom: 1rem;
+            }
+            .btn-lg {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+        }
+    </style>
+}
+<div class="main-full-width d-flex gap-4">
+    <div class="form-section flex-grow">
         <form method="post" class="p-4 border rounded-3 shadow-sm bg-light">
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
             <input type="hidden" asp-for="Grupo.GrupoId" />
             <div class="row">
-                <div class="form-group mb-3 col-4">
+                <div class="form-group mb-3 col-12 col-md-4">
                     <label asp-for="Grupo.Nombre" class="form-label"></label>
                     <input asp-for="Grupo.Nombre" class="form-control" />
                     <span asp-validation-for="Grupo.Nombre" class="text-danger"></span>
                 </div>
-
-                <div class="form-group mb-3 col-4">
+                <div class="form-group mb-3 col-12 col-md-4">
                     <label asp-for="Grupo.Limite" class="form-label"></label>
                     <input asp-for="Grupo.Limite" class="form-control" />
                     <span asp-validation-for="Grupo.Limite" class="text-danger"></span>
                 </div>
-
-                <div class="form-group form-check mb-3 col-4 d-flex align-items-center">
+                <div class="form-group form-check mb-3 col-12 col-md-4 d-flex align-items-center">
                     <input class="form-check-input mt-1" asp-for="Grupo.Activo" />
                     <label class="form-check-label ms-2" asp-for="Grupo.Activo">Activo</label>
                 </div>
-
             </div>
             <div class="form-group mb-3">
                 <label asp-for="Grupo.CarreraId" class="form-label"></label>
@@ -39,9 +110,8 @@
             </div>
             <div class="form-group mb-3">
                 <label asp-for="Grupo.PensumId" class="form-label"></label>
-                <select id="carreraSelect" asp-for="Grupo.PensumId" class="form-select" asp-items="ViewBag.PensumId"></select>
+                <select id="pensumSelect" asp-for="Grupo.PensumId" class="form-select" asp-items="ViewBag.PensumId"></select>
             </div>
-
             <div class="form-group mb-3">
                 <label asp-for="Grupo.CicloId" class="form-label"></label>
                 <select asp-for="Grupo.CicloId" class="form-select" asp-items="ViewBag.CicloId"></select>
@@ -49,10 +119,8 @@
             @{
                 bool isDocente = User.IsInRole("Docentes");
             }
-
             <div class="form-group mb-3">
                 <label asp-for="Grupo.DocenteId" class="form-label"></label>
-                
                 @if (isDocente)
                 {
                     <select asp-for="Grupo.DocenteId" class="form-select" asp-items="ViewBag.DocenteId" disabled="disabled"></select>
@@ -62,41 +130,36 @@
                 {
                     <select asp-for="Grupo.DocenteId" class="form-select" asp-items="ViewBag.DocenteId"></select>
                 }
-
-                
-
             </div>
-
             <div class="form-group text-center">
                 <input type="submit" value="Actualizar grupo" class="btn btn-success btn-lg me-2" />
                 <a asp-page="Index" class="btn btn-outline-secondary btn-lg">Volver</a>
             </div>
         </form>
     </div>
-    <div class="col-md-6">
+    <div class="form-section flex-grow">
         <form method="post" id="formMaterias" class="p-4 border rounded-3 shadow-sm bg-light">
-            @* <input type="hidden" asp-for="MateriasGrupo.MateriasGrupoId" /> *@
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" id="formulario2" value="0" />
             <div class="row">
-                <div class="form-group col-3">
+                <div class="form-group col-12 col-md-3">
                     <label asp-for="MateriasGrupo.Aula" class="form-label"></label>
                     <input asp-for="MateriasGrupo.Aula" class="form-control" />
                     <span asp-validation-for="MateriasGrupo.Aula" class="text-danger"></span>
                 </div>
-                <div class="form-group col-3">
+                <div class="form-group col-12 col-md-3">
                     <label asp-for="MateriasGrupo.Dia" class="form-label"></label>
                     <select asp-for="MateriasGrupo.Dia" class="form-control" asp-items="Html.GetEnumSelectList<DiaSemana>()">
                         <option value="">-- Selecciona un día --</option>
                     </select>
                     <span asp-validation-for="MateriasGrupo.Dia" class="text-danger"></span>
                 </div>
-                <div class="form-group col-3">
+                <div class="form-group col-12 col-md-3">
                     <label asp-for="MateriasGrupo.HoraInicio" class="form-label"></label>
                     <input asp-for="MateriasGrupo.HoraInicio" class="form-control" />
                     <span asp-validation-for="MateriasGrupo.HoraInicio" class="text-danger"></span>
                 </div>
-                <div class="form-group col-3">
+                <div class="form-group col-12 col-md-3">
                     <label asp-for="MateriasGrupo.HoraFin" class="form-label"></label>
                     <input asp-for="MateriasGrupo.HoraFin" class="form-control" />
                     <span asp-validation-for="MateriasGrupo.HoraFin" class="text-danger"></span>
@@ -105,44 +168,28 @@
             <div class="form-group">
                 <label asp-for="MateriasGrupo.MateriaId" class="control-label"></label>
                 <select asp-for="MateriasGrupo.MateriaId" class="form-control" asp-items="ViewBag.MateriaId"></select>
-                
             </div>
             <div class="form-group">
                 <label asp-for="MateriasGrupo.DocenteId" class="control-label"></label>
                 <select asp-for="MateriasGrupo.DocenteId" class="form-control" asp-items="ViewBag.DocenteId"></select>
-
             </div>
             <input type="hidden" asp-for="MateriasGrupo.GrupoId" value="@Model.GrupoId" />
-            <div class="form-group">
-                <button type="submit" class="btn btn-primary mt-2 shadow-sm">
+            <div class="form-group text-center">
+                <button type="submit" class="btn btn-primary btn-lg mt-2 shadow-sm">
                     <i class="bi bi-book"></i> Asignar Materia
                 </button>
             </div>
-
-
         </form>
         <hr />
-        <h6>Materias del Grupo</h6>
-        <table class="table">
+        <h6 class="fw-bold mb-3">Materias del Grupo</h6>
+        <table class="table table-striped align-middle">
             <thead>
                 <tr>
-                    <th>
-                        @Html.DisplayNameFor(model => model.ListadoMateriasGrupo[0].Materia)
-                    </th>
-                    <th>
-                        @Html.DisplayNameFor(model => model.ListadoMateriasGrupo[0].Aula)
-                    </th>
-                    <th>
-                        @Html.DisplayNameFor(model => model.ListadoMateriasGrupo[0].Docente)
-                    </th>
-                    <th>
-                        Horario
-                    </th>
+                    <th>@Html.DisplayNameFor(model => model.ListadoMateriasGrupo[0].Materia)</th>
+                    <th>@Html.DisplayNameFor(model => model.ListadoMateriasGrupo[0].Aula)</th>
+                    <th>@Html.DisplayNameFor(model => model.ListadoMateriasGrupo[0].Docente)</th>
+                    <th>Horario</th>
                     <th>Inscritos</th>
-                   
-                   @*  <th>
-                        @Html.DisplayNameFor(model => model.ListadoMateriasGrupo[0].Grupo)
-                    </th> *@
                     <th></th>
                     <th></th>
                 </tr>
@@ -151,26 +198,12 @@
                 @foreach (var item in Model.ListadoMateriasGrupo)
                 {
                     <tr>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.Materia.NombreMateria)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.Aula)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.Docente.Nombres) @Html.DisplayFor(modelItem => item.Docente.Apellidos)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(m => item.Dia) @item.FormatearHora12Horas(item.HoraInicio) - @item.FormatearHora12Horas(item.HoraFin)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.TotalInscritos)
-                        </td>
-                        
-                       @*  <td>
-                            @Html.DisplayFor(modelItem => item.Grupo.GrupoId)
-                        </td> *@
-                        <td>
+                        <td>@Html.DisplayFor(modelItem => item.Materia.NombreMateria)</td>
+                        <td>@Html.DisplayFor(modelItem => item.Aula)</td>
+                        <td>@Html.DisplayFor(modelItem => item.Docente.Nombres) @Html.DisplayFor(modelItem => item.Docente.Apellidos)</td>
+                        <td>@Html.DisplayFor(m => item.Dia) @item.FormatearHora12Horas(item.HoraInicio) - @item.FormatearHora12Horas(item.HoraFin)</td>
+                        <td>@Html.DisplayFor(modelItem => item.TotalInscritos)</td>
+                        <td class="text-center">
                             <button type="button" class="btn btn-warning edit-btn"
                                     data-id="@item.MateriasGrupoId"
                                     data-materia="@item.MateriaId"
@@ -181,10 +214,10 @@
                                     data-docente="@item.DocenteId">
                                 <i class="bi bi-pencil"></i>
                             </button>
+                        </td>
+                        <td class="text-center">
                             <a asp-page="./EliminarMateriaDeGrupo" data-inscritos="@item.TotalInscritos" asp-route-id="@item.MateriasGrupoId" class="btn btn-danger delete-btn" data-id="@item.MateriasGrupoId"><i class="bi bi-trash"></i></a>
                         </td>
-
-
                     </tr>
                 }
             </tbody>
