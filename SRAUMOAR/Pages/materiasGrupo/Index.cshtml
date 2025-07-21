@@ -5,17 +5,25 @@
     ViewData["Title"] = "Materias asignadas";
 }
 
-<div class="container-fluid py-4">
+<div class="container py-5">
+    <div class="row justify-content-center mb-4">
+        <div class="col-lg-8">
+            <div class="bg-gradient-materias rounded-4 shadow p-4 text-center position-relative overflow-hidden mb-3">
+                <div class="position-absolute top-0 start-0 w-100 h-100 opacity-10" style="background: url('/wwwroot/assets/img/AdminLTELogo.png') center/contain no-repeat;"></div>
+                <h1 class="fw-bold display-6 mb-2 text-success">
+                    <i class="bi bi-book-half me-2"></i>Mis materias asignadas
+                </h1>
+                <p class="lead text-secondary mb-0">Visualice y gestione las materias que imparte este ciclo</p>
+            </div>
+        </div>
+    </div>
     <div class="row justify-content-center">
         <div class="col-12 col-md-10 col-lg-8">
-            <div class="card shadow-sm">
-                <div class="card-header bg-success text-white">
-                    <h1 class="h3 mb-0">Mis materias asignadas</h1>
-                </div>
+            <div class="card shadow-lg border-0 rounded-4">
                 <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-striped table-hover mb-0">
-                            <thead class="table-dark">
+                        <table class="table table-hover align-middle mb-0 table-modern">
+                            <thead class="table-success">
                                 <tr>
                                     <th>@Html.DisplayNameFor(model => model.MateriasGrupo[0].Materia)</th>
                                     <th>@Html.DisplayNameFor(model => model.MateriasGrupo[0].Aula)</th>
@@ -28,17 +36,14 @@
                                 @foreach (var item in Model.MateriasGrupo)
                                 {
                                     <tr>
-                                        <td>@Html.DisplayFor(modelItem => item.Materia.NombreMateria)</td>
+                                        <td class="fw-semibold">@Html.DisplayFor(modelItem => item.Materia.NombreMateria)</td>
                                         <td>@Html.DisplayFor(modelItem => item.Aula)</td>
-                                        <td>@item.FormatearHora12Horas(item.HoraInicio) - @item.FormatearHora12Horas(item.HoraFin)</td>
-                                   
+                                        <td><span class="badge bg-light text-dark">@item.FormatearHora12Horas(item.HoraInicio) - @item.FormatearHora12Horas(item.HoraFin)</span></td>
                                         <td>@Html.DisplayFor(modelItem => item.Grupo.Nombre)</td>
                                         <td>
-                                            
-                                                <a asp-page="./ListadoEstudiantes" asp-route-id="@item.MateriasGrupoId" class="btn btn-success">Ver grupo</a>
-                                            
-
-                                            
+                                            <a asp-page="./ListadoEstudiantes" asp-route-id="@item.MateriasGrupoId" class="btn btn-outline-success btn-sm px-3 rounded-pill fw-semibold">
+                                                <i class="bi bi-people-fill me-1"></i> Ver grupo
+                                            </a>
                                         </td>
                                     </tr>
                                 }
@@ -50,4 +55,29 @@
         </div>
     </div>
 </div>
+
+<style>
+.bg-gradient-materias {
+    background: linear-gradient(90deg, #e9f7ef 0%, #f8f9fa 100%);
+}
+.table-modern th, .table-modern td {
+    vertical-align: middle;
+    border-top: none;
+}
+.table-modern thead th {
+    border-bottom: 2px solid #198754;
+    font-size: 1rem;
+    letter-spacing: 0.03em;
+}
+.table-modern tbody tr {
+    transition: background 0.15s;
+}
+.table-modern tbody tr:hover {
+    background: #e9f7ef;
+}
+@@media (max-width: 767.98px) {
+    .display-6 { font-size: 1.5rem; }
+    .table-responsive { font-size: 0.95rem; }
+}
+</style>
 

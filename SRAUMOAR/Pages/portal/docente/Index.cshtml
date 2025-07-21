@@ -3,44 +3,52 @@
 @{
 }
 <div class="container py-5">
-    <h2 class="text-center mb-4">Panel del Docente</h2>
-
-    <div class="row g-4 justify-content-center">
+    <div class="row justify-content-center mb-4">
+        <div class="col-lg-8">
+            <div class="bg-gradient-primary-to-secondary rounded-4 shadow p-4 text-center position-relative overflow-hidden">
+                <div class="position-absolute top-0 start-0 w-100 h-100 opacity-10" style="background: url('/wwwroot/assets/img/AdminLTELogo.png') center/contain no-repeat;"></div>
+                <h1 class="fw-bold display-5 mb-2 text-primary">
+                    <i class="bi bi-person-badge-fill me-2"></i>Panel del Docente
+                </h1>
+                <p class="lead text-secondary mb-0">Bienvenido al portal de gestión docente</p>
+            </div>
+        </div>
+    </div>
+    <div class="row g-4 justify-content-center mt-2">
         <!-- Tarjeta de Grupos Asignados -->
         <div class="col-md-6 col-lg-4">
             <a asp-page="/grupos/Index" class="text-decoration-none">
-                <div class="card h-100 shadow-sm hover-card">
+                <div class="card h-100 shadow-lg border-0 hover-card-pro">
                     <div class="card-body text-center p-4">
-                        <div class="display-4 text-primary mb-3">
-                            <i class="bi bi-people-fill"></i>
+                        <div class="icon-circle bg-primary text-white mb-3 mx-auto">
+                            <i class="bi bi-people-fill fs-1"></i>
                         </div>
-                        <h4 class="card-title mb-3">Grupos Asignados</h4>
-                        <p class="card-text text-muted">
+                        <h4 class="card-title mb-2 fw-semibold">Grupos Asignados</h4>
+                        <p class="card-text text-muted small">
                             Gestione y visualice todos sus grupos asignados para el período actual
                         </p>
                     </div>
-                    <div class="card-footer bg-light text-center py-3">
-                        <span class="text-primary">Ver grupos <i class="bi bi-arrow-right"></i></span>
+                    <div class="card-footer bg-light text-center py-3 border-0">
+                        <span class="text-primary fw-semibold">Ver grupos <i class="bi bi-arrow-right"></i></span>
                     </div>
                 </div>
             </a>
         </div>
-
         <!-- Tarjeta de Materias Asignadas -->
         <div class="col-md-6 col-lg-4">
             <a asp-page="/materiasgrupo/Index" class="text-decoration-none">
-                <div class="card h-100 shadow-sm hover-card">
+                <div class="card h-100 shadow-lg border-0 hover-card-pro">
                     <div class="card-body text-center p-4">
-                        <div class="display-4 text-success mb-3">
-                            <i class="bi bi-book"></i>
+                        <div class="icon-circle bg-success text-white mb-3 mx-auto">
+                            <i class="bi bi-book fs-1"></i>
                         </div>
-                        <h4 class="card-title mb-3">Materias Asignadas</h4>
-                        <p class="card-text text-muted">
+                        <h4 class="card-title mb-2 fw-semibold">Materias Asignadas</h4>
+                        <p class="card-text text-muted small">
                             Acceda a todas las materias que imparte en el período actual
                         </p>
                     </div>
-                    <div class="card-footer bg-light text-center py-3">
-                        <span class="text-success">Ver materias <i class="bi bi-arrow-right"></i></span>
+                    <div class="card-footer bg-light text-center py-3 border-0">
+                        <span class="text-success fw-semibold">Ver materias <i class="bi bi-arrow-right"></i></span>
                     </div>
                 </div>
             </a>
@@ -49,11 +57,29 @@
 </div>
 
 <style>
-    .hover-card {
-        transition: transform 0.2s ease-in-out;
-    }
-
-        .hover-card:hover {
-            transform: translateY(-5px);
-        }
+.bg-gradient-primary-to-secondary {
+    background: linear-gradient(90deg, #e3f0ff 0%, #f8f9fa 100%);
+}
+.icon-circle {
+    width: 70px;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 2rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+.hover-card-pro {
+    transition: transform 0.2s cubic-bezier(.4,2,.6,1), box-shadow 0.2s;
+}
+.hover-card-pro:hover {
+    transform: translateY(-8px) scale(1.03);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    z-index: 2;
+}
+@@media (max-width: 767.98px) {
+    .display-5 { font-size: 2rem; }
+    .icon-circle { width: 56px; height: 56px; font-size: 1.5rem; }
+}
 </style>

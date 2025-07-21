@@ -134,7 +134,8 @@ namespace SRAUMOAR.Pages.generales.listas
                 columnaDer.Add(new Paragraph("Docente: " + docenteTexto).SetFontSize(11));
                 columnaDer.Add(new Paragraph("Aula: " + (materiaGrupo?.Aula ?? "No asignada"))
                     .SetFontSize(11));
-
+                columnaDer.Add(new Paragraph("Firma: " + ("__________________"))
+                    .SetFontSize(11));
                 infoTable.AddCell(columnaIzq);
                 infoTable.AddCell(columnaDer);
                 document.Add(infoTable);
@@ -224,60 +225,60 @@ namespace SRAUMOAR.Pages.generales.listas
                 document.Add(new Paragraph(" "));
                 document.Add(new Paragraph(" "));
 
-                // SECCIÓN DE FIRMAS
-                var firmasTable = new Table(2);
-                firmasTable.SetWidth(UnitValue.CreatePercentValue(100));
+                //// SECCIÓN DE FIRMAS
+                //var firmasTable = new Table(2);
+                //firmasTable.SetWidth(UnitValue.CreatePercentValue(100));
 
-                // Espacios para las firmas
-                firmasTable.AddCell(new Cell().Add(new Paragraph("\n\n\n"))
-                    .SetBorder(Border.NO_BORDER));
-                firmasTable.AddCell(new Cell().Add(new Paragraph("\n\n\n"))
-                    .SetBorder(Border.NO_BORDER));
+                //// Espacios para las firmas
+                //firmasTable.AddCell(new Cell().Add(new Paragraph("\n\n\n"))
+                //    .SetBorder(Border.NO_BORDER));
+                //firmasTable.AddCell(new Cell().Add(new Paragraph("\n\n\n"))
+                //    .SetBorder(Border.NO_BORDER));
 
-                // Líneas para firmar
-                firmasTable.AddCell(new Cell()
-                    .Add(new Paragraph("_".PadRight(40, '_')).SetFontSize(10))
-                    .SetTextAlignment(TextAlignment.CENTER)
-                    .SetBorder(Border.NO_BORDER));
-                firmasTable.AddCell(new Cell()
-                    .Add(new Paragraph("_".PadRight(40, '_')).SetFontSize(10))
-                    .SetTextAlignment(TextAlignment.CENTER)
-                    .SetBorder(Border.NO_BORDER));
+                //// Líneas para firmar
+                //firmasTable.AddCell(new Cell()
+                //    .Add(new Paragraph("_".PadRight(40, '_')).SetFontSize(10))
+                //    .SetTextAlignment(TextAlignment.CENTER)
+                //    .SetBorder(Border.NO_BORDER));
+                //firmasTable.AddCell(new Cell()
+                //    .Add(new Paragraph("_".PadRight(40, '_')).SetFontSize(10))
+                //    .SetTextAlignment(TextAlignment.CENTER)
+                //    .SetBorder(Border.NO_BORDER));
 
-                // Textos de las firmas
-                firmasTable.AddCell(new Cell()
-                    .Add(new Paragraph("FIRMA DEL DOCENTE").SetFontSize(10))
-                    .SetTextAlignment(TextAlignment.CENTER)
-                    .SetBorder(Border.NO_BORDER));
-                firmasTable.AddCell(new Cell()
-                    .Add(new Paragraph("SELLO DE LA INSTITUCIÓN").SetFontSize(10))
-                    .SetTextAlignment(TextAlignment.CENTER)
-                    .SetBorder(Border.NO_BORDER));
+                //// Textos de las firmas
+                //firmasTable.AddCell(new Cell()
+                //    .Add(new Paragraph("FIRMA DEL DOCENTE").SetFontSize(10))
+                //    .SetTextAlignment(TextAlignment.CENTER)
+                //    .SetBorder(Border.NO_BORDER));
+                //firmasTable.AddCell(new Cell()
+                //    .Add(new Paragraph("SELLO DE LA INSTITUCIÓN").SetFontSize(10))
+                //    .SetTextAlignment(TextAlignment.CENTER)
+                //    .SetBorder(Border.NO_BORDER));
 
-                // Agregar nombre del docente debajo de su firma
-                if (materiaGrupo?.Docente != null)
-                {
-                    firmasTable.AddCell(new Cell()
-                        .Add(new Paragraph($"{materiaGrupo.Docente.Nombres} {materiaGrupo.Docente.Apellidos}")
-                            .SetFontSize(9))
-                        .SetTextAlignment(TextAlignment.CENTER)
-                        .SetBorder(Border.NO_BORDER));
-                }
-                else
-                {
-                    firmasTable.AddCell(new Cell().Add(new Paragraph("")).SetBorder(Border.NO_BORDER));
-                }
+                //// Agregar nombre del docente debajo de su firma
+                //if (materiaGrupo?.Docente != null)
+                //{
+                //    firmasTable.AddCell(new Cell()
+                //        .Add(new Paragraph($"{materiaGrupo.Docente.Nombres} {materiaGrupo.Docente.Apellidos}")
+                //            .SetFontSize(9))
+                //        .SetTextAlignment(TextAlignment.CENTER)
+                //        .SetBorder(Border.NO_BORDER));
+                //}
+                //else
+                //{
+                //    firmasTable.AddCell(new Cell().Add(new Paragraph("")).SetBorder(Border.NO_BORDER));
+                //}
 
-                firmasTable.AddCell(new Cell().Add(new Paragraph("")).SetBorder(Border.NO_BORDER));
+                //firmasTable.AddCell(new Cell().Add(new Paragraph("")).SetBorder(Border.NO_BORDER));
 
-                document.Add(firmasTable);
+                //document.Add(firmasTable);
 
-                // Fecha y ubicación
-                document.Add(new Paragraph(" "));
-                string fechaTexto = DateTime.Now.ToString("dd 'de' MMMM 'de' yyyy", new CultureInfo("es-ES"));
-                document.Add(new Paragraph($"Distrito de Tejutla, municipio de Chalatenango Centro, departamento de Chalatenango, {fechaTexto}")
-                    .SetFontSize(10)
-                    .SetTextAlignment(TextAlignment.CENTER));
+                //// Fecha y ubicación
+                //document.Add(new Paragraph(" "));
+                //string fechaTexto = DateTime.Now.ToString("dd 'de' MMMM 'de' yyyy", new CultureInfo("es-ES"));
+                //document.Add(new Paragraph($"Distrito de Tejutla, municipio de Chalatenango Centro, departamento de Chalatenango, {fechaTexto}")
+                //    .SetFontSize(10)
+                //    .SetTextAlignment(TextAlignment.CENTER));
 
                 document.Close();
                 var pdfBytes = memoryStream.ToArray();

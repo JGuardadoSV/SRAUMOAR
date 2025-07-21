@@ -102,7 +102,7 @@
                                 <option value="">Todas las carreras</option>
                                 @foreach (var carrera in Model.Grupo.Select(g => g.Carrera).Distinct())
                                 {
-                                    <option value="@carrera.CodigoCarrera">@carrera.CodigoCarrera</option>
+                                    <option value="@carrera.CodigoCarrera">@carrera.NombreCarrera</option>
                                 }
                             </select>
                         </div>

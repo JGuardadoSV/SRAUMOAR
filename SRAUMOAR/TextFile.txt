@@ -9,6 +9,7 @@ Construir la imagen:
 Apply to Create.cshtm...
 Run
 docker build -t prehack77/sraumoar:latest .
+docker push prehack77/sraumoar:latest
 Iniciar sesión en DockerHub:
 Apply to Create.cshtm...
 docker login
