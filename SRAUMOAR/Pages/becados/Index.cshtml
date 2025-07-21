@@ -700,9 +700,19 @@
     <div class="table-container">
         <div class="table-header">
             <h2 class="table-title">Listado de Becados</h2>
-            <a asp-page="Create" class="btn-create">
-                Asignar Nueva Beca
-            </a>
+            <div class="d-flex gap-2">
+                <a asp-page="Create" class="btn-create">
+                    Asignar Nueva Beca
+                </a>
+                <a asp-page="./Index" asp-page-handler="GenerarReporteExcel"
+                   asp-route-CarreraId="@Model.CarreraId"
+                   asp-route-EntidadBecaId="@Model.EntidadBecaId"
+                   asp-route-TipoBeca="@Model.TipoBeca"
+                   asp-route-Estado="@Model.Estado"
+                   class="btn btn-success" title="Exportar a Excel">
+                    <i class="bi bi-file-earmark-excel me-2"></i>Excel
+                </a>
+            </div>
         </div>
 
         <div class="table-responsive">
@@ -711,6 +721,7 @@
                 <table class="table">
                     <thead>
                         <tr>
+                            <th>#</th>
                             <th>👨‍🎓 Estudiante</th>
                             <th>🎓 Tipo de Beca</th>
                             <th>🏢 Entidad Otorgante</th>
@@ -721,9 +732,13 @@
                         </tr>
                     </thead>
                     <tbody>
+                        @{
+                            int correlativo = (Model.PageNumber - 1) * Model.PageSize + 1;
+                        }
                         @foreach (var item in Model.Becados)
                         {
                             <tr>
+                                <td>@correlativo</td>
                                 <td>
                                     <div class="student-name">
                                         @Html.DisplayFor(modelItem => item.Alumno.Nombres) @Html.DisplayFor(modelItem => item.Alumno.Apellidos)
@@ -769,6 +784,7 @@
                                     </div>
                                 </td>
                             </tr>
+                            correlativo++;
                         }
                     </tbody>
                 </table>
@@ -785,4 +801,25 @@
             }
         </div>
     </div>
+
+    <!-- Controles de paginación -->
+    @if (Model.TotalPages > 1)
+    {
+        <nav aria-label="Paginación de becados" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(Model.PageNumber == 1 ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Page(null, null, new { CarreraId = Model.CarreraId, EntidadBecaId = Model.EntidadBecaId, TipoBeca = Model.TipoBeca, Estado = Model.Estado, PageNumber = Model.PageNumber - 1 }, null)">Anterior</a>
+                </li>
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                        <a class="page-link" href="@Url.Page(null, null, new { CarreraId = Model.CarreraId, EntidadBecaId = Model.EntidadBecaId, TipoBeca = Model.TipoBeca, Estado = Model.Estado, PageNumber = i }, null)">@i</a>
+                    </li>
+                }
+                <li class="page-item @(Model.PageNumber == Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Page(null, null, new { CarreraId = Model.CarreraId, EntidadBecaId = Model.EntidadBecaId, TipoBeca = Model.TipoBeca, Estado = Model.Estado, PageNumber = Model.PageNumber + 1 }, null)">Siguiente</a>
+                </li>
+            </ul>
+        </nav>
+    }
 </div>

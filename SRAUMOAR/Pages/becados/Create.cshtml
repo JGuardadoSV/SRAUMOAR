@@ -47,7 +47,7 @@
                             <i class="bi bi-person me-1"></i>
                             Alumno
                         </label>
-                        <select asp-for="Becados.AlumnoId" class="form-select form-select-sm" asp-items="ViewBag.AlumnoId">
+                        <select asp-for="Becados.AlumnoId" class="form-select form-select-sm select-buscable" asp-items="ViewBag.AlumnoId">
                             <option value="">-- Seleccionar Alumno --</option>
                         </select>
                     </div>
@@ -93,6 +93,20 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-
-   
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('.select-buscable').select2({
+                width: '100%',
+                placeholder: 'Buscar alumno...',
+                allowClear: true,
+                language: {
+                    noResults: function() {
+                        return "No hay resultados";
+                    }
+                }
+            });
+        });
+    </script>
 }

@@ -508,7 +508,10 @@ namespace SRAUMOAR.Pages.puntoventa
                         {
                             using (HttpClient client = new HttpClient())
                             {
-                                var response = client.PostAsJsonAsync("http://207.58.153.147:7122/api/procesar-dte", requestUnificado).Result;
+                                var response = client.PostAsJsonAsync(
+                                ambiente == 1 ? "http://207.58.153.147:7122/api/procesar-dte" : "https://localhost:7122/api/procesar-dte",
+                                 requestUnificado).Result;
+
                                 var responseData = response.Content.ReadAsStringAsync().Result;
                                 if (!response.IsSuccessStatusCode)
                                     throw new Exception($"Error al procesar DTE: {responseData}");

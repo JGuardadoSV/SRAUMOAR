@@ -254,7 +254,8 @@
 <div class="modal fade" id="editMateriaModal" tabindex="-1" aria-labelledby="editMateriaModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
-      <form id="editMateriaForm">
+      <form id="editMateriaForm" method="post" action="?handler=EditarMateriaGrupo">
+        @Html.AntiForgeryToken()
         <div class="modal-header">
           <h5 class="modal-title" id="editMateriaModalLabel">Editar Materia del Grupo</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
@@ -316,38 +317,10 @@
     <!-- Select2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-  @*   <script>
-
-        $(document).ready(function(){
-            $('.delete-link').click(function(){
-                var id = $(this).data('id');
-                var url = '@Url.Page("./EliminarMateriaDeGrupo")' + "?id=" + id;
-
-                if(confirm("¿Deseas eliminar este registro?")) {
-                    $.ajax({
-                        url: url,
-                        type: 'POST',
-                        success: function(result){
-                            if(result.success) {
-                                alert("Registro eliminado exitosamente.");
-                                location.reload(); // Recarga la página para reflejar los cambios
-                            } else {
-                                alert("Hubo un error al eliminar el registro.");
-                            }
-                        },
-                        error: function(err){
-                            alert("Hubo un error en la solicitud.");
-                        }
-                    });
-                }
-            });
-        });
-   </script> *@
-
     <script>
         $(document).ready(function() {
-            // Inicializar Select2 en los selects con buscador
-            $('.select-buscable').select2({
+            // Inicializar Select2 en los selects con buscador fuera del modal
+            $('.select-buscable').not('#editMateriaId, #editDocenteId').select2({
                 width: '100%',
                 placeholder: 'Seleccione una opción',
                 allowClear: true,
@@ -357,20 +330,31 @@
                     }
                 }
             });
+            // Inicializar Select2 en los selects dentro del modal con dropdownParent
+            $('#editMateriaId, #editDocenteId').select2({
+                width: '100%',
+                placeholder: 'Seleccione una opción',
+                allowClear: true,
+                dropdownParent: $('#editMateriaModal'),
+                language: {
+                    noResults: function() {
+                        return "No hay resultados";
+                    }
+                }
+            });
             // Botón editar
             $('.edit-btn').on('click', function() {
                 $('#editMateriasGrupoId').val($(this).data('id'));
-                $('#editMateriaId').val($(this).data('materia'));
+                $('#editMateriaId').val($(this).data('materia')).trigger('change');
                 $('#editAula').val($(this).data('aula'));
                 $('#editDia').val($(this).data('dia'));
-                // Convertir hora a formato HH:mm si es necesario
                 let horaInicio = $(this).data('horainicio');
                 let horaFin = $(this).data('horafin');
                 if(horaInicio && horaInicio.length > 5) horaInicio = horaInicio.substring(0,5);
                 if(horaFin && horaFin.length > 5) horaFin = horaFin.substring(0,5);
                 $('#editHoraInicio').val(horaInicio);
                 $('#editHoraFin').val(horaFin);
-                $('#editDocenteId').val($(this).data('docente'));
+                $('#editDocenteId').val($(this).data('docente')).trigger('change');
                 var modal = new bootstrap.Modal(document.getElementById('editMateriaModal'));
                 modal.show();
             });
@@ -383,6 +367,10 @@
                     url: '?handler=EditarMateriaGrupo',
                     type: 'POST',
                     data: formData,
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
                     success: function(result) {
                         if (result.success) {
                             alert('Materia actualizada correctamente');
@@ -391,12 +379,11 @@
                             alert(result.message || 'Error al actualizar la materia');
                         }
                     },
-                    error: function() {
-                        alert('Ocurrió un error al intentar actualizar la materia');
+                    error: function(xhr) {
+                        alert('Error técnico: ' + xhr.responseText);
                     }
                 });
             });
         });
     </script>
-
 }
