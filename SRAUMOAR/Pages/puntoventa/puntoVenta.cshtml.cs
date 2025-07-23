@@ -382,7 +382,7 @@ namespace SRAUMOAR.Pages.puntoventa
                             numItem = index + 1,
                             tipoItem = 1,
                             numeroDocumento = (string)null,
-                            cantidad = 1,
+                            cantidad = arancel.Cantidad,
                             codigo = arancel.Codigo,
                             codTributo = (string)null,
                             uniMedida = 59,

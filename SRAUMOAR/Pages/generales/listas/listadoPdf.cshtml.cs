@@ -1,3 +1,4 @@
+using iText.IO.Font;
 using iText.IO.Font.Constants;
 using iText.IO.Image;
 using iText.Kernel.Font;
@@ -8,13 +9,9 @@ using iText.Layout.Properties;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using SRAUMOAR.Entidades.Procesos;
-using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
-using System.Globalization;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using SRAUMOAR.Entidades.Procesos;
 using iText.Layout;
+
 namespace SRAUMOAR.Pages.generales.listas
 {
     public class listadoPdfModel : PageModel
@@ -41,38 +38,57 @@ namespace SRAUMOAR.Pages.generales.listas
                 .Select(im => im.Materia.NombreMateria)
                 .FirstOrDefaultAsync();
         }
+
         public IActionResult OnGet(int id)
         {
             try
             {
-                // Obtener datos (usando la misma lógica que ya tienes)
+                // Obtener datos
                 var cicloactual = _context.Ciclos.Where(x => x.Activo == true).First();
-
                 var nombreMateria = ObtenerNombreMateriaAsync(id).Result;
-
                 var grupo = _context.MateriasGrupo
                     .Include(g => g.Grupo)
                         .ThenInclude(g => g.Carrera)
                     .Include(g => g.Docente)
-                .Where(mg => mg.MateriasGrupoId == id)
+                    .Where(mg => mg.MateriasGrupoId == id)
                     .Select(mg => mg.Grupo)
                     .FirstOrDefault() ?? new Grupo();
 
                 var materiasInscritas = _context.MateriasInscritas
                     .Include(m => m.Alumno)
-                .Include(m => m.MateriasGrupo)
+                    .Include(m => m.MateriasGrupo)
                     .Where(m => m.MateriasGrupoId == id)
                     .ToList();
 
-                // Obtener información del docente
                 var materiaGrupo = _context.MateriasGrupo
                     .Include(mg => mg.Docente)
                     .FirstOrDefault(mg => mg.MateriasGrupoId == id);
 
                 using var memoryStream = new MemoryStream();
-                using var writer = new PdfWriter(memoryStream);
+
+                // Configurar el PdfWriter con opciones especï¿½ficas
+                var writerProperties = new WriterProperties();
+                writerProperties.SetCompressionLevel(9);
+
+                using var writer = new PdfWriter(memoryStream, writerProperties);
                 using var pdf = new PdfDocument(writer);
+
+                // Configurar metadatos del PDF
+                var info = pdf.GetDocumentInfo();
+                info.SetTitle("Lista de Asistencia");
+                info.SetAuthor("SRAUMOAR");
+
                 using var document = new Document(pdf);
+
+                // IMPORTANTE: Crear las fuentes con el encoding correcto
+                PdfFont normalFont;
+                PdfFont boldFont;
+                normalFont = PdfFontFactory.CreateFont(StandardFonts.TIMES_ROMAN);
+                boldFont = PdfFontFactory.CreateFont(StandardFonts.TIMES_BOLD);
+                
+
+                // Establecer la fuente por defecto para todo el documento
+                document.SetFont(normalFont);
 
                 // ENCABEZADO
                 var headerTable = new Table(2);
@@ -80,89 +96,101 @@ namespace SRAUMOAR.Pages.generales.listas
 
                 // Logo
                 var logoPath = Path.Combine("wwwroot", "images", "logoUmoar.jpg");
-                var logo = new Image(ImageDataFactory.Create(logoPath));
-                logo.SetWidth(60);
-                headerTable.AddCell(new Cell().Add(logo).SetBorder(Border.NO_BORDER));
+                if (System.IO.File.Exists(logoPath))
+                {
+                    var logo = new Image(ImageDataFactory.Create(logoPath));
+                    logo.SetWidth(60);
+                    headerTable.AddCell(new Cell().Add(logo).SetBorder(Border.NO_BORDER));
+                }
+                else
+                {
+                    headerTable.AddCell(new Cell().SetBorder(Border.NO_BORDER));
+                }
 
-                // Texto del encabezado
+                // Texto del encabezado - Asegurarse de establecer la fuente
                 var textCell = new Cell().SetBorder(Border.NO_BORDER);
-                textCell.Add(new Paragraph("UNIVERSIDAD MONSEÑOR OSCAR ARNULFO ROMERO")
+                var titleParagraph = new Paragraph("UNIVERSIDAD MONSEÃ‘OR OSCAR ARNULFO ROMERO")
                     .SetFontSize(14)
                     .SetTextAlignment(TextAlignment.CENTER)
-                    .SetFont(PdfFontFactory.CreateFont(StandardFonts.HELVETICA_BOLD)));
-                textCell.Add(new Paragraph("LISTA DE ASISTENCIA")
+                    .SetFont(boldFont);
+                textCell.Add(titleParagraph);
+
+                var subtitleParagraph = new Paragraph("LISTA DE ASISTENCIA")
                     .SetFontSize(12)
                     .SetTextAlignment(TextAlignment.CENTER)
-                    .SetFont(PdfFontFactory.CreateFont(StandardFonts.HELVETICA_BOLD)));
+                    .SetFont(boldFont);
+                textCell.Add(subtitleParagraph);
                 headerTable.AddCell(textCell);
 
                 document.Add(headerTable);
-                document.Add(new Paragraph(" "));
-                float[] columnWidths = { 400f, 400f }; // Ambas columnas de 300 puntos
-                // INFORMACIÓN DE LA MATERIA EN DOS COLUMNAS
+                document.Add(new Paragraph(" ").SetFont(normalFont));
+
+                // INFORMACIÃ“N DE LA MATERIA
+                float[] columnWidths = { 400f, 400f };
                 var infoTable = new Table(columnWidths);
                 infoTable.SetWidth(UnitValue.CreatePercentValue(100));
 
                 // Columna izquierda
                 var columnaIzq = new Cell().SetBorder(Border.NO_BORDER);
-                columnaIzq.Add(new Paragraph("Materia: " + (nombreMateria ?? "No especificada"))
-                    .SetFontSize(11));
-                columnaIzq.Add(new Paragraph("Grupo: " + (grupo?.Nombre ?? "No especificado"))
-                    .SetFontSize(11));
-                columnaIzq.Add(new Paragraph("Fecha: " + DateTime.Now.ToShortDateString())
-                    .SetFontSize(11));
+                columnaIzq.Add(new Paragraph($"Materia: {nombreMateria ?? "No especificada"}")
+                    .SetFontSize(11).SetFont(normalFont));
+                columnaIzq.Add(new Paragraph($"Grupo: {grupo?.Nombre ?? "No especificado"}")
+                    .SetFontSize(11).SetFont(normalFont));
+                columnaIzq.Add(new Paragraph($"Fecha:    /     / 2025")
+                    .SetFontSize(11).SetFont(normalFont));
 
-                // Formatear hora si existe
                 string horaTexto = "No especificada";
                 if (materiaGrupo != null)
                 {
-                    horaTexto = materiaGrupo.FormatearHora12Horas(materiaGrupo.HoraInicio) + " - " +
-                               materiaGrupo.FormatearHora12Horas(materiaGrupo.HoraFin);
+                    horaTexto = $"{materiaGrupo.FormatearHora12Horas(materiaGrupo.HoraInicio)} - {materiaGrupo.FormatearHora12Horas(materiaGrupo.HoraFin)}";
                 }
-                columnaIzq.Add(new Paragraph("Hora: " + horaTexto).SetFontSize(11));
+                columnaIzq.Add(new Paragraph($"Hora: {horaTexto}")
+                    .SetFontSize(11).SetFont(normalFont));
 
                 // Columna derecha
                 var columnaDer = new Cell().SetBorder(Border.NO_BORDER);
-                columnaDer.Add(new Paragraph("Carrera: " + (grupo?.Carrera?.NombreCarrera ?? "No especificada"))
-                    .SetFontSize(11));
+                columnaDer.Add(new Paragraph($"Carrera: {grupo?.Carrera?.NombreCarrera ?? "No especificada"}")
+                    .SetFontSize(11).SetFont(normalFont));
 
                 string docenteTexto = "No asignado";
                 if (materiaGrupo?.Docente != null)
                 {
                     docenteTexto = $"{materiaGrupo.Docente.Nombres} {materiaGrupo.Docente.Apellidos}";
                 }
-                columnaDer.Add(new Paragraph("Docente: " + docenteTexto).SetFontSize(11));
-                columnaDer.Add(new Paragraph("Aula: " + (materiaGrupo?.Aula ?? "No asignada"))
-                    .SetFontSize(11));
-                columnaDer.Add(new Paragraph("Firma: " + ("__________________"))
-                    .SetFontSize(11));
+                columnaDer.Add(new Paragraph($"Docente: {docenteTexto}")
+                    .SetFontSize(11).SetFont(normalFont));
+                columnaDer.Add(new Paragraph($"Aula: {materiaGrupo?.Aula ?? "No asignada"}")
+                    .SetFontSize(11).SetFont(normalFont));
+                columnaDer.Add(new Paragraph("Firma: __________________")
+                    .SetFontSize(11).SetFont(normalFont));
+
                 infoTable.AddCell(columnaIzq);
                 infoTable.AddCell(columnaDer);
                 document.Add(infoTable);
-                document.Add(new Paragraph(" "));
+                document.Add(new Paragraph(" ").SetFont(normalFont));
 
                 // TABLA DE ESTUDIANTES
                 var tablaEstudiantes = new Table(new float[] { 0.5f, 3f, 2f });
                 tablaEstudiantes.SetWidth(UnitValue.CreatePercentValue(100));
 
-                // Headers
-                tablaEstudiantes.AddHeaderCell(new Cell()
-                    .Add(new Paragraph("N°").SetFontSize(12))
+                // Headers con fuente bold
+                var headerNo = new Cell()
+                    .Add(new Paragraph("NÂº").SetFontSize(12).SetFont(boldFont))
                     .SetTextAlignment(TextAlignment.CENTER)
-                    .SetFont(PdfFontFactory.CreateFont(StandardFonts.HELVETICA_BOLD))
-                    .SetBorder(new SolidBorder(1)));
+                    .SetBorder(new SolidBorder(1));
+                tablaEstudiantes.AddHeaderCell(headerNo);
 
-                tablaEstudiantes.AddHeaderCell(new Cell()
-                    .Add(new Paragraph("NOMBRE DEL ESTUDIANTE").SetFontSize(12))
+                var headerNombre = new Cell()
+                    .Add(new Paragraph("NOMBRE DEL ESTUDIANTE").SetFontSize(12).SetFont(boldFont))
                     .SetTextAlignment(TextAlignment.CENTER)
-                    .SetFont(PdfFontFactory.CreateFont(StandardFonts.HELVETICA_BOLD))
-                    .SetBorder(new SolidBorder(1)));
+                    .SetBorder(new SolidBorder(1));
+                tablaEstudiantes.AddHeaderCell(headerNombre);
 
-                tablaEstudiantes.AddHeaderCell(new Cell()
-                    .Add(new Paragraph("FIRMA").SetFontSize(12))
+                var headerFirma = new Cell()
+                    .Add(new Paragraph("FIRMA").SetFontSize(12).SetFont(boldFont))
                     .SetTextAlignment(TextAlignment.CENTER)
-                    .SetFont(PdfFontFactory.CreateFont(StandardFonts.HELVETICA_BOLD))
-                    .SetBorder(new SolidBorder(1)));
+                    .SetBorder(new SolidBorder(1));
+                tablaEstudiantes.AddHeaderCell(headerFirma);
 
                 // Filas de estudiantes
                 int correlativo = 1;
@@ -171,122 +199,71 @@ namespace SRAUMOAR.Pages.generales.listas
 
                 foreach (var item in materiasInscritas)
                 {
-                    // Número correlativo
                     tablaEstudiantes.AddCell(new Cell()
-                        .Add(new Paragraph(correlativo.ToString()).SetFontSize(10))
+                        .Add(new Paragraph(correlativo.ToString()).SetFontSize(10).SetFont(normalFont))
                         .SetTextAlignment(TextAlignment.CENTER)
                         .SetBorder(new SolidBorder(1)));
 
-                    // Nombre del estudiante
                     string nombreCompleto = $"{item?.Alumno?.Nombres ?? ""} {item?.Alumno?.Apellidos ?? ""}";
                     tablaEstudiantes.AddCell(new Cell()
-                        .Add(new Paragraph(nombreCompleto).SetFontSize(10))
+                        .Add(new Paragraph(nombreCompleto).SetFontSize(10).SetFont(normalFont))
                         .SetBorder(new SolidBorder(1)));
 
-                    // Celda para firma (vacía)
                     tablaEstudiantes.AddCell(new Cell()
-                        .Add(new Paragraph(" ").SetFontSize(10))
+                        .Add(new Paragraph(" ").SetFontSize(10).SetFont(normalFont))
                         .SetHeight(25)
                         .SetBorder(new SolidBorder(1)));
 
-                    // Contar por género (asumiendo que tienes un campo Genero en Alumno)
-                    if (item?.Alumno?.Genero == 0) // suponiendo que 1 es el código para masculino
+                    if (item?.Alumno?.Genero == 0)
                         totalHombres++;
-                    else if (item?.Alumno?.Genero == 1) // suponiendo que 2 es el código para femenino
+                    else if (item?.Alumno?.Genero == 1)
                         totalMujeres++;
 
                     correlativo++;
                 }
 
                 document.Add(tablaEstudiantes);
-                document.Add(new Paragraph(" "));
+                document.Add(new Paragraph(" ").SetFont(normalFont));
 
                 // RESUMEN Y TOTALES
                 var resumenTable = new Table(4);
                 resumenTable.SetWidth(UnitValue.CreatePercentValue(100));
 
                 resumenTable.AddCell(new Cell()
-                    .Add(new Paragraph("Total de estudiantes: " + materiasInscritas.Count).SetFontSize(11))
+                    .Add(new Paragraph($"Total de estudiantes: {materiasInscritas.Count}")
+                        .SetFontSize(11).SetFont(normalFont))
                     .SetBorder(Border.NO_BORDER));
 
                 resumenTable.AddCell(new Cell()
-                    .Add(new Paragraph("Hombres: " + totalHombres).SetFontSize(11))
+                    .Add(new Paragraph($"Hombres: {totalHombres}")
+                        .SetFontSize(11).SetFont(normalFont))
                     .SetBorder(Border.NO_BORDER));
 
                 resumenTable.AddCell(new Cell()
-                    .Add(new Paragraph("Mujeres: " + totalMujeres).SetFontSize(11))
+                    .Add(new Paragraph($"Mujeres: {totalMujeres}")
+                        .SetFontSize(11).SetFont(normalFont))
                     .SetBorder(Border.NO_BORDER));
 
                 resumenTable.AddCell(new Cell()
-                    .Add(new Paragraph("Faltantes: ____").SetFontSize(11))
+                    .Add(new Paragraph("Faltantes: ____")
+                        .SetFontSize(11).SetFont(normalFont))
                     .SetBorder(Border.NO_BORDER));
 
                 document.Add(resumenTable);
-                document.Add(new Paragraph(" "));
-                document.Add(new Paragraph(" "));
-
-                //// SECCIÓN DE FIRMAS
-                //var firmasTable = new Table(2);
-                //firmasTable.SetWidth(UnitValue.CreatePercentValue(100));
-
-                //// Espacios para las firmas
-                //firmasTable.AddCell(new Cell().Add(new Paragraph("\n\n\n"))
-                //    .SetBorder(Border.NO_BORDER));
-                //firmasTable.AddCell(new Cell().Add(new Paragraph("\n\n\n"))
-                //    .SetBorder(Border.NO_BORDER));
-
-                //// Líneas para firmar
-                //firmasTable.AddCell(new Cell()
-                //    .Add(new Paragraph("_".PadRight(40, '_')).SetFontSize(10))
-                //    .SetTextAlignment(TextAlignment.CENTER)
-                //    .SetBorder(Border.NO_BORDER));
-                //firmasTable.AddCell(new Cell()
-                //    .Add(new Paragraph("_".PadRight(40, '_')).SetFontSize(10))
-                //    .SetTextAlignment(TextAlignment.CENTER)
-                //    .SetBorder(Border.NO_BORDER));
-
-                //// Textos de las firmas
-                //firmasTable.AddCell(new Cell()
-                //    .Add(new Paragraph("FIRMA DEL DOCENTE").SetFontSize(10))
-                //    .SetTextAlignment(TextAlignment.CENTER)
-                //    .SetBorder(Border.NO_BORDER));
-                //firmasTable.AddCell(new Cell()
-                //    .Add(new Paragraph("SELLO DE LA INSTITUCIÓN").SetFontSize(10))
-                //    .SetTextAlignment(TextAlignment.CENTER)
-                //    .SetBorder(Border.NO_BORDER));
-
-                //// Agregar nombre del docente debajo de su firma
-                //if (materiaGrupo?.Docente != null)
-                //{
-                //    firmasTable.AddCell(new Cell()
-                //        .Add(new Paragraph($"{materiaGrupo.Docente.Nombres} {materiaGrupo.Docente.Apellidos}")
-                //            .SetFontSize(9))
-                //        .SetTextAlignment(TextAlignment.CENTER)
-                //        .SetBorder(Border.NO_BORDER));
-                //}
-                //else
-                //{
-                //    firmasTable.AddCell(new Cell().Add(new Paragraph("")).SetBorder(Border.NO_BORDER));
-                //}
-
-                //firmasTable.AddCell(new Cell().Add(new Paragraph("")).SetBorder(Border.NO_BORDER));
-
-                //document.Add(firmasTable);
-
-                //// Fecha y ubicación
-                //document.Add(new Paragraph(" "));
-                //string fechaTexto = DateTime.Now.ToString("dd 'de' MMMM 'de' yyyy", new CultureInfo("es-ES"));
-                //document.Add(new Paragraph($"Distrito de Tejutla, municipio de Chalatenango Centro, departamento de Chalatenango, {fechaTexto}")
-                //    .SetFontSize(10)
-                //    .SetTextAlignment(TextAlignment.CENTER));
 
                 document.Close();
                 var pdfBytes = memoryStream.ToArray();
+
+                // Establecer el nombre del archivo con encoding correcto
+                var fileName = "Lista_Asistencia.pdf";
+                Response.Headers.Add("Content-Disposition", $"inline; filename=\"{fileName}\"");
+
                 return File(pdfBytes, "application/pdf");
             }
             catch (Exception ex)
             {
-                return BadRequest($"Error al generar PDF: {ex.Message}");
+                // Para debugging
+                return BadRequest($"Error al generar PDF: {ex.Message}\nStack: {ex.StackTrace}");
             }
         }
     }

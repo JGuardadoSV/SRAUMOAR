@@ -10,6 +10,7 @@
     <Folder Include="Entidades\Colecturia\NewFolder\" />
     <Folder Include="Migrations\" />
     <Folder Include="NewFolder\" />
+    <Folder Include="wwwroot\fonts\" />
   </ItemGroup>
 
   <ItemGroup>
