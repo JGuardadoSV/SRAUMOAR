@@ -102,6 +102,16 @@
                                             <strong>Total mora:</strong> $@Model.TotalMora.ToString("F2")<br>
                                             <strong>Total general:</strong> $@Model.TotalGeneral.ToString("F2")
                                         </p>
+                                        @if (Model.AlumnosInsolventes.Any(a => a.EsRepeticion))
+                                        {
+                                            <hr />
+                                            <p class="mb-0">
+                                                <i class="fas fa-exclamation-triangle text-warning"></i>
+                                                <strong>Nota:</strong> Algunos alumnos aparecen en múltiples grupos. 
+                                                Las filas con fondo amarillo indican repeticiones y muestran en qué otros grupos está inscrito el alumno. 
+                                                Los totales se calculan correctamente sin duplicar las deudas.
+                                            </p>
+                                        }
                                     </div>
                                 </div>
                             </div>
@@ -220,9 +230,18 @@
                                                     }
                                                     @foreach (var alumno in Model.AlumnosInsolventes.OrderBy(a => a.Apellidos).ThenBy(a => a.Nombres))
                                                     {
-                                                        <tr>
+                                                        <tr class="@(alumno.EsRepeticion ? "table-warning" : "")">
                                                             <td>@contador</td>
-                                                            <td>@alumno.Apellidos, @alumno.Nombres</td>
+                                                            <td>
+                                                                @alumno.Apellidos, @alumno.Nombres
+                                                                @if (alumno.EsRepeticion && !string.IsNullOrEmpty(alumno.GruposAdicionales))
+                                                                {
+                                                                    <br /><small class="text-muted">
+                                                                        <i class="fas fa-exclamation-triangle"></i> 
+                                                                        Repetición - También en: @alumno.GruposAdicionales
+                                                                    </small>
+                                                                }
+                                                            </td>
                                                             <td>@alumno.Carrera</td>
                                                             <td>@(alumno.Carnet ?? alumno.Email?.Split('@')[0] ?? "")</td>
                                                             <td class="text-right">$@alumno.TotalPendiente.ToString("F2")</td>
@@ -237,6 +256,22 @@
                                     </div>
                                 </div>
                             </div>
+
+                            @if (Model.AlumnosInsolventes.Any(a => a.EsRepeticion))
+                            {
+                                <div class="row mt-3">
+                                    <div class="col-12">
+                                        <div class="alert alert-warning">
+                                            <h5><i class="icon fas fa-exclamation-triangle"></i> Nota sobre Repeticiones</h5>
+                                            <p class="mb-0">
+                                                <strong>Nota:</strong> Algunos alumnos aparecen en múltiples grupos. 
+                                                Las filas con fondo amarillo indican repeticiones y muestran en qué otros grupos está inscrito el alumno. 
+                                                Los totales se calculan correctamente sin duplicar las deudas.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
                         }
                         else if (Model.AlumnosInsolventes != null)
                         {

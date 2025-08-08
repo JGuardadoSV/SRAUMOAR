@@ -14,6 +14,13 @@ using DinkToPdf;
 using DinkToPdf.Contracts;
 using SRAUMOAR.Servicios;
 using ClosedXML.Excel;
+using iText.Kernel.Pdf;
+using iText.Layout;
+using iText.Layout.Element;
+using iText.Layout.Properties;
+using iText.Kernel.Colors;
+using iText.Kernel.Font;
+using iText.IO.Font.Constants;
 
 namespace SRAUMOAR.Pages.reportes.matricula_sin_inscripcion
 {
@@ -144,29 +151,176 @@ namespace SRAUMOAR.Pages.reportes.matricula_sin_inscripcion
         {
             await OnGetAsync();
 
-            var htmlContent = await _pdfService.GenerarHtmlReporteMatriculaSinInscripcion(
-                AlumnosConMatriculaSinInscripcion,
-                TotalAlumnos,
-                TotalMatricula,
-                SelectedCarreraId,
-                IncluirAlumnosConBeca);
-
-            var pdfBytes = _converter.Convert(new HtmlToPdfDocument()
+            if (!AlumnosConMatriculaSinInscripcion.Any())
             {
-                GlobalSettings = {
-                    ColorMode = ColorMode.Color,
-                    Orientation = Orientation.Portrait,
-                    PaperSize = PaperKind.A4,
-                    Margins = new MarginSettings() { Top = 10, Bottom = 10, Left = 10, Right = 10 }
-                },
-                Objects = {
-                    new ObjectSettings() {
-                        HtmlContent = htmlContent
-                    }
-                }
-            });
+                TempData["Error"] = "No hay datos para generar el PDF";
+                return RedirectToPage();
+            }
 
-            return File(pdfBytes, "application/pdf", $"Reporte_Matricula_Sin_Inscripcion_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
+            using var memoryStream = new MemoryStream();
+            var writer = new iText.Kernel.Pdf.PdfWriter(memoryStream);
+            var pdf = new iText.Kernel.Pdf.PdfDocument(writer);
+            var document = new iText.Layout.Document(pdf, iText.Kernel.Geom.PageSize.A4);
+
+            // Configurar fuentes que soporten caracteres especiales (Ñ, acentos, etc.)
+            var fontNormal = iText.Kernel.Font.PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.TIMES_ROMAN);
+            var fontBold = iText.Kernel.Font.PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.TIMES_BOLD);
+            var fontItalic = iText.Kernel.Font.PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.TIMES_ITALIC);
+
+            // Color para texto (negro estándar)
+            var colorTexto = iText.Kernel.Colors.ColorConstants.BLACK;
+
+            // Configurar márgenes
+            document.SetMargins(40, 40, 40, 40);
+
+            // ========== ENCABEZADO LIMPIO ==========
+
+            // Título principal
+            var tituloUniversidad = new iText.Layout.Element.Paragraph("UNIVERSIDAD MONSEÑOR OSCAR ARNULFO ROMERO")
+                .SetFontSize(18)
+                .SetFont(fontBold)
+                .SetTextAlignment(iText.Layout.Properties.TextAlignment.CENTER)
+                .SetFontColor(colorTexto)
+                .SetMarginBottom(8);
+            document.Add(tituloUniversidad);
+
+            // Subtítulo del reporte
+            var subtituloReporte = new iText.Layout.Element.Paragraph("REPORTE DE ALUMNOS CON MATRÍCULA SIN INSCRIPCIÓN")
+                .SetFontSize(14)
+                .SetFont(fontBold)
+                .SetTextAlignment(iText.Layout.Properties.TextAlignment.CENTER)
+                .SetFontColor(colorTexto)
+                .SetMarginBottom(15);
+            document.Add(subtituloReporte);
+
+            // ========== INFORMACIÓN DEL REPORTE ==========
+
+            // Fecha de generación
+            var fechaInfo = new iText.Layout.Element.Paragraph($"Fecha de generación: {DateTime.Now:dd/MM/yyyy HH:mm}")
+                .SetFontSize(10)
+                .SetFont(fontNormal)
+                .SetFontColor(colorTexto)
+                .SetMarginBottom(5);
+            document.Add(fechaInfo);
+
+            // Filtro de carrera (si aplica)
+            if (SelectedCarreraId.HasValue)
+            {
+                var carrera = _context.Carreras.FirstOrDefault(c => c.CarreraId == SelectedCarreraId.Value);
+                var filtroCarrera = new iText.Layout.Element.Paragraph($"Filtro aplicado - Carrera: {carrera?.NombreCarrera ?? "N/A"}")
+                    .SetFontSize(10)
+                    .SetFont(fontNormal)
+                    .SetFontColor(colorTexto)
+                    .SetMarginBottom(5);
+                document.Add(filtroCarrera);
+            }
+
+            // Filtro de beca
+            var filtroBeca = new iText.Layout.Element.Paragraph($"Incluir alumnos con beca: {(IncluirAlumnosConBeca ? "Sí" : "No")}")
+                .SetFontSize(10)
+                .SetFont(fontNormal)
+                .SetFontColor(colorTexto)
+                .SetMarginBottom(10);
+            document.Add(filtroBeca);
+
+            // ========== RESUMEN ==========
+
+            var resumenText = new iText.Layout.Element.Paragraph($"Total de alumnos encontrados: {TotalAlumnos}")
+                .SetFontSize(12)
+                .SetFont(fontBold)
+                .SetFontColor(colorTexto)
+                .SetMarginBottom(15);
+            document.Add(resumenText);
+
+            // ========== TABLA DE DATOS COMPACTA ==========
+
+            var table = new iText.Layout.Element.Table(new float[] { 1f, 4f, 3f, 2f }).UseAllAvailableWidth();
+
+            // Encabezados de tabla
+            string[] headers = { "No.", "Nombre Completo", "Carrera", "Carnet" };
+            foreach (string header in headers)
+            {
+                var headerCell2 = new iText.Layout.Element.Cell()
+                    .Add(new iText.Layout.Element.Paragraph(header)
+                        .SetFontSize(12)
+                        .SetFont(fontBold)
+                        .SetTextAlignment(iText.Layout.Properties.TextAlignment.CENTER))
+                    .SetFontColor(colorTexto)
+                    .SetPadding(6)
+                    .SetBorder(new iText.Layout.Borders.SolidBorder(colorTexto, 1));
+
+                table.AddHeaderCell(headerCell2);
+            }
+
+            // Datos de la tabla compactos
+            int contador = 1;
+            foreach (var alumno in AlumnosConMatriculaSinInscripcion)
+            {
+                // Número
+                var numeroCell = new iText.Layout.Element.Cell()
+                    .Add(new iText.Layout.Element.Paragraph(contador.ToString())
+                        .SetFontSize(11)
+                        .SetFont(fontNormal)
+                        .SetTextAlignment(iText.Layout.Properties.TextAlignment.CENTER))
+                    .SetPadding(4)
+                    .SetBorder(new iText.Layout.Borders.SolidBorder(colorTexto, 1))
+                    .SetFontColor(colorTexto);
+                table.AddCell(numeroCell);
+
+                // Nombre completo
+                var nombreCell = new iText.Layout.Element.Cell()
+                    .Add(new iText.Layout.Element.Paragraph($"{alumno.Apellidos}, {alumno.Nombres}")
+                        .SetFontSize(11)
+                        .SetFont(fontNormal))
+                    .SetPadding(4)
+                    .SetBorder(new iText.Layout.Borders.SolidBorder(colorTexto, 1))
+                    .SetFontColor(colorTexto);
+                table.AddCell(nombreCell);
+
+                // Carrera
+                var carreraCell = new iText.Layout.Element.Cell()
+                    .Add(new iText.Layout.Element.Paragraph(alumno.Carrera ?? "")
+                        .SetFontSize(11)
+                        .SetFont(fontNormal))
+                    .SetPadding(4)
+                    .SetBorder(new iText.Layout.Borders.SolidBorder(colorTexto, 1))
+                    .SetFontColor(colorTexto);
+                table.AddCell(carreraCell);
+
+                // Carnet
+                var carnetText = alumno.Carnet ?? alumno.Email?.Split('@')[0] ?? "";
+                var carnetCell = new iText.Layout.Element.Cell()
+                    .Add(new iText.Layout.Element.Paragraph(carnetText)
+                        .SetFontSize(11)
+                        .SetFont(fontNormal)
+                        .SetTextAlignment(iText.Layout.Properties.TextAlignment.CENTER))
+                    .SetPadding(4)
+                    .SetBorder(new iText.Layout.Borders.SolidBorder(colorTexto, 1))
+                    .SetFontColor(colorTexto);
+                table.AddCell(carnetCell);
+
+                contador++;
+            }
+
+            document.Add(table);
+
+            // ========== PIE DE PÁGINA SIMPLE ==========
+
+            document.Add(new iText.Layout.Element.Paragraph("\n").SetMarginBottom(10));
+
+            var footerText = new iText.Layout.Element.Paragraph("Generado por el Sistema Académico UMOAR")
+                .SetFontSize(9)
+                .SetFont(fontItalic)
+                .SetFontColor(colorTexto)
+                .SetTextAlignment(iText.Layout.Properties.TextAlignment.CENTER);
+            document.Add(footerText);
+
+            document.Close();
+
+            var fileName = $"Reporte_Matricula_Sin_Inscripcion_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+            Response.Headers["Content-Disposition"] = $"attachment; filename={fileName}";
+
+            return File(memoryStream.ToArray(), "application/pdf");
         }
 
         public async Task<IActionResult> OnGetGenerarExcelAsync()
@@ -174,17 +328,17 @@ namespace SRAUMOAR.Pages.reportes.matricula_sin_inscripcion
             await OnGetAsync();
 
             var workbook = new ClosedXML.Excel.XLWorkbook();
-            var worksheet = workbook.Worksheets.Add("Alumnos con Matrícula Sin Inscripción");
+            var worksheet = workbook.Worksheets.Add("Matricula Sin Inscripcion");
 
             // Encabezados
             worksheet.Cell("A1").Value = "No.";
             worksheet.Cell("B1").Value = "Nombre Completo";
             worksheet.Cell("C1").Value = "Carrera";
             worksheet.Cell("D1").Value = "Carnet";
-            worksheet.Cell("E1").Value = "Email";
-            worksheet.Cell("F1").Value = "Fecha Pago Matrícula";
-            worksheet.Cell("G1").Value = "Monto Matrícula";
-            worksheet.Cell("H1").Value = "Código Generación";
+           // worksheet.Cell("E1").Value = "Email";
+            worksheet.Cell("E1").Value = "Fecha Pago Matrícula";
+            //worksheet.Cell("G1").Value = "Monto Matrícula";
+            //worksheet.Cell("H1").Value = "Código Generación";
 
             // Aplicar formato a encabezados
             var headerRange = worksheet.Range("A1:H1");
@@ -201,10 +355,10 @@ namespace SRAUMOAR.Pages.reportes.matricula_sin_inscripcion
                 worksheet.Cell($"B{row}").Value = $"{alumno.Apellidos}, {alumno.Nombres}";
                 worksheet.Cell($"C{row}").Value = alumno.Carrera;
                 worksheet.Cell($"D{row}").Value = alumno.Carnet;
-                worksheet.Cell($"E{row}").Value = alumno.Email;
-                worksheet.Cell($"F{row}").Value = alumno.FechaPagoMatricula.ToString("dd/MM/yyyy");
-                worksheet.Cell($"G{row}").Value = alumno.MontoMatricula;
-                worksheet.Cell($"H{row}").Value = alumno.CodigoGeneracion;
+                //worksheet.Cell($"E{row}").Value = alumno.Email;
+                worksheet.Cell($"E{row}").Value = alumno.FechaPagoMatricula.ToString("dd/MM/yyyy");
+                //worksheet.Cell($"G{row}").Value = alumno.MontoMatricula;
+                //worksheet.Cell($"H{row}").Value = alumno.CodigoGeneracion;
             }
 
             // Autoajustar columnas

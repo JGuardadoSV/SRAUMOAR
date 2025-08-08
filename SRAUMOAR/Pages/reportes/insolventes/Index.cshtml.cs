@@ -231,6 +231,9 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                     return RedirectToPage();
                 }
 
+                // Aplicar la misma lógica de agrupación que en el servicio PDF para detectar repeticiones
+                var carrerasConGrupos = AgruparPorCarreraYGrupo(alumnosInsolventes, grupos);
+
                 // Generar Excel
                 using var package = new ExcelPackage();
                 var worksheet = package.Workbook.Worksheets.Add("Alumnos Insolventes");
@@ -259,52 +262,31 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                 decimal totalGeneralMora = 0;
                 decimal totalGeneralTotal = 0;
 
-                // Agrupar por carrera
-                var carrerasConAlumnos = alumnosInsolventes
-                    .GroupBy(a => a.Carrera)
-                    .OrderBy(g => g.Key)
-                    .ToList();
-
-                foreach (var carreraGrupo in carrerasConAlumnos)
+                // Usar la estructura agrupada por carrera y grupo
+                foreach (var carrera in carrerasConGrupos)
                 {
                     // Título de la carrera
                     worksheet.Cells[currentRow, 1, currentRow, 7].Merge = true;
-                    worksheet.Cells[currentRow, 1].Value = $"CARRERA: {carreraGrupo.Key?.ToUpper() ?? "SIN CARRERA"}";
+                    worksheet.Cells[currentRow, 1].Value = $"CARRERA: {carrera.NombreCarrera?.ToUpper() ?? "SIN CARRERA"}";
                     worksheet.Cells[currentRow, 1].Style.Font.Bold = true;
                     worksheet.Cells[currentRow, 1].Style.Font.Size = 12;
                     worksheet.Cells[currentRow, 1].Style.Fill.PatternType = ExcelFillStyle.Solid;
                     worksheet.Cells[currentRow, 1].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGreen);
                     currentRow++;
 
-                    // Obtener grupos de esta carrera
-                    var gruposCarrera = grupos
-                        .Where(g => g.Carrera?.NombreCarrera == carreraGrupo.Key)
-                        .ToList();
-
                     decimal totalCarreraPendiente = 0;
                     decimal totalCarreraMora = 0;
                     decimal totalCarreraTotal = 0;
 
-                    foreach (var grupo in gruposCarrera.OrderBy(g => g.Nombre))
+                    foreach (var grupo in carrera.Grupos.OrderBy(g => g.NombreGrupo))
                     {
-                        // Obtener alumnos de este grupo
-                        var alumnosGrupo = grupo.MateriasGrupos != null
-                            ? grupo.MateriasGrupos
-                                .SelectMany(mg => mg.MateriasInscritas ?? Enumerable.Empty<MateriasInscritas>())
-                                .Select(mi => mi.Alumno)
-                                .Distinct()
-                                .ToList()
-                            : new List<Alumno>();
-
-                        var alumnosInsolventesGrupo = alumnosInsolventes
-                            .Where(a => alumnosGrupo.Any(ag => ag.AlumnoId == a.AlumnoId))
-                            .ToList();
+                        var alumnosInsolventesGrupo = grupo.AlumnosInsolventes;
 
                         if (alumnosInsolventesGrupo.Any())
                         {
                             // Título del grupo
                             worksheet.Cells[currentRow, 1, currentRow, 7].Merge = true;
-                            worksheet.Cells[currentRow, 1].Value = $"Grupo: {grupo.Nombre}";
+                            worksheet.Cells[currentRow, 1].Value = $"Grupo: {grupo.NombreGrupo}";
                             worksheet.Cells[currentRow, 1].Style.Font.Bold = true;
                             worksheet.Cells[currentRow, 1].Style.Font.Size = 11;
                             worksheet.Cells[currentRow, 1].Style.Fill.PatternType = ExcelFillStyle.Solid;
@@ -328,7 +310,15 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                             foreach (var alumno in alumnosInsolventesGrupo.OrderBy(a => a.Apellidos).ThenBy(a => a.Nombres))
                             {
                                 worksheet.Cells[currentRow, 1].Value = contador;
-                                worksheet.Cells[currentRow, 2].Value = $"{alumno.Apellidos}, {alumno.Nombres}";
+                                
+                                // Agregar información de repetición si aplica
+                                string nombreCompleto = $"{alumno.Apellidos}, {alumno.Nombres}";
+                                if (alumno.EsRepeticion && !string.IsNullOrEmpty(alumno.GruposAdicionales))
+                                {
+                                    nombreCompleto += $" (Repetición - También en: {alumno.GruposAdicionales})";
+                                }
+                                worksheet.Cells[currentRow, 2].Value = nombreCompleto;
+                                
                                 worksheet.Cells[currentRow, 3].Value = alumno.Carnet ?? alumno.Email?.Split('@')[0] ?? "";
                                 worksheet.Cells[currentRow, 4].Value = alumno.TotalPendiente;
                                 worksheet.Cells[currentRow, 5].Value = alumno.TotalMora;
@@ -339,6 +329,13 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                                 worksheet.Cells[currentRow, 5].Style.Numberformat.Format = "#,##0.00";
                                 worksheet.Cells[currentRow, 6].Style.Numberformat.Format = "#,##0.00";
                                 worksheet.Cells[currentRow, 6].Style.Font.Bold = true;
+
+                                // Color de fondo para repeticiones
+                                if (alumno.EsRepeticion)
+                                {
+                                    worksheet.Cells[currentRow, 1, currentRow, 6].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                                    worksheet.Cells[currentRow, 1, currentRow, 6].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightYellow);
+                                }
 
                                 // Bordes
                                 for (int col = 1; col <= 6; col++)
@@ -351,45 +348,41 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                             }
 
                             // Subtotal del grupo
-                            var totalGrupoPendiente = alumnosInsolventesGrupo.Sum(a => a.TotalPendiente);
-                            var totalGrupoMora = alumnosInsolventesGrupo.Sum(a => a.TotalMora);
-                            var totalGrupoTotal = alumnosInsolventesGrupo.Sum(a => a.TotalGeneral);
-
                             worksheet.Cells[currentRow, 1, currentRow, 3].Merge = true;
-                            worksheet.Cells[currentRow, 1].Value = $"Subtotal Grupo {grupo.Nombre}:";
+                            worksheet.Cells[currentRow, 1].Value = $"Subtotal Grupo {grupo.NombreGrupo}:";
                             worksheet.Cells[currentRow, 1].Style.Font.Bold = true;
-                            worksheet.Cells[currentRow, 4].Value = totalGrupoPendiente;
-                            worksheet.Cells[currentRow, 5].Value = totalGrupoMora;
-                            worksheet.Cells[currentRow, 6].Value = totalGrupoTotal;
+                            worksheet.Cells[currentRow, 4].Value = grupo.TotalPendiente;
+                            worksheet.Cells[currentRow, 5].Value = grupo.TotalMora;
+                            worksheet.Cells[currentRow, 6].Value = grupo.TotalGeneral;
                             worksheet.Cells[currentRow, 4].Style.Numberformat.Format = "#,##0.00";
                             worksheet.Cells[currentRow, 5].Style.Numberformat.Format = "#,##0.00";
                             worksheet.Cells[currentRow, 6].Style.Numberformat.Format = "#,##0.00";
                             worksheet.Cells[currentRow, 6].Style.Font.Bold = true;
                             currentRow++;
 
-                            totalCarreraPendiente += totalGrupoPendiente;
-                            totalCarreraMora += totalGrupoMora;
-                            totalCarreraTotal += totalGrupoTotal;
+                            totalCarreraPendiente += grupo.TotalPendiente;
+                            totalCarreraMora += grupo.TotalMora;
+                            totalCarreraTotal += grupo.TotalGeneral;
                         }
                     }
 
                     // Total de la carrera
                     worksheet.Cells[currentRow, 1, currentRow, 3].Merge = true;
-                    worksheet.Cells[currentRow, 1].Value = $"TOTAL CARRERA {carreraGrupo.Key?.ToUpper()}:";
+                    worksheet.Cells[currentRow, 1].Value = $"TOTAL CARRERA {carrera.NombreCarrera?.ToUpper()}:";
                     worksheet.Cells[currentRow, 1].Style.Font.Bold = true;
                     worksheet.Cells[currentRow, 1].Style.Font.Size = 11;
-                    worksheet.Cells[currentRow, 4].Value = totalCarreraPendiente;
-                    worksheet.Cells[currentRow, 5].Value = totalCarreraMora;
-                    worksheet.Cells[currentRow, 6].Value = totalCarreraTotal;
+                    worksheet.Cells[currentRow, 4].Value = carrera.TotalPendiente;
+                    worksheet.Cells[currentRow, 5].Value = carrera.TotalMora;
+                    worksheet.Cells[currentRow, 6].Value = carrera.TotalGeneral;
                     worksheet.Cells[currentRow, 4].Style.Numberformat.Format = "#,##0.00";
                     worksheet.Cells[currentRow, 5].Style.Numberformat.Format = "#,##0.00";
                     worksheet.Cells[currentRow, 6].Style.Numberformat.Format = "#,##0.00";
                     worksheet.Cells[currentRow, 6].Style.Font.Bold = true;
                     currentRow++;
 
-                    totalGeneralPendiente += totalCarreraPendiente;
-                    totalGeneralMora += totalCarreraMora;
-                    totalGeneralTotal += totalCarreraTotal;
+                    totalGeneralPendiente += carrera.TotalPendiente;
+                    totalGeneralMora += carrera.TotalMora;
+                    totalGeneralTotal += carrera.TotalGeneral;
 
                     // Línea separadora
                     currentRow++;
@@ -639,9 +632,31 @@ namespace SRAUMOAR.Pages.reportes.insolventes
             var inscripciones = await query.ToListAsync();
 
             // Procesar alumnos insolventes
-            AlumnosInsolventes = await ProcesarAlumnosInsolventesAsync(inscripciones, arancelesObligatorios, cicloActual.Id);
+            var alumnosInsolventes = await ProcesarAlumnosInsolventesAsync(inscripciones, arancelesObligatorios, cicloActual.Id);
 
+            // Obtener grupos para detectar repeticiones
+            var grupos = await _context.Grupo
+                .Include(g => g.Carrera)
+                .Include(g => g.MateriasGrupos)
+                    .ThenInclude(mg => mg.MateriasInscritas)
+                        .ThenInclude(mi => mi.Alumno)
+                .Where(g => g.CicloId == cicloActual.Id && g.Activo)
+                .ToListAsync();
 
+            // Aplicar la misma lógica de agrupación que en el servicio PDF para detectar repeticiones
+            var carrerasConGrupos = AgruparPorCarreraYGrupo(alumnosInsolventes, grupos);
+            
+            // Crear lista final de alumnos con información de repeticiones
+            var alumnosFinales = new List<AlumnoInsolvente>();
+            foreach (var carrera in carrerasConGrupos)
+            {
+                foreach (var grupo in carrera.Grupos)
+                {
+                    alumnosFinales.AddRange(grupo.AlumnosInsolventes);
+                }
+            }
+
+            AlumnosInsolventes = alumnosFinales;
 
             // Calcular totales
             TotalPendiente = AlumnosInsolventes.Sum(a => a.TotalPendiente);
@@ -655,6 +670,7 @@ namespace SRAUMOAR.Pages.reportes.insolventes
             int cicloId)
         {
             var alumnosInsolventes = new List<AlumnoInsolvente>();
+            var alumnosUnicos = new Dictionary<int, AlumnoInsolvente>();
 
             // Obtener todos los pagos de una vez para evitar consultas en bucle
             var pagosExistentes = await _context.CobrosArancel
@@ -678,6 +694,10 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                 
                 // Excluir alumnos con excepciones
                 if (alumno.PermiteInscripcionSinPago)
+                    continue;
+
+                // Verificar si ya procesamos este alumno
+                if (alumnosUnicos.ContainsKey(alumno.AlumnoId))
                     continue;
 
                 var arancelesPendientes = new List<ArancelPendiente>();
@@ -712,7 +732,7 @@ namespace SRAUMOAR.Pages.reportes.insolventes
 
                 if (arancelesPendientes.Any())
                 {
-                    alumnosInsolventes.Add(new AlumnoInsolvente
+                    var alumnoInsolvente = new AlumnoInsolvente
                     {
                         AlumnoId = alumno.AlumnoId,
                         Nombres = alumno.Nombres,
@@ -724,11 +744,127 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                         TotalPendiente = arancelesPendientes.Sum(ap => ap.CostoOriginal),
                         TotalMora = arancelesPendientes.Sum(ap => ap.Mora),
                         TotalGeneral = arancelesPendientes.Sum(ap => ap.TotalConMora)
-                    });
+                    };
+
+                    alumnosUnicos[alumno.AlumnoId] = alumnoInsolvente;
+                    alumnosInsolventes.Add(alumnoInsolvente);
                 }
             }
 
             return alumnosInsolventes;
+        }
+
+        private List<CarreraInsolvente> AgruparPorCarreraYGrupo(List<AlumnoInsolvente> alumnosInsolventes, List<Grupo> grupos)
+        {
+            var reporteAgrupado = new List<CarreraInsolvente>();
+
+            // Crear un diccionario para rastrear alumnos únicos y sus grupos
+            var alumnosUnicos = new Dictionary<int, AlumnoInsolvente>();
+            var gruposPorAlumno = new Dictionary<int, List<string>>();
+
+            // Agrupar por carrera
+            var carrerasConAlumnos = alumnosInsolventes
+                .GroupBy(a => a.Carrera)
+                .OrderBy(g => g.Key)
+                .ToList();
+
+            foreach (var carreraGrupo in carrerasConAlumnos)
+            {
+                var carrera = new CarreraInsolvente
+                {
+                    NombreCarrera = carreraGrupo.Key ?? "Sin Carrera",
+                    Grupos = new List<GrupoInsolvente>()
+                };
+
+                // Obtener grupos de esta carrera
+                var gruposCarrera = grupos
+                    .Where(g => g.Carrera?.NombreCarrera == carreraGrupo.Key)
+                    .ToList();
+
+                foreach (var grupo in gruposCarrera.OrderBy(g => g.Nombre))
+                {
+                    // Obtener alumnos de este grupo
+                    var alumnosGrupo = grupo.MateriasGrupos?
+                        .SelectMany(mg => mg.MateriasInscritas ?? Enumerable.Empty<MateriasInscritas>())
+                        .Select(mi => mi.Alumno)
+                        .Distinct()
+                        .ToList() ?? new List<Alumno>();
+
+                    var alumnosInsolventesGrupo = alumnosInsolventes
+                        .Where(a => alumnosGrupo.Any(ag => ag.AlumnoId == a.AlumnoId))
+                        .ToList();
+
+                    if (alumnosInsolventesGrupo.Any())
+                    {
+                        // Procesar alumnos únicos para este grupo
+                        var alumnosUnicosGrupo = new List<AlumnoInsolvente>();
+                        
+                        foreach (var alumno in alumnosInsolventesGrupo)
+                        {
+                            if (!alumnosUnicos.ContainsKey(alumno.AlumnoId))
+                            {
+                                // Es la primera vez que vemos este alumno
+                                alumnosUnicos[alumno.AlumnoId] = alumno;
+                                gruposPorAlumno[alumno.AlumnoId] = new List<string> { grupo.Nombre };
+                                alumnosUnicosGrupo.Add(alumno);
+                            }
+                            else
+                            {
+                                // El alumno ya existe, agregar este grupo a su lista
+                                if (!gruposPorAlumno[alumno.AlumnoId].Contains(grupo.Nombre))
+                                {
+                                    gruposPorAlumno[alumno.AlumnoId].Add(grupo.Nombre);
+                                }
+                                
+                                // Agregar una copia del alumno con información de repetición
+                                var alumnoConRepeticion = new AlumnoInsolvente
+                                {
+                                    AlumnoId = alumno.AlumnoId,
+                                    Nombres = alumno.Nombres,
+                                    Apellidos = alumno.Apellidos,
+                                    Carrera = alumno.Carrera,
+                                    Carnet = alumno.Carnet,
+                                    Email = alumno.Email,
+                                    ArancelesPendientes = alumno.ArancelesPendientes,
+                                    TotalPendiente = alumno.TotalPendiente,
+                                    TotalMora = alumno.TotalMora,
+                                    TotalGeneral = alumno.TotalGeneral,
+                                    // Agregar información de repetición
+                                    EsRepeticion = true,
+                                    GruposAdicionales = gruposPorAlumno[alumno.AlumnoId].Count > 1 
+                                        ? string.Join(", ", gruposPorAlumno[alumno.AlumnoId].Where(g => g != grupo.Nombre))
+                                        : ""
+                                };
+                                
+                                alumnosUnicosGrupo.Add(alumnoConRepeticion);
+                            }
+                        }
+
+                        if (alumnosUnicosGrupo.Any())
+                        {
+                            var grupoInsolvente = new GrupoInsolvente
+                            {
+                                NombreGrupo = grupo.Nombre,
+                                AlumnosInsolventes = alumnosUnicosGrupo,
+                                TotalPendiente = alumnosUnicosGrupo.Sum(a => a.TotalPendiente),
+                                TotalMora = alumnosUnicosGrupo.Sum(a => a.TotalMora),
+                                TotalGeneral = alumnosUnicosGrupo.Sum(a => a.TotalGeneral)
+                            };
+
+                            carrera.Grupos.Add(grupoInsolvente);
+                        }
+                    }
+                }
+
+                if (carrera.Grupos.Any())
+                {
+                    carrera.TotalPendiente = carrera.Grupos.Sum(g => g.TotalPendiente);
+                    carrera.TotalMora = carrera.Grupos.Sum(g => g.TotalMora);
+                    carrera.TotalGeneral = carrera.Grupos.Sum(g => g.TotalGeneral);
+                    reporteAgrupado.Add(carrera);
+                }
+            }
+            return reporteAgrupado;
         }
     }
 
@@ -740,5 +876,51 @@ namespace SRAUMOAR.Pages.reportes.insolventes
         public int DiasVencido { get; set; }
         public decimal Costo { get; set; }
         public decimal ValorMora { get; set; }
+    }
+
+    // Clase para alumnos insolventes
+    public class AlumnoInsolvente
+    {
+        public int AlumnoId { get; set; }
+        public string Nombres { get; set; } = "";
+        public string Apellidos { get; set; } = "";
+        public string? Carrera { get; set; }
+        public string? Carnet { get; set; }
+        public string? Email { get; set; }
+        public List<ArancelPendiente> ArancelesPendientes { get; set; } = new();
+        public decimal TotalPendiente { get; set; }
+        public decimal TotalMora { get; set; }
+        public decimal TotalGeneral { get; set; }
+        public bool EsRepeticion { get; set; } = false;
+        public string GruposAdicionales { get; set; } = "";
+    }
+
+    public class ArancelPendiente
+    {
+        public int ArancelId { get; set; }
+        public string NombreArancel { get; set; } = "";
+        public decimal CostoOriginal { get; set; }
+        public decimal Mora { get; set; }
+        public decimal TotalConMora { get; set; }
+        public DateTime? FechaVencimiento { get; set; }
+        public bool EstaVencido { get; set; }
+    }
+
+    public class CarreraInsolvente
+    {
+        public string NombreCarrera { get; set; } = "";
+        public List<GrupoInsolvente> Grupos { get; set; } = new();
+        public decimal TotalPendiente { get; set; }
+        public decimal TotalMora { get; set; }
+        public decimal TotalGeneral { get; set; }
+    }
+
+    public class GrupoInsolvente
+    {
+        public string NombreGrupo { get; set; } = "";
+        public List<AlumnoInsolvente> AlumnosInsolventes { get; set; } = new();
+        public decimal TotalPendiente { get; set; }
+        public decimal TotalMora { get; set; }
+        public decimal TotalGeneral { get; set; }
     }
 }
