@@ -1,0 +1,270 @@
+@page
+@model SRAUMOAR.Pages.reportes.insolventes.IndexModel
+@{
+    ViewData["Title"] = "Reporte de Alumnos Insolventes";
+}
+
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0">Reporte de Alumnos Insolventes</h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="#">Inicio</a></li>
+                    <li class="breadcrumb-item"><a href="#">Reportes</a></li>
+                    <li class="breadcrumb-item active">Alumnos Insolventes</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Generar Reporte de Alumnos Insolventes</h3>
+                    </div>
+                    <div class="card-body">
+                        <form method="get">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label asp-for="SelectedCarreraId">Carrera</label>
+                                        <select asp-for="SelectedCarreraId" asp-items="@(ViewData["Carreras"] as SelectList)" class="form-control">
+                                            <option value="">Todas las carreras</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label asp-for="IncluirAlumnosConBeca">Incluir Alumnos con Beca</label>
+                                        <div class="form-check">
+                                            <input asp-for="IncluirAlumnosConBeca" class="form-check-input" type="checkbox" />
+                                            <label class="form-check-label" asp-for="IncluirAlumnosConBeca">
+                                                Mostrar también alumnos con beca
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>&nbsp;</label>
+                                        <div>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-search"></i> Filtrar
+                                            </button>
+                                            <a href="@Url.Page("")" class="btn btn-secondary">
+                                                <i class="fas fa-times"></i> Limpiar
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- Botones de exportación siempre visibles -->
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h3 class="card-title">Exportar Reporte</h3>
+                                        <div class="card-tools">
+                                            <a href="@Url.Page("", "GenerarPDF", new { carreraId = Model.SelectedCarreraId, incluirAlumnosConBeca = Model.IncluirAlumnosConBeca })" 
+                                               class="btn btn-danger btn-sm me-2">
+                                                <i class="fas fa-file-pdf"></i> PDF
+                                            </a>
+                                            <a href="@Url.Page("", "GenerarExcel", new { carreraId = Model.SelectedCarreraId, incluirAlumnosConBeca = Model.IncluirAlumnosConBeca })" 
+                                               class="btn btn-success btn-sm">
+                                                <i class="fas fa-file-excel"></i> Excel
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (Model.AlumnosInsolventes != null && Model.AlumnosInsolventes.Any())
+                        {
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <div class="alert alert-info">
+                                        <h5><i class="icon fas fa-info"></i> Resumen del Reporte</h5>
+                                        <p>
+                                            <strong>Total de alumnos insolventes:</strong> @Model.AlumnosInsolventes.Count<br>
+                                            <strong>Total pendiente:</strong> $@Model.TotalPendiente.ToString("F2")<br>
+                                            <strong>Total mora:</strong> $@Model.TotalMora.ToString("F2")<br>
+                                            <strong>Total general:</strong> $@Model.TotalGeneral.ToString("F2")
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Resumen de Aranceles Vencidos -->
+                            @if (Model.ArancelesVencidos != null && Model.ArancelesVencidos.Any())
+                            {
+                                <div class="row mt-3">
+                                    <div class="col-12">
+                                        <div class="card card-warning">
+                                            <div class="card-header">
+                                                <h3 class="card-title">
+                                                    <i class="fas fa-exclamation-triangle"></i> 
+                                                    Resumen de Aranceles Vencidos (@Model.TotalArancelesVencidos)
+                                                </h3>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        <div class="info-box bg-warning">
+                                                            <span class="info-box-icon"><i class="fas fa-calendar-times"></i></span>
+                                                            <div class="info-box-content">
+                                                                <span class="info-box-text">Total Vencidos</span>
+                                                                <span class="info-box-number">@Model.TotalArancelesVencidos</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="info-box bg-warning">
+                                                            <span class="info-box-icon"><i class="fas fa-dollar-sign"></i></span>
+                                                            <div class="info-box-content">
+                                                                <span class="info-box-text">Costo Total</span>
+                                                                <span class="info-box-number">$@Model.TotalCostoVencido.ToString("F2")</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="info-box bg-warning">
+                                                            <span class="info-box-icon"><i class="fas fa-exclamation"></i></span>
+                                                            <div class="info-box-content">
+                                                                <span class="info-box-text">Mora Total</span>
+                                                                <span class="info-box-number">$@Model.TotalMoraVencido.ToString("F2")</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="info-box bg-warning">
+                                                            <span class="info-box-icon"><i class="fas fa-calculator"></i></span>
+                                                            <div class="info-box-content">
+                                                                <span class="info-box-text">Total + Mora</span>
+                                                                <span class="info-box-number">$@((Model.TotalCostoVencido + Model.TotalMoraVencido).ToString("F2"))</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="table-responsive mt-3">
+                                                    <table class="table table-sm table-bordered">
+                                                        <thead class="thead-dark">
+                                                            <tr>
+                                                                <th>Arancel</th>
+                                                                <th>Fecha Vencimiento</th>
+                                                                <th>Días Vencido</th>
+                                                                <th class="text-right">Costo</th>
+                                                                <th class="text-right">Mora</th>
+                                                                <th class="text-right">Total</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (var arancel in Model.ArancelesVencidos.OrderBy(a => a.FechaVencimiento))
+                                                            {
+                                                                <tr class="@(arancel.DiasVencido > 30 ? "table-danger" : arancel.DiasVencido > 15 ? "table-warning" : "table-info")">
+                                                                    <td><strong>@arancel.Nombre</strong></td>
+                                                                    <td>@arancel.FechaVencimiento.ToString("dd/MM/yyyy")</td>
+                                                                    <td>
+                                                                        <span >
+                                                                            @arancel.DiasVencido días
+                                                                        </span>
+                                                                    </td>
+                                                                    <td class="text-right">$@arancel.Costo.ToString("F2")</td>
+                                                                    <td class="text-right">$@arancel.ValorMora.ToString("F2")</td>
+                                                                    <td class="text-right font-weight-bold">$@((arancel.Costo + arancel.ValorMora).ToString("F2"))</td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h3 class="card-title">Alumnos Insolventes</h3>
+                                        </div>
+                                        <div class="card-body table-responsive p-0">
+                                            <table class="table table-hover text-nowrap">
+                                                <thead>
+                                                    <tr>
+                                                        <th>No.</th>
+                                                        <th>Nombre Completo</th>
+                                                        <th>Carrera</th>
+                                                        <th>Carnet</th>
+                                                        <th class="text-right">Pendiente</th>
+                                                        <th class="text-right">Mora</th>
+                                                        <th class="text-right">Total</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @{
+                                                        int contador = 1;
+                                                    }
+                                                    @foreach (var alumno in Model.AlumnosInsolventes.OrderBy(a => a.Apellidos).ThenBy(a => a.Nombres))
+                                                    {
+                                                        <tr>
+                                                            <td>@contador</td>
+                                                            <td>@alumno.Apellidos, @alumno.Nombres</td>
+                                                            <td>@alumno.Carrera</td>
+                                                            <td>@(alumno.Carnet ?? alumno.Email?.Split('@')[0] ?? "")</td>
+                                                            <td class="text-right">$@alumno.TotalPendiente.ToString("F2")</td>
+                                                            <td class="text-right">$@alumno.TotalMora.ToString("F2")</td>
+                                                            <td class="text-right font-weight-bold">$@alumno.TotalGeneral.ToString("F2")</td>
+                                                        </tr>
+                                                        contador++;
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        else if (Model.AlumnosInsolventes != null)
+                        {
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <div class="alert alert-warning">
+                                        <h5><i class="icon fas fa-exclamation-triangle"></i> No se encontraron alumnos insolventes</h5>
+                                        <p>No hay alumnos que cumplan con los criterios especificados.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Auto-submit form when filters change
+            $('#SelectedCarreraId, #MontoMinimo').change(function () {
+                if ($('#SelectedCarreraId').val() !== '' || $('#MontoMinimo').val() !== '') {
+                    $('form').submit();
+                }
+            });
+        });
+    </script>
+}
