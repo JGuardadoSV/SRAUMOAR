@@ -99,7 +99,7 @@ namespace SRAUMOAR.Pages.alumno
             _context.Entry(Alumno).Property(a => a.IngresoPorEquivalencias).IsModified = false;
             _context.Entry(Alumno).Property(a => a.Fotografia).IsModified = false;
             _context.Entry(Alumno).Property(a => a.Carnet).IsModified = true;
-            _context.Entry(Alumno).Property(a => a.Genero).IsModified = false;
+            _context.Entry(Alumno).Property(a => a.Genero).IsModified = true;
             _context.Entry(Alumno).Property(a => a.UsuarioId).IsModified = false;
             _context.Entry(Alumno).Property(a => a.MunicipioId).IsModified = false;
             _context.Entry(Alumno).Property(a => a.CarreraId).IsModified = true;
