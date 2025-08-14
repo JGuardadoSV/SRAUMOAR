@@ -273,6 +273,8 @@ namespace SRAUMOAR.Pages.puntoventa
 
             if (ModelState.IsValid)
             {
+                //se corrige si viene @gmail o @umoar y no terminan en .com o .edu.sv respectivamente
+                Factura.Receptor.Correo=CorregirCorreo(Factura.Receptor.Correo);
                 if (Factura.TipoDocumento == "01")
                 {
                     // CONSUMIDOR FINAL
@@ -1277,6 +1279,48 @@ namespace SRAUMOAR.Pages.puntoventa
             }
 
             return Page();
+        }
+
+        public static string CorregirCorreo(string correo)
+        {
+            if (string.IsNullOrWhiteSpace(correo))
+                return correo;
+
+            correo = correo.Trim().ToLower();
+
+            // Verificar y corregir @gmail
+            if (correo.Contains("@gmail") && !correo.EndsWith("@gmail.com"))
+            {
+                // Si termina solo en @gmail, agregar .com
+                if (correo.EndsWith("@gmail"))
+                {
+                    correo += ".com";
+                }
+                // Si tiene @gmail pero no .com al final, reemplazar la parte después de @gmail
+                else if (correo.Contains("@gmail"))
+                {
+                    int gmailIndex = correo.IndexOf("@gmail");
+                    correo = correo.Substring(0, gmailIndex) + "@gmail.com";
+                }
+            }
+
+            // Verificar y corregir @umoar
+            if (correo.Contains("@umoar") && !correo.EndsWith("@umoar.edu.sv"))
+            {
+                // Si termina solo en @umoar, agregar .edu.sv
+                if (correo.EndsWith("@umoar"))
+                {
+                    correo += ".edu.sv";
+                }
+                // Si tiene @umoar pero no .edu.sv al final, reemplazar la parte después de @umoar
+                else if (correo.Contains("@umoar"))
+                {
+                    int umoarIndex = correo.IndexOf("@umoar");
+                    correo = correo.Substring(0, umoarIndex) + "@umoar.edu.sv";
+                }
+            }
+
+            return correo;
         }
 
         private void CargarDatosEmisor()
