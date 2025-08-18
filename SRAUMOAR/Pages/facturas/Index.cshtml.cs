@@ -618,10 +618,14 @@ namespace SRAUMOAR.Pages.facturas
                     worksheet.Cells[1, i + 1].Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
                 }
 
-                // Agregar datos
-                for (int row = 0; row < facturas.Count; row++)
+                // Agregar datos (ordenados por fecha ascendente)
+                var facturasOrdenadas = facturas
+                    .OrderBy(f => f.Fecha)
+                    .ThenBy(f => f.FacturaId)
+                    .ToList();
+                for (int row = 0; row < facturasOrdenadas.Count; row++)
                 {
-                    var factura = facturas[row];
+                    var factura = facturasOrdenadas[row];
                     var excelRow = row + 2;
 
                     worksheet.Cells[excelRow, 1].Value = factura.FacturaId;
@@ -685,6 +689,327 @@ namespace SRAUMOAR.Pages.facturas
                 // Agregar información del filtro
                 worksheet.Cells[lastRow + 6, 1].Value = $"Período: {FechaInicio?.ToString("dd/MM/yyyy")} - {FechaFin?.ToString("dd/MM/yyyy")}";
                 worksheet.Cells[lastRow + 7, 1].Value = $"Reporte generado el: {DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss")}";
+
+                // =============================
+                // Hoja: ANEXO CONSUMIDOR FINAL
+                // (Consolidado por día)
+                // =============================
+                var wsAnexoCF = package.Workbook.Worksheets.Add("ANEXO CONSUMIDOR FINAL");
+                var headersAnexoCF = new[] {
+                    "Fecha", "Cantidad", "Primer Código", "Último Código",
+                    "Gravado", "Exento", "IVA", "Total"
+                };
+                for (int i = 0; i < headersAnexoCF.Length; i++)
+                {
+                    wsAnexoCF.Cells[1, i + 1].Value = headersAnexoCF[i];
+                    wsAnexoCF.Cells[1, i + 1].Style.Font.Bold = true;
+                    wsAnexoCF.Cells[1, i + 1].Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                    wsAnexoCF.Cells[1, i + 1].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                    wsAnexoCF.Cells[1, i + 1].Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
+                }
+                var cfValidas = facturas
+                    .Where(f => f.TipoDTE == 1 && !f.Anulada && !string.IsNullOrEmpty(f.SelloRecepcion))
+                    .ToList();
+                var consolidadoCF = cfValidas
+                    .GroupBy(f => f.Fecha.Date)
+                    .OrderBy(g => g.Key)
+                    .Select(g => new
+                    {
+                        Fecha = g.Key,
+                        Cantidad = g.Count(),
+                        PrimerCodigo = g.OrderBy(x => x.Fecha).First().CodigoGeneracion,
+                        UltimoCodigo = g.OrderByDescending(x => x.Fecha).First().CodigoGeneracion,
+                        Gravado = g.Sum(x => x.TotalGravado),
+                        Exento = g.Sum(x => x.TotalExento),
+                        Iva = g.Sum(x => x.TotalIva),
+                        Total = g.Sum(x => x.TotalPagar)
+                    })
+                    .ToList();
+                var rowCF = 2;
+                foreach (var item in consolidadoCF)
+                {
+                    wsAnexoCF.Cells[rowCF, 1].Value = item.Fecha.ToString("dd/MM/yyyy");
+                    wsAnexoCF.Cells[rowCF, 2].Value = item.Cantidad;
+                    wsAnexoCF.Cells[rowCF, 3].Value = item.PrimerCodigo ?? "";
+                    wsAnexoCF.Cells[rowCF, 4].Value = item.UltimoCodigo ?? "";
+                    wsAnexoCF.Cells[rowCF, 5].Value = item.Gravado;
+                    wsAnexoCF.Cells[rowCF, 6].Value = item.Exento;
+                    wsAnexoCF.Cells[rowCF, 7].Value = item.Iva;
+                    wsAnexoCF.Cells[rowCF, 8].Value = item.Total;
+
+                    wsAnexoCF.Cells[rowCF, 5].Style.Numberformat.Format = "#,##0.00";
+                    wsAnexoCF.Cells[rowCF, 6].Style.Numberformat.Format = "#,##0.00";
+                    wsAnexoCF.Cells[rowCF, 7].Style.Numberformat.Format = "#,##0.00";
+                    wsAnexoCF.Cells[rowCF, 8].Style.Numberformat.Format = "#,##0.00";
+
+                    for (int c = 1; c <= 8; c++)
+                    {
+                        wsAnexoCF.Cells[rowCF, c].Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
+                    }
+                    rowCF++;
+                }
+                // Totales consolidado CF
+                wsAnexoCF.Cells[rowCF, 1].Value = "";
+                rowCF++;
+                var totalCantCF = consolidadoCF.Sum(x => x.Cantidad);
+                var totalGravadoCF = consolidadoCF.Sum(x => x.Gravado);
+                var totalExentoCF = consolidadoCF.Sum(x => x.Exento);
+                var totalIvaCF = consolidadoCF.Sum(x => x.Iva);
+                var totalGeneralCF = consolidadoCF.Sum(x => x.Total);
+
+                wsAnexoCF.Cells[rowCF, 1].Value = "TOTALES:";
+                wsAnexoCF.Cells[rowCF, 2].Value = totalCantCF;
+                wsAnexoCF.Cells[rowCF, 5].Value = totalGravadoCF;
+                wsAnexoCF.Cells[rowCF, 6].Value = totalExentoCF;
+                wsAnexoCF.Cells[rowCF, 7].Value = totalIvaCF;
+                wsAnexoCF.Cells[rowCF, 8].Value = totalGeneralCF;
+
+                wsAnexoCF.Cells[rowCF, 5].Style.Numberformat.Format = "#,##0.00";
+                wsAnexoCF.Cells[rowCF, 6].Style.Numberformat.Format = "#,##0.00";
+                wsAnexoCF.Cells[rowCF, 7].Style.Numberformat.Format = "#,##0.00";
+                wsAnexoCF.Cells[rowCF, 8].Style.Numberformat.Format = "#,##0.00";
+
+                var totalRangeCF = wsAnexoCF.Cells[rowCF, 1, rowCF, 8];
+                totalRangeCF.Style.Font.Bold = true;
+                totalRangeCF.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                totalRangeCF.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                totalRangeCF.Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
+                wsAnexoCF.Cells.AutoFitColumns();
+
+                // =============================
+                // Hoja: ANEXO CONTRIBUYENTES
+                // (Detalle individual CCF válidas)
+                // =============================
+                var wsAnexoCCF = package.Workbook.Worksheets.Add("ANEXO CONTRIBUYENTES");
+                var headersAnexoCCF = new[] {
+                    "Fecha", "Tipo", "Número Control", "Código Generación", "Sello Recepción",
+                    "Gravado", "Exento", "IVA", "Total", "Estado"
+                };
+                for (int i = 0; i < headersAnexoCCF.Length; i++)
+                {
+                    wsAnexoCCF.Cells[1, i + 1].Value = headersAnexoCCF[i];
+                    wsAnexoCCF.Cells[1, i + 1].Style.Font.Bold = true;
+                    wsAnexoCCF.Cells[1, i + 1].Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                    wsAnexoCCF.Cells[1, i + 1].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                    wsAnexoCCF.Cells[1, i + 1].Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
+                }
+                var ccfValidas = facturas
+                    .Where(f => f.TipoDTE == 3 && !f.Anulada && !string.IsNullOrEmpty(f.SelloRecepcion))
+                    .OrderBy(f => f.Fecha)
+                    .ToList();
+                var rowCCF = 2;
+                foreach (var f in ccfValidas)
+                {
+                    wsAnexoCCF.Cells[rowCCF, 1].Value = f.Fecha.ToString("dd/MM/yyyy");
+                    wsAnexoCCF.Cells[rowCCF, 2].Value = "CCF";
+                    wsAnexoCCF.Cells[rowCCF, 3].Value = f.NumeroControl ?? "";
+                    wsAnexoCCF.Cells[rowCCF, 4].Value = f.CodigoGeneracion ?? "";
+                    wsAnexoCCF.Cells[rowCCF, 5].Value = f.SelloRecepcion ?? "";
+                    wsAnexoCCF.Cells[rowCCF, 6].Value = f.TotalGravado;
+                    wsAnexoCCF.Cells[rowCCF, 7].Value = f.TotalExento;
+                    wsAnexoCCF.Cells[rowCCF, 8].Value = f.TotalIva;
+                    wsAnexoCCF.Cells[rowCCF, 9].Value = f.TotalPagar;
+                    wsAnexoCCF.Cells[rowCCF, 10].Value = "Válida";
+
+                    wsAnexoCCF.Cells[rowCCF, 6].Style.Numberformat.Format = "#,##0.00";
+                    wsAnexoCCF.Cells[rowCCF, 7].Style.Numberformat.Format = "#,##0.00";
+                    wsAnexoCCF.Cells[rowCCF, 8].Style.Numberformat.Format = "#,##0.00";
+                    wsAnexoCCF.Cells[rowCCF, 9].Style.Numberformat.Format = "#,##0.00";
+
+                    for (int c = 1; c <= 10; c++)
+                    {
+                        wsAnexoCCF.Cells[rowCCF, c].Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
+                    }
+                    rowCCF++;
+                }
+                // Totales CCF válidas
+                wsAnexoCCF.Cells[rowCCF, 1].Value = "";
+                rowCCF++;
+                var totalGravadoCCF = ccfValidas.Sum(x => x.TotalGravado);
+                var totalExentoCCF = ccfValidas.Sum(x => x.TotalExento);
+                var totalIvaCCF = ccfValidas.Sum(x => x.TotalIva);
+                var totalGeneralCCF = ccfValidas.Sum(x => x.TotalPagar);
+                var totalRegsCCF = ccfValidas.Count;
+
+                wsAnexoCCF.Cells[rowCCF, 1].Value = "TOTALES:";
+                wsAnexoCCF.Cells[rowCCF, 6].Value = totalGravadoCCF;
+                wsAnexoCCF.Cells[rowCCF, 7].Value = totalExentoCCF;
+                wsAnexoCCF.Cells[rowCCF, 8].Value = totalIvaCCF;
+                wsAnexoCCF.Cells[rowCCF, 9].Value = totalGeneralCCF;
+                wsAnexoCCF.Cells[rowCCF, 10].Value = $"Registros: {totalRegsCCF}";
+
+                wsAnexoCCF.Cells[rowCCF, 6].Style.Numberformat.Format = "#,##0.00";
+                wsAnexoCCF.Cells[rowCCF, 7].Style.Numberformat.Format = "#,##0.00";
+                wsAnexoCCF.Cells[rowCCF, 8].Style.Numberformat.Format = "#,##0.00";
+                wsAnexoCCF.Cells[rowCCF, 9].Style.Numberformat.Format = "#,##0.00";
+
+                var totalRangeCCF = wsAnexoCCF.Cells[rowCCF, 1, rowCCF, 10];
+                totalRangeCCF.Style.Font.Bold = true;
+                totalRangeCCF.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                totalRangeCCF.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                totalRangeCCF.Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
+                wsAnexoCCF.Cells.AutoFitColumns();
+
+                // =====================================
+                // Hoja: EXCLUIDAS CONSUMIDOR FINAL (CF)
+                // =====================================
+                var wsExcluidasCF = package.Workbook.Worksheets.Add("EXCLUIDAS CONSUMIDOR FINAL");
+                var headersExcluidas = new[] {
+                    "Fecha", "Tipo", "Número Control", "Código Generación", "Sello Recepción",
+                    "Gravado", "Exento", "IVA", "Total", "Estado", "Motivo Exclusión", "Verificar Estado"
+                };
+                for (int i = 0; i < headersExcluidas.Length; i++)
+                {
+                    wsExcluidasCF.Cells[1, i + 1].Value = headersExcluidas[i];
+                    wsExcluidasCF.Cells[1, i + 1].Style.Font.Bold = true;
+                    wsExcluidasCF.Cells[1, i + 1].Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                    wsExcluidasCF.Cells[1, i + 1].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                    wsExcluidasCF.Cells[1, i + 1].Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
+                }
+                var cfExcluidas = facturas
+                    .Where(f => f.TipoDTE == 1 && (f.Anulada || string.IsNullOrEmpty(f.SelloRecepcion)))
+                    .OrderBy(f => f.Fecha)
+                    .ToList();
+                var rowExCF = 2;
+                foreach (var f in cfExcluidas)
+                {
+                    var estado = f.Anulada ? "Anulada" : (string.IsNullOrEmpty(f.SelloRecepcion) ? "Pendiente" : "Válida");
+                    var motivo = f.Anulada ? "ANULADA" : (string.IsNullOrEmpty(f.SelloRecepcion) ? "SIN SELLO RECEPCION" : "");
+
+                    wsExcluidasCF.Cells[rowExCF, 1].Value = f.Fecha.ToString("dd/MM/yyyy");
+                    wsExcluidasCF.Cells[rowExCF, 2].Value = "CF";
+                    wsExcluidasCF.Cells[rowExCF, 3].Value = f.NumeroControl ?? "";
+                    wsExcluidasCF.Cells[rowExCF, 4].Value = f.CodigoGeneracion ?? "";
+                    wsExcluidasCF.Cells[rowExCF, 5].Value = f.SelloRecepcion ?? "";
+                    wsExcluidasCF.Cells[rowExCF, 6].Value = f.TotalGravado;
+                    wsExcluidasCF.Cells[rowExCF, 7].Value = f.TotalExento;
+                    wsExcluidasCF.Cells[rowExCF, 8].Value = f.TotalIva;
+                    wsExcluidasCF.Cells[rowExCF, 9].Value = f.TotalPagar;
+                    wsExcluidasCF.Cells[rowExCF, 10].Value = estado;
+                    wsExcluidasCF.Cells[rowExCF, 11].Value = motivo;
+
+                    // Hipervínculo para verificación pública si hay código de generación
+                    if (!string.IsNullOrEmpty(f.CodigoGeneracion))
+                    {
+                        var url = $"https://admin.factura.gob.sv/consultaPublica?ambiente=01&codGen={f.CodigoGeneracion}&fechaEmi={f.Fecha:yyyy-MM-dd}";
+                        wsExcluidasCF.Cells[rowExCF, 12].Value = "VERIFICAR";
+                        wsExcluidasCF.Cells[rowExCF, 12].Hyperlink = new Uri(url);
+                    }
+                    else
+                    {
+                        wsExcluidasCF.Cells[rowExCF, 12].Value = "N/A";
+                    }
+
+                    wsExcluidasCF.Cells[rowExCF, 6].Style.Numberformat.Format = "#,##0.00";
+                    wsExcluidasCF.Cells[rowExCF, 7].Style.Numberformat.Format = "#,##0.00";
+                    wsExcluidasCF.Cells[rowExCF, 8].Style.Numberformat.Format = "#,##0.00";
+                    wsExcluidasCF.Cells[rowExCF, 9].Style.Numberformat.Format = "#,##0.00";
+
+                    for (int c = 1; c <= 12; c++)
+                    {
+                        wsExcluidasCF.Cells[rowExCF, c].Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
+                    }
+
+                    rowExCF++;
+                }
+                // Totales Excluidas CF
+                wsExcluidasCF.Cells[rowExCF, 1].Value = "";
+                rowExCF++;
+                var totalSinSelloCF = cfExcluidas.Where(v => !v.Anulada && string.IsNullOrEmpty(v.SelloRecepcion)).Count();
+                var montoSinSelloCF = cfExcluidas.Where(v => !v.Anulada && string.IsNullOrEmpty(v.SelloRecepcion)).Sum(v => v.TotalPagar);
+                var totalAnuladasCF = cfExcluidas.Where(v => v.Anulada).Count();
+                var montoAnuladasCF = cfExcluidas.Where(v => v.Anulada).Sum(v => v.TotalPagar);
+                var totalGeneralExCF = cfExcluidas.Sum(v => v.TotalPagar);
+
+                wsExcluidasCF.Cells[rowExCF, 1].Value = "TOTALES:";
+                wsExcluidasCF.Cells[rowExCF, 9].Value = totalGeneralExCF;
+                wsExcluidasCF.Cells[rowExCF, 9].Style.Numberformat.Format = "#,##0.00";
+                wsExcluidasCF.Cells[rowExCF, 11].Value = $"Sin Sello: {totalSinSelloCF} (${montoSinSelloCF:N2}) | Anuladas: {totalAnuladasCF} (${montoAnuladasCF:N2})";
+
+                var totalRangeExCF = wsExcluidasCF.Cells[rowExCF, 1, rowExCF, 12];
+                totalRangeExCF.Style.Font.Bold = true;
+                totalRangeExCF.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                totalRangeExCF.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                totalRangeExCF.Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
+                wsExcluidasCF.Cells.AutoFitColumns();
+
+                // ==========================================
+                // Hoja: EXCLUIDAS CONTRIBUYENTES (CCF)
+                // ==========================================
+                var wsExcluidasCCF = package.Workbook.Worksheets.Add("EXCLUIDAS CONTRIBUYENTES");
+                for (int i = 0; i < headersExcluidas.Length; i++)
+                {
+                    wsExcluidasCCF.Cells[1, i + 1].Value = headersExcluidas[i];
+                    wsExcluidasCCF.Cells[1, i + 1].Style.Font.Bold = true;
+                    wsExcluidasCCF.Cells[1, i + 1].Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                    wsExcluidasCCF.Cells[1, i + 1].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                    wsExcluidasCCF.Cells[1, i + 1].Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
+                }
+                var ccfExcluidas = facturas
+                    .Where(f => f.TipoDTE == 3 && (f.Anulada || string.IsNullOrEmpty(f.SelloRecepcion)))
+                    .OrderBy(f => f.Fecha)
+                    .ToList();
+                var rowExCCF = 2;
+                foreach (var f in ccfExcluidas)
+                {
+                    var estado = f.Anulada ? "Anulada" : (string.IsNullOrEmpty(f.SelloRecepcion) ? "Pendiente" : "Válida");
+                    var motivo = f.Anulada ? "ANULADA" : (string.IsNullOrEmpty(f.SelloRecepcion) ? "SIN SELLO RECEPCION" : "");
+
+                    wsExcluidasCCF.Cells[rowExCCF, 1].Value = f.Fecha.ToString("dd/MM/yyyy");
+                    wsExcluidasCCF.Cells[rowExCCF, 2].Value = "CCF";
+                    wsExcluidasCCF.Cells[rowExCCF, 3].Value = f.NumeroControl ?? "";
+                    wsExcluidasCCF.Cells[rowExCCF, 4].Value = f.CodigoGeneracion ?? "";
+                    wsExcluidasCCF.Cells[rowExCCF, 5].Value = f.SelloRecepcion ?? "";
+                    wsExcluidasCCF.Cells[rowExCCF, 6].Value = f.TotalGravado;
+                    wsExcluidasCCF.Cells[rowExCCF, 7].Value = f.TotalExento;
+                    wsExcluidasCCF.Cells[rowExCCF, 8].Value = f.TotalIva;
+                    wsExcluidasCCF.Cells[rowExCCF, 9].Value = f.TotalPagar;
+                    wsExcluidasCCF.Cells[rowExCCF, 10].Value = estado;
+                    wsExcluidasCCF.Cells[rowExCCF, 11].Value = motivo;
+
+                    if (!string.IsNullOrEmpty(f.CodigoGeneracion))
+                    {
+                        var url = $"https://admin.factura.gob.sv/consultaPublica?ambiente=01&codGen={f.CodigoGeneracion}&fechaEmi={f.Fecha:yyyy-MM-dd}";
+                        wsExcluidasCCF.Cells[rowExCCF, 12].Value = "VERIFICAR";
+                        wsExcluidasCCF.Cells[rowExCCF, 12].Hyperlink = new Uri(url);
+                    }
+                    else
+                    {
+                        wsExcluidasCCF.Cells[rowExCCF, 12].Value = "N/A";
+                    }
+
+                    wsExcluidasCCF.Cells[rowExCCF, 6].Style.Numberformat.Format = "#,##0.00";
+                    wsExcluidasCCF.Cells[rowExCCF, 7].Style.Numberformat.Format = "#,##0.00";
+                    wsExcluidasCCF.Cells[rowExCCF, 8].Style.Numberformat.Format = "#,##0.00";
+                    wsExcluidasCCF.Cells[rowExCCF, 9].Style.Numberformat.Format = "#,##0.00";
+
+                    for (int c = 1; c <= 12; c++)
+                    {
+                        wsExcluidasCCF.Cells[rowExCCF, c].Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
+                    }
+
+                    rowExCCF++;
+                }
+                // Totales Excluidas CCF
+                wsExcluidasCCF.Cells[rowExCCF, 1].Value = "";
+                rowExCCF++;
+                var totalSinSelloCCF = ccfExcluidas.Where(v => !v.Anulada && string.IsNullOrEmpty(v.SelloRecepcion)).Count();
+                var montoSinSelloCCF = ccfExcluidas.Where(v => !v.Anulada && string.IsNullOrEmpty(v.SelloRecepcion)).Sum(v => v.TotalPagar);
+                var totalAnuladasCCF2 = ccfExcluidas.Where(v => v.Anulada).Count();
+                var montoAnuladasCCF2 = ccfExcluidas.Where(v => v.Anulada).Sum(v => v.TotalPagar);
+                var totalGeneralExCCF = ccfExcluidas.Sum(v => v.TotalPagar);
+
+                wsExcluidasCCF.Cells[rowExCCF, 1].Value = "TOTALES:";
+                wsExcluidasCCF.Cells[rowExCCF, 9].Value = totalGeneralExCCF;
+                wsExcluidasCCF.Cells[rowExCCF, 9].Style.Numberformat.Format = "#,##0.00";
+                wsExcluidasCCF.Cells[rowExCCF, 11].Value = $"Sin Sello: {totalSinSelloCCF} (${montoSinSelloCCF:N2}) | Anuladas: {totalAnuladasCCF2} (${montoAnuladasCCF2:N2})";
+
+                var totalRangeExCCF = wsExcluidasCCF.Cells[rowExCCF, 1, rowExCCF, 12];
+                totalRangeExCCF.Style.Font.Bold = true;
+                totalRangeExCCF.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                totalRangeExCCF.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                totalRangeExCCF.Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
+                wsExcluidasCCF.Cells.AutoFitColumns();
 
                 var fileName = $"ReporteFacturas_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
                 var content = package.GetAsByteArray();

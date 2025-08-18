@@ -1,0 +1,851 @@
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.Linq;
+using Dapper;
+using ClosedXML.Excel;
+using JPOS2.clases.conexion;
+
+public class ReporteService
+{
+    
+    private readonly IDbConnection _cn = Conexion.Conectar();
+    
+    // Método para obtener ventas (igual que en la web)
+    public List<VentaR> ObtenerVentasParaReporte(DateTime? fechaInicio, DateTime? fechaFin, int? tipoVenta)
+    {
+        string consulta = "SELECT v.*, c.* FROM venta v LEFT JOIN cliente c ON v.ClienteId = c.ClienteId";
+        var ventas = _cn.Query<VentaR, ClienteR, VentaR>(consulta, (venta, cliente) =>
+        {
+            venta.Cliente = cliente;
+            return venta;
+        }, splitOn: "ClienteId").ToList();
+
+        var query = ventas.AsQueryable();
+
+        if (fechaInicio.HasValue)
+        {
+            var fechaInicioCompleta = fechaInicio.Value.Date;
+            query = query.Where(v => v.Fecha >= fechaInicioCompleta);
+        }
+        if (fechaFin.HasValue)
+        {
+            var fechaFinCompleta = fechaFin.Value.Date.AddDays(1).AddTicks(-1);
+            query = query.Where(v => v.Fecha <= fechaFinCompleta);
+        }
+        if (tipoVenta.HasValue)
+        {
+            query = query.Where(v => v.TipoComprobante == tipoVenta.Value);
+        }
+
+        return query.OrderBy(v => v.Fecha).ToList();
+    }
+
+    // Método completo para generar Excel (copia exacta de la web)
+    public void GenerarReporteExcel(DateTime? fechaInicio, DateTime? fechaFin, int? tipoVenta, string rutaArchivo)
+    {
+        // Obtener ventas (igual que en la web)
+        var ventas = ObtenerVentasParaReporte(fechaInicio, fechaFin, tipoVenta);
+
+        using (var workbook = new XLWorkbook())
+        {
+            // Hoja 1: Resumen General
+            var wsResumen = workbook.Worksheets.Add("Resumen General");
+            wsResumen.Cell(1, 1).Value = "CATEGORÍA";
+            wsResumen.Cell(1, 2).Value = "CONSUMIDOR FINAL (CF)";
+            wsResumen.Cell(1, 3).Value = "MONTO CF";
+            wsResumen.Cell(1, 4).Value = "CRÉDITO FISCAL (CCF)";
+            wsResumen.Cell(1, 5).Value = "MONTO CCF";
+            wsResumen.Cell(1, 6).Value = "TOTAL";
+            wsResumen.Cell(1, 7).Value = "MONTO TOTAL";
+
+            // Calcular estadísticas
+            var cfValidas = ventas.Where(v => v.TipoComprobante == 1 && 
+                                              !string.IsNullOrEmpty(v.SelloRecepcion) && 
+                                              string.IsNullOrEmpty(v.MotivoAnulacion)).ToList();
+            var cfSinSelloNoAnuladas = ventas.Where(v => v.TipoComprobante == 1 && 
+                                                         string.IsNullOrEmpty(v.SelloRecepcion) && 
+                                                         string.IsNullOrEmpty(v.MotivoAnulacion)).ToList();
+            var cfAnuladasSinSelloAnulacion = ventas.Where(v => v.TipoComprobante == 1 && 
+                                                                 !string.IsNullOrEmpty(v.MotivoAnulacion) && 
+                                                                 string.IsNullOrEmpty(v.SelloRecepcion)).ToList();
+            var cfAnuladasConSelloAnulacion = ventas.Where(v => v.TipoComprobante == 1 && 
+                                                                 !string.IsNullOrEmpty(v.MotivoAnulacion) && 
+                                                                 !string.IsNullOrEmpty(v.SelloRecepcion)).ToList();
+
+            var ccfValidas = ventas.Where(v => v.TipoComprobante == 2 && 
+                                               !string.IsNullOrEmpty(v.SelloRecepcion) && 
+                                               string.IsNullOrEmpty(v.MotivoAnulacion)).ToList();
+            var ccfSinSelloNoAnuladas = ventas.Where(v => v.TipoComprobante == 2 && 
+                                                           string.IsNullOrEmpty(v.SelloRecepcion) && 
+                                                           string.IsNullOrEmpty(v.MotivoAnulacion)).ToList();
+            var ccfAnuladasSinSelloAnulacion = ventas.Where(v => v.TipoComprobante == 2 && 
+                                                                   !string.IsNullOrEmpty(v.MotivoAnulacion) && 
+                                                                   string.IsNullOrEmpty(v.SelloRecepcion)).ToList();
+            var ccfAnuladasConSelloAnulacion = ventas.Where(v => v.TipoComprobante == 2 && 
+                                                                   !string.IsNullOrEmpty(v.MotivoAnulacion) && 
+                                                                   !string.IsNullOrEmpty(v.SelloRecepcion)).ToList();
+
+            int rowResumen = 2;
+            
+            // CF Válidas
+            wsResumen.Cell(rowResumen, 1).Value = "VÁLIDAS";
+            wsResumen.Cell(rowResumen, 2).Value = cfValidas.Count;
+            wsResumen.Cell(rowResumen, 3).Value = cfValidas.Sum(v => v.Total);
+            wsResumen.Cell(rowResumen, 4).Value = ccfValidas.Count;
+            wsResumen.Cell(rowResumen, 5).Value = ccfValidas.Sum(v => v.Total);
+            wsResumen.Cell(rowResumen, 6).Value = cfValidas.Count + ccfValidas.Count;
+            wsResumen.Cell(rowResumen, 7).Value = cfValidas.Sum(v => v.Total) + ccfValidas.Sum(v => v.Total);
+            rowResumen++;
+
+            // CF Sin sello pero no anuladas
+            wsResumen.Cell(rowResumen, 1).Value = "SIN SELLO (NO ANULADAS)";
+            wsResumen.Cell(rowResumen, 2).Value = cfSinSelloNoAnuladas.Count;
+            wsResumen.Cell(rowResumen, 3).Value = cfSinSelloNoAnuladas.Sum(v => v.Total);
+            wsResumen.Cell(rowResumen, 4).Value = ccfSinSelloNoAnuladas.Count;
+            wsResumen.Cell(rowResumen, 5).Value = ccfSinSelloNoAnuladas.Sum(v => v.Total);
+            wsResumen.Cell(rowResumen, 6).Value = cfSinSelloNoAnuladas.Count + ccfSinSelloNoAnuladas.Count;
+            wsResumen.Cell(rowResumen, 7).Value = cfSinSelloNoAnuladas.Sum(v => v.Total) + ccfSinSelloNoAnuladas.Sum(v => v.Total);
+            rowResumen++;
+
+            // Anuladas sin sello de anulación
+            wsResumen.Cell(rowResumen, 1).Value = "ANULADAS SIN SELLO ANULACIÓN";
+            wsResumen.Cell(rowResumen, 2).Value = cfAnuladasSinSelloAnulacion.Count;
+            wsResumen.Cell(rowResumen, 3).Value = cfAnuladasSinSelloAnulacion.Sum(v => v.Total);
+            wsResumen.Cell(rowResumen, 4).Value = ccfAnuladasSinSelloAnulacion.Count;
+            wsResumen.Cell(rowResumen, 5).Value = ccfAnuladasSinSelloAnulacion.Sum(v => v.Total);
+            wsResumen.Cell(rowResumen, 6).Value = cfAnuladasSinSelloAnulacion.Count + ccfAnuladasSinSelloAnulacion.Count;
+            wsResumen.Cell(rowResumen, 7).Value = cfAnuladasSinSelloAnulacion.Sum(v => v.Total) + ccfAnuladasSinSelloAnulacion.Sum(v => v.Total);
+            rowResumen++;
+
+            // Anuladas con sello de anulación
+            wsResumen.Cell(rowResumen, 1).Value = "ANULADAS CON SELLO ANULACIÓN";
+            wsResumen.Cell(rowResumen, 2).Value = cfAnuladasConSelloAnulacion.Count;
+            wsResumen.Cell(rowResumen, 3).Value = cfAnuladasConSelloAnulacion.Sum(v => v.Total);
+            wsResumen.Cell(rowResumen, 4).Value = ccfAnuladasConSelloAnulacion.Count;
+            wsResumen.Cell(rowResumen, 5).Value = ccfAnuladasConSelloAnulacion.Sum(v => v.Total);
+            wsResumen.Cell(rowResumen, 6).Value = cfAnuladasConSelloAnulacion.Count + ccfAnuladasConSelloAnulacion.Count;
+            wsResumen.Cell(rowResumen, 7).Value = cfAnuladasConSelloAnulacion.Sum(v => v.Total) + ccfAnuladasConSelloAnulacion.Sum(v => v.Total);
+            rowResumen++;
+
+            // Línea separadora
+            wsResumen.Cell(rowResumen, 1).Value = "";
+            rowResumen++;
+
+            // TOTALES
+            wsResumen.Cell(rowResumen, 1).Value = "TOTAL GENERAL";
+            wsResumen.Cell(rowResumen, 2).Value = ventas.Where(v => v.TipoComprobante == 1).Count();
+            wsResumen.Cell(rowResumen, 3).Value = ventas.Where(v => v.TipoComprobante == 1).Sum(v => v.Total);
+            wsResumen.Cell(rowResumen, 4).Value = ventas.Where(v => v.TipoComprobante == 2).Count();
+            wsResumen.Cell(rowResumen, 5).Value = ventas.Where(v => v.TipoComprobante == 2).Sum(v => v.Total);
+            wsResumen.Cell(rowResumen, 6).Value = ventas.Count;
+            wsResumen.Cell(rowResumen, 7).Value = ventas.Sum(v => v.Total);
+
+            // Agregar información del rango de fechas
+            rowResumen++;
+            wsResumen.Cell(rowResumen, 1).Value = "";
+            rowResumen++;
+            
+            string rangoFechas = "";
+            if (fechaInicio.HasValue && fechaFin.HasValue)
+            {
+                if (fechaInicio.Value.Date == fechaFin.Value.Date)
+                {
+                    rangoFechas = $"Reporte generado para: {fechaInicio.Value:dd/MM/yyyy}";
+                }
+                else
+                {
+                    rangoFechas = $"Reporte generado del {fechaInicio.Value:dd/MM/yyyy} al {fechaFin.Value:dd/MM/yyyy}";
+                }
+            }
+            else if (fechaInicio.HasValue)
+            {
+                rangoFechas = $"Reporte generado desde: {fechaInicio.Value:dd/MM/yyyy}";
+            }
+            else if (fechaFin.HasValue)
+            {
+                rangoFechas = $"Reporte generado hasta: {fechaFin.Value:dd/MM/yyyy}";
+            }
+            else
+            {
+                rangoFechas = "Reporte generado para todas las fechas";
+            }
+            
+            wsResumen.Cell(rowResumen, 1).Value = rangoFechas;
+            var rangeFechas = wsResumen.Range(rowResumen, 1, rowResumen, 7);
+            rangeFechas.Style.Font.Bold = true;
+            rangeFechas.Style.Font.Italic = true;
+            rangeFechas.Style.Fill.BackgroundColor = XLColor.LightYellow;
+
+            // Formatear encabezados
+            var rangeHeader = wsResumen.Range(1, 1, 1, 7);
+            rangeHeader.Style.Font.Bold = true;
+            rangeHeader.Style.Fill.BackgroundColor = XLColor.LightGray;
+
+            // Formatear totales
+            var rangeTotales = wsResumen.Range(rowResumen - 2, 1, rowResumen - 2, 7);
+            rangeTotales.Style.Font.Bold = true;
+            rangeTotales.Style.Fill.BackgroundColor = XLColor.LightBlue;
+
+            // Ajustar columnas
+            wsResumen.Columns().AdjustToContents();
+
+            // Hoja 2: Ventas (original)
+            var worksheet = workbook.Worksheets.Add("Ventas");
+            worksheet.Cell(1, 1).Value = "Fecha";
+            worksheet.Cell(1, 2).Value = "Tipo";
+            worksheet.Cell(1, 3).Value = "Número Control";
+            worksheet.Cell(1, 4).Value = "Código Generación";
+            worksheet.Cell(1, 5).Value = "Sello Recepción";
+            worksheet.Cell(1, 6).Value = "Cliente";
+            worksheet.Cell(1, 7).Value = "Total";
+            worksheet.Cell(1, 8).Value = "Retención";
+            worksheet.Cell(1, 9).Value = "Estado";
+
+            int row = 2;
+            int totalValidas = 0;
+            int totalAnuladas = 0;
+            int totalPendientes = 0;
+            decimal sumaTotalValidas = 0;
+            decimal sumaTotalAnuladas = 0;
+            decimal sumaTotalPendientes = 0;
+            
+            foreach (var venta in ventas)
+            {
+                worksheet.Cell(row, 1).Value = venta.Fecha.ToString("dd/MM/yyyy");
+                worksheet.Cell(row, 2).Value = venta.TipoComprobante == 1 ? "CF" : venta.TipoComprobante == 2 ? "CCF" : "-";
+                worksheet.Cell(row, 3).Value = venta.NumeroDeControl ?? "N/A";
+                worksheet.Cell(row, 4).Value = venta.CodigoGeneracion ?? "N/A";
+                worksheet.Cell(row, 5).Value = venta.SelloRecepcion ?? "";
+                worksheet.Cell(row, 6).Value = venta.Cliente?.Nombre ?? "N/A";
+                worksheet.Cell(row, 7).Value = venta.Total;
+                worksheet.Cell(row, 8).Value = venta.Retencion;
+                
+                string estado = !string.IsNullOrEmpty(venta.MotivoAnulacion) ? "Anulada" : (!string.IsNullOrEmpty(venta.SelloRecepcion) ? "Válida" : "Pendiente");
+                worksheet.Cell(row, 9).Value = estado;
+                
+                // Contar y sumar por estado
+                if (estado == "Válida") 
+                {
+                    totalValidas++;
+                    sumaTotalValidas += venta.Total;
+                }
+                else if (estado == "Anulada") 
+                {
+                    totalAnuladas++;
+                    sumaTotalAnuladas += venta.Total;
+                }
+                else if (estado == "Pendiente") 
+                {
+                    totalPendientes++;
+                    sumaTotalPendientes += venta.Total;
+                }
+                
+                row++;
+            }
+            
+            // Agregar fila en blanco
+            worksheet.Cell(row, 1).Value = "";
+            row++;
+            
+            // Agregar totales
+            worksheet.Cell(row, 1).Value = "TOTALES:";
+            worksheet.Cell(row, 7).Value = sumaTotalValidas + sumaTotalAnuladas + sumaTotalPendientes; // Total general
+            worksheet.Cell(row, 9).Value = $"Válidas: {totalValidas} (${sumaTotalValidas:F2}) | Anuladas: {totalAnuladas} (${sumaTotalAnuladas:F2}) | Pendientes: {totalPendientes} (${sumaTotalPendientes:F2})";
+            
+            // Agregar fila adicional con total "Todas menos anuladas"
+            row++;
+            worksheet.Cell(row, 1).Value = "TOTAL (SIN ANULADAS):";
+            worksheet.Cell(row, 7).Value = sumaTotalValidas + sumaTotalPendientes; // Total sin anuladas
+            worksheet.Cell(row, 9).Value = $"Válidas + Pendientes: {totalValidas + totalPendientes} (${sumaTotalValidas + sumaTotalPendientes:F2})";
+            
+            // Formatear fila de total sin anuladas
+            var rangeTotalSinAnuladas = worksheet.Range(row, 1, row, 9);
+            rangeTotalSinAnuladas.Style.Font.Bold = true;
+            rangeTotalSinAnuladas.Style.Fill.BackgroundColor = XLColor.LightGreen;
+            
+            // Formatear fila de totales
+            var rangeTotalesVentas = worksheet.Range(row - 1, 1, row - 1, 9);
+            rangeTotalesVentas.Style.Font.Bold = true;
+            rangeTotalesVentas.Style.Fill.BackgroundColor = XLColor.LightGray;
+            
+            worksheet.Columns().AdjustToContents();
+
+            // Hoja 3: Consolidado (nuevo formato)
+            var wsConsolidado = workbook.Worksheets.Add("Consolidado");
+            wsConsolidado.Cell(1, 1).Value = "Fecha";
+            wsConsolidado.Cell(1, 2).Value = "Total CF";
+            wsConsolidado.Cell(1, 3).Value = "IVA CF";
+            wsConsolidado.Cell(1, 4).Value = "Retención CF";
+            wsConsolidado.Cell(1, 5).Value = "Gravado CCF";
+            wsConsolidado.Cell(1, 6).Value = "IVA CCF";
+            wsConsolidado.Cell(1, 7).Value = "Retención CCF";
+            wsConsolidado.Cell(1, 8).Value = "Total CCF";
+            wsConsolidado.Cell(1, 9).Value = "Total Día";
+
+            var resumenPorFecha = ventas
+                .Where(v => string.IsNullOrEmpty(v.MotivoAnulacion)) // Solo excluir anuladas
+                .GroupBy(v => v.Fecha.Date)
+                .OrderBy(g => g.Key)
+                .Select(g => new
+                {
+                    Fecha = g.Key,
+                    TotalCF = g.Where(v => v.TipoComprobante == 1).Sum(v => v.Total),
+                    IVACF = g.Where(v => v.TipoComprobante == 1).Sum(v => Math.Round(v.Total - (v.Total / 1.13m), 2)),
+                    RetencionCF = g.Where(v => v.TipoComprobante == 1).Sum(v => v.Retencion ?? 0),
+                    GravadoCCF = g.Where(v => v.TipoComprobante == 2).Sum(v => Math.Round(v.Total / 1.13m, 2)),
+                    IVACCF = g.Where(v => v.TipoComprobante == 2).Sum(v => Math.Round(v.Total - (v.Total / 1.13m), 2)),
+                    RetencionCCF = g.Where(v => v.TipoComprobante == 2).Sum(v => v.Retencion ?? 0),
+                    TotalCCF = g.Where(v => v.TipoComprobante == 2).Sum(v => v.Total),
+                })
+                .ToList();
+
+            int rowC = 2;
+            foreach (var item in resumenPorFecha)
+            {
+                wsConsolidado.Cell(rowC, 1).Value = item.Fecha.ToString("dd/MM/yyyy");
+                wsConsolidado.Cell(rowC, 2).Value = item.TotalCF;
+                wsConsolidado.Cell(rowC, 3).Value = item.IVACF;
+                wsConsolidado.Cell(rowC, 4).Value = item.RetencionCF;
+                wsConsolidado.Cell(rowC, 5).Value = item.GravadoCCF;
+                wsConsolidado.Cell(rowC, 6).Value = item.IVACCF;
+                wsConsolidado.Cell(rowC, 7).Value = item.RetencionCCF;
+                wsConsolidado.Cell(rowC, 8).Value = item.TotalCCF;
+                wsConsolidado.Cell(rowC, 9).Value = item.TotalCF + item.TotalCCF;
+                rowC++;
+            }
+            wsConsolidado.Columns().AdjustToContents();
+
+            // Colorear columnas CF y CCF
+            var colorCF = XLColor.LightBlue;
+            var colorCCF = XLColor.LightGreen;
+            wsConsolidado.Range(1, 2, rowC - 1, 4).Style.Fill.BackgroundColor = colorCF;
+            wsConsolidado.Range(1, 5, rowC - 1, 8).Style.Fill.BackgroundColor = colorCCF;
+
+            // Verificar si hay ventas sin sello en el consolidado
+            var ventasSinSelloConsolidado = ventas.Where(v => string.IsNullOrEmpty(v.MotivoAnulacion) && 
+                                                               string.IsNullOrEmpty(v.SelloRecepcion)).Count();
+            if (ventasSinSelloConsolidado > 0)
+            {
+                rowC++;
+                wsConsolidado.Cell(rowC, 1).Value = "";
+                rowC++;
+                wsConsolidado.Cell(rowC, 1).Value = $"⚠️ NOTA: Se han incluido {ventasSinSelloConsolidado} facturas sin sello de recepción que no están anuladas.";
+                wsConsolidado.Cell(rowC, 2).Value = "Se requiere revisión manual de estas facturas.";
+                var rangeNota = wsConsolidado.Range(rowC, 1, rowC, 9);
+                rangeNota.Style.Font.Bold = true;
+                rangeNota.Style.Fill.BackgroundColor = XLColor.Yellow;
+            }
+
+            // Hoja 4: Consumidor Final (CF)
+            var wsCF = workbook.Worksheets.Add("ConsumidorFinal");
+            wsCF.Cell(1, 1).Value = "Fecha";
+            wsCF.Cell(1, 2).Value = "Tipo";
+            wsCF.Cell(1, 3).Value = "Número Control";
+            wsCF.Cell(1, 4).Value = "Código Generación";
+            wsCF.Cell(1, 5).Value = "Sello Recepción";
+            wsCF.Cell(1, 6).Value = "Cliente";
+            wsCF.Cell(1, 7).Value = "Total";
+            wsCF.Cell(1, 8).Value = "IVA";
+            wsCF.Cell(1, 9).Value = "Retención";
+            wsCF.Cell(1, 10).Value = "Estado";
+
+            int rowCF = 2;
+            foreach (var venta in ventas.Where(v => v.TipoComprobante == 1 && 
+                                                    string.IsNullOrEmpty(v.MotivoAnulacion)))
+            {
+                wsCF.Cell(rowCF, 1).Value = venta.Fecha.ToString("dd/MM/yyyy");
+                wsCF.Cell(rowCF, 2).Value = "CF";
+                wsCF.Cell(rowCF, 3).Value = venta.NumeroDeControl ?? "N/A";
+                wsCF.Cell(rowCF, 4).Value = venta.CodigoGeneracion ?? "N/A";
+                wsCF.Cell(rowCF, 5).Value = venta.SelloRecepcion ?? "";
+                wsCF.Cell(rowCF, 6).Value = venta.Cliente?.Nombre ?? "N/A";
+                wsCF.Cell(rowCF, 7).Value = venta.Total;
+                wsCF.Cell(rowCF, 8).Value = Math.Round(venta.Total - (venta.Total / 1.13m), 2);
+                wsCF.Cell(rowCF, 9).Value = venta.Retencion;
+                wsCF.Cell(rowCF, 10).Value = !string.IsNullOrEmpty(venta.MotivoAnulacion) ? "Anulada" : (!string.IsNullOrEmpty(venta.SelloRecepcion) ? "Válida" : "Pendiente");
+                rowCF++;
+            }
+            wsCF.Columns().AdjustToContents();
+
+            // Verificar si hay ventas CF sin sello
+            var ventasCFSinSello = ventas.Where(v => v.TipoComprobante == 1 && 
+                                                     string.IsNullOrEmpty(v.MotivoAnulacion) && 
+                                                     string.IsNullOrEmpty(v.SelloRecepcion)).Count();
+            if (ventasCFSinSello > 0)
+            {
+                rowCF++;
+                wsCF.Cell(rowCF, 1).Value = "";
+                rowCF++;
+                wsCF.Cell(rowCF, 1).Value = $"⚠️ NOTA: Se han incluido {ventasCFSinSello} facturas CF sin sello de recepción que no están anuladas.";
+                wsCF.Cell(rowCF, 2).Value = "Se requiere revisión manual de estas facturas.";
+                var rangeNotaCF = wsCF.Range(rowCF, 1, rowCF, 10);
+                rangeNotaCF.Style.Font.Bold = true;
+                rangeNotaCF.Style.Fill.BackgroundColor = XLColor.Yellow;
+            }
+
+            // Hoja 5: Crédito Fiscal (CCF)
+            var wsCCF = workbook.Worksheets.Add("CreditoFiscal");
+            wsCCF.Cell(1, 1).Value = "Fecha";
+            wsCCF.Cell(1, 2).Value = "Tipo";
+            wsCCF.Cell(1, 3).Value = "Número Control";
+            wsCCF.Cell(1, 4).Value = "Código Generación";
+            wsCCF.Cell(1, 5).Value = "Sello Recepción";
+            wsCCF.Cell(1, 6).Value = "Cliente";
+            wsCCF.Cell(1, 7).Value = "Dui";
+            wsCCF.Cell(1, 8).Value = "Nit";
+            wsCCF.Cell(1, 9).Value = "Registro";
+            wsCCF.Cell(1, 10).Value = "Giro";
+            wsCCF.Cell(1, 11).Value = "coddepartamento";
+            wsCCF.Cell(1, 12).Value = "codmunicipio";
+            wsCCF.Cell(1, 13).Value = "codactividad";
+            wsCCF.Cell(1, 14).Value = "grancontribuyente";
+            wsCCF.Cell(1, 15).Value = "Total";
+            wsCCF.Cell(1, 16).Value = "Gravado";
+            wsCCF.Cell(1, 17).Value = "Retención";
+            wsCCF.Cell(1, 18).Value = "IVA";
+            wsCCF.Cell(1, 19).Value = "Estado";
+
+            int rowCCF = 2;
+            foreach (var venta in ventas.Where(v => v.TipoComprobante == 2 && 
+                                                    string.IsNullOrEmpty(v.MotivoAnulacion)))
+            {
+                wsCCF.Cell(rowCCF, 1).Value = venta.Fecha.ToString("dd/MM/yyyy");
+                wsCCF.Cell(rowCCF, 2).Value = "CCF";
+                wsCCF.Cell(rowCCF, 3).Value = venta.NumeroDeControl ?? "N/A";
+                wsCCF.Cell(rowCCF, 4).Value = venta.CodigoGeneracion ?? "N/A";
+                wsCCF.Cell(rowCCF, 5).Value = venta.SelloRecepcion ?? "";
+                wsCCF.Cell(rowCCF, 6).Value = venta.Cliente?.Nombre ?? "N/A";
+                wsCCF.Cell(rowCCF, 7).Value = venta.Cliente?.Dui ?? "";
+                wsCCF.Cell(rowCCF, 8).Value = venta.Cliente?.Nit ?? "";
+                wsCCF.Cell(rowCCF, 9).Value = venta.Cliente?.Registro ?? "";
+                wsCCF.Cell(rowCCF, 10).Value = venta.Cliente?.Giro ?? "";
+                wsCCF.Cell(rowCCF, 11).Value = venta.Cliente?.CodDepartamento ?? "";
+                wsCCF.Cell(rowCCF, 12).Value = venta.Cliente?.CodMunicipio ?? "";
+                wsCCF.Cell(rowCCF, 13).Value = venta.Cliente?.CodActividad ?? "";
+                wsCCF.Cell(rowCCF, 14).Value = venta.Cliente?.GranContribuyente?.ToString() ?? "";
+                wsCCF.Cell(rowCCF, 15).Value = venta.Total;
+                wsCCF.Cell(rowCCF, 16).Value = Math.Round(venta.Total / 1.13m, 2);
+                wsCCF.Cell(rowCCF, 17).Value = venta.Retencion;
+                wsCCF.Cell(rowCCF, 18).Value = Math.Round(venta.Total - (venta.Total / 1.13m), 2);
+                wsCCF.Cell(rowCCF, 19).Value = !string.IsNullOrEmpty(venta.MotivoAnulacion) ? "Anulada" : (!string.IsNullOrEmpty(venta.SelloRecepcion) ? "Válida" : "Pendiente");
+                rowCCF++;
+            }
+            wsCCF.Columns().AdjustToContents();
+
+            // Verificar si hay ventas CCF sin sello
+            var ventasCCFSinSello = ventas.Where(v => v.TipoComprobante == 2 && 
+                                                      string.IsNullOrEmpty(v.MotivoAnulacion) && 
+                                                      string.IsNullOrEmpty(v.SelloRecepcion)).Count();
+            if (ventasCCFSinSello > 0)
+            {
+                rowCCF++;
+                wsCCF.Cell(rowCCF, 1).Value = "";
+                rowCCF++;
+                wsCCF.Cell(rowCCF, 1).Value = $"⚠️ NOTA: Se han incluido {ventasCCFSinSello} facturas CCF sin sello de recepción que no están anuladas.";
+                wsCCF.Cell(rowCCF, 2).Value = "Se requiere revisión manual de estas facturas.";
+                var rangeNotaCCF = wsCCF.Range(rowCCF, 1, rowCCF, 19);
+                rangeNotaCCF.Style.Font.Bold = true;
+                rangeNotaCCF.Style.Fill.BackgroundColor = XLColor.Yellow;
+            }
+
+            // Hoja 6: ANEXO CONSUMIDOR FINAL
+            var wsAnexoCF = workbook.Worksheets.Add("ANEXO CONSUMIDOR FINAL");
+            wsAnexoCF.Cell(1, 1).Value = "A";
+            wsAnexoCF.Cell(1, 2).Value = "B";
+            wsAnexoCF.Cell(1, 3).Value = "C";
+            wsAnexoCF.Cell(1, 4).Value = "D";
+            wsAnexoCF.Cell(1, 5).Value = "E";
+            wsAnexoCF.Cell(1, 6).Value = "F";
+            wsAnexoCF.Cell(1, 7).Value = "G";
+            wsAnexoCF.Cell(1, 8).Value = "H";
+            wsAnexoCF.Cell(1, 9).Value = "I";
+            wsAnexoCF.Cell(1, 10).Value = "J";
+            wsAnexoCF.Cell(1, 11).Value = "K";
+            wsAnexoCF.Cell(1, 12).Value = "L";
+            wsAnexoCF.Cell(1, 13).Value = "M";
+            wsAnexoCF.Cell(1, 14).Value = "N";
+            wsAnexoCF.Cell(1, 15).Value = "O";
+            wsAnexoCF.Cell(1, 16).Value = "P";
+            wsAnexoCF.Cell(1, 17).Value = "Q";
+            wsAnexoCF.Cell(1, 18).Value = "R";
+            wsAnexoCF.Cell(1, 19).Value = "S";
+            wsAnexoCF.Cell(1, 20).Value = "T";
+            wsAnexoCF.Cell(1, 21).Value = "U";
+            wsAnexoCF.Cell(1, 22).Value = "V";
+            wsAnexoCF.Cell(1, 23).Value = "W";
+
+            var ventasCF = ventas.Where(v => v.TipoComprobante == 1 && 
+                                             !string.IsNullOrEmpty(v.SelloRecepcion) && 
+                                             string.IsNullOrEmpty(v.MotivoAnulacion)).ToList();
+            var anexoCFPorFecha = ventasCF
+                .GroupBy(v => v.Fecha.Date)
+                .OrderBy(g => g.Key)
+                .Select(g => new
+                {
+                    Fecha = g.Key,
+                    CantidadVentas = g.Count(),
+                    PrimerCodigo = g.OrderBy(v => v.Fecha).First().CodigoGeneracion ?? "",
+                    UltimoCodigo = g.OrderByDescending(v => v.Fecha).First().CodigoGeneracion ?? "",
+                    TotalConsolidado = g.Sum(v => v.Total)
+                })
+                .ToList();
+
+            int rowAnexo = 2;
+            foreach (var item in anexoCFPorFecha)
+            {
+                wsAnexoCF.Cell(rowAnexo, 1).Value = item.Fecha.ToString("dd/MM/yyyy");
+                wsAnexoCF.Cell(rowAnexo, 2).Value = 4;
+                wsAnexoCF.Cell(rowAnexo, 3).Value = 1;
+                wsAnexoCF.Cell(rowAnexo, 4).Value = "N/A";
+                wsAnexoCF.Cell(rowAnexo, 5).Value = "N/A";
+                wsAnexoCF.Cell(rowAnexo, 6).Value = "N/A";
+                wsAnexoCF.Cell(rowAnexo, 7).Value = "N/A";
+                wsAnexoCF.Cell(rowAnexo, 8).Value = item.PrimerCodigo.Replace("-", "");
+                wsAnexoCF.Cell(rowAnexo, 9).Value = item.UltimoCodigo.Replace("-", "");
+                wsAnexoCF.Cell(rowAnexo, 10).Value = "";
+                wsAnexoCF.Cell(rowAnexo, 11).Value = 0;
+                wsAnexoCF.Cell(rowAnexo, 12).Value = 0;
+                wsAnexoCF.Cell(rowAnexo, 13).Value = 0;
+                wsAnexoCF.Cell(rowAnexo, 14).Value = item.TotalConsolidado;
+                wsAnexoCF.Cell(rowAnexo, 15).Value = 0;
+                wsAnexoCF.Cell(rowAnexo, 16).Value = 0;
+                wsAnexoCF.Cell(rowAnexo, 17).Value = 0;
+                wsAnexoCF.Cell(rowAnexo, 18).Value = 0;
+                wsAnexoCF.Cell(rowAnexo, 19).Value = 0;
+                wsAnexoCF.Cell(rowAnexo, 20).Value = item.TotalConsolidado;
+                wsAnexoCF.Cell(rowAnexo, 21).Value = 1;
+                wsAnexoCF.Cell(rowAnexo, 22).Value = 4;
+                wsAnexoCF.Cell(rowAnexo, 23).Value = 2;
+                rowAnexo++;
+            }
+            wsAnexoCF.Columns().AdjustToContents();
+
+            // Ajustar ancho de columnas para ANEXO CONSUMIDOR FINAL
+            for (int col = 1; col <= 23; col++)
+            {
+                if (col == 8 || col == 9)
+                {
+                    wsAnexoCF.Column(col).Width = 41;
+                }
+                else
+                {
+                    wsAnexoCF.Column(col).Width = 12;
+                }
+            }
+
+            // Hoja 7: ANEXO CONTRIBUYENTES
+            var wsAnexoContribuyentes = workbook.Worksheets.Add("ANEXO CONTRIBUYENTES");
+            wsAnexoContribuyentes.Cell(1, 1).Value = "A";
+            wsAnexoContribuyentes.Cell(1, 2).Value = "B";
+            wsAnexoContribuyentes.Cell(1, 3).Value = "C";
+            wsAnexoContribuyentes.Cell(1, 4).Value = "D";
+            wsAnexoContribuyentes.Cell(1, 5).Value = "E";
+            wsAnexoContribuyentes.Cell(1, 6).Value = "F";
+            wsAnexoContribuyentes.Cell(1, 7).Value = "G";
+            wsAnexoContribuyentes.Cell(1, 8).Value = "H";
+            wsAnexoContribuyentes.Cell(1, 9).Value = "I";
+            wsAnexoContribuyentes.Cell(1, 10).Value = "J";
+            wsAnexoContribuyentes.Cell(1, 11).Value = "K";
+            wsAnexoContribuyentes.Cell(1, 12).Value = "L";
+            wsAnexoContribuyentes.Cell(1, 13).Value = "M";
+            wsAnexoContribuyentes.Cell(1, 14).Value = "N";
+            wsAnexoContribuyentes.Cell(1, 15).Value = "O";
+            wsAnexoContribuyentes.Cell(1, 16).Value = "P";
+            wsAnexoContribuyentes.Cell(1, 17).Value = "Q";
+            wsAnexoContribuyentes.Cell(1, 18).Value = "R";
+            wsAnexoContribuyentes.Cell(1, 19).Value = "S";
+            wsAnexoContribuyentes.Cell(1, 20).Value = "T";
+
+            var ventasCCF = ventas.Where(v => v.TipoComprobante == 2 && 
+                                              !string.IsNullOrEmpty(v.SelloRecepcion) && 
+                                              string.IsNullOrEmpty(v.MotivoAnulacion)).OrderBy(v => v.Fecha).ToList();
+
+            int rowContribuyentes = 2;
+            foreach (var venta in ventasCCF)
+            {
+                var gravado = Math.Round(venta.Total / 1.13m, 2);
+                var iva = Math.Round(venta.Total - gravado, 2);
+
+                wsAnexoContribuyentes.Cell(rowContribuyentes, 1).Value = venta.Fecha.ToString("dd/MM/yyyy");
+                wsAnexoContribuyentes.Cell(rowContribuyentes, 2).Value = 4;
+                wsAnexoContribuyentes.Cell(rowContribuyentes, 3).Value = 3;
+                wsAnexoContribuyentes.Cell(rowContribuyentes, 4).Value = venta.NumeroDeControl?.Replace("-", "") ?? "N/A";
+                wsAnexoContribuyentes.Cell(rowContribuyentes, 5).Value = venta.SelloRecepcion ?? "";
+                wsAnexoContribuyentes.Cell(rowContribuyentes, 6).Value = venta.CodigoGeneracion?.Replace("-", "") ?? "N/A";
+                wsAnexoContribuyentes.Cell(rowContribuyentes, 7).Value = "0000";
+                wsAnexoContribuyentes.Cell(rowContribuyentes, 8).Value = venta.Cliente?.Registro ?? "";
+                wsAnexoContribuyentes.Cell(rowContribuyentes, 9).Value = venta.Cliente?.Nombre ?? "N/A";
+                wsAnexoContribuyentes.Cell(rowContribuyentes, 10).Value = 0;
+                wsAnexoContribuyentes.Cell(rowContribuyentes, 11).Value = 0;
+                wsAnexoContribuyentes.Cell(rowContribuyentes, 12).Value = gravado;
+                wsAnexoContribuyentes.Cell(rowContribuyentes, 13).Value = iva;
+                wsAnexoContribuyentes.Cell(rowContribuyentes, 14).Value = 0;
+                wsAnexoContribuyentes.Cell(rowContribuyentes, 15).Value = 0;
+                wsAnexoContribuyentes.Cell(rowContribuyentes, 16).Value = gravado + iva;
+                wsAnexoContribuyentes.Cell(rowContribuyentes, 17).Value = "";
+                wsAnexoContribuyentes.Cell(rowContribuyentes, 18).Value = 1;
+                wsAnexoContribuyentes.Cell(rowContribuyentes, 19).Value = 4;
+                wsAnexoContribuyentes.Cell(rowContribuyentes, 20).Value = 1;
+                rowContribuyentes++;
+            }
+            wsAnexoContribuyentes.Columns().AdjustToContents();
+
+            // Ajustar ancho de columnas para ANEXO CONTRIBUYENTES
+            for (int col = 1; col <= 20; col++)
+            {
+                if (col == 4 || col == 5 || col == 6)
+                {
+                    wsAnexoContribuyentes.Column(col).Width = 41;
+                }
+                else if (col == 9)
+                {
+                    wsAnexoContribuyentes.Column(col).Width = 30;
+                }
+                else
+                {
+                    wsAnexoContribuyentes.Column(col).Width = 12;
+                }
+                         }
+
+             // Hoja 8: VENTAS EXCLUIDAS CONSUMIDOR FINAL
+             var wsExcluidasCF = workbook.Worksheets.Add("EXCLUIDAS CONSUMIDOR FINAL");
+             wsExcluidasCF.Cell(1, 1).Value = "Fecha";
+             wsExcluidasCF.Cell(1, 2).Value = "Tipo";
+             wsExcluidasCF.Cell(1, 3).Value = "Número Control";
+             wsExcluidasCF.Cell(1, 4).Value = "Código Generación";
+             wsExcluidasCF.Cell(1, 5).Value = "Sello Recepción";
+             wsExcluidasCF.Cell(1, 6).Value = "Cliente";
+             wsExcluidasCF.Cell(1, 7).Value = "Total";
+             wsExcluidasCF.Cell(1, 8).Value = "IVA";
+             wsExcluidasCF.Cell(1, 9).Value = "Retención";
+             wsExcluidasCF.Cell(1, 10).Value = "Estado";
+             wsExcluidasCF.Cell(1, 11).Value = "Motivo Exclusión";
+             wsExcluidasCF.Cell(1, 12).Value = "Verificar Estado";
+
+             var ventasExcluidasCF = ventas.Where(v => v.TipoComprobante == 1 && 
+                                                      (string.IsNullOrEmpty(v.SelloRecepcion) || 
+                                                       !string.IsNullOrEmpty(v.MotivoAnulacion))).OrderBy(v => v.Fecha).ToList();
+
+             int rowExcluidasCF = 2;
+             foreach (var venta in ventasExcluidasCF)
+             {
+                 string motivoExclusion = "";
+                 if (!string.IsNullOrEmpty(venta.MotivoAnulacion))
+                 {
+                     motivoExclusion = "ANULADA";
+                 }
+                 else if (string.IsNullOrEmpty(venta.SelloRecepcion))
+                 {
+                     motivoExclusion = "SIN SELLO RECEPCIÓN";
+                 }
+
+                 wsExcluidasCF.Cell(rowExcluidasCF, 1).Value = venta.Fecha.ToString("dd/MM/yyyy");
+                 wsExcluidasCF.Cell(rowExcluidasCF, 2).Value = "CF";
+                 wsExcluidasCF.Cell(rowExcluidasCF, 3).Value = venta.NumeroDeControl ?? "N/A";
+                 wsExcluidasCF.Cell(rowExcluidasCF, 4).Value = venta.CodigoGeneracion ?? "N/A";
+                 wsExcluidasCF.Cell(rowExcluidasCF, 5).Value = venta.SelloRecepcion ?? "";
+                 wsExcluidasCF.Cell(rowExcluidasCF, 6).Value = venta.Cliente?.Nombre ?? "N/A";
+                 wsExcluidasCF.Cell(rowExcluidasCF, 7).Value = venta.Total;
+                 wsExcluidasCF.Cell(rowExcluidasCF, 8).Value = Math.Round(venta.Total - (venta.Total / 1.13m), 2); // IVA
+                 wsExcluidasCF.Cell(rowExcluidasCF, 9).Value = venta.Retencion;
+                 wsExcluidasCF.Cell(rowExcluidasCF, 10).Value = !string.IsNullOrEmpty(venta.MotivoAnulacion) ? "Anulada" : (!string.IsNullOrEmpty(venta.SelloRecepcion) ? "Válida" : "Pendiente");
+                 wsExcluidasCF.Cell(rowExcluidasCF, 11).Value = motivoExclusion;
+                 
+                 // Agregar enlace para verificar estado
+                 if (!string.IsNullOrEmpty(venta.CodigoGeneracion))
+                 {
+                     var urlConsulta = $"https://admin.factura.gob.sv/consultaPublica?ambiente=01&codGen={venta.CodigoGeneracion}&fechaEmi={venta.Fecha:yyyy-MM-dd}";
+                     var cell = wsExcluidasCF.Cell(rowExcluidasCF, 12);
+                     cell.Value = "VERIFICAR";
+                     cell.SetHyperlink(new XLHyperlink(urlConsulta));
+                 }
+                 else
+                 {
+                     wsExcluidasCF.Cell(rowExcluidasCF, 12).Value = "N/A";
+                 }
+                 rowExcluidasCF++;
+             }
+             wsExcluidasCF.Columns().AdjustToContents();
+
+             // Colorear filas según motivo de exclusión
+             for (int rowColor = 2; rowColor < rowExcluidasCF; rowColor++)
+             {
+                 var motivo = wsExcluidasCF.Cell(rowColor, 11).Value.ToString();
+                 if (motivo == "ANULADA")
+                 {
+                     wsExcluidasCF.Range(rowColor, 1, rowColor, 12).Style.Fill.BackgroundColor = XLColor.LightCoral;
+                 }
+                 else if (motivo == "SIN SELLO RECEPCIÓN")
+                 {
+                     wsExcluidasCF.Range(rowColor, 1, rowColor, 12).Style.Fill.BackgroundColor = XLColor.LightYellow;
+                 }
+             }
+
+             // Agregar totales al final
+             rowExcluidasCF++;
+             wsExcluidasCF.Cell(rowExcluidasCF, 1).Value = "";
+             rowExcluidasCF++;
+
+             // Calcular totales
+             var totalSinSelloCF = ventasExcluidasCF.Where(v => string.IsNullOrEmpty(v.SelloRecepcion) && string.IsNullOrEmpty(v.MotivoAnulacion)).Count();
+             var montoSinSelloCF = ventasExcluidasCF.Where(v => string.IsNullOrEmpty(v.SelloRecepcion) && string.IsNullOrEmpty(v.MotivoAnulacion)).Sum(v => v.Total);
+             var totalAnuladasCF = ventasExcluidasCF.Where(v => !string.IsNullOrEmpty(v.MotivoAnulacion)).Count();
+             var montoAnuladasCF = ventasExcluidasCF.Where(v => !string.IsNullOrEmpty(v.MotivoAnulacion)).Sum(v => v.Total);
+
+             wsExcluidasCF.Cell(rowExcluidasCF, 1).Value = "TOTALES:";
+             wsExcluidasCF.Cell(rowExcluidasCF, 7).Value = ventasExcluidasCF.Sum(v => v.Total);
+             wsExcluidasCF.Cell(rowExcluidasCF, 11).Value = $"Sin Sello: {totalSinSelloCF} (${montoSinSelloCF:F2}) | Anuladas: {totalAnuladasCF} (${montoAnuladasCF:F2})";
+
+             // Formatear fila de totales
+             var rangeTotalesExcluidasCF = wsExcluidasCF.Range(rowExcluidasCF, 1, rowExcluidasCF, 12);
+             rangeTotalesExcluidasCF.Style.Font.Bold = true;
+             rangeTotalesExcluidasCF.Style.Fill.BackgroundColor = XLColor.LightGray;
+
+             // Hoja 9: VENTAS EXCLUIDAS CONTRIBUYENTES
+             var wsExcluidasContribuyentes = workbook.Worksheets.Add("EXCLUIDAS CONTRIBUYENTES");
+             wsExcluidasContribuyentes.Cell(1, 1).Value = "Fecha";
+             wsExcluidasContribuyentes.Cell(1, 2).Value = "Tipo";
+             wsExcluidasContribuyentes.Cell(1, 3).Value = "Número Control";
+             wsExcluidasContribuyentes.Cell(1, 4).Value = "Código Generación";
+             wsExcluidasContribuyentes.Cell(1, 5).Value = "Sello Recepción";
+             wsExcluidasContribuyentes.Cell(1, 6).Value = "Cliente";
+             wsExcluidasContribuyentes.Cell(1, 7).Value = "Dui";
+             wsExcluidasContribuyentes.Cell(1, 8).Value = "Nit";
+             wsExcluidasContribuyentes.Cell(1, 9).Value = "Registro";
+             wsExcluidasContribuyentes.Cell(1, 10).Value = "Giro";
+             wsExcluidasContribuyentes.Cell(1, 11).Value = "coddepartamento";
+             wsExcluidasContribuyentes.Cell(1, 12).Value = "codmunicipio";
+             wsExcluidasContribuyentes.Cell(1, 13).Value = "codactividad";
+             wsExcluidasContribuyentes.Cell(1, 14).Value = "grancontribuyente";
+             wsExcluidasContribuyentes.Cell(1, 15).Value = "Total";
+             wsExcluidasContribuyentes.Cell(1, 16).Value = "Gravado";
+             wsExcluidasContribuyentes.Cell(1, 17).Value = "Retención";
+             wsExcluidasContribuyentes.Cell(1, 18).Value = "IVA";
+             wsExcluidasContribuyentes.Cell(1, 19).Value = "Estado";
+             wsExcluidasContribuyentes.Cell(1, 20).Value = "Motivo Exclusión";
+             wsExcluidasContribuyentes.Cell(1, 21).Value = "Verificar Estado";
+
+             var ventasExcluidasContribuyentes = ventas.Where(v => v.TipoComprobante == 2 && 
+                                                                  (string.IsNullOrEmpty(v.SelloRecepcion) || 
+                                                                   !string.IsNullOrEmpty(v.MotivoAnulacion))).OrderBy(v => v.Fecha).ToList();
+
+             int rowExcluidasContribuyentes = 2;
+             foreach (var venta in ventasExcluidasContribuyentes)
+             {
+                 string motivoExclusion = "";
+                 if (!string.IsNullOrEmpty(venta.MotivoAnulacion))
+                 {
+                     motivoExclusion = "ANULADA";
+                 }
+                 else if (string.IsNullOrEmpty(venta.SelloRecepcion))
+                 {
+                     motivoExclusion = "SIN SELLO RECEPCIÓN";
+                 }
+
+                 wsExcluidasContribuyentes.Cell(rowExcluidasContribuyentes, 1).Value = venta.Fecha.ToString("dd/MM/yyyy");
+                 wsExcluidasContribuyentes.Cell(rowExcluidasContribuyentes, 2).Value = "CCF";
+                 wsExcluidasContribuyentes.Cell(rowExcluidasContribuyentes, 3).Value = venta.NumeroDeControl ?? "N/A";
+                 wsExcluidasContribuyentes.Cell(rowExcluidasContribuyentes, 4).Value = venta.CodigoGeneracion ?? "N/A";
+                 wsExcluidasContribuyentes.Cell(rowExcluidasContribuyentes, 5).Value = venta.SelloRecepcion ?? "";
+                 wsExcluidasContribuyentes.Cell(rowExcluidasContribuyentes, 6).Value = venta.Cliente?.Nombre ?? "N/A";
+                 wsExcluidasContribuyentes.Cell(rowExcluidasContribuyentes, 7).Value = venta.Cliente?.Dui ?? "";
+                 wsExcluidasContribuyentes.Cell(rowExcluidasContribuyentes, 8).Value = venta.Cliente?.Nit ?? "";
+                 wsExcluidasContribuyentes.Cell(rowExcluidasContribuyentes, 9).Value = venta.Cliente?.Registro ?? "";
+                 wsExcluidasContribuyentes.Cell(rowExcluidasContribuyentes, 10).Value = venta.Cliente?.Giro ?? "";
+                 wsExcluidasContribuyentes.Cell(rowExcluidasContribuyentes, 11).Value = venta.Cliente?.CodDepartamento ?? "";
+                 wsExcluidasContribuyentes.Cell(rowExcluidasContribuyentes, 12).Value = venta.Cliente?.CodMunicipio ?? "";
+                 wsExcluidasContribuyentes.Cell(rowExcluidasContribuyentes, 13).Value = venta.Cliente?.CodActividad ?? "";
+                 wsExcluidasContribuyentes.Cell(rowExcluidasContribuyentes, 14).Value = venta.Cliente?.GranContribuyente?.ToString() ?? "";
+                 wsExcluidasContribuyentes.Cell(rowExcluidasContribuyentes, 15).Value = venta.Total;
+                 wsExcluidasContribuyentes.Cell(rowExcluidasContribuyentes, 16).Value = Math.Round(venta.Total / 1.13m, 2); // Gravado
+                 wsExcluidasContribuyentes.Cell(rowExcluidasContribuyentes, 17).Value = venta.Retencion;
+                 wsExcluidasContribuyentes.Cell(rowExcluidasContribuyentes, 18).Value = Math.Round(venta.Total - (venta.Total / 1.13m), 2); // IVA
+                 wsExcluidasContribuyentes.Cell(rowExcluidasContribuyentes, 19).Value = !string.IsNullOrEmpty(venta.MotivoAnulacion) ? "Anulada" : (!string.IsNullOrEmpty(venta.SelloRecepcion) ? "Válida" : "Pendiente");
+                 wsExcluidasContribuyentes.Cell(rowExcluidasContribuyentes, 20).Value = motivoExclusion;
+                 
+                 // Agregar enlace para verificar estado
+                 if (!string.IsNullOrEmpty(venta.CodigoGeneracion))
+                 {
+                     var urlConsulta = $"https://admin.factura.gob.sv/consultaPublica?ambiente=01&codGen={venta.CodigoGeneracion}&fechaEmi={venta.Fecha:yyyy-MM-dd}";
+                     var cell = wsExcluidasContribuyentes.Cell(rowExcluidasContribuyentes, 21);
+                     cell.Value = "VERIFICAR";
+                     cell.SetHyperlink(new XLHyperlink(urlConsulta));
+                 }
+                 else
+                 {
+                     wsExcluidasContribuyentes.Cell(rowExcluidasContribuyentes, 21).Value = "N/A";
+                 }
+                 rowExcluidasContribuyentes++;
+             }
+             wsExcluidasContribuyentes.Columns().AdjustToContents();
+
+             // Colorear filas según motivo de exclusión
+             for (int rowColorContribuyentes = 2; rowColorContribuyentes < rowExcluidasContribuyentes; rowColorContribuyentes++)
+             {
+                 var motivo = wsExcluidasContribuyentes.Cell(rowColorContribuyentes, 20).Value.ToString();
+                 if (motivo == "ANULADA")
+                 {
+                     wsExcluidasContribuyentes.Range(rowColorContribuyentes, 1, rowColorContribuyentes, 21).Style.Fill.BackgroundColor = XLColor.LightCoral;
+                 }
+                 else if (motivo == "SIN SELLO RECEPCIÓN")
+                 {
+                     wsExcluidasContribuyentes.Range(rowColorContribuyentes, 1, rowColorContribuyentes, 21).Style.Fill.BackgroundColor = XLColor.LightYellow;
+                 }
+             }
+
+             // Agregar totales al final
+             rowExcluidasContribuyentes++;
+             wsExcluidasContribuyentes.Cell(rowExcluidasContribuyentes, 1).Value = "";
+             rowExcluidasContribuyentes++;
+
+             // Calcular totales
+             var totalSinSelloCCF = ventasExcluidasContribuyentes.Where(v => string.IsNullOrEmpty(v.SelloRecepcion) && string.IsNullOrEmpty(v.MotivoAnulacion)).Count();
+             var montoSinSelloCCF = ventasExcluidasContribuyentes.Where(v => string.IsNullOrEmpty(v.SelloRecepcion) && string.IsNullOrEmpty(v.MotivoAnulacion)).Sum(v => v.Total);
+             var totalAnuladasCCF = ventasExcluidasContribuyentes.Where(v => !string.IsNullOrEmpty(v.MotivoAnulacion)).Count();
+             var montoAnuladasCCF = ventasExcluidasContribuyentes.Where(v => !string.IsNullOrEmpty(v.MotivoAnulacion)).Sum(v => v.Total);
+
+             wsExcluidasContribuyentes.Cell(rowExcluidasContribuyentes, 1).Value = "TOTALES:";
+             wsExcluidasContribuyentes.Cell(rowExcluidasContribuyentes, 15).Value = ventasExcluidasContribuyentes.Sum(v => v.Total);
+             wsExcluidasContribuyentes.Cell(rowExcluidasContribuyentes, 20).Value = $"Sin Sello: {totalSinSelloCCF} (${montoSinSelloCCF:F2}) | Anuladas: {totalAnuladasCCF} (${montoAnuladasCCF:F2})";
+
+             // Formatear fila de totales
+             var rangeTotalesExcluidasCCF = wsExcluidasContribuyentes.Range(rowExcluidasContribuyentes, 1, rowExcluidasContribuyentes, 21);
+             rangeTotalesExcluidasCCF.Style.Font.Bold = true;
+             rangeTotalesExcluidasCCF.Style.Fill.BackgroundColor = XLColor.LightGray;
+
+             workbook.SaveAs(rutaArchivo);
+         }
+     }
+ }
+
+// Clases modelo (necesarias)
+public class VentaR
+{
+    public int Id { get; set; }
+    public DateTime Fecha { get; set; }
+    public int TipoComprobante { get; set; }
+    public string NumeroDeControl { get; set; }
+    public string CodigoGeneracion { get; set; }
+    public string SelloRecepcion { get; set; }
+    public decimal Total { get; set; }
+    public decimal? Retencion { get; set; }
+    public string MotivoAnulacion { get; set; }
+    public int? ClienteId { get; set; }
+    public ClienteR Cliente { get; set; }
+}
+
+public class ClienteR
+{
+    public int ClienteId { get; set; }
+    public string Nombre { get; set; }
+    public string Dui { get; set; }
+    public string Nit { get; set; }
+    public string Registro { get; set; }
+    public string Giro { get; set; }
+    public string CodDepartamento { get; set; }
+    public string CodMunicipio { get; set; }
+    public string CodActividad { get; set; }
+    public bool? GranContribuyente { get; set; }
+} 
