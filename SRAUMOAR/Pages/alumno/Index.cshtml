@@ -404,14 +404,19 @@
     }
 
     .pagination-custom .page-link {
-        color: var(--primary-color);
-        border: 2px solid transparent;
-        padding: 0.75rem 1rem;
-        margin: 0 0.25rem;
-        border-radius: var(--border-radius-sm);
-        font-weight: 500;
-        transition: all 0.3s ease;
-        background: white;
+        color: var(--primary-color) !important;
+        border: 2px solid transparent !important;
+        padding: 0.75rem 1rem !important;
+        margin: 0 0.25rem !important;
+        border-radius: var(--border-radius-sm) !important;
+        font-weight: 500 !important;
+        transition: all 0.3s ease !important;
+        background: white !important;
+        min-width: 44px !important;
+        text-align: center !important;
+        position: relative !important;
+        overflow: hidden !important;
+        cursor: pointer !important;
     }
 
         .pagination-custom .page-link:hover {
@@ -419,6 +424,11 @@
             border-color: var(--primary-color);
             transform: translateY(-2px);
             box-shadow: var(--shadow-sm);
+            color: var(--primary-color);
+        }
+
+        .pagination-custom .page-link:active {
+            transform: translateY(0);
         }
 
     .pagination-custom .page-item.active .page-link {
@@ -426,12 +436,73 @@
         border-color: var(--primary-color);
         color: white;
         box-shadow: var(--shadow-md);
+        font-weight: 600;
     }
 
     .pagination-custom .page-item.disabled .page-link {
         color: var(--text-muted);
         background: #f8f9fa;
         border-color: transparent;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    /* Asegurar que todos los enlaces clickeables tengan cursor pointer */
+    .pagination-custom .page-item:not(.disabled) .page-link {
+        cursor: pointer !important;
+    }
+
+    /* Forzar cursor pointer en todos los enlaces de paginación */
+    .pagination-custom a.page-link {
+        cursor: pointer !important;
+    }
+
+    /* Estilos específicos para elementos activos */
+    .pagination-custom .page-item.active .page-link {
+        cursor: pointer !important;
+    }
+
+    /* Estilos específicos para elementos no deshabilitados */
+    .pagination-custom .page-item:not(.disabled) a.page-link {
+        cursor: pointer !important;
+    }
+
+    .pagination-custom .page-item.disabled .page-link:hover {
+        transform: none;
+        box-shadow: none;
+        background: #f8f9fa;
+    }
+
+    /* Estilos para los botones de navegación rápida */
+    .pagination-custom .page-item:first-child .page-link,
+    .pagination-custom .page-item:last-child .page-link {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%) !important;
+        color: white !important;
+        border-color: var(--primary-color) !important;
+        cursor: pointer !important;
+    }
+
+    .pagination-custom .page-item:first-child .page-link:hover,
+    .pagination-custom .page-item:last-child .page-link:hover {
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    /* Estilos para los puntos suspensivos */
+    .pagination-custom .page-item .page-link:only-child {
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        cursor: default;
+        font-weight: bold;
+        letter-spacing: 2px;
+    }
+
+    .pagination-custom .page-item .page-link:only-child:hover {
+        transform: none;
+        box-shadow: none;
+        background: transparent;
     }
 
     /* Estados Vacíos */
@@ -500,11 +571,39 @@
             width: 40px;
             height: 40px;
         }
+
+        /* Paginación responsiva */
+        .pagination-custom .page-link {
+            padding: 0.5rem 0.75rem;
+            margin: 0 0.125rem;
+            min-width: 38px;
+            font-size: 0.875rem;
+        }
+
+        .pagination-container .row {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .pagination-container .col-md-6 {
+            text-align: center;
+        }
     }
 
     /* Utilidades */
     .text-primary-custom {
         color: var(--primary-color) !important;
+    }
+
+    /* Forzar cursor pointer en toda la paginación */
+    .pagination-custom .page-link,
+    .pagination-custom .page-item:not(.disabled) .page-link,
+    .pagination-custom .page-item.active .page-link {
+        cursor: pointer !important;
+    }
+
+    .pagination-custom .page-item.disabled .page-link {
+        cursor: not-allowed !important;
     }
 
     .bg-primary-custom {
@@ -712,28 +811,94 @@
                                         <i class="bi bi-info-circle me-2"></i>
                                         <span>
                                             Mostrando <strong>@(((Model.PageNumber - 1) * Model.PageSize) + 1)</strong> a
-                                            <strong>@(Math.Min(Model.PageNumber * Model.PageSize, Model.TotalPages * Model.PageSize))</strong>
-                                            de <strong>@(Model.TotalPages * Model.PageSize)</strong> estudiantes
+                                            <strong>@(Math.Min(Model.PageNumber * Model.PageSize, Model.TotalItems))</strong>
+                                            de <strong>@Model.TotalItems</strong> estudiantes
                                         </span>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <nav aria-label="Navegación de páginas" class="d-flex justify-content-md-end">
-                                        <ul class="pagination pagination-custom mb-0">
+                                        <ul class="pagination pagination-custom mb-0" style="cursor: pointer;">
+                                            <!-- Botón Primera Página -->
+                                            <li class="page-item @(Model.PageNumber == 1 ? "disabled" : "")">
+                                                <a class="page-link" asp-page="./Index" asp-route-PageNumber="1" aria-label="Primera página">
+                                                    <i class="bi bi-chevron-double-left"></i>
+                                                </a>
+                                            </li>
+                                            
+                                            <!-- Botón Anterior -->
                                             <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
                                                 <a class="page-link" asp-page="./Index" asp-route-PageNumber="@(Model.PageNumber - 1)" aria-label="Anterior">
                                                     <i class="bi bi-chevron-left"></i>
                                                 </a>
                                             </li>
-                                            @for (int i = 1; i <= Model.TotalPages; i++)
+
+                                            <!-- Números de Páginas -->
+                                            @{
+                                                int startPage = Math.Max(1, Model.PageNumber - 2);
+                                                int endPage = Math.Min(Model.TotalPages, Model.PageNumber + 2);
+                                                
+                                                // Ajustar el rango para mostrar siempre 5 páginas si es posible
+                                                if (endPage - startPage < 4 && Model.TotalPages > 5)
+                                                {
+                                                    if (startPage == 1)
+                                                    {
+                                                        endPage = Math.Min(Model.TotalPages, startPage + 4);
+                                                    }
+                                                    else if (endPage == Model.TotalPages)
+                                                    {
+                                                        startPage = Math.Max(1, endPage - 4);
+                                                    }
+                                                }
+                                            }
+
+                                            <!-- Mostrar primera página si no está en el rango -->
+                                            @if (startPage > 1)
+                                            {
+                                                <li class="page-item">
+                                                    <a class="page-link" asp-page="./Index" asp-route-PageNumber="1" style="cursor: pointer !important;">1</a>
+                                                </li>
+                                                @if (startPage > 2)
+                                                {
+                                                    <li class="page-item disabled">
+                                                        <span class="page-link">...</span>
+                                                    </li>
+                                                }
+                                            }
+
+                                            <!-- Rango de páginas -->
+                                            @for (int i = startPage; i <= endPage; i++)
                                             {
                                                 <li class="page-item @(i == Model.PageNumber ? "active" : "")">
-                                                    <a class="page-link" asp-page="./Index" asp-route-PageNumber="@i">@i</a>
+                                                    <a class="page-link" asp-page="./Index" asp-route-PageNumber="@i" style="cursor: pointer !important;">@i</a>
                                                 </li>
                                             }
+
+                                            <!-- Mostrar última página si no está en el rango -->
+                                            @if (endPage < Model.TotalPages)
+                                            {
+                                                @if (endPage < Model.TotalPages - 1)
+                                                {
+                                                    <li class="page-item disabled">
+                                                        <span class="page-link">...</span>
+                                                    </li>
+                                                }
+                                                <li class="page-item">
+                                                    <a class="page-link" asp-page="./Index" asp-route-PageNumber="@Model.TotalPages" style="cursor: pointer !important;">@Model.TotalPages</a>
+                                                </li>
+                                            }
+
+                                            <!-- Botón Siguiente -->
                                             <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
                                                 <a class="page-link" asp-page="./Index" asp-route-PageNumber="@(Model.PageNumber + 1)" aria-label="Siguiente">
                                                     <i class="bi bi-chevron-right"></i>
+                                                </a>
+                                            </li>
+
+                                            <!-- Botón Última Página -->
+                                            <li class="page-item @(Model.PageNumber == Model.TotalPages ? "disabled" : "")">
+                                                <a class="page-link" asp-page="./Index" asp-route-PageNumber="@Model.TotalPages" aria-label="Última página">
+                                                    <i class="bi bi-chevron-double-right"></i>
                                                 </a>
                                             </li>
                                         </ul>

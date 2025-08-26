@@ -31,14 +31,15 @@ namespace SRAUMOAR.Pages.alumno
         public int PageSize { get; set; } = 10;
         
         public int TotalPages { get; set; }
+        public int TotalItems { get; set; }
         
         public bool HasPreviousPage => PageNumber > 1;
         public bool HasNextPage => PageNumber < TotalPages;
 
         public async Task OnGetAsync()
         {
-            var totalItems = await _alumnoService.ObtenerTotalAlumnosAsync();
-            TotalPages = (int)Math.Ceiling(totalItems / (double)PageSize);
+            TotalItems = await _alumnoService.ObtenerTotalAlumnosAsync();
+            TotalPages = (int)Math.Ceiling(TotalItems / (double)PageSize);
 
             Alumno = await _alumnoService.ObtenerAlumnosPaginadosAsync(PageNumber, PageSize);
         }
