@@ -39,6 +39,7 @@ namespace SRAUMOAR.Pages.alumno
             this.busqueda = Request.Query["buscar"];
             
             var query = _context.Alumno
+                .Include(a => a.Usuario)
                 .Where(a => a.Nombres.Contains(busqueda) || 
                            a.Apellidos.Contains(busqueda) || 
                            a.TelefonoPrimario.Contains(busqueda));
