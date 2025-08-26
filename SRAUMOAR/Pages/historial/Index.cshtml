@@ -1,0 +1,216 @@
+@page
+@model SRAUMOAR.Pages.historial.IndexModel
+@{
+    ViewData["Title"] = "Historial Académico";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="bi bi-journal-text me-2"></i>
+                        Historial Académico
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Buscador de Alumnos -->
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <label for="buscadorAlumno" class="form-label">
+                                <i class="bi bi-search me-2"></i>Buscar Alumno:
+                            </label>
+                            <input type="text" id="buscadorAlumno" class="form-control form-control-lg" 
+                                   placeholder="Escriba apellidos, nombres o carnet del alumno...">
+                            <small class="form-text text-muted">
+                                Escriba al menos 3 caracteres para buscar. Puede buscar por apellidos, nombres o carnet.
+                            </small>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button id="btnLimpiarBusqueda" class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-clockwise me-2"></i>Limpiar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resultado de la búsqueda -->
+                    <div id="resultadoBusqueda" class="mb-4" style="display: none;">
+                        <div class="card border-primary">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="mb-0">
+                                    <i class="bi bi-person-check me-2"></i>Alumno Seleccionado
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <h5 id="nombreAlumnoSeleccionado"></h5>
+                                        <p class="text-muted mb-0" id="carnetAlumnoSeleccionado"></p>
+                                    </div>
+                                    <div class="col-md-4 text-end">
+                                        <button id="btnVerHistorial" class="btn btn-primary me-2">
+                                            <i class="bi bi-eye me-2"></i>Ver Historial
+                                        </button>
+                                        <button id="btnNuevoHistorial" class="btn btn-success">
+                                            <i class="bi bi-plus-circle me-2"></i>Nuevo Historial
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Método tradicional (dropdown) -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">
+                                    <i class="bi bi-list-ul me-2"></i>Método Alternativo - Lista Completa
+                                </h6>
+                                <button class="btn btn-sm btn-outline-info" type="button" data-bs-toggle="collapse" data-bs-target="#metodoTradicional">
+                                    <i class="bi bi-chevron-down me-1"></i>Mostrar/Ocultar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="collapse" id="metodoTradicional">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="alumnoSelect" class="form-label">Seleccionar Alumno:</label>
+                                <select id="alumnoSelect" class="form-select" asp-items="@Model.AlumnosList">
+                                    <option value="">-- Seleccione un alumno --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <button id="btnVerHistorialTradicional" class="btn btn-primary mt-4" disabled>
+                                    <i class="bi bi-eye me-2"></i>Ver Historial
+                                </button>
+                                <button id="btnNuevoHistorialTradicional" class="btn btn-success mt-4 ms-2" disabled>
+                                    <i class="bi bi-plus-circle me-2"></i>Nuevo Historial
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let alumnoSeleccionado = null;
+
+        $(document).ready(function() {
+            // Configurar autocompletado del buscador
+            $('#buscadorAlumno').autocomplete({
+                source: function(request, response) {
+                    if (request.term.length < 3) {
+                        response([]);
+                        return;
+                    }
+
+                    $.get('/historial?handler=BuscarAlumnos&term=' + encodeURIComponent(request.term))
+                        .done(function(data) {
+                            response(data);
+                        })
+                        .fail(function() {
+                            response([]);
+                        });
+                },
+                minLength: 3,
+                delay: 300,
+                select: function(event, ui) {
+                    alumnoSeleccionado = {
+                        id: ui.item.id,
+                        nombre: ui.item.value,
+                        carnet: ui.item.carnet
+                    };
+                    
+                    mostrarResultadoBusqueda();
+                    return false;
+                }
+            }).autocomplete("instance")._renderItem = function(ul, item) {
+                return $("<li>")
+                    .append("<div><strong>" + item.value + "</strong><br><small class='text-muted'>Carnet: " + item.carnet + "</small></div>")
+                    .appendTo(ul);
+            };
+
+            // Botón limpiar búsqueda
+            $('#btnLimpiarBusqueda').click(function() {
+                limpiarBusqueda();
+            });
+
+            // Botones del resultado de búsqueda
+            $('#btnVerHistorial').click(function() {
+                if (alumnoSeleccionado) {
+                    window.location.href = '/historial/Ver?alumnoId=' + alumnoSeleccionado.id;
+                }
+            });
+
+            $('#btnNuevoHistorial').click(function() {
+                if (alumnoSeleccionado) {
+                    window.location.href = '/historial/Registrar?alumnoId=' + alumnoSeleccionado.id;
+                }
+            });
+
+            // Método tradicional (dropdown)
+            $('#alumnoSelect').change(function() {
+                var alumnoId = $(this).val();
+                if (alumnoId) {
+                    $('#btnVerHistorialTradicional').prop('disabled', false);
+                    $('#btnNuevoHistorialTradicional').prop('disabled', false);
+                } else {
+                    $('#btnVerHistorialTradicional').prop('disabled', true);
+                    $('#btnNuevoHistorialTradicional').prop('disabled', true);
+                }
+            });
+
+            $('#btnVerHistorialTradicional').click(function() {
+                var alumnoId = $('#alumnoSelect').val();
+                if (alumnoId) {
+                    window.location.href = '/historial/Ver?alumnoId=' + alumnoId;
+                }
+            });
+
+            $('#btnNuevoHistorialTradicional').click(function() {
+                var alumnoId = $('#alumnoSelect').val();
+                if (alumnoId) {
+                    window.location.href = '/historial/Registrar?alumnoId=' + alumnoId;
+                }
+            });
+
+            // Función para mostrar resultado de búsqueda
+            function mostrarResultadoBusqueda() {
+                if (alumnoSeleccionado) {
+                    $('#nombreAlumnoSeleccionado').text(alumnoSeleccionado.nombre);
+                    $('#carnetAlumnoSeleccionado').text('Carnet: ' + alumnoSeleccionado.carnet);
+                    $('#resultadoBusqueda').show();
+                    
+                    // Limpiar método tradicional
+                    $('#alumnoSelect').val('');
+                    $('#btnVerHistorialTradicional').prop('disabled', true);
+                    $('#btnNuevoHistorialTradicional').prop('disabled', true);
+                }
+            }
+
+            // Función para limpiar búsqueda
+            function limpiarBusqueda() {
+                $('#buscadorAlumno').val('');
+                $('#resultadoBusqueda').hide();
+                alumnoSeleccionado = null;
+                
+                // Limpiar método tradicional también
+                $('#alumnoSelect').val('');
+                $('#btnVerHistorialTradicional').prop('disabled', true);
+                $('#btnNuevoHistorialTradicional').prop('disabled', true);
+            }
+        });
+    </script>
+}

@@ -9,6 +9,7 @@ using SRAUMOAR.Entidades.Accesos;
 using SRAUMOAR.Entidades.Procesos;
 using SRAUMOAR.Entidades.Colecturia;
 using SRAUMOAR.Entidades.Becas;
+using SRAUMOAR.Entidades.Historial;
 using SRAUMOAR.Entidades;
 
 namespace SRAUMOAR.Modelos
@@ -58,6 +59,11 @@ namespace SRAUMOAR.Modelos
         public DbSet<Donantes> Donantes { get; set; }
         public DbSet<DteCorrelativo> DteCorrelativos { get; set; }
         public DbSet<Factura> Facturas { get; set; }
+        
+        // DbSets para Historial Académico
+        public DbSet<HistorialAcademico> HistorialAcademico { get; set; } = null!;
+        public DbSet<HistorialCiclo> HistorialCiclo { get; set; } = null!;
+        public DbSet<HistorialMateria> HistorialMateria { get; set; } = null!;
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Arancel>()
@@ -75,6 +81,45 @@ namespace SRAUMOAR.Modelos
                 .WithMany()
                 .HasForeignKey(mp => mp.PrerrequisoMateriaId)
                 .OnDelete(DeleteBehavior.Restrict); // O la acción deseada en caso de eliminar una materia
+
+            // Configuración para Historial Académico
+            modelBuilder.Entity<HistorialAcademico>()
+                .HasOne(ha => ha.Alumno)
+                .WithMany()
+                .HasForeignKey(ha => ha.AlumnoId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<HistorialAcademico>()
+                .HasOne(ha => ha.Carrera)
+                .WithMany()
+                .HasForeignKey(ha => ha.CarreraId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<HistorialCiclo>()
+                .HasOne(hc => hc.HistorialAcademico)
+                .WithMany(ha => ha.CiclosHistorial)
+                .HasForeignKey(hc => hc.HistorialAcademicoId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<HistorialMateria>()
+                .HasOne(hm => hm.HistorialCiclo)
+                .WithMany(hc => hc.MateriasHistorial)
+                .HasForeignKey(hm => hm.HistorialCicloId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<HistorialMateria>()
+                .HasOne(hm => hm.Materia)
+                .WithMany()
+                .HasForeignKey(hm => hm.MateriaId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+
+
+            modelBuilder.Entity<HistorialCiclo>()
+                .HasOne(hc => hc.Pensum)
+                .WithMany()
+                .HasForeignKey(hc => hc.PensumId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
         public DbSet<SRAUMOAR.Entidades.Accesos.NivelAcceso> NivelAcceso { get; set; } = default!;
 

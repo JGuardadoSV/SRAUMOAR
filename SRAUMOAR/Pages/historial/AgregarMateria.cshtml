@@ -1,0 +1,320 @@
+@page
+@model SRAUMOAR.Pages.historial.AgregarMateriaModel
+@{
+    ViewData["Title"] = "Agregar Materias al Historial";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Agregar Materias al Historial
+                    </h4>
+                    <div class="card-tools">
+                        <a href="/historial/Ver?alumnoId=@Model.AlumnoId" class="btn btn-secondary btn-sm">
+                            <i class="bi bi-arrow-left me-1"></i>
+                            Volver al Historial
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <input type="hidden" asp-for="HistorialCicloId" />
+                        
+                        <!-- Información Pre-cargada del Historial -->
+                        <div class="alert alert-info mb-4">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <h6><i class="bi bi-person me-2"></i>Alumno</h6>
+                                    <strong>@Model.NombreAlumno</strong>
+                                </div>
+                                <div class="col-md-3">
+                                    <h6><i class="bi bi-calendar me-2"></i>Ciclo</h6>
+                                    <strong>@Model.CicloTexto</strong>
+                                </div>
+                                <div class="col-md-3">
+                                    <h6><i class="bi bi-mortarboard me-2"></i>Carrera</h6>
+                                    <strong>@Model.NombreCarrera</strong>
+                                </div>
+                                <div class="col-md-3">
+                                    <h6><i class="bi bi-book me-2"></i>Pensúm</h6>
+                                    <strong>@Model.NombrePensum</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Formulario de Nueva Materia -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="bi bi-book me-2"></i>
+                                    Agregar Nueva Materia
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="materiaSelect" class="form-label">Materia:</label>
+                                        <select id="materiaSelect" class="form-select">
+                                            <option value="">-- Seleccione una materia --</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="promedio" class="form-label">Promedio:</label>
+                                        <input type="number" id="promedio" class="form-control" step="0.01" min="0" max="10" />
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-2">
+                                        <label for="nota1" class="form-label">Nota 1:</label>
+                                        <input type="number" id="nota1" class="form-control" step="0.01" min="0" max="10" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label for="nota2" class="form-label">Nota 2:</label>
+                                        <input type="number" id="nota2" class="form-control" step="0.01" min="0" max="10" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label for="nota3" class="form-label">Nota 3:</label>
+                                        <input type="number" id="nota3" class="form-control" step="0.01" min="0" max="10" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label for="nota4" class="form-label">Nota 4:</label>
+                                        <input type="number" id="nota4" class="form-control" step="0.01" min="0" max="10" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label for="nota5" class="form-label">Nota 5:</label>
+                                        <input type="number" id="nota5" class="form-control" step="0.01" min="0" max="10" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label for="nota6" class="form-label">Nota 6:</label>
+                                        <input type="number" id="nota6" class="form-control" step="0.01" min="0" max="10" />
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="aprobada" checked>
+                                            <label class="form-check-label" for="aprobada">
+                                                Materia Aprobada
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 text-end">
+                                        <button type="button" class="btn btn-primary" id="btnAgregarMateria">
+                                            <i class="bi bi-plus-circle me-2"></i>
+                                            Agregar Materia
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Lista de Materias Agregadas -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="bi bi-list-ul me-2"></i>
+                                    Materias a Agregar
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="materiasList">
+                                    <p class="text-muted">No hay materias agregadas aún.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botones de Acción -->
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-success btn-lg" id="btnGuardar" disabled>
+                                <i class="bi bi-save me-2"></i>
+                                Agregar Materias al Historial
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let materiasAgregadas = [];
+        let materiasDisponibles = [];
+
+        $(document).ready(function() {
+            // Cargar materias del pensum al cargar la página
+            cargarMaterias(@Model.PensumId);
+
+            // Agregar materia
+            $('#btnAgregarMateria').click(function() {
+                agregarMateria();
+            });
+
+            // El promedio se ingresa manualmente
+        });
+
+        function cargarMaterias(pensumId) {
+            $.get(`/api/materias?pensumId=${pensumId}`, function(data) {
+                materiasDisponibles = data;
+                var select = $('#materiaSelect');
+                select.empty();
+                select.append('<option value="">-- Seleccione una materia --</option>');
+                
+                materiasDisponibles.forEach(function(materia) {
+                    select.append(`<option value="${materia.materiaId}">${materia.nombreMateria}</option>`);
+                });
+            });
+        }
+
+        function agregarMateria() {
+            var materiaId = $('#materiaSelect').val();
+            var materiaText = $('#materiaSelect option:selected').text();
+            
+            if (!materiaId) {
+                alert('Por favor seleccione una materia');
+                return;
+            }
+
+            var materia = {
+                materiaId: materiaId,
+                nombreMateria: materiaText,
+                nota1: parseFloat($('#nota1').val()) || 0,
+                nota2: parseFloat($('#nota2').val()) || 0,
+                nota3: parseFloat($('#nota3').val()) || 0,
+                nota4: parseFloat($('#nota4').val()) || 0,
+                nota5: parseFloat($('#nota5').val()) || 0,
+                nota6: parseFloat($('#nota6').val()) || 0,
+                promedio: parseFloat($('#promedio').val()) || 0,
+                aprobada: $('#aprobada').is(':checked')
+            };
+
+            materiasAgregadas.push(materia);
+            actualizarListaMaterias();
+            limpiarFormularioMateria();
+            habilitarBotonGuardar();
+        }
+
+        function actualizarListaMaterias() {
+            var container = $('#materiasList');
+            if (materiasAgregadas.length === 0) {
+                container.html('<p class="text-muted">No hay materias agregadas aún.</p>');
+                return;
+            }
+
+            var html = '';
+            materiasAgregadas.forEach(function(materia, index) {
+                html += `
+                    <div class="alert alert-success d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${materia.nombreMateria}</strong><br>
+                            <small>Promedio: ${materia.promedio} | Aprobada: ${materia.aprobada ? 'Sí' : 'No'}</small>
+                        </div>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="eliminarMateria(${index})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                `;
+            });
+            
+            container.html(html);
+        }
+
+        function eliminarMateria(index) {
+            materiasAgregadas.splice(index, 1);
+            actualizarListaMaterias();
+            habilitarBotonGuardar();
+        }
+
+        function limpiarFormularioMateria() {
+            $('#materiaSelect').val('');
+            $('input[id^="nota"]').val('');
+            $('#promedio').val('');
+            $('#aprobada').prop('checked', true);
+        }
+
+        function habilitarBotonGuardar() {
+            $('#btnGuardar').prop('disabled', materiasAgregadas.length === 0);
+        }
+
+        // Enviar formulario
+        $('form').submit(function(e) {
+            if (materiasAgregadas.length === 0) {
+                e.preventDefault();
+                alert('Debe agregar al menos una materia antes de guardar');
+                return false;
+            }
+            
+            // Validar que todas las materias tengan notas válidas
+            for (let i = 0; i < materiasAgregadas.length; i++) {
+                var materia = materiasAgregadas[i];
+                if (materia.promedio <= 0) {
+                    e.preventDefault();
+                    alert(`La materia "${materia.nombreMateria}" debe tener al menos una nota válida`);
+                    return false;
+                }
+            }
+
+            // Agregar las materias al formulario antes de enviar
+            materiasAgregadas.forEach(function(materia, index) {
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: `Materias[${index}].MateriaId`,
+                    value: materia.materiaId
+                }).appendTo('form');
+                
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: `Materias[${index}].Nota1`,
+                    value: materia.nota1
+                }).appendTo('form');
+                
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: `Materias[${index}].Nota2`,
+                    value: materia.nota2
+                }).appendTo('form');
+                
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: `Materias[${index}].Nota3`,
+                    value: materia.nota3
+                }).appendTo('form');
+                
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: `Materias[${index}].Nota4`,
+                    value: materia.nota4
+                }).appendTo('form');
+                
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: `Materias[${index}].Nota5`,
+                    value: materia.nota5
+                }).appendTo('form');
+                
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: `Materias[${index}].Nota6`,
+                    value: materia.nota6
+                }).appendTo('form');
+                
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: `Materias[${index}].Promedio`,
+                    value: materia.promedio
+                }).appendTo('form');
+                
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: `Materias[${index}].Aprobada`,
+                    value: materia.aprobada
+                }).appendTo('form');
+            });
+        });
+    </script>
+}

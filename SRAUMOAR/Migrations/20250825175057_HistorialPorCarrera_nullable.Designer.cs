@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SRAUMOAR.Modelos;
 
@@ -11,9 +12,11 @@ using SRAUMOAR.Modelos;
 namespace SRAUMOAR.Migrations
 {
     [DbContext(typeof(Contexto))]
-    partial class ContextoModelSnapshot : ModelSnapshot
+    [Migration("20250825175057_HistorialPorCarrera_nullable")]
+    partial class HistorialPorCarrera_nullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -749,10 +752,8 @@ namespace SRAUMOAR.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("HistorialCicloId"));
 
-                    b.Property<string>("CicloTexto")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
+                    b.Property<int>("CicloId")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("FechaRegistro")
                         .HasColumnType("datetime2");
@@ -764,6 +765,8 @@ namespace SRAUMOAR.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("HistorialCicloId");
+
+                    b.HasIndex("CicloId");
 
                     b.HasIndex("HistorialAcademicoId");
 
@@ -1452,6 +1455,12 @@ namespace SRAUMOAR.Migrations
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Historial.HistorialCiclo", b =>
                 {
+                    b.HasOne("SRAUMOAR.Entidades.Procesos.Ciclo", "Ciclo")
+                        .WithMany()
+                        .HasForeignKey("CicloId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("SRAUMOAR.Entidades.Historial.HistorialAcademico", "HistorialAcademico")
                         .WithMany("CiclosHistorial")
                         .HasForeignKey("HistorialAcademicoId")
@@ -1463,6 +1472,8 @@ namespace SRAUMOAR.Migrations
                         .HasForeignKey("PensumId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Ciclo");
 
                     b.Navigation("HistorialAcademico");
 

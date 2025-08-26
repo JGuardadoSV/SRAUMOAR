@@ -44,6 +44,22 @@ builder.Services.AddScoped<ReporteInsolventesService>();
 builder.Services.Configure<EmisorConfig>(
     builder.Configuration.GetSection("EMISOR"));
 builder.Services.AddRazorPages();
+builder.Services.AddAntiforgery(options =>
+{
+    options.Cookie.Name = "XSRF-TOKEN";
+    options.Cookie.HttpOnly = false;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.MaxAge = TimeSpan.FromHours(2); // Token válido por 2 horas
+    options.HeaderName = "X-XSRF-TOKEN";
+    options.SuppressXFrameOptionsHeader = false;
+    
+    // Configuración más permisiva para desarrollo
+    if (builder.Environment.IsDevelopment())
+    {
+        options.Cookie.MaxAge = TimeSpan.FromHours(4); // Tokens más largos en desarrollo
+    }
+});
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
         .AddCookie(options =>
         {
@@ -88,7 +104,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapRazorPages();
-app.MapControllers(); // A�ade esta l�nea si usas controladores
+app.MapControllers(); // Añade esta línea si usas controladores
 
 
 app.Run();
