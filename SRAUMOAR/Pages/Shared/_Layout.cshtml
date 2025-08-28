@@ -329,10 +329,25 @@
                     <!--begin::Messages Dropdown Menu-->
                     <li class="nav-item"> <a class="nav-link" href="#" data-lte-toggle="fullscreen"> <i data-lte-icon="maximize" class="bi bi-arrows-fullscreen"></i> <i data-lte-icon="minimize" class="bi bi-fullscreen-exit" style="display: none;"></i> </a> </li>
                     <!--end::Fullscreen Toggle-->
-                    <!--begin::User Menu Dropdown-->
+                                        <!--begin::User Menu Dropdown-->
                     <li class="nav-item dropdown user-menu">
                         <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-                            <img src="~/assets/img/user2-160x160.jpg" class="user-image rounded-circle shadow" alt="User Image">
+                            @if (User.Identity.IsAuthenticated && User.IsInRole("Estudiantes"))
+                            {
+                                var userId = User.FindFirstValue("UserId");
+                                if (!string.IsNullOrEmpty(userId))
+                                {
+                                    <img id="user-photo-small" src="~/assets/img/user2-160x160.jpg" class="user-image rounded-circle shadow" alt="User Image">
+                                }
+                                else
+                                {
+                                    <img src="~/assets/img/user2-160x160.jpg" class="user-image rounded-circle shadow" alt="User Image">
+                                }
+                            }
+                            else
+                            {
+                                <img src="~/assets/img/user2-160x160.jpg" class="user-image rounded-circle shadow" alt="User Image">
+                            }
                             <span class="d-none d-md-inline">
                                 @if (User.Identity.IsAuthenticated)
                                 {
@@ -347,7 +362,22 @@
                         <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-end">
                             <!--begin::User Image-->
                             <li class="user-header text-bg-primary">
-                                <img src="~/assets/img/user2-160x160.jpg" class="rounded-circle shadow" alt="User Image">
+                                @if (User.Identity.IsAuthenticated && User.IsInRole("Estudiantes"))
+                                {
+                                    var userId = User.FindFirstValue("UserId");
+                                    if (!string.IsNullOrEmpty(userId))
+                                    {
+                                        <img id="user-photo-large" src="~/assets/img/user2-160x160.jpg" class="rounded-circle shadow" alt="User Image">
+                                    }
+                                    else
+                                    {
+                                        <img src="~/assets/img/user2-160x160.jpg" class="rounded-circle shadow" alt="User Image">
+                                    }
+                                }
+                                else
+                                {
+                                    <img src="~/assets/img/user2-160x160.jpg" class="rounded-circle shadow" alt="User Image">
+                                }
                                 <p>
                                     @if (User.Identity.IsAuthenticated)
                                     {
@@ -909,6 +939,44 @@
                         autoHide: Default.scrollbarAutoHide,
                         clickScroll: Default.scrollbarClickScroll,
                     },
+                });
+            }
+        });
+    </script>
+
+    <!-- Cargar foto del usuario estudiante -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Solo ejecutar si el usuario es estudiante
+            const userPhotoSmall = document.getElementById('user-photo-small');
+            const userPhotoLarge = document.getElementById('user-photo-large');
+            
+            if (userPhotoSmall || userPhotoLarge) {
+                // Hacer una llamada AJAX para obtener la foto del alumno
+                fetch('/api/alumnosapi/obtenerfoto', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.foto) {
+                        const fotoUrl = `data:image/jpeg;base64,${data.foto}`;
+                        
+                        // Actualizar la foto pequeña en la barra de navegación
+                        if (userPhotoSmall) {
+                            userPhotoSmall.src = fotoUrl;
+                        }
+                        
+                        // Actualizar la foto grande en el dropdown
+                        if (userPhotoLarge) {
+                            userPhotoLarge.src = fotoUrl;
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.log('No se pudo cargar la foto del usuario:', error);
                 });
             }
         });
