@@ -1,0 +1,108 @@
+@page
+@model SRAUMOAR.Pages.Autenticacion.ResetearContrasenasModel
+@{
+    ViewData["Title"] = "Resetear contraseñas";
+}
+
+<h2>Resetear contraseñas</h2>
+
+<form method="post" id="resetForm">
+    @Html.AntiForgeryToken()
+    <div class="form-group">
+        <label for="Rol">Rol</label>
+        <select asp-for="Input.Rol" class="form-control" id="rolSelect">
+            <option value="3">Docentes</option>
+            <option value="4">Alumnos</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>
+            <input type="radio" name="Input.Modo" value="Todos" checked id="modoTodos" /> Todos
+        </label>
+        <label class="ml-3">
+            <input type="radio" name="Input.Modo" value="Seleccionados" id="modoSeleccionados" /> Seleccionados
+        </label>
+    </div>
+
+    <div id="listaContainer" style="display: none;">
+        <div class="form-group">
+            <label>Seleccionar usuarios</label>
+            <select asp-for="Input.SeleccionIds" asp-items="Model.ListaSeleccion" class="form-control" multiple size="12"></select>
+            <small class="form-text text-muted">Mantén Ctrl/Cmd para seleccionar varios.</small>
+        </div>
+    </div>
+
+    <div class="form-check mt-2">
+        <input class="form-check-input" asp-for="Input.Confirm" type="checkbox" id="confirmacion" />
+        <label class="form-check-label" for="confirmacion">Confirmo que deseo aplicar el reseteo con las opciones seleccionadas</label>
+    </div>
+
+    <div class="form-group mt-3">
+        <button type="submit" class="btn btn-primary" id="btnReset" disabled>Resetear</button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ResultadoMensaje))
+    {
+        <div class="alert alert-info mt-3">
+            @Model.ResultadoMensaje
+        </div>
+    }
+</form>
+
+@section Scripts{
+    <script>
+        (function(){
+            const form = document.getElementById('resetForm');
+            const rol = document.getElementById('rolSelect');
+            const modoTodos = document.getElementById('modoTodos');
+            const modoSel = document.getElementById('modoSeleccionados');
+            const btn = document.getElementById('btnReset');
+            const chk = document.getElementById('confirmacion');
+            const listaContainer = document.getElementById('listaContainer');
+
+            async function cargarLista(){
+                if(modoSel.checked){
+                    const rolSeleccionado = rol.value;
+                    try {
+                        const response = await fetch(`?handler=Cargar&rol=${rolSeleccionado}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: new URLSearchParams({
+                                '__RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                            })
+                        });
+                        
+                        if (response.ok) {
+                            const html = await response.text();
+                            // Extraer solo la lista del HTML de respuesta
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+                            const nuevaLista = doc.querySelector('#listaContainer');
+                            if (nuevaLista) {
+                                listaContainer.innerHTML = nuevaLista.innerHTML;
+                                listaContainer.style.display = 'block';
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error cargando lista:', error);
+                    }
+                } else {
+                    listaContainer.style.display = 'none';
+                }
+            }
+
+            rol.addEventListener('change', cargarLista);
+            modoSel.addEventListener('change', cargarLista);
+            modoTodos.addEventListener('change', cargarLista);
+
+            chk.addEventListener('change', function(){
+                btn.disabled = !chk.checked;
+            });
+        })();
+    </script>
+}
+
+

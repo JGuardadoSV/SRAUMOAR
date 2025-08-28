@@ -1,0 +1,14 @@
+@model dynamic
+
+<div id="listaContainer">
+    <div class="form-group">
+        <label>Seleccionar usuarios</label>
+        <select name="Input.SeleccionIds" class="form-control" multiple size="12">
+            @foreach (var item in Model.ListaSeleccion)
+            {
+                <option value="@item.Value">@item.Text</option>
+            }
+        </select>
+        <small class="form-text text-muted">Mantén Ctrl/Cmd para seleccionar varios.</small>
+    </div>
+</div>
