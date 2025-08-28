@@ -25,6 +25,9 @@ CultureInfo.DefaultThreadCurrentUICulture = culture;
 // Registrar el servicio de alumnos
 builder.Services.AddScoped<IAlumnoService, AlumnoService>();
 
+// Registrar el servicio de email
+builder.Services.AddScoped<IEmailService, EmailService>();
+
 
 
 // Add services to the container.

@@ -34,6 +34,13 @@
     </div>
 
     <div class="form-check mt-2">
+        <input class="form-check-input" asp-for="Input.EnviarEmail" type="checkbox" id="enviarEmail" />
+        <label class="form-check-label" for="enviarEmail">
+            <i class="bi bi-envelope"></i> Enviar notificación por email con las nuevas credenciales
+        </label>
+    </div>
+
+    <div class="form-check mt-2">
         <input class="form-check-input" asp-for="Input.Confirm" type="checkbox" id="confirmacion" />
         <label class="form-check-label" for="confirmacion">Confirmo que deseo aplicar el reseteo con las opciones seleccionadas</label>
     </div>

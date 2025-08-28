@@ -845,89 +845,40 @@
     <!-- Después jQuery UI -->
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
 
-    <!-- INMEDIATAMENTE después, tu código del autocomplete -->
+    <!-- Configuración centralizada de jQuery -->
+    <script src="~/js/jquery-config.js"></script>
+    
+    <!-- Inicialización del autocomplete -->
     <script>
-        function showStudentDetails(student) {
-            $("#searchResults").html(`
-                <div class="student-details-card">
-                    <button type="button" class="close-btn" onclick="$('#searchResults').empty()">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-                    <div class="d-flex flex-column align-items-center">
-                        <img src="${student.photoUrl || '/images/default.PNG'}"
-                             class="student-photo-lg mb-2"
-                             alt="Foto de ${student.name}"
-                             onerror="this.src='/images/default.PNG'">
-                        <div class="student-name-lg">${student.name}</div>
-                    </div>
-                    <div class="actions d-flex justify-content-center">
-                        <a href="/aranceles/Cobrar?id=${student.id}" class="btn btn-primary btn-action"><i class="bi bi-cash-coin"></i> Aranceles</a>
-                        <a href="/inscripcion/Create?id=${student.id}" class="btn btn-success btn-action"><i class="bi bi-arrow-right-circle"></i> Inscribir ciclo</a>
-                        <a href="/inscripcion/MateriasInscritas?id=${student.id}" class="btn btn-outline-secondary btn-action"><i class="bi bi-journal-plus"></i> Inscribir materias</a>
-                    </div>
-                </div>
-            `);
-        }
-
-        function abrirPdfEnPopup(url, titulo = 'Reporte') {
-            const ancho = 900;
-            const alto = 850;
-            const left = (screen.width - ancho) / 2;
-            const top = (screen.height - alto) / 2;
-
-            const opciones = `
-                width=${ancho},
-                height=${alto},
-                left=${left},
-                top=${top},
-                scrollbars=yes,
-                resizable=yes,
-                toolbar=no,
-                menubar=no,
-                location=no,
-                directories=no,
-                status=no
-            `;
-
-            window.open(url, titulo, opciones);
-        }
-
-        $(document).ready(function() {
-            $("#studentSearch").autocomplete({
-                source: function(request, response) {
-                    $.ajax({
-                        url: "/api/alumnosapi/busquedaajax1",
-                        data: {
-                            term: request.term,
-                            __RequestVerificationToken: $('input:hidden[name="__RequestVerificationToken"]').val()
-                        },
-                        success: function(data) {
-                            response(data);
+        jQuery(document).ready(function() {
+            // Inicializar autocomplete de forma segura
+            if (typeof window.initializeAutocomplete === 'function') {
+                window.initializeAutocomplete("#studentSearch", {
+                    source: function(request, response) {
+                        jQuery.ajax({
+                            url: "/api/alumnosapi/busquedaajax1",
+                            data: {
+                                term: request.term,
+                                __RequestVerificationToken: jQuery('input:hidden[name="__RequestVerificationToken"]').val()
+                            },
+                            success: function(data) {
+                                response(data);
+                            }
+                        });
+                    },
+                    minLength: 2,
+                    select: function(event, ui) {
+                        if (typeof window.showStudentDetails === 'function') {
+                            window.showStudentDetails(ui.item);
                         }
-                    });
-                },
-                minLength: 2,
-                select: function(event, ui) {
-                    showStudentDetails(ui.item);
-                    return false;
-                },
-                focus: function(event, ui) {
-                    event.preventDefault();
-                    $(this).val(ui.item.name);
-                }
-            }).autocomplete("instance")._renderItem = function(ul, item) {
-                return $("<li>")
-                    .append(`<button type='button' class='student-item'>
-                        <img src='${item.photoUrl || '/images/default.PNG'}'
-                             class='student-photo'
-                             alt='Foto de ${item.name}'
-                             onerror="this.src='/images/default.PNG'">
-                        <div class='student-info'>
-                            <div class='student-name'>${item.name}</div>
-                        </div>
-                    </button>`)
-                    .appendTo(ul);
-            };
+                        return false;
+                    },
+                    focus: function(event, ui) {
+                        event.preventDefault();
+                        jQuery(this).val(ui.item.name);
+                    }
+                });
+            }
         });
     </script>
 

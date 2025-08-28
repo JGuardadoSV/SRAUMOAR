@@ -1,0 +1,266 @@
+@page
+@model SRAUMOAR.Pages.portal.estudiante.MiHistorialModel
+@{
+    ViewData["Title"] = "Mi Historial Académico";
+}
+
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="bi bi-journal-text me-2 text-primary"></i>
+                        Mi Historial Académico
+                    </h2>
+                    <p class="text-muted mb-0">Consulta tu progreso académico y calificaciones</p>
+                </div>
+                <a href="/portal/estudiante" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>
+                    Volver al Portal
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información del Alumno -->
+    <div class="card mb-4 border-0 shadow-sm">
+        <div class="card-header bg-gradient-primary text-white">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person me-2"></i>
+                        @Model.NombreAlumno
+                    </h5>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <div class="row">
+                        <div class="col-6">
+                            <h6 class="mb-1 text-white-50">Total Materias</h6>
+                            <span class="badge bg-light text-dark fs-6 shadow-sm">@Model.TotalMaterias</span>
+                        </div>
+                        <div class="col-6">
+                            <h6 class="mb-1 text-white-50">Total UV</h6>
+                            <span class="badge bg-light text-dark fs-6 shadow-sm">@Model.TotalUV</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.CarrerasDisponibles.Any())
+    {
+        <!-- Filtro por Carrera -->
+        <div class="card mb-4 border-0 shadow-sm">
+            <div class="card-header bg-gradient-light">
+                <h6 class="mb-0">
+                    <i class="bi bi-funnel me-2"></i>
+                    Seleccionar Carrera
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-end">
+                    <div class="col-md-8">
+                        <label for="carreraFiltro" class="form-label fw-semibold">Carrera:</label>
+                        <select id="carreraFiltro" class="form-select border-2">
+                            @foreach (var carrera in Model.CarrerasDisponibles)
+                            {
+                                if (carrera.CarreraId == Model.CarreraSeleccionadaId)
+                                {
+                                    <option value="@carrera.CarreraId" selected>
+                                        @carrera.NombreCarrera
+                                    </option>
+                                }
+                                else
+                                {
+                                    <option value="@carrera.CarreraId">
+                                        @carrera.NombreCarrera
+                                    </option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" id="btnFiltrar" class="btn btn-primary shadow-sm">
+                            <i class="bi bi-search me-2"></i>
+                            Cambiar Carrera
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (Model.HistorialCiclos != null && Model.HistorialCiclos.Any())
+    {
+        <!-- Historial por Ciclos -->
+        @foreach (var ciclo in Model.HistorialCiclos.OrderByDescending(c => c.CicloTexto))
+        {
+            <div class="card mb-4 border-0 shadow-sm">
+                <div class="card-header bg-gradient-info text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-calendar me-2"></i>
+                        Ciclo @ciclo.CicloTexto | Pensúm @ciclo.Pensum.Anio
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    @if (ciclo.MateriasHistorial != null && ciclo.MateriasHistorial.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="border-0 ps-4">Materia</th>
+                                        <th class="text-center border-0">Promedio</th>
+                                        <th class="text-center border-0">Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var materia in ciclo.MateriasHistorial.OrderBy(m => m.Materia.NombreMateria))
+                                    {
+                                        <tr class="border-0">
+                                            <td class="ps-4">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="me-3">
+                                                        <strong class="d-block text-dark">@materia.Materia.NombreMateria</strong>
+                                                        <small class="text-muted">@materia.Materia.CodigoMateria</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-@(materia.Promedio >= 6 ? "success" : "danger") fs-6 px-3 py-2 shadow-sm">
+                                                    @materia.Promedio.ToString("0.00")
+                                                </span>
+                                            </td>
+                                            <td class="text-center">
+                                                @if (materia.Aprobada)
+                                                {
+                                                    <span class="badge bg-success px-3 py-2 shadow-sm">
+                                                        <i class="bi bi-check-circle me-1"></i>
+                                                        Aprobada
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-danger px-3 py-2 shadow-sm">
+                                                        <i class="bi bi-x-circle me-1"></i>
+                                                        Reprobada
+                                                    </span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info text-center">
+                            <i class="bi bi-info-circle me-2"></i>
+                            No hay materias registradas para este ciclo.
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <!-- No hay historial -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-journal-x text-muted" style="font-size: 4rem;"></i>
+                <h4 class="text-muted mt-3">No hay historial académico disponible</h4>
+                <p class="text-muted">Tu historial académico aparecerá aquí una vez que se registren tus calificaciones.</p>
+            </div>
+        </div>
+    }
+</div>
+
+<script>
+    document.getElementById('btnFiltrar').addEventListener('click', function() {
+        const carreraId = document.getElementById('carreraFiltro').value;
+        const currentUrl = new URL(window.location);
+        currentUrl.searchParams.set('carreraId', carreraId);
+        window.location.href = currentUrl.toString();
+    });
+</script>
+
+<style>
+    .card {
+        border-radius: 15px;
+        transition: all 0.3s ease-in-out;
+        border: none;
+    }
+    
+    .card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+    }
+    
+    .table th {
+        border-top: none;
+        font-weight: 600;
+        color: #495057;
+        background: #f8f9fa;
+        padding: 1rem 0.75rem;
+    }
+    
+    .table td {
+        padding: 1rem 0.75rem;
+        vertical-align: middle;
+    }
+    
+    .badge {
+        font-size: 0.9rem;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+    }
+    
+    .btn {
+        border-radius: 10px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn:hover {
+        transform: translateY(-1px);
+    }
+    
+    .form-select {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .form-select:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+        transform: translateY(-1px);
+    }
+    
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+    }
+    
+    .bg-gradient-info {
+        background: linear-gradient(135deg, #0dcaf0 0%, #0aa2c0 100%);
+    }
+    
+    .bg-gradient-light {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: scale(1.01);
+        transition: all 0.2s ease;
+    }
+    
+    .shadow-sm {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+    }
+</style>

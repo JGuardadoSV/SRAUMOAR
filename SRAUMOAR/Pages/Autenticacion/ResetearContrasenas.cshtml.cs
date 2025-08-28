@@ -12,6 +12,7 @@ using SRAUMOAR.Entidades.Accesos;
 using SRAUMOAR.Entidades.Alumnos;
 using SRAUMOAR.Entidades.Docentes;
 using SRAUMOAR.Modelos;
+using SRAUMOAR.Servicios;
 
 namespace SRAUMOAR.Pages.Autenticacion
 {
@@ -19,10 +20,12 @@ namespace SRAUMOAR.Pages.Autenticacion
     public class ResetearContrasenasModel : PageModel
     {
         private readonly Contexto _context;
+        private readonly IEmailService _emailService;
 
-        public ResetearContrasenasModel(Contexto context)
+        public ResetearContrasenasModel(Contexto context, IEmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
         public bool MostrarSeleccion { get; set; }
@@ -41,6 +44,8 @@ namespace SRAUMOAR.Pages.Autenticacion
             public string Modo { get; set; } = "Todos"; // Todos | Seleccionados
 
             public List<int> SeleccionIds { get; set; } = new List<int>(); // Ids de AlumnoId o DocenteId segun rol
+
+            public bool EnviarEmail { get; set; } = false; // Enviar notificación por email
 
             [Required(ErrorMessage = "Debe confirmar antes de aplicar cambios.")]
             public bool Confirm { get; set; }
@@ -80,8 +85,11 @@ namespace SRAUMOAR.Pages.Autenticacion
             int sinEmail = 0;
             int creados = 0;
             int corregidosDuplicados = 0;
-            var alumnosPorVincular = new List<(Alumno alumno, Usuario user)>();
-            var docentesPorVincular = new List<(Docente docente, Usuario user)>();
+            int emailsEnviados = 0;
+            int emailsFallidos = 0;
+            var alumnosPorVincular = new List<(Alumno alumno, Usuario user, string nombreCompleto)>();
+            var docentesPorVincular = new List<(Docente docente, Usuario user, string nombreCompleto)>();
+            var notificaciones = new List<(string email, string nombreUsuario, string clave, string nombreCompleto)>();
 
             if (rolObjetivo == 4)
             {
@@ -92,7 +100,7 @@ namespace SRAUMOAR.Pages.Autenticacion
                     query = query.Where(a => Input.SeleccionIds.Contains(a.AlumnoId));
                 }
 
-                var alumnos = await query.Select(a => new { Entidad = a, a.AlumnoId, a.UsuarioId, a.Email }).ToListAsync();
+                var alumnos = await query.Select(a => new { Entidad = a, a.AlumnoId, a.UsuarioId, a.Email, a.Nombres, a.Apellidos }).ToListAsync();
                 var usuarioIds = alumnos.Where(a => a.UsuarioId.HasValue).Select(a => a.UsuarioId.Value).ToList();
 
                 var usuarios = await _context.Usuarios.Where(u => usuarioIds.Contains(u.IdUsuario) || (u.NivelAccesoId == 4)).ToListAsync();
@@ -102,6 +110,8 @@ namespace SRAUMOAR.Pages.Autenticacion
                     var alumno = al.Entidad;
                     Usuario user = null;
                     string email = alumno.Email;
+                    string nombreCompleto = ($"{al.Nombres} {al.Apellidos}").Trim();
+                    
                     if (alumno.UsuarioId.HasValue)
                     {
                         user = usuarios.FirstOrDefault(u => u.IdUsuario == alumno.UsuarioId.Value);
@@ -126,9 +136,6 @@ namespace SRAUMOAR.Pages.Autenticacion
                         // actualizar existente
                         if (existentePorMail != null && existentePorMail.IdUsuario != user.IdUsuario)
                         {
-                            // corregir: unificar credenciales al usuario destino actual
-                            existentePorMail.NombreUsuario = email; // ya es igual
-                            // desvincular duplicados no corresponde, pero prevenimos colisión manteniendo solo uno
                             corregidosDuplicados++;
                         }
                         user.NombreUsuario = email;
@@ -136,13 +143,14 @@ namespace SRAUMOAR.Pages.Autenticacion
                         user.Clave = local;
                         user.NivelAccesoId = 4;
                         afectados++;
+                        // Agregar a notificación
+                        notificaciones.Add((user.Email, user.NombreUsuario, user.Clave, nombreCompleto));
                     }
                     else
                     {
                         // crear usuario nuevo o reutilizar existente por email
                         if (existentePorMail != null)
                         {
-                            // reutilizar ese usuario
                             user = existentePorMail;
                         }
                         else
@@ -159,8 +167,10 @@ namespace SRAUMOAR.Pages.Autenticacion
                             usuarios.Add(user);
                             creados++;
                         }
-                        alumnosPorVincular.Add((alumno, user));
+                        alumnosPorVincular.Add((alumno, user, nombreCompleto));
                         afectados++;
+                        // Agregar a notificación (se usará tras guardar)
+                        notificaciones.Add((email, email, local, nombreCompleto));
                     }
                 }
             }
@@ -173,7 +183,7 @@ namespace SRAUMOAR.Pages.Autenticacion
                     query = query.Where(d => Input.SeleccionIds.Contains(d.DocenteId));
                 }
 
-                var docentes = await query.Select(d => new { Entidad = d, d.DocenteId, d.UsuarioId, d.Email }).ToListAsync();
+                var docentes = await query.Select(d => new { Entidad = d, d.DocenteId, d.UsuarioId, d.Email, d.Nombres, d.Apellidos }).ToListAsync();
                 var usuarioIds = docentes.Where(d => d.UsuarioId.HasValue).Select(d => d.UsuarioId.Value).ToList();
 
                 var usuarios = await _context.Usuarios.Where(u => usuarioIds.Contains(u.IdUsuario) || (u.NivelAccesoId == 3)).ToListAsync();
@@ -183,6 +193,8 @@ namespace SRAUMOAR.Pages.Autenticacion
                     var docente = dc.Entidad;
                     Usuario user = null;
                     string email = docente.Email;
+                    string nombreCompleto = ($"{dc.Nombres} {dc.Apellidos}").Trim();
+                    
                     if (docente.UsuarioId.HasValue)
                     {
                         user = usuarios.FirstOrDefault(u => u.IdUsuario == docente.UsuarioId.Value);
@@ -211,6 +223,8 @@ namespace SRAUMOAR.Pages.Autenticacion
                         user.Clave = local;
                         user.NivelAccesoId = 3;
                         afectados++;
+                        // Agregar a notificación
+                        notificaciones.Add((user.Email, user.NombreUsuario, user.Clave, nombreCompleto));
                     }
                     else
                     {
@@ -232,8 +246,10 @@ namespace SRAUMOAR.Pages.Autenticacion
                             usuarios.Add(user);
                             creados++;
                         }
-                        docentesPorVincular.Add((docente, user));
+                        docentesPorVincular.Add((docente, user, nombreCompleto));
                         afectados++;
+                        // Agregar a notificación (se usará tras guardar)
+                        notificaciones.Add((email, email, local, nombreCompleto));
                     }
                 }
             }
@@ -262,7 +278,43 @@ namespace SRAUMOAR.Pages.Autenticacion
                 await _context.SaveChangesAsync();
             }
 
-            ResultadoMensaje = $"Usuarios actualizados: {afectados}. Creados: {creados}. Posibles duplicados corregidos: {corregidosDuplicados}. Sin usuario vinculado: {sinUsuario}. Sin email válido: {sinEmail}.";
+            // Enviar emails si está habilitado
+            if (Input.EnviarEmail && notificaciones.Count > 0)
+            {
+                foreach (var n in notificaciones)
+                {
+                    try
+                    {
+                        bool enviado = await _emailService.EnviarNotificacionCambioContrasenaAsync(
+                            n.email,
+                            n.nombreUsuario,
+                            n.clave,
+                            n.nombreCompleto);
+                        if (enviado) emailsEnviados++; else emailsFallidos++;
+                    }
+                    catch { emailsFallidos++; }
+                }
+            }
+
+            // Construir mensaje de resultado
+            var mensaje = $"Usuarios actualizados: {afectados}. Creados: {creados}. Posibles duplicados corregidos: {corregidosDuplicados}. Sin usuario vinculado: {sinUsuario}. Sin email válido: {sinEmail}.";
+            
+            if (Input.EnviarEmail)
+            {
+                mensaje += $" Emails enviados: {emailsEnviados}. Emails fallidos: {emailsFallidos}.";
+            }
+
+            ResultadoMensaje = mensaje;
+
+            // Limpiar el estado del formulario después de completar
+            Input = new ResetInput
+            {
+                Rol = Input.Rol, // Mantener el rol seleccionado
+                Modo = Input.Modo, // Mantener el modo seleccionado
+                SeleccionIds = new List<int>(), // Limpiar selección
+                EnviarEmail = false, // Desmarcar checkbox de email
+                Confirm = false // Desmarcar checkbox de confirmación
+            };
 
             await CargarSeleccionAsync();
             return Page();
