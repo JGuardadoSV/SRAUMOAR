@@ -1,5 +1,6 @@
 using iText.Kernel.Pdf;
 using iText.Layout.Element;
+using iText.Layout;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder.Extensions;
 using Microsoft.AspNetCore.Mvc;
@@ -12,10 +13,9 @@ using SRAUMOAR.Entidades.Procesos;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Text;
-using Newtonsoft.Json;
-using iText.Kernel.Pdf;
-using iText.Layout.Element;
-using iText.Layout;
+using ImageSharpImage = SixLabors.ImageSharp.Image;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Formats.Jpeg;
 namespace SRAUMOAR.Pages.portal.estudiante
 {
 
@@ -55,12 +55,12 @@ namespace SRAUMOAR.Pages.portal.estudiante
      .Include(mi => mi.MateriasGrupo)
          .ThenInclude(mg => mg.Docente)
      .Include(mi => mi.MateriasGrupo)
-         .ThenInclude(mg => mg.Grupo)  // Agregamos esta línea para incluir el Grupo
+         .ThenInclude(mg => mg.Grupo)  // Agregamos esta lï¿½nea para incluir el Grupo
      .Where(mi => mi.MateriasGrupo.Grupo.CicloId == Ciclo.Id &&
                   mi.Alumno.AlumnoId == Alumno.AlumnoId)
      .ToList();
 
-            // Consulta modificada para manejar múltiples pagos
+            // Consulta modificada para manejar mï¿½ltiples pagos
             Arancel =  _context.Aranceles.Where(x => x.Ciclo.Id == Ciclo.Id)
                  .Include(a => a.Ciclo).ToList();
 
@@ -106,7 +106,7 @@ namespace SRAUMOAR.Pages.portal.estudiante
         {
             try
             {
-                // Aquí puedes agregar tu lógica para obtener el JSON y sello
+                // Aquï¿½ puedes agregar tu lï¿½gica para obtener el JSON y sello
                 // Por ahora uso valores de ejemplo
                 CobroArancel cobroArancel = await _context.CobrosArancel
                     .Include(c => c.Alumno)
@@ -128,8 +128,8 @@ namespace SRAUMOAR.Pages.portal.estudiante
                 }
 
 
-                var dteJson = factura.JsonDte; // Reemplazar con tu lógica
-                var selloRecibido = factura.SelloRecepcion; // Reemplazar con tu lógica
+                var dteJson = factura.JsonDte; // Reemplazar con tu lï¿½gica
+                var selloRecibido = factura.SelloRecepcion; // Reemplazar con tu lï¿½gica
                 var tipo = factura.TipoDTE.ToString().PadLeft(2, '0');
 
                 // Datos que necesitas enviar
@@ -151,9 +151,9 @@ namespace SRAUMOAR.Pages.portal.estudiante
                 {
                     var pdfBytes = await response.Content.ReadAsByteArrayAsync();
 
-                    //Console.WriteLine($"[DEBUG CLIENT] PDF recibido, tamaño: {pdfBytes.Length} bytes");
+                    //Console.WriteLine($"[DEBUG CLIENT] PDF recibido, tamaï¿½o: {pdfBytes.Length} bytes");
 
-                    // Respuesta más simple - deja que la API maneje los headers
+                    // Respuesta mï¿½s simple - deja que la API maneje los headers
                     return File(pdfBytes, "application/pdf");
                 }
                 else
@@ -166,9 +166,109 @@ namespace SRAUMOAR.Pages.portal.estudiante
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR CLIENT] Excepción: {ex}");
+                Console.WriteLine($"[ERROR CLIENT] Excepciï¿½n: {ex}");
                 TempData["Error"] = $"Error: {ex.Message}";
                 return RedirectToPage();
+            }
+        }
+
+        public async Task<IActionResult> OnPostActualizarFotoAsync(IFormFile nuevaFoto)
+        {
+            try
+            {
+                if (nuevaFoto == null || nuevaFoto.Length == 0)
+                {
+                    return new JsonResult(new { success = false, message = "No se seleccionÃ³ ninguna imagen." });
+                }
+
+                // Validar tamaÃ±o (5MB mÃ¡ximo antes de optimizaciÃ³n)
+                if (nuevaFoto.Length > 5 * 1024 * 1024)
+                {
+                    return new JsonResult(new { success = false, message = "La imagen es demasiado grande. El tamaÃ±o mÃ¡ximo es 5MB." });
+                }
+
+                // Validar tipo de archivo
+                var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png" };
+                if (!allowedTypes.Contains(nuevaFoto.ContentType.ToLower()))
+                {
+                    return new JsonResult(new { success = false, message = "Formato de imagen no vÃ¡lido. Solo se permiten JPG y PNG." });
+                }
+
+                // Obtener el alumno actual
+                var userId = User.FindFirstValue("UserId") ?? "0";
+                int idusuario = int.Parse(userId);
+                var alumno = await _context.Alumno.FirstOrDefaultAsync(a => a.UsuarioId == idusuario);
+
+                if (alumno == null)
+                {
+                    return new JsonResult(new { success = false, message = "Alumno no encontrado." });
+                }
+
+                // Optimizar y comprimir la imagen
+                var fotoBytes = await OptimizarImagenAsync(nuevaFoto);
+
+                // Actualizar la foto en la base de datos
+                alumno.Foto = fotoBytes;
+                _context.Alumno.Update(alumno);
+                await _context.SaveChangesAsync();
+
+                return new JsonResult(new { 
+                    success = true, 
+                    message = $"Foto actualizada exitosamente. TamaÃ±o optimizado: {(fotoBytes.Length / 1024.0):F1} KB" 
+                });
+            }
+            catch (Exception ex)
+            {
+                return new JsonResult(new { success = false, message = $"Error al actualizar la foto: {ex.Message}" });
+            }
+        }
+
+        private async Task<byte[]> OptimizarImagenAsync(IFormFile imagen)
+        {
+            try
+            {
+                using var memoryStream = new MemoryStream();
+                await imagen.CopyToAsync(memoryStream);
+                memoryStream.Position = 0;
+
+                using var image = await ImageSharpImage.LoadAsync(memoryStream);
+                
+                // Redimensionar si es muy grande (mÃ¡ximo 300x300 pÃ­xeles)
+                var maxSize = 300;
+                if (image.Width > maxSize || image.Height > maxSize)
+                {
+                    var ratio = Math.Min((double)maxSize / image.Width, (double)maxSize / image.Height);
+                    var newWidth = (int)(image.Width * ratio);
+                    var newHeight = (int)(image.Height * ratio);
+                    
+                    image.Mutate(x => x.Resize(newWidth, newHeight));
+                }
+
+                // Convertir a JPEG con compresiÃ³n
+                using var outputStream = new MemoryStream();
+                await image.SaveAsync(outputStream, new JpegEncoder
+                {
+                    Quality = 85 // Calidad del 85% para buen balance entre tamaÃ±o y calidad
+                });
+
+                var optimizedBytes = outputStream.ToArray();
+                
+                // Log del tamaÃ±o optimizado
+                var originalSize = memoryStream.Length;
+                var optimizedSize = optimizedBytes.Length;
+                var compressionRatio = (double)optimizedSize / originalSize * 100;
+                
+                Console.WriteLine($"Imagen optimizada: {originalSize / 1024.0:F1} KB -> {optimizedSize / 1024.0:F1} KB ({compressionRatio:F1}%)");
+                
+                return optimizedBytes;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al optimizar imagen: {ex.Message}");
+                // Si falla la optimizaciÃ³n, devolver la imagen original
+                using var memoryStream = new MemoryStream();
+                await imagen.CopyToAsync(memoryStream);
+                return memoryStream.ToArray();
             }
         }
     }

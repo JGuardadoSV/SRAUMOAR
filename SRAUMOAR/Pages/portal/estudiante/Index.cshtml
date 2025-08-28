@@ -8,12 +8,18 @@
     .Any(dc => dc.ArancelId == a.ArancelId && dc.CobroArancel.AlumnoId == Model.Alumno.AlumnoId)
     && (a.FechaFin < DateTime.Now)))
     {
-        <div class="card border-danger shadow-sm">
-            <div class="card-header bg-danger text-white py-3 d-flex align-items-center">
-                <i class="bi bi-exclamation-triangle-fill fs-4 me-2"></i>
-                <h5 class="mb-0">Aranceles Pendientes de Pago</h5>
+        <div class="aranceles-alert-compact mb-3">
+            <div class="alert-header-compact">
+                <div class="alert-icon-compact">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                </div>
+                <div class="alert-title-compact">
+                    <h6 class="mb-0">⚠️ Aranceles Vencidos</h6>
+                    <small class="text-muted">Pagos pendientes que requieren atención</small>
+                </div>
             </div>
-            <div class="card-body">
+            
+            <div class="aranceles-list">
                 @{
                     var arancelesVencidos = Model.Arancel
                     .Where(a => !Model.DetallesCobroArancel
@@ -25,39 +31,80 @@
 
                 @foreach (var item in arancelesVencidos)
                 {
-                var diasAtraso = item.FechaFin.HasValue ? (DateTime.Now - item.FechaFin.Value).Days : 0;
+                    var diasAtraso = item.FechaFin.HasValue ? (DateTime.Now - item.FechaFin.Value).Days : 0;
+                    var urgenciaClass = diasAtraso > 30 ? "urgente" : diasAtraso > 15 ? "alto" : "medio";
 
-                <div class="alert alert-danger d-flex align-items-center p-3 mb-3">
-                    <div class="d-flex align-items-center flex-grow-1">
-                        <div class="bg-danger bg-opacity-10 rounded-circle p-2 me-3">
-                            <i class="bi bi-calendar-x text-danger fs-5"></i>
-                        </div>
-                        <div>
-                            <h6 class="mb-1">@item.Nombre</h6>
-                            <div class="d-flex flex-column flex-sm-row gap-2">
-                                <span class="text-danger">
-                                    <i class="bi bi-clock-history me-1"></i>
-                                    Atrasado <strong>@diasAtraso días</strong>
+                    <div class="arancel-item @urgenciaClass">
+                        <div class="arancel-info-compact">
+                            <div class="arancel-main">
+                                <h6 class="arancel-nombre-compact">@item.Nombre</h6>
+                                <div class="arancel-details">
+                                    <span class="dias-atraso-compact @urgenciaClass">
+                                        <i class="bi bi-clock-history me-1"></i>
+                                        @diasAtraso días atrasado
+                                    </span>
+                                    <span class="fecha-vencimiento">
+                                        <i class="bi bi-calendar-event me-1"></i>
+                                        @(item.FechaFin?.ToString("dd/MM/yyyy") ?? "Sin fecha")
+                                    </span>
+                                                                     @if (item.Costo > 0)
+                                 {
+                                     <span class="monto">
+                                         <i class="bi bi-cash-coin me-1"></i>
+                                         @if (item.EstaVencido && item.ValorMora > 0)
+                                         {
+                                             <span class="monto-con-mora">
+                                                 <span class="costo-original">$@item.Costo.ToString("N2")</span>
+                                                 <span class="mora-adicional">+ $@item.ValorMora.ToString("N2") mora</span>
+                                                 <span class="total-mora">= $@item.TotalConMora.ToString("N2")</span>
+                                             </span>
+                                         }
+                                         else
+                                         {
+                                             <span>$@item.Costo.ToString("N2")</span>
+                                         }
+                                     </span>
+                                 }
+                                </div>
+                            </div>
+                            <div class="arancel-actions-compact">
+                                <span class="badge-urgencia @urgenciaClass">
+                                    @if (diasAtraso > 30)
+                                    {
+                                        <span>CRÍTICO</span>
+                                    }
+                                    else if (diasAtraso > 15)
+                                    {
+                                        <span>ALTO</span>
+                                    }
+                                    else
+                                    {
+                                        <span>MEDIO</span>
+                                    }
+                                    @if (item.EstaVencido && item.ValorMora > 0)
+                                    {
+                                        <span class="mora-indicator">+ MORA</span>
+                                    }
                                 </span>
-                                <span class="text-danger">
-                                    <i class="bi bi-calendar me-1"></i>
-                                    Venció el <strong>@(item.FechaFin?.ToString("dd/MM/yyyy") ?? "Fecha no definida")</strong>
-                                </span>
+                               @*  <button class="btn-pagar-compact" onclick="location.href='@Url.Action("PagarArancel", "Pagos", new { id = item.ArancelId })'">
+                                    <i class="bi bi-credit-card"></i>
+                                    Pagar
+                                </button> *@
                             </div>
                         </div>
                     </div>
-                    <button class="btn btn-danger ms-auto" onclick="location.href='@Url.Action("PagarArancel", "Pagos", new { id = item.ArancelId })'">
-                        <i class="bi bi-credit-card me-2"></i>Pagar Ahora
-                    </button>
-                </div>
                 }
-
-                <div class="mt-3">
-                    <small class="text-danger">
-                        <i class="bi bi-info-circle me-1"></i>
-                        Los aranceles vencidos pueden generar recargos adicionales. Por favor, regulariza tu situación lo antes posible.
-                    </small>
-                </div>
+            </div>
+            
+            <div class="alert-footer-compact">
+                <small class="text-muted">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Los aranceles vencidos pueden generar recargos adicionales
+                    @if (arancelesVencidos.Any(a => a.EstaVencido && a.ValorMora > 0))
+                    {
+                        <span class="text-danger fw-bold"> • Se aplicará mora por atraso</span>
+                    }
+                </small>
             </div>
         </div>
     }
@@ -75,17 +122,21 @@
                     <div class="row g-0">
                         <div class="col-md-4">
                             <div class="p-3">
-                                <div class="foto-container">
-                                  
-                                    @if (Model.Alumno.Foto != null)
-                                    {
-                                        <img src="data:image/jpeg;base64,@Convert.ToBase64String(Model.Alumno.Foto)" alt="Foto Estudiante" class="img-fluid rounded-circle border border-3 border-primary" />
-                                    }
-                                    else
-                                    {
-                                        <img src="~/images/default.PNG" alt="Foto Estudiante" class="img-fluid rounded-circle border border-3 border-primary" />
-                                    }
-                                </div>
+                                                                 <div class="foto-container">
+                                     <div class="foto-wrapper position-relative">
+                                         @if (Model.Alumno.Foto != null)
+                                         {
+                                             <img src="data:image/jpeg;base64,@Convert.ToBase64String(Model.Alumno.Foto)" alt="Foto Estudiante" class="img-fluid rounded-circle border border-3 border-primary" />
+                                         }
+                                         else
+                                         {
+                                             <img src="~/images/default.PNG" alt="Foto Estudiante" class="img-fluid rounded-circle border border-3 border-primary" />
+                                         }
+                                         <button type="button" class="btn btn-sm btn-primary foto-edit-btn" data-bs-toggle="modal" data-bs-target="#editarFotoModal" title="Cambiar foto">
+                                             <i class="bi bi-camera"></i>
+                                         </button>
+                                     </div>
+                                 </div>
                             </div>
                         </div>
                         <div class="col-md-8">
@@ -422,26 +473,195 @@
     
 
 
+ </div>
+
+<!-- Modal para editar foto -->
+<div class="modal fade" id="editarFotoModal" tabindex="-1" aria-labelledby="editarFotoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editarFotoModalLabel">
+                    <i class="bi bi-camera me-2"></i>Actualizar Foto de Perfil
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formActualizarFoto" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <div class="foto-preview-container">
+                            <img id="fotoPreview" src="@(Model.Alumno.Foto != null ? $"data:image/jpeg;base64,{Convert.ToBase64String(Model.Alumno.Foto)}" : "/images/default.PNG")" 
+                                 alt="Vista previa" class="img-fluid rounded-circle border border-3 border-primary" style="width: 150px; height: 150px; object-fit: cover;" />
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="nuevaFoto" class="form-label">Seleccionar nueva foto:</label>
+                        <input type="file" class="form-control" id="nuevaFoto" name="nuevaFoto" accept="image/*" required>
+                        <div class="form-text">
+                            Formatos permitidos: JPG, PNG. Tamaño máximo: 5MB (se optimizará automáticamente)
+                        </div>
+                    </div>
+                    
+                                         <div class="alert alert-info">
+                         <i class="bi bi-info-circle me-2"></i>
+                         <small>
+                             <strong>Recomendaciones:</strong><br>
+                             • Usa una foto clara y bien iluminada<br>
+                             • Fondo neutro y sin distracciones<br>
+                             • La foto se optimizará automáticamente a 300x300 píxeles<br>
+                             • Se comprimirá para reducir el tamaño de almacenamiento
+                         </small>
+                     </div>
+                     
+                     <div id="optimizationInfo" class="alert alert-success d-none">
+                         <i class="bi bi-check-circle me-2"></i>
+                         <small>
+                             <strong>Optimización:</strong><br>
+                             <span id="optimizationDetails">La imagen se optimizará automáticamente</span>
+                         </small>
+                     </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btnGuardarFoto">
+                        <i class="bi bi-check-circle me-2"></i>Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
+
 @section Scripts {
 <script>
     // Función para ver PDF
-       function verPDF(id) {
-           // Mostrar indicador de carga
-           const button = event.target;
-           const originalText = button.innerHTML;
-           button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
-           button.disabled = true;
+    function verPDF(id) {
+        // Mostrar indicador de carga
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
+        button.disabled = true;
 
-           // Hacer la llamada al método para generar el PDF
-            window.open(`@Url.Page("./Facturas")?handler=GenerarPdf&id=${id}`, '_blank');
+        // Hacer la llamada al método para generar el PDF
+        window.open(`@Url.Page("./Facturas")?handler=GenerarPdf&id=${id}`, '_blank');
 
-           // Restaurar el botón después de un breve delay
-           setTimeout(() => {
-               button.innerHTML = originalText;
-               button.disabled = false;
-           }, 2000);
-       }
+        // Restaurar el botón después de un breve delay
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }, 2000);
+    }
+
+    // Funcionalidad para actualizar foto
+    document.addEventListener('DOMContentLoaded', function() {
+        const inputFoto = document.getElementById('nuevaFoto');
+        const fotoPreview = document.getElementById('fotoPreview');
+        const formActualizarFoto = document.getElementById('formActualizarFoto');
+        const btnGuardarFoto = document.getElementById('btnGuardarFoto');
+
+        // Vista previa de la imagen seleccionada
+        inputFoto.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Validar tamaño (5MB máximo)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('La imagen es demasiado grande. El tamaño máximo es 5MB.');
+                    inputFoto.value = '';
+                    return;
+                }
+
+                // Validar tipo de archivo
+                if (!file.type.startsWith('image/')) {
+                    alert('Por favor selecciona un archivo de imagen válido.');
+                    inputFoto.value = '';
+                    return;
+                }
+
+                // Mostrar información de optimización
+                const fileSizeKB = (file.size / 1024).toFixed(1);
+                const optimizationInfo = document.getElementById('optimizationInfo');
+                const optimizationDetails = document.getElementById('optimizationDetails');
+                
+                optimizationDetails.innerHTML = `Imagen seleccionada: ${fileSizeKB} KB<br>Se optimizará a 300x300 píxeles y se comprimirá`;
+                optimizationInfo.classList.remove('d-none');
+
+                // Mostrar vista previa
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    fotoPreview.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Envío del formulario
+        formActualizarFoto.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            const file = inputFoto.files[0];
+            
+            if (!file) {
+                alert('Por favor selecciona una imagen.');
+                return;
+            }
+
+            formData.append('nuevaFoto', file);
+
+            // Deshabilitar botón y mostrar loading
+            btnGuardarFoto.disabled = true;
+            const originalText = btnGuardarFoto.innerHTML;
+            btnGuardarFoto.innerHTML = '<i class="bi bi-arrow-clockwise me-2"></i>Guardando...';
+
+            try {
+                // Agregar el token CSRF al FormData
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                formData.append('__RequestVerificationToken', token);
+                
+                const response = await fetch('/portal/estudiante/Index?handler=ActualizarFoto', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        // Actualizar la foto en el carnet
+                        const fotoCarnet = document.querySelector('.foto-container img');
+                        if (fotoCarnet) {
+                            fotoCarnet.src = fotoPreview.src;
+                        }
+                        
+                        // Mostrar mensaje de éxito con información del tamaño
+                        alert(result.message || '¡Foto actualizada exitosamente!');
+                        
+                        // Cerrar modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('editarFotoModal'));
+                        modal.hide();
+                        
+                        // Limpiar formulario
+                        formActualizarFoto.reset();
+                        fotoPreview.src = '@(Model.Alumno.Foto != null ? $"data:image/jpeg;base64,{Convert.ToBase64String(Model.Alumno.Foto)}" : "/images/default.PNG")';
+                        
+                        // Ocultar información de optimización
+                        document.getElementById('optimizationInfo').classList.add('d-none');
+                    } else {
+                        alert('Error al actualizar la foto: ' + (result.message || 'Error desconocido'));
+                    }
+                } else {
+                    alert('Error en la comunicación con el servidor.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al procesar la solicitud.');
+            } finally {
+                // Restaurar botón
+                btnGuardarFoto.disabled = false;
+                btnGuardarFoto.innerHTML = originalText;
+            }
+        });
+    });
 </script>
 }
 <style>
@@ -517,9 +737,282 @@
         justify-content: center;
         align-items: center;
     }
+    
+    .foto-wrapper {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .foto-edit-btn {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        transition: all 0.2s ease;
+    }
+    
+    .foto-edit-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    .foto-preview-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
 
     .student-info p {
         color: #666;
         font-size: 0.95rem;
+    }
+</style>
+
+<style>
+    /* Estilos compactos para las alertas de aranceles vencidos */
+    .aranceles-alert-compact {
+        background: #fff;
+        border: 1px solid #fecaca;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(254, 178, 178, 0.15);
+    }
+    
+    .alert-header-compact {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        padding: 0.75rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        border-bottom: 1px solid #fecaca;
+    }
+    
+    .alert-icon-compact {
+        background: #dc2626;
+        color: white;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+    }
+    
+    .alert-title-compact h6 {
+        color: #991b1b;
+        font-weight: 600;
+        margin: 0;
+        font-size: 0.95rem;
+    }
+    
+    .alert-title-compact small {
+        font-size: 0.8rem;
+    }
+    
+    .aranceles-list {
+        padding: 0.5rem;
+    }
+    
+    .arancel-item {
+        background: #fef2f2;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        border-left: 4px solid var(--item-color);
+        transition: all 0.2s ease;
+    }
+    
+    .arancel-item.medio {
+        --item-color: #f59e0b;
+        background: #fffbeb;
+    }
+    
+    .arancel-item.alto {
+        --item-color: #dc2626;
+        background: #fef2f2;
+    }
+    
+    .arancel-item.urgente {
+        --item-color: #7c2d12;
+        background: #fef2f2;
+        animation: subtle-pulse 3s infinite;
+    }
+    
+    @@keyframes subtle-pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.95; }
+    }
+    
+    .arancel-item:hover {
+        transform: translateX(2px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .arancel-info-compact {
+        padding: 0.75rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .arancel-main {
+        flex: 1;
+    }
+    
+    .arancel-nombre-compact {
+        color: #1f2937;
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin: 0 0 0.25rem 0;
+    }
+    
+    .arancel-details {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .arancel-details span {
+        font-size: 0.75rem;
+        color: #6b7280;
+        display: flex;
+        align-items: center;
+    }
+    
+    .monto-con-mora {
+        display: flex;
+        flex-direction: column;
+        gap: 0.1rem;
+        align-items: flex-start;
+    }
+    
+    .costo-original {
+        color: #6b7280;
+        text-decoration: line-through;
+        font-size: 0.7rem;
+    }
+    
+    .mora-adicional {
+        color: #dc2626;
+        font-weight: 600;
+        font-size: 0.7rem;
+    }
+    
+    .total-mora {
+        color: #991b1b;
+        font-weight: 700;
+        font-size: 0.8rem;
+    }
+    
+    .dias-atraso-compact.medio {
+        color: #92400e;
+        font-weight: 600;
+    }
+    
+    .dias-atraso-compact.alto {
+        color: #991b1b;
+        font-weight: 600;
+    }
+    
+    .dias-atraso-compact.urgente {
+        color: #7f1d1d;
+        font-weight: 700;
+    }
+    
+    .arancel-actions-compact {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.5rem;
+    }
+    
+    .badge-urgencia {
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    
+    .badge-urgencia.medio {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .badge-urgencia.alto {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .badge-urgencia.urgente {
+        background: #fecaca;
+        color: #7f1d1d;
+    }
+    
+    .mora-indicator {
+        background: #dc2626;
+        color: white;
+        padding: 0.1rem 0.3rem;
+        border-radius: 8px;
+        font-size: 0.6rem;
+        margin-left: 0.25rem;
+        font-weight: 800;
+    }
+    
+    .btn-pagar-compact {
+        background: var(--item-color);
+        color: white;
+        border: none;
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+    
+    .btn-pagar-compact:hover {
+        filter: brightness(1.1);
+        transform: translateY(-1px);
+    }
+    
+    .alert-footer-compact {
+        background: #fef2f2;
+        padding: 0.5rem 1rem;
+        border-top: 1px solid #fecaca;
+        text-align: center;
+    }
+    
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .arancel-info-compact {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+        
+        .arancel-actions-compact {
+            align-items: flex-start;
+            flex-direction: row;
+            gap: 0.5rem;
+        }
+        
+        .arancel-details {
+            gap: 0.5rem;
+        }
     }
 </style>
