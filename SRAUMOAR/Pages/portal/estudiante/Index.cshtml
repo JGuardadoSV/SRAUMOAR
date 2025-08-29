@@ -248,6 +248,7 @@
                                         <th>Aula</th>
                                         <th class="text-center">Nota Promedio</th>
                                         <th class="text-center">Estado</th>
+                                        <th class="text-center">Notas</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -274,10 +275,68 @@
                                                     <span class="badge bg-danger">En Riesgo</span>
                                                 }
                                             </td>
+                                            <td class="text-center">
+                                                <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalNotas_@materia.MateriasInscritasId">
+                                                    Ver notas
+                                                </button>
+                                            </td>
                                         </tr>
                                     }
                                 </tbody>
                             </table>
+                            @* Renderizar modales fuera de la tabla para evitar problemas de maquetado *@
+                            @foreach (var materia in Model.MateriasInscritas)
+                            {
+                                <div class="modal fade" id="modalNotas_@materia.MateriasInscritasId" tabindex="-1" aria-labelledby="modalNotasLabel_@materia.MateriasInscritasId" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="modalNotasLabel_@materia.MateriasInscritasId">
+                                                    Notas - @materia.MateriasGrupo.Materia.NombreMateria (@materia.MateriasGrupo.Grupo.Nombre)
+                                                </h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                @if (materia.Notas != null && materia.Notas.Any())
+                                                {
+                                                    <div class="table-responsive">
+                                                        <table class="table table-sm align-middle">
+                                                            <thead class="table-light">
+                                                                <tr>
+                                                                    <th>Actividad</th>
+                                                                    <th>Tipo</th>
+                                                                    <th class="text-center">Porcentaje</th>
+                                                                    <th class="text-center">Nota</th>
+                                                                    <th class="text-center">Fecha registro</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                @foreach (var n in (materia.Notas?.OrderBy(x => x.ActividadAcademica != null ? x.ActividadAcademica.FechaInicio : DateTime.MaxValue) ?? Enumerable.Empty<SRAUMOAR.Entidades.Procesos.Notas>()))
+                                                                {
+                                                                    <tr>
+                                                                        <td>@(n.ActividadAcademica?.Nombre ?? "-")</td>
+                                                                        <td>@(n.ActividadAcademica?.GetNombreTipo() ?? "-")</td>
+                                                                        <td class="text-center">@(n.ActividadAcademica?.Porcentaje ?? 0)%</td>
+                                                                        <td class="text-center">@n.Nota.ToString("N1")</td>
+                                                                        <td class="text-center">@n.FechaRegistro.ToString("dd/MM/yyyy")</td>
+                                                                    </tr>
+                                                                }
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="text-center text-muted">Sin notas registradas.</div>
+                                                }
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
                     </div>
                 </div>
             </div>

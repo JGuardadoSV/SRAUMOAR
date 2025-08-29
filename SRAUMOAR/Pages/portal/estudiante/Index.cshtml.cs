@@ -56,6 +56,8 @@ namespace SRAUMOAR.Pages.portal.estudiante
          .ThenInclude(mg => mg.Docente)
      .Include(mi => mi.MateriasGrupo)
          .ThenInclude(mg => mg.Grupo)  // Agregamos esta l�nea para incluir el Grupo
+     .Include(mi => mi.Notas)
+         .ThenInclude(n => n.ActividadAcademica)
      .Where(mi => mi.MateriasGrupo.Grupo.CicloId == Ciclo.Id &&
                   mi.Alumno.AlumnoId == Alumno.AlumnoId)
      .ToList();
