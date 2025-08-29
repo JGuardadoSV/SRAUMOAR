@@ -1,0 +1,203 @@
+@page
+@model SRAUMOAR.Pages.ReportesAlumnos.IndexModel
+@{
+    ViewData["Title"] = "Reportes de Alumnos";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-users"></i> Reportes de Alumnos
+                    </h3>
+                </div>
+                <div class="card-body">
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            @TempData["Error"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="card-title mb-0">
+                                        <i class="fas fa-file-excel"></i> Reporte Completo
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">
+                                        Genera un reporte Excel con todos los datos de los alumnos registrados en el sistema.
+                                    </p>
+                                                                                 <p class="text-muted small">
+                                                 <strong>Incluye:</strong> Información personal, académica y datos de contacto esenciales.
+                                             </p>
+                                                                         <a asp-page-handler="ExcelCompleto" 
+                                        class="btn btn-primary btn-lg btn-block">
+                                         <i class="fas fa-download"></i> Descargar Reporte Completo
+                                     </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="card-title mb-0">
+                                        <i class="fas fa-filter"></i> Reporte Filtrado
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">
+                                        Genera un reporte Excel con filtros específicos para análisis más detallados.
+                                    </p>
+                                                                         <p class="text-muted small">
+                                         <strong>Filtros disponibles:</strong> Carrera, Estado, Ingreso por Equivalencias, Inscritos en Ciclo Activo.
+                                     </p>
+                                                                         <button type="button" class="btn btn-success btn-lg btn-block" 
+                                             data-bs-toggle="modal" data-bs-target="#filtrosModal">
+                                         <i class="fas fa-cog"></i> Configurar Filtros
+                                     </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-info text-white">
+                                    <h5 class="card-title mb-0">
+                                        <i class="fas fa-info-circle"></i> Información del Reporte
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                                                                         <h6>Columnas Incluidas:</h6>
+                                             <ul class="list-unstyled">
+                                                 <li><i class="fas fa-check text-success"></i> Información Personal (Nombres, Apellidos, DUI, Género)</li>
+                                                 <li><i class="fas fa-check text-success"></i> Datos de Contacto (Email, Teléfono, Dirección)</li>
+                                                 <li><i class="fas fa-check text-success"></i> Información Académica (Carrera)</li>
+                                                 <li><i class="fas fa-check text-success"></i> Fecha de Nacimiento</li>
+                                                 <li><i class="fas fa-check text-success"></i> Carnet (extraído del email)</li>
+                                                 <li><i class="fas fa-check text-success"></i> Estado Civil</li>
+                                             </ul>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6>Características:</h6>
+                                            <ul class="list-unstyled">
+                                                <li><i class="fas fa-star text-warning"></i> Formato Excel (.xlsx) compatible</li>
+                                                <li><i class="fas fa-star text-warning"></i> Encabezados formateados</li>
+                                                <li><i class="fas fa-star text-warning"></i> Estadísticas y resúmenes</li>
+                                                <li><i class="fas fa-star text-warning"></i> Autoajuste de columnas</li>
+                                                <li><i class="fas fa-star text-warning"></i> Filtros personalizables</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para filtros -->
+<div class="modal fade" id="filtrosModal" tabindex="-1" role="dialog" aria-labelledby="filtrosModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="filtrosModalLabel">
+                    <i class="fas fa-filter"></i> Configurar Filtros
+                </h5>
+                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="filtrosForm">
+                <div class="modal-body">
+                                            <div class="form-group">
+                            <label for="carreraId">Carrera:</label>
+                            <select class="form-control" id="carreraId" name="carreraId">
+                                <option value="">Todas las carreras</option>
+                                @foreach (var carrera in Model.Carreras)
+                                {
+                                    <option value="@carrera.CarreraId">@carrera.NombreCarrera</option>
+                                }
+                            </select>
+                        </div>
+                    
+                    <div class="form-group">
+                        <label for="estado">Estado:</label>
+                        <select class="form-control" id="estado" name="estado">
+                            <option value="">Todos los estados</option>
+                            <option value="1">Activo</option>
+                            <option value="2">Inactivo</option>
+                        </select>
+                    </div>
+                    
+                                         <div class="form-group">
+                         <label for="ingresoPorEquivalencias">Ingreso por Equivalencias:</label>
+                         <select class="form-control" id="ingresoPorEquivalencias" name="ingresoPorEquivalencias">
+                             <option value="">Todos</option>
+                             <option value="true">Sí</option>
+                             <option value="false">No</option>
+                         </select>
+                     </div>
+                     
+                     <div class="form-group">
+                         <label for="inscritosEnCicloActivo">Inscritos en Ciclo Activo:</label>
+                         <select class="form-control" id="inscritosEnCicloActivo" name="inscritosEnCicloActivo">
+                             <option value="">Todos</option>
+                             <option value="true">Solo Inscritos</option>
+                             <option value="false">Solo No Inscritos</option>
+                         </select>
+                     </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-download"></i> Generar Reporte Filtrado
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        jQuery(document).ready(function() {
+            // Manejar el envío del formulario de filtros
+            jQuery('#filtrosForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                var formData = jQuery(this).serialize();
+                var url = '?handler=ExcelFiltrado&' + formData;
+                
+                // Crear un enlace temporal para descargar
+                var link = document.createElement('a');
+                link.href = url;
+                link.download = 'Reporte_Alumnos_Filtrado.xlsx';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                                 // Cerrar el modal
+                 var modal = bootstrap.Modal.getInstance(jQuery('#filtrosModal')[0]);
+                 if (modal) {
+                     modal.hide();
+                 }
+            });
+            
+            // Cargar carreras dinámicamente (opcional)
+            // Aquí podrías hacer una llamada AJAX para cargar las carreras
+        });
+    </script>
+}

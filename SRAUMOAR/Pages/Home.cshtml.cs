@@ -32,6 +32,11 @@ namespace SRAUMOAR.Pages
         public bool HasPreviousPage => PageNumber > 1;
         public bool HasNextPage => PageNumber < TotalPages;
 
+        // Propiedades para paginación inteligente
+        public int MaxVisiblePages { get; set; } = 10;
+        public int StartPage { get; set; }
+        public int EndPage { get; set; }
+
         public async Task OnGetAsync()
         {
             Ciclo cicloactual = await _context.Ciclos.Where(x => x.Activo).FirstAsync();
@@ -49,10 +54,40 @@ namespace SRAUMOAR.Pages
             var totalItems = await query.CountAsync();
             TotalPages = (int)Math.Ceiling(totalItems / (double)PageSize);
 
+            // Calcular páginas visibles para la paginación inteligente
+            CalculateVisiblePages();
+
             Alumno = await query
                 .Skip((PageNumber - 1) * PageSize)
                 .Take(PageSize)
                 .ToListAsync();
+        }
+
+        private void CalculateVisiblePages()
+        {
+            // Si hay menos páginas que el máximo visible, mostrar todas
+            if (TotalPages <= MaxVisiblePages)
+            {
+                StartPage = 1;
+                EndPage = TotalPages;
+                return;
+            }
+
+            // Calcular el rango de páginas a mostrar
+            int halfVisible = MaxVisiblePages / 2;
+            
+            // Página inicial
+            StartPage = Math.Max(1, PageNumber - halfVisible);
+            
+            // Página final
+            EndPage = StartPage + MaxVisiblePages - 1;
+            
+            // Si la página final excede el total, ajustar hacia atrás
+            if (EndPage > TotalPages)
+            {
+                EndPage = TotalPages;
+                StartPage = Math.Max(1, EndPage - MaxVisiblePages + 1);
+            }
         }
     }
 }
