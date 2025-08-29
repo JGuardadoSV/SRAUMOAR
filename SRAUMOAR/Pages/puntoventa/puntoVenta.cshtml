@@ -524,42 +524,42 @@
 @section Scripts {
     <script>
         // Auto-focus en el campo de código después de agregar producto
-        $(document).ready(function() {
-            $('#Factura_CodigoProducto').focus();
+        jQuery(document).ready(function() {
+            jQuery('#Factura_CodigoProducto').focus();
             
             // Guardar posición del scroll antes de enviar el formulario
             var scrollPosition = 0;
             
             // Seleccionar contenido al hacer clic en Cantidad y Precio Unitario
-            $('#Factura_CantidadProducto, #Factura_PrecioProducto').on('click', function() {
-                $(this).select();
+            jQuery('#Factura_CantidadProducto, #Factura_PrecioProducto').on('click', function() {
+                jQuery(this).select();
             });
             
             // Capturar posición del scroll antes de enviar formulario
-            $('form').on('submit', function() {
-                scrollPosition = $(window).scrollTop();
+            jQuery('form').on('submit', function() {
+                scrollPosition = jQuery(window).scrollTop();
                 sessionStorage.setItem('scrollPosition', scrollPosition);
                 
                 // Guardar el municipio seleccionado antes de enviar
-                var municipioSeleccionado = $('#Factura_Receptor_CodigoMunicipio').val();
+                var municipioSeleccionado = jQuery('#Factura_Receptor_CodigoMunicipio').val();
                 if (municipioSeleccionado) {
                     sessionStorage.setItem('municipioSeleccionado', municipioSeleccionado);
                 }
             });
             
             // Restaurar posición del scroll después de cargar la página
-            $(window).on('load', function() {
+            jQuery(window).on('load', function() {
                 var savedPosition = sessionStorage.getItem('scrollPosition');
                 if (savedPosition) {
                     setTimeout(function() {
                         // Scroll suave a la posición guardada
-                        $('html, body').animate({
+                        jQuery('html, body').animate({
                             scrollTop: savedPosition
                         }, 300);
                         sessionStorage.removeItem('scrollPosition');
                         
                         // Enfocar en el campo de código después de restaurar posición
-                        $('#Factura_CodigoProducto').focus();
+                        jQuery('#Factura_CodigoProducto').focus();
                     }, 100);
                 }
             });
@@ -574,26 +574,26 @@
             if (savedPosition) {
                 setTimeout(function() {
                     // Scroll suave a la posición guardada
-                    $('html, body').animate({
+                    jQuery('html, body').animate({
                         scrollTop: savedPosition
                     }, 300);
                     sessionStorage.removeItem('scrollPosition');
                     
                     // Enfocar en el campo de código después de restaurar posición
-                    $('#Factura_CodigoProducto').focus();
+                    jQuery('#Factura_CodigoProducto').focus();
                 }, 100);
             }
             
             // Inicializar estado del IVA según el tipo de documento
             function actualizarEstado() {
-                var tipoDoc = $('#tipoDocumentoSelect').val();
-                var ivaRow = $('.iva-row');
-                var btnAgregar = $('.btn-agregar-producto');
-                var campoPais = $('.campo-pais');
-                var campoTipoDonacion = $('.campo-tipo-donacion');
-                var camposCreditoFiscal = $('.campos-credito-fiscal');
-                var alertaTipoDocumento = $('#alertaTipoDocumento');
-                var campoSujetoExcluido = $('.campo-sujeto-excluido');
+                var tipoDoc = jQuery('#tipoDocumentoSelect').val();
+                var ivaRow = jQuery('.iva-row');
+                var btnAgregar = jQuery('.btn-agregar-producto');
+                var campoPais = jQuery('.campo-pais');
+                var campoTipoDonacion = jQuery('.campo-tipo-donacion');
+                var camposCreditoFiscal = jQuery('.campos-credito-fiscal');
+                var alertaTipoDocumento = jQuery('#alertaTipoDocumento');
+                var campoSujetoExcluido = jQuery('.campo-sujeto-excluido');
                 
                 console.log('Tipo documento:', tipoDoc); // Debug
                 console.log('Botón encontrado:', btnAgregar.length); // Debug
@@ -628,10 +628,10 @@
                 } else {
                     // Ocultar campo de país para otros tipos
                     campoPais.hide();
-                    $('#Factura_CodigoPais').val(''); // Limpiar valor
+                    jQuery('#Factura_CodigoPais').val(''); // Limpiar valor
                     // Ocultar campo de tipo de donación para otros tipos
                     campoTipoDonacion.hide();
-                    $('#Factura_TipoDonacion').val(''); // Limpiar valor
+                    jQuery('#Factura_TipoDonacion').val(''); // Limpiar valor
                 }
                 
                 // Habilitar/deshabilitar botón de agregar según tipo de documento
@@ -648,8 +648,8 @@
                     campoSujetoExcluido.show();
                 } else {
                     campoSujetoExcluido.hide();
-                    $('#tipoOperacionSelect').val('');
-                    $('#retencionRentaCheck').prop('checked', false);
+                    jQuery('#tipoOperacionSelect').val('');
+                    jQuery('#retencionRentaCheck').prop('checked', false);
                 }
             }
             
@@ -659,12 +659,12 @@
                 var totalGravado = 0;
                 
                 // Verificar si hay productos en la tabla
-                var filasProductos = $('.table tbody tr').not(':contains("No hay productos")');
+                var filasProductos = jQuery('.table tbody tr').not(':contains("No hay productos")');
                 
                 if (filasProductos.length > 0) {
                     // Calcular subtotales desde la tabla de productos
                     filasProductos.each(function() {
-                        var row = $(this);
+                        var row = jQuery(this);
                         var subtotalText = row.find('td:eq(5)').text(); // Columna del subtotal
                         var esExento = row.find('.badge').text().trim() === 'Exento';
                         
@@ -684,14 +684,14 @@
                 var totalGeneral = totalExento + totalGravado + iva;
                 
                 // Actualizar los valores en la interfaz
-                $('.card-body .row:eq(0) .col-6:last').text('$' + totalExento.toFixed(2));
-                $('.card-body .row:eq(1) .col-6:last').text('$' + totalGravado.toFixed(2));
-                $('.iva-row .col-6:last').text('$' + iva.toFixed(2));
+                jQuery('.card-body .row:eq(0) .col-6:last').text('$' + totalExento.toFixed(2));
+                jQuery('.card-body .row:eq(1) .col-6:last').text('$' + totalGravado.toFixed(2));
+                jQuery('.iva-row .col-6:last').text('$' + iva.toFixed(2));
                 console.log('Totales recalculados:', { totalExento, totalGravado, iva, totalGeneral });
             }
             
             // Actualizar cálculos cuando cambie el tipo de documento
-            $('#tipoDocumentoSelect').on('change', function() {
+            jQuery('#tipoDocumentoSelect').on('change', function() {
                 console.log('Cambio detectado en tipo documento'); // Debug
                 actualizarEstado();
             });
@@ -700,13 +700,13 @@
             actualizarEstado();
             
             // Manejar íconos de flecha en secciones colapsables
-            $('.card-header[data-toggle="collapse"]').on('click', function() {
-                var target = $(this).data('target');
-                var icon = $(this).find('.fa-chevron-down, .fa-chevron-up');
+            jQuery('.card-header[data-toggle="collapse"]').on('click', function() {
+                var target = jQuery(this).data('target');
+                var icon = jQuery(this).find('.fa-chevron-down, .fa-chevron-up');
                 
                 // Cambiar ícono después de un pequeño delay para que coincida con la animación
                 setTimeout(function() {
-                    if ($(target).hasClass('show')) {
+                    if (jQuery(target).hasClass('show')) {
                         icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
                     } else {
                         icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
@@ -715,9 +715,9 @@
             });
             
             // Cargar municipios según departamento seleccionado
-            $('#Factura_Receptor_CodigoDepartamento').on('change', function() {
-                var departamento = $(this).val();
-                var municipioSelect = $('#Factura_Receptor_CodigoMunicipio');
+            jQuery('#Factura_Receptor_CodigoDepartamento').on('change', function() {
+                var departamento = jQuery(this).val();
+                var municipioSelect = jQuery('#Factura_Receptor_CodigoMunicipio');
                 
                 // Limpiar municipios
                 municipioSelect.empty();
@@ -734,8 +734,8 @@
             
             // Función para restaurar el municipio seleccionado
             function restaurarMunicipioSeleccionado() {
-                var departamento = $('#Factura_Receptor_CodigoDepartamento').val();
-                var municipioSeleccionado = $('#Factura_Receptor_CodigoMunicipio').val();
+                var departamento = jQuery('#Factura_Receptor_CodigoDepartamento').val();
+                var municipioSeleccionado = jQuery('#Factura_Receptor_CodigoMunicipio').val();
                 
                 // Si no hay municipio seleccionado en el campo, intentar obtenerlo del sessionStorage
                 if (!municipioSeleccionado) {
@@ -744,7 +744,7 @@
                 
                 if (departamento && municipioSeleccionado) {
                     // Cargar municipios del departamento
-                    var municipioSelect = $('#Factura_Receptor_CodigoMunicipio');
+                    var municipioSelect = jQuery('#Factura_Receptor_CodigoMunicipio');
                     municipioSelect.empty();
                     municipioSelect.append('<option value="">Seleccione municipio...</option>');
                     
@@ -878,7 +878,7 @@
             
             // Recalcular totales cuando se agregue o elimine un producto
             function recalcularTotalesDespuesDeCambio() {
-                var tipoDoc = $('#tipoDocumentoSelect').val();
+                var tipoDoc = jQuery('#tipoDocumentoSelect').val();
                 var conIVA = tipoDoc === '02';
                 recalcularTotales(conIVA);
                 
@@ -905,42 +905,42 @@
         });
 
         // Validación básica del formulario
-        $('form').on('submit', function(e) {
-            var handler = $(e.target).attr('formaction') || $(e.target).closest('button').attr('formaction');
+        jQuery('form').on('submit', function(e) {
+            var handler = jQuery(e.target).attr('formaction') || jQuery(e.target).closest('button').attr('formaction');
             
             if (handler && handler.includes('AgregarProducto')) {
                 // Verificar que se haya seleccionado un tipo de documento
-                var tipoDoc = $('#tipoDocumentoSelect').val();
+                var tipoDoc = jQuery('#tipoDocumentoSelect').val();
                 if (!tipoDoc) {
                     e.preventDefault();
                     alert('Por favor seleccione un tipo de documento antes de agregar productos.');
-                    $('#tipoDocumentoSelect').focus();
+                    jQuery('#tipoDocumentoSelect').focus();
                     return false;
                 }
                 
                 // Verificar código de país para donaciones
                 if (tipoDoc === '15') {
-                    var codigoPais = $('#Factura_CodigoPais').val();
+                    var codigoPais = jQuery('#Factura_CodigoPais').val();
                     if (!codigoPais) {
                         e.preventDefault();
                         alert('Por favor seleccione un código de país para documentos de donación.');
-                        $('#Factura_CodigoPais').focus();
+                        jQuery('#Factura_CodigoPais').focus();
                         return false;
                     }
                     
-                    var tipoDonacion = $('#Factura_TipoDonacion').val();
+                    var tipoDonacion = jQuery('#Factura_TipoDonacion').val();
                     if (!tipoDonacion) {
                         e.preventDefault();
                         alert('Por favor seleccione un tipo de donación.');
-                        $('#Factura_TipoDonacion').focus();
+                        jQuery('#Factura_TipoDonacion').focus();
                         return false;
                     }
                 }
                 
-                var codigo = $('#Factura_CodigoProducto').val();
-                var descripcion = $('#Factura_DescripcionProducto').val();
-                var cantidad = $('#Factura_CantidadProducto').val();
-                var precio = $('#Factura_PrecioProducto').val();
+                var codigo = jQuery('#Factura_CodigoProducto').val();
+                var descripcion = jQuery('#Factura_DescripcionProducto').val();
+                var cantidad = jQuery('#Factura_CantidadProducto').val();
+                var precio = jQuery('#Factura_PrecioProducto').val();
                 
                 if (!codigo || !descripcion || !cantidad || cantidad <= 0 || !precio || precio <= 0) {
                     e.preventDefault();
@@ -950,17 +950,17 @@
                 
                 // Limpiar campos después de agregar producto exitosamente
                 setTimeout(function() {
-                    $('#Factura_CodigoProducto').val('');
-                    $('#Factura_DescripcionProducto').val('');
-                    $('#Factura_CantidadProducto').val('');
-                    $('#Factura_PrecioProducto').val('');
-                    $('#Factura_ProductoExento').prop('checked', false);
-                    $('#Factura_CodigoProducto').focus();
+                    jQuery('#Factura_CodigoProducto').val('');
+                    jQuery('#Factura_DescripcionProducto').val('');
+                    jQuery('#Factura_CantidadProducto').val('');
+                    jQuery('#Factura_PrecioProducto').val('');
+                    jQuery('#Factura_ProductoExento').prop('checked', false);
+                    jQuery('#Factura_CodigoProducto').focus();
                 }, 100);
             }
             
             if (handler && handler.includes('ProcesarFactura')) {
-                var tipoDoc = $('#tipoDocumentoSelect').val();
+                var tipoDoc = jQuery('#tipoDocumentoSelect').val();
                 if (!tipoDoc) {
                     e.preventDefault();
                     alert('Por favor seleccione el tipo de documento.');
@@ -984,8 +984,8 @@
 
 
         // Prevenir doble clic y mostrar ventana de espera para Procesar Factura
-        $(document).on('click', 'button[asp-page-handler="ProcesarFactura"]', function(e) {
-            var submitButton = $(this);
+        jQuery(document).on('click', 'button[asp-page-handler="ProcesarFactura"]', function(e) {
+            var submitButton = jQuery(this);
             
             // Si ya está procesando, prevenir clic
             if (submitButton.hasClass('processing')) {
@@ -1009,8 +1009,8 @@
         // Función para mostrar overlay de carga
         function showLoadingOverlay() {
             // Crear overlay si no existe
-            if ($('#loadingOverlay').length === 0) {
-                $('body').append(`
+            if (jQuery('#loadingOverlay').length === 0) {
+                jQuery('body').append(`
                     <div id="loadingOverlay" style="
                         position: fixed;
                         top: 0;
@@ -1056,7 +1056,7 @@
                 `);
                 
                 // Agregar estilos CSS para la animación
-                $('head').append(`
+                jQuery('head').append(`
                     <style>
                         @@keyframes spin {
                             0% { transform: rotate(0deg); }
@@ -1065,7 +1065,7 @@
                     </style>
                 `);
             } else {
-                $('#loadingOverlay').show();
+                jQuery('#loadingOverlay').show();
             }
         }
     </script>
