@@ -70,12 +70,64 @@ namespace SRAUMOAR.Pages.facturas
             var factura = await _context.Facturas.FindAsync(id);
             if (factura != null)
             {
+                // Verificar que la factura no esté ya anulada
+                if (factura.Anulada)
+                {
+                    TempData["ErrorAnulacion"] = "Esta factura ya ha sido anulada anteriormente.";
+                    return RedirectToPage("./Index");
+                }
+
+                // Verificar que la factura tenga el JSON del DTE
+                if (string.IsNullOrEmpty(factura.JsonDte))
+                {
+                    TempData["ErrorAnulacion"] = "Esta factura no tiene el JSON del DTE necesario para la anulación.";
+                    return RedirectToPage("./Index");
+                }
+
+                // Verificar que la factura tenga el sello de recepción
+                if (string.IsNullOrEmpty(factura.SelloRecepcion))
+                {
+                    TempData["ErrorAnulacion"] = "Esta factura no tiene el sello de recepción necesario para la anulación.";
+                    return RedirectToPage("./Index");
+                }
+
                 Factura = factura;
                 var venta = Factura;
 
                 //**************************************************
                
                 var jsonObj = JObject.Parse(venta.JsonDte); // OBTENER EL JSON ORIGINAL PARA LEERLO EN CADA SECCION
+
+                // Validar que el JSON original tenga la estructura esperada
+                if (jsonObj == null || !jsonObj.HasValues)
+                {
+                    throw new Exception("El JSON del DTE original está vacío o es inválido");
+                }
+
+                // Validar campos críticos del JSON original
+                if (jsonObj["identificacion"] == null || jsonObj["emisor"] == null || jsonObj["receptor"] == null)
+                {
+                    throw new Exception("El JSON del DTE no tiene la estructura esperada (identificacion, emisor, receptor)");
+                }
+
+                // Validar que el emisor tenga las claves necesarias
+                if (string.IsNullOrEmpty(jsonObj["emisor"]["nit"]?.ToString()))
+                {
+                    throw new Exception("El NIT del emisor no puede estar vacío");
+                }
+
+                // Validar que el emisor esté configurado en la base de datos
+                if (_emisor == null)
+                {
+                    throw new Exception("La configuración del emisor no está disponible en la base de datos");
+                }
+
+                // Validar que el ambiente sea válido
+                var ambiente = jsonObj["identificacion"]["ambiente"]?.ToString();
+                if (string.IsNullOrEmpty(ambiente) || (ambiente != "00" && ambiente != "01"))
+                {
+                    throw new Exception($"El ambiente del DTE no es válido: {ambiente}");
+                }
 
                 // Sección de Identificación
                 // Opción 1: Usando TimeZoneInfo (recomendado)
@@ -85,7 +137,7 @@ namespace SRAUMOAR.Pages.facturas
                 var identificacion = new
                 {
                     version = 2,
-                    ambiente = jsonObj["identificacion"]["ambiente"].ToString(),
+                    ambiente = ambiente,
                     codigoGeneracion = Guid.NewGuid().ToString().ToUpper(),
                     fecAnula = fechaHoraElSalvador.ToString("yyyy-MM-dd"),
                     horAnula = fechaHoraElSalvador.ToString("HH:mm:ss")
@@ -172,17 +224,39 @@ namespace SRAUMOAR.Pages.facturas
             };
                 string jsonFormateado = jsonAnulacion.ToString(Newtonsoft.Json.Formatting.None);
 
+                // Validar que el JSON de anulación no esté vacío
+                if (string.IsNullOrEmpty(jsonFormateado))
+                {
+                    throw new Exception("El JSON de anulación generado está vacío");
+                }
+
+                // Log del JSON de anulación para debugging
+                Console.WriteLine($"[DEBUG] JSON de anulación generado: {jsonFormateado}");
+
 
 
                 try
                 {
                     using (HttpClient client = new HttpClient())
                     {
+                        // Agregar timeout para evitar bloqueos
+                        client.Timeout = TimeSpan.FromMinutes(2);
 
-
-
-                        // Obtener el ambiente del JSON
-                        string ambiente = jsonObj["identificacion"]["ambiente"].ToString();
+                        // Validar que las claves del emisor estén configuradas
+                        if (ambiente == "01")
+                        {
+                            if (string.IsNullOrEmpty(_emisor.CLAVEPRODAPI))
+                                throw new Exception("La clave de producción de la API no está configurada");
+                            if (string.IsNullOrEmpty(_emisor.CLAVEPRODCERTIFICADO))
+                                throw new Exception("La clave de producción del certificado no está configurada");
+                        }
+                        else
+                        {
+                            if (string.IsNullOrEmpty(_emisor.CLAVETESTAPI))
+                                throw new Exception("La clave de pruebas de la API no está configurada");
+                            if (string.IsNullOrEmpty(_emisor.CLAVETESTCERTIFICADO))
+                                throw new Exception("La clave de pruebas del certificado no está configurada");
+                        }
 
                         // Crear el request según el ambiente
                         var requestAnulacion = ambiente == "01"
@@ -205,17 +279,24 @@ namespace SRAUMOAR.Pages.facturas
                                 PasswordPrivado = _emisor.CLAVETESTCERTIFICADO, // Clave de pruebas
                             };
 
-                        //  var json2 = JsonConvert.SerializeObject(requestUnificado);
-                        //  Console.WriteLine(json2); // Verifica que el JSON esté bien
+                        // Log del request para debugging
+                        var requestJson = JsonConvert.SerializeObject(requestAnulacion);
+                        Console.WriteLine($"[DEBUG] Request de anulación: {requestJson}");
 
                         // LLAMADA ÚNICA a la API
                         var response = client.PostAsJsonAsync("http://207.58.153.147:7122/api/anular-dte", requestAnulacion).Result;
                         var responseData = response.Content.ReadAsStringAsync().Result;
 
-                        //*****************
+                        Console.WriteLine($"[DEBUG] Response Status: {response.StatusCode}");
+                        Console.WriteLine($"[DEBUG] Response Content: {responseData}");
 
-                            if (!response.IsSuccessStatusCode)
-                            throw new Exception($"Error al procesar DTE : {responseData}");
+                        //*****************
+                        if (!response.IsSuccessStatusCode)
+                        {
+                            var errorMessage = $"Error al procesar DTE. Status: {response.StatusCode}, Response: {responseData}";
+                            Console.WriteLine($"[ERROR] {errorMessage}");
+                            throw new Exception(errorMessage);
+                        }
 
                         var resultado2 = JsonDocument.Parse(responseData).RootElement;
                         string selloRecibido = resultado2.TryGetProperty("selloRecibido", out var sello2)
@@ -228,8 +309,14 @@ namespace SRAUMOAR.Pages.facturas
                         Factura.Anulada = true;
                     }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    Console.WriteLine($"[ERROR] Excepción durante la anulación: {ex.Message}");
+                    Console.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
+                    
+                    // Agregar el error a TempData para mostrarlo en la vista
+                    TempData["ErrorAnulacion"] = $"Error al anular la factura: {ex.Message}";
+                    
                     return RedirectToPage("./Index");
                 }
                 //*****************************************************

@@ -574,6 +574,15 @@
         </div>
     }
 
+    @if (TempData["ErrorAnulacion"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-ban me-2"></i>
+            <strong>Error de Anulación:</strong> @TempData["ErrorAnulacion"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
     <!-- Filtros -->
     <div class="filters-container" style="background: white; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid var(--border-color);">
         <form method="get" class="row g-3 align-items-end">
@@ -917,29 +926,68 @@
     });
 
            function confirmarAnulacion(facturaId) {
-        if (confirm('¿Está seguro que desea anular esta factura?')) {
+        if (confirm('¿Está seguro que desea anular esta factura?\n\nEsta acción no se puede deshacer y anulará el documento tributario electrónico.')) {
+            // Mostrar indicador de carga
+            const button = event.target;
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Anulando...';
+            button.disabled = true;
+
+            // Obtener el token de verificación
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            if (!token) {
+                alert('Error: No se pudo obtener el token de verificación. Recarga la página e intenta nuevamente.');
+                button.innerHTML = originalText;
+                button.disabled = false;
+                return;
+            }
+
+            // Crear un formulario con el token de verificación
+            const formData = new FormData();
+            formData.append('__RequestVerificationToken', token);
+            
             // Hacer la petición AJAX
             fetch('/facturas/Delete?id=' + facturaId, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                }
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
             })
             .then(response => {
                 if (response.ok) {
-                    alert('Factura anulada exitosamente');
-                    location.reload(); // Recargar la página para ver los cambios
+                    // Mostrar mensaje de éxito y recargar
+                    const successAlert = document.createElement('div');
+                    successAlert.className = 'alert alert-success alert-dismissible fade show';
+                    successAlert.innerHTML = `
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>Éxito:</strong> Factura anulada correctamente
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    `;
+                    document.querySelector('.container-fluid').insertBefore(successAlert, document.querySelector('.page-header'));
+                    
+                    // Recargar la página después de un breve delay
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
                 } else {
-                    alert('Error al anular la factura');
+                    // Mostrar error específico
+                    response.text().then(errorText => {
+                        console.error('Error del servidor:', errorText);
+                        alert('Error al anular la factura.');
+                    });
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
-                alert('Error al procesar la solicitud');
+                console.error('Error de red:', error);
+                alert('Error de conexión al anular la factura. Verifica tu conexión a internet.');
+            })
+            .finally(() => {
+                // Restaurar el botón
+                button.innerHTML = originalText;
+                button.disabled = false;
             });
         }
-    
     }
 
      // Función para ver PDF
