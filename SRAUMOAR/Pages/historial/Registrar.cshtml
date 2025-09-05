@@ -131,7 +131,7 @@
                                 </div>
                                 
                                 <div class="row mb-3">
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <div class="form-check mt-4">
                                             <input class="form-check-input" type="checkbox" id="aprobada" checked>
                                             <label class="form-check-label" for="aprobada">
@@ -139,7 +139,15 @@
                                             </label>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 text-end">
+                                    <div class="col-md-4">
+                                        <div class="form-check mt-4">
+                                            <input class="form-check-input" type="checkbox" id="equivalencia">
+                                            <label class="form-check-label" for="equivalencia">
+                                                Equivalencia
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 text-end">
                                         <button type="button" id="btnAgregarMateria" class="btn btn-primary mt-4">
                                             <i class="bi bi-plus-circle me-2"></i>
                                             Agregar Materia
@@ -274,7 +282,8 @@
                 nota5: parseFloat($('#nota5').val()) || 0,
                 nota6: parseFloat($('#nota6').val()) || 0,
                 promedio: parseFloat($('#promedio').val()) || 0,
-                aprobada: $('#aprobada').is(':checked')
+                aprobada: $('#aprobada').is(':checked'),
+                equivalencia: $('#equivalencia').is(':checked')
             };
 
             materiasAgregadas.push(materia);
@@ -296,7 +305,7 @@
                     <div class="alert alert-success d-flex justify-content-between align-items-center">
                         <div>
                             <strong>${materia.nombreMateria}</strong><br>
-                            <small>Promedio: ${materia.promedio} | Aprobada: ${materia.aprobada ? 'Sí' : 'No'}</small>
+                            <small>Promedio: ${materia.promedio} | Aprobada: ${materia.aprobada ? 'Sí' : 'No'} | Equivalencia: ${materia.equivalencia ? 'Sí' : 'No'}</small>
                         </div>
                         <button type="button" class="btn btn-danger btn-sm" onclick="eliminarMateria(${index})">
                             <i class="bi bi-trash"></i>
@@ -319,6 +328,7 @@
             $('input[id^="nota"]').val('');
             $('#promedio').val('');
             $('#aprobada').prop('checked', true);
+            $('#equivalencia').prop('checked', false);
             
             // Limpiar también el dropdown de materias
             $('#materiaSelect').empty().append('<option value="">-- Seleccione una materia --</option>');
@@ -400,6 +410,12 @@
                     type: 'hidden',
                     name: `Materias[${index}].Aprobada`,
                     value: materia.aprobada
+                }).appendTo('form');
+                
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: `Materias[${index}].Equivalencia`,
+                    value: materia.equivalencia
                 }).appendTo('form');
             });
         });

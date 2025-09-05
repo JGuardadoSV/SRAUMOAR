@@ -28,5 +28,7 @@ namespace SRAUMOAR.Modelos
         public decimal Promedio { get; set; }
         
         public bool Aprobada { get; set; }
+        
+        public bool Equivalencia { get; set; }
     }
 }

@@ -1,0 +1,54 @@
+[33mcommit 9ec1d39cdff4506458fa30160aee806a1e7e80e3[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Josue Guardado <jguardadosv@gmail.com>
+Date:   Sun Aug 31 09:31:37 2025 -0600
+
+    ok
+
+ SRAUMOAR/Pages/facturas/Delete.cshtml.cs | 111 [32m+++++++++++++++++++++++++++[m[31m----[m
+ SRAUMOAR/Pages/facturas/Index.cshtml     |  68 [32m++++++++++++++++[m[31m---[m
+ 2 files changed, 157 insertions(+), 22 deletions(-)
+
+[33mcommit b2a0c4c2112332fc6326348ec99d214688732d2f[m
+Author: Josue Guardado <jguardadosv@gmail.com>
+Date:   Fri Aug 29 12:23:45 2025 -0600
+
+    ok
+
+ SRAUMOAR/Pages/puntoventa/puntoVenta.cshtml | 132 [32m++++++++++++++[m[31m--------------[m
+ 1 file changed, 66 insertions(+), 66 deletions(-)
+
+[33mcommit b286450510793bf6ea05c24854cf9efcd4a0023f[m
+Author: Josue Guardado <jguardadosv@gmail.com>
+Date:   Fri Aug 29 12:10:09 2025 -0600
+
+    ok
+
+ SRAUMOAR/Pages/aranceles/Facturar.cshtml | 52 [32m++++++++++++++++[m[31m----------------[m
+ 1 file changed, 26 insertions(+), 26 deletions(-)
+
+[33mcommit b6444b3a661f79583d274151eaea26bb3e5a6310[m
+Author: Josue Guardado <jguardadosv@gmail.com>
+Date:   Fri Aug 29 08:52:05 2025 -0600
+
+    ok
+
+ SRAUMOAR/Pages/portal/estudiante/Index.cshtml    | 59 [32m++++++++++++++++++++++++[m
+ SRAUMOAR/Pages/portal/estudiante/Index.cshtml.cs |  2 [32m+[m
+ 2 files changed, 61 insertions(+)
+
+[33mcommit 01a48d0dbb95e459fb33c418d39a8ac9ab10aa4b[m
+Author: Josue Guardado <jguardadosv@gmail.com>
+Date:   Fri Aug 29 08:40:22 2025 -0600
+
+    ok
+
+ SRAUMOAR/Pages/Home.cshtml                     |  77 [32m++++++[m[31m-[m
+ SRAUMOAR/Pages/Home.cshtml.cs                  |  35 [32m+++[m
+ SRAUMOAR/Pages/ReportesAlumnos/Index.cshtml    | 203 [32m++++++++++++++++[m
+ SRAUMOAR/Pages/ReportesAlumnos/Index.cshtml.cs |  66 [32m++++++[m
+ SRAUMOAR/Pages/Shared/_Layout.cshtml           |   6 [32m+[m
+ SRAUMOAR/Program.cs                            |   1 [32m+[m
+ SRAUMOAR/README_REPORTES_ALUMNOS.md            | 184 [32m+++++++++++++++[m
+ SRAUMOAR/Servicios/EmailService.cs             |   2 [32m+[m[31m-[m
+ SRAUMOAR/Servicios/ReporteAlumnosService.cs    | 308 [32m+++++++++++++++++++++++++[m
+ 9 files changed, 880 insertions(+), 2 deletions(-)

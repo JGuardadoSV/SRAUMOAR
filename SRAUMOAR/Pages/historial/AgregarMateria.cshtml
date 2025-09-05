@@ -94,7 +94,7 @@
                                     </div>
                                 </div>
                                 <div class="row mb-3">
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="aprobada" checked>
                                             <label class="form-check-label" for="aprobada">
@@ -102,7 +102,15 @@
                                             </label>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 text-end">
+                                    <div class="col-md-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="equivalencia">
+                                            <label class="form-check-label" for="equivalencia">
+                                                Equivalencia
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 text-end">
                                         <button type="button" class="btn btn-primary" id="btnAgregarMateria">
                                             <i class="bi bi-plus-circle me-2"></i>
                                             Agregar Materia
@@ -146,12 +154,12 @@
         let materiasAgregadas = [];
         let materiasDisponibles = [];
 
-        $(document).ready(function() {
+        jQuery(document).ready(function() {
             // Cargar materias del pensum al cargar la página
             cargarMaterias(@Model.PensumId);
 
             // Agregar materia
-            $('#btnAgregarMateria').click(function() {
+            jQuery('#btnAgregarMateria').click(function() {
                 agregarMateria();
             });
 
@@ -159,9 +167,9 @@
         });
 
         function cargarMaterias(pensumId) {
-            $.get(`/api/materias?pensumId=${pensumId}`, function(data) {
+            jQuery.get(`/api/materias?pensumId=${pensumId}`, function(data) {
                 materiasDisponibles = data;
-                var select = $('#materiaSelect');
+                var select = jQuery('#materiaSelect');
                 select.empty();
                 select.append('<option value="">-- Seleccione una materia --</option>');
                 
@@ -172,8 +180,8 @@
         }
 
         function agregarMateria() {
-            var materiaId = $('#materiaSelect').val();
-            var materiaText = $('#materiaSelect option:selected').text();
+            var materiaId = jQuery('#materiaSelect').val();
+            var materiaText = jQuery('#materiaSelect option:selected').text();
             
             if (!materiaId) {
                 alert('Por favor seleccione una materia');
@@ -183,14 +191,15 @@
             var materia = {
                 materiaId: materiaId,
                 nombreMateria: materiaText,
-                nota1: parseFloat($('#nota1').val()) || 0,
-                nota2: parseFloat($('#nota2').val()) || 0,
-                nota3: parseFloat($('#nota3').val()) || 0,
-                nota4: parseFloat($('#nota4').val()) || 0,
-                nota5: parseFloat($('#nota5').val()) || 0,
-                nota6: parseFloat($('#nota6').val()) || 0,
-                promedio: parseFloat($('#promedio').val()) || 0,
-                aprobada: $('#aprobada').is(':checked')
+                nota1: parseFloat(jQuery('#nota1').val()) || 0,
+                nota2: parseFloat(jQuery('#nota2').val()) || 0,
+                nota3: parseFloat(jQuery('#nota3').val()) || 0,
+                nota4: parseFloat(jQuery('#nota4').val()) || 0,
+                nota5: parseFloat(jQuery('#nota5').val()) || 0,
+                nota6: parseFloat(jQuery('#nota6').val()) || 0,
+                promedio: parseFloat(jQuery('#promedio').val()) || 0,
+                aprobada: jQuery('#aprobada').is(':checked'),
+                equivalencia: jQuery('#equivalencia').is(':checked')
             };
 
             materiasAgregadas.push(materia);
@@ -200,7 +209,7 @@
         }
 
         function actualizarListaMaterias() {
-            var container = $('#materiasList');
+            var container = jQuery('#materiasList');
             if (materiasAgregadas.length === 0) {
                 container.html('<p class="text-muted">No hay materias agregadas aún.</p>');
                 return;
@@ -212,7 +221,7 @@
                     <div class="alert alert-success d-flex justify-content-between align-items-center">
                         <div>
                             <strong>${materia.nombreMateria}</strong><br>
-                            <small>Promedio: ${materia.promedio} | Aprobada: ${materia.aprobada ? 'Sí' : 'No'}</small>
+                            <small>Promedio: ${materia.promedio} | Aprobada: ${materia.aprobada ? 'Sí' : 'No'} | Equivalencia: ${materia.equivalencia ? 'Sí' : 'No'}</small>
                         </div>
                         <button type="button" class="btn btn-danger btn-sm" onclick="eliminarMateria(${index})">
                             <i class="bi bi-trash"></i>
@@ -231,18 +240,19 @@
         }
 
         function limpiarFormularioMateria() {
-            $('#materiaSelect').val('');
-            $('input[id^="nota"]').val('');
-            $('#promedio').val('');
-            $('#aprobada').prop('checked', true);
+            jQuery('#materiaSelect').val('');
+            jQuery('input[id^="nota"]').val('');
+            jQuery('#promedio').val('');
+            jQuery('#aprobada').prop('checked', true);
+            jQuery('#equivalencia').prop('checked', false);
         }
 
         function habilitarBotonGuardar() {
-            $('#btnGuardar').prop('disabled', materiasAgregadas.length === 0);
+            jQuery('#btnGuardar').prop('disabled', materiasAgregadas.length === 0);
         }
 
         // Enviar formulario
-        $('form').submit(function(e) {
+        jQuery('form').submit(function(e) {
             if (materiasAgregadas.length === 0) {
                 e.preventDefault();
                 alert('Debe agregar al menos una materia antes de guardar');
@@ -261,58 +271,64 @@
 
             // Agregar las materias al formulario antes de enviar
             materiasAgregadas.forEach(function(materia, index) {
-                $('<input>').attr({
+                jQuery('<input>').attr({
                     type: 'hidden',
                     name: `Materias[${index}].MateriaId`,
                     value: materia.materiaId
                 }).appendTo('form');
                 
-                $('<input>').attr({
+                jQuery('<input>').attr({
                     type: 'hidden',
                     name: `Materias[${index}].Nota1`,
                     value: materia.nota1
                 }).appendTo('form');
                 
-                $('<input>').attr({
+                jQuery('<input>').attr({
                     type: 'hidden',
                     name: `Materias[${index}].Nota2`,
                     value: materia.nota2
                 }).appendTo('form');
                 
-                $('<input>').attr({
+                jQuery('<input>').attr({
                     type: 'hidden',
                     name: `Materias[${index}].Nota3`,
                     value: materia.nota3
                 }).appendTo('form');
                 
-                $('<input>').attr({
+                jQuery('<input>').attr({
                     type: 'hidden',
                     name: `Materias[${index}].Nota4`,
                     value: materia.nota4
                 }).appendTo('form');
                 
-                $('<input>').attr({
+                jQuery('<input>').attr({
                     type: 'hidden',
                     name: `Materias[${index}].Nota5`,
                     value: materia.nota5
                 }).appendTo('form');
                 
-                $('<input>').attr({
+                jQuery('<input>').attr({
                     type: 'hidden',
                     name: `Materias[${index}].Nota6`,
                     value: materia.nota6
                 }).appendTo('form');
                 
-                $('<input>').attr({
+                jQuery('<input>').attr({
                     type: 'hidden',
                     name: `Materias[${index}].Promedio`,
                     value: materia.promedio
                 }).appendTo('form');
                 
-                $('<input>').attr({
+                jQuery('<input>').attr({
                     type: 'hidden',
                     name: `Materias[${index}].Aprobada`,
                     value: materia.aprobada
+                }).appendTo('form');
+                
+                jQuery('<input>').attr({
+                    type: 'hidden',
+                    name: `Materias[${index}].Equivalencia`,
+                    value: materia.equivalencia
                 }).appendTo('form');
             });
         });

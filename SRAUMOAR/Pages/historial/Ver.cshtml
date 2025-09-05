@@ -134,6 +134,7 @@
                                                         <th>Nota 6</th>
                                                         <th>Promedio</th>
                                                         <th>Estado</th>
+                                                        <th>Equivalencia</th>
                                                         <th>Acciones</th>
                                                     </tr>
                                                 </thead>
@@ -161,6 +162,16 @@
                                                                 else
                                                                 {
                                                                     <span class="badge bg-danger">Reprobada</span>
+                                                                }
+                                                            </td>
+                                                            <td>
+                                                                @if (materia.Equivalencia)
+                                                                {
+                                                                    <span class="badge bg-info">Sí</span>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <span class="badge bg-secondary">No</span>
                                                                 }
                                                             </td>
                                                             <td>
@@ -240,10 +251,10 @@
     <script>
         let materiaIdAEliminar = null;
 
-        $(document).ready(function() {
+        jQuery(document).ready(function() {
             // Evento del botón cambiar carrera
-            $('#btnFiltrar').on('click', function() {
-                var carreraId = $('#carreraFiltro').val();
+            jQuery('#btnFiltrar').on('click', function() {
+                var carreraId = jQuery('#carreraFiltro').val();
                 if (carreraId) {
                     // Redirigir a la misma página con la nueva carrera
                     var url = '/historial/Ver?alumnoId=@Model.AlumnoId&carreraId=' + carreraId;
@@ -252,8 +263,8 @@
             });
 
             // Evento del select de carrera (cambio automático)
-            $('#carreraFiltro').on('change', function() {
-                var carreraId = $(this).val();
+            jQuery('#carreraFiltro').on('change', function() {
+                var carreraId = jQuery(this).val();
                 if (carreraId) {
                     // Redirigir automáticamente al cambiar la carrera
                     var url = '/historial/Ver?alumnoId=@Model.AlumnoId&carreraId=' + carreraId;
@@ -262,7 +273,7 @@
             });
 
             // Evento del botón confirmar eliminación
-            $('#btnConfirmarEliminar').on('click', function() {
+            jQuery('#btnConfirmarEliminar').on('click', function() {
                 if (materiaIdAEliminar) {
                     eliminarMateria(materiaIdAEliminar);
                 }
@@ -271,22 +282,22 @@
 
         function confirmarEliminarMateria(materiaId, nombreMateria) {
             materiaIdAEliminar = materiaId;
-            $('#nombreMateriaEliminar').text(nombreMateria);
-            $('#modalEliminarMateria').modal('show');
+            jQuery('#nombreMateriaEliminar').text(nombreMateria);
+            jQuery('#modalEliminarMateria').modal('show');
         }
 
         function eliminarMateria(materiaId) {
             // Mostrar indicador de carga
-            $('#btnConfirmarEliminar').prop('disabled', true).html('<i class="bi bi-hourglass-split me-1"></i>Eliminando...');
+            jQuery('#btnConfirmarEliminar').prop('disabled', true).html('<i class="bi bi-hourglass-split me-1"></i>Eliminando...');
             
-            $.ajax({
+            jQuery.ajax({
                 url: '/api/historial/eliminarMateria',
                 type: 'GET',
                 data: { id: materiaId },
                 success: function(response) {
                     if (response.success) {
                         // Cerrar modal
-                        $('#modalEliminarMateria').modal('hide');
+                        jQuery('#modalEliminarMateria').modal('hide');
                         
                         // Mostrar mensaje de éxito
                         mostrarMensaje('Materia eliminada exitosamente', 'success');
@@ -304,7 +315,7 @@
                 },
                 complete: function() {
                     // Restaurar botón
-                    $('#btnConfirmarEliminar').prop('disabled', false).html('<i class="bi bi-trash me-1"></i>Sí, Eliminar');
+                    jQuery('#btnConfirmarEliminar').prop('disabled', false).html('<i class="bi bi-trash me-1"></i>Sí, Eliminar');
                 }
             });
         }
@@ -322,11 +333,11 @@
             `;
             
             // Insertar al inicio del card-body
-            $('.card-body').first().prepend(alertHtml);
+            jQuery('.card-body').first().prepend(alertHtml);
             
             // Auto-ocultar después de 5 segundos
             setTimeout(function() {
-                $('.alert').fadeOut();
+                jQuery('.alert').fadeOut();
             }, 5000);
         }
     </script>

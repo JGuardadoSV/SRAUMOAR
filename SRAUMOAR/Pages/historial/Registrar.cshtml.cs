@@ -155,6 +155,7 @@ namespace SRAUMOAR.Pages.historial
                         Nota6 = materia.Nota6,
                         Promedio = materia.Promedio,
                         Aprobada = materia.Aprobada,
+                        Equivalencia = materia.Equivalencia,
                         FechaRegistro = DateTime.Now
                     };
 

@@ -107,16 +107,16 @@
     <script>
         let alumnoSeleccionado = null;
 
-        $(document).ready(function() {
+        jQuery(document).ready(function() {
             // Configurar autocompletado del buscador
-            $('#buscadorAlumno').autocomplete({
+            jQuery('#buscadorAlumno').autocomplete({
                 source: function(request, response) {
                     if (request.term.length < 3) {
                         response([]);
                         return;
                     }
 
-                    $.get('/historial?handler=BuscarAlumnos&term=' + encodeURIComponent(request.term))
+                    jQuery.get('/historial?handler=BuscarAlumnos&term=' + encodeURIComponent(request.term))
                         .done(function(data) {
                             response(data);
                         })
@@ -137,50 +137,50 @@
                     return false;
                 }
             }).autocomplete("instance")._renderItem = function(ul, item) {
-                return $("<li>")
+                return jQuery("<li>")
                     .append("<div><strong>" + item.value + "</strong><br><small class='text-muted'>Carnet: " + item.carnet + "</small></div>")
                     .appendTo(ul);
             };
 
             // Botón limpiar búsqueda
-            $('#btnLimpiarBusqueda').click(function() {
+            jQuery('#btnLimpiarBusqueda').click(function() {
                 limpiarBusqueda();
             });
 
             // Botones del resultado de búsqueda
-            $('#btnVerHistorial').click(function() {
+            jQuery('#btnVerHistorial').click(function() {
                 if (alumnoSeleccionado) {
                     window.location.href = '/historial/Ver?alumnoId=' + alumnoSeleccionado.id;
                 }
             });
 
-            $('#btnNuevoHistorial').click(function() {
+            jQuery('#btnNuevoHistorial').click(function() {
                 if (alumnoSeleccionado) {
                     window.location.href = '/historial/Registrar?alumnoId=' + alumnoSeleccionado.id;
                 }
             });
 
             // Método tradicional (dropdown)
-            $('#alumnoSelect').change(function() {
-                var alumnoId = $(this).val();
+            jQuery('#alumnoSelect').change(function() {
+                var alumnoId = jQuery(this).val();
                 if (alumnoId) {
-                    $('#btnVerHistorialTradicional').prop('disabled', false);
-                    $('#btnNuevoHistorialTradicional').prop('disabled', false);
+                    jQuery('#btnVerHistorialTradicional').prop('disabled', false);
+                    jQuery('#btnNuevoHistorialTradicional').prop('disabled', false);
                 } else {
-                    $('#btnVerHistorialTradicional').prop('disabled', true);
-                    $('#btnNuevoHistorialTradicional').prop('disabled', true);
+                    jQuery('#btnVerHistorialTradicional').prop('disabled', true);
+                    jQuery('#btnNuevoHistorialTradicional').prop('disabled', true);
                 }
             });
 
-            $('#btnVerHistorialTradicional').click(function() {
-                var alumnoId = $('#alumnoSelect').val();
+            jQuery('#btnVerHistorialTradicional').click(function() {
+                var alumnoId = jQuery('#alumnoSelect').val();
                 if (alumnoId) {
                     window.location.href = '/historial/Ver?alumnoId=' + alumnoId;
                 }
             });
 
-            $('#btnNuevoHistorialTradicional').click(function() {
-                var alumnoId = $('#alumnoSelect').val();
+            jQuery('#btnNuevoHistorialTradicional').click(function() {
+                var alumnoId = jQuery('#alumnoSelect').val();
                 if (alumnoId) {
                     window.location.href = '/historial/Registrar?alumnoId=' + alumnoId;
                 }
@@ -189,27 +189,27 @@
             // Función para mostrar resultado de búsqueda
             function mostrarResultadoBusqueda() {
                 if (alumnoSeleccionado) {
-                    $('#nombreAlumnoSeleccionado').text(alumnoSeleccionado.nombre);
-                    $('#carnetAlumnoSeleccionado').text('Carnet: ' + alumnoSeleccionado.carnet);
-                    $('#resultadoBusqueda').show();
+                    jQuery('#nombreAlumnoSeleccionado').text(alumnoSeleccionado.nombre);
+                    jQuery('#carnetAlumnoSeleccionado').text('Carnet: ' + alumnoSeleccionado.carnet);
+                    jQuery('#resultadoBusqueda').show();
                     
                     // Limpiar método tradicional
-                    $('#alumnoSelect').val('');
-                    $('#btnVerHistorialTradicional').prop('disabled', true);
-                    $('#btnNuevoHistorialTradicional').prop('disabled', true);
+                    jQuery('#alumnoSelect').val('');
+                    jQuery('#btnVerHistorialTradicional').prop('disabled', true);
+                    jQuery('#btnNuevoHistorialTradicional').prop('disabled', true);
                 }
             }
 
             // Función para limpiar búsqueda
             function limpiarBusqueda() {
-                $('#buscadorAlumno').val('');
-                $('#resultadoBusqueda').hide();
+                jQuery('#buscadorAlumno').val('');
+                jQuery('#resultadoBusqueda').hide();
                 alumnoSeleccionado = null;
                 
                 // Limpiar método tradicional también
-                $('#alumnoSelect').val('');
-                $('#btnVerHistorialTradicional').prop('disabled', true);
-                $('#btnNuevoHistorialTradicional').prop('disabled', true);
+                jQuery('#alumnoSelect').val('');
+                jQuery('#btnVerHistorialTradicional').prop('disabled', true);
+                jQuery('#btnNuevoHistorialTradicional').prop('disabled', true);
             }
         });
     </script>
