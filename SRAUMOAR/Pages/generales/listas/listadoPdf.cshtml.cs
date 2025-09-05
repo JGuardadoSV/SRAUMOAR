@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using SRAUMOAR.Entidades.Procesos;
 using Microsoft.EntityFrameworkCore;
 using iText.Layout;
+using SRAUMOAR.Entidades.Colecturia;
+using SRAUMOAR.Entidades.Becas;
 
 namespace SRAUMOAR.Pages.generales.listas
 {
@@ -29,6 +31,7 @@ namespace SRAUMOAR.Pages.generales.listas
         public string NombreMateria { get; set; } = default!;
         public bool lista { get; set; }
         public int idgrupo { get; set; } = default!;
+        public Dictionary<int, string> EstadoPagoEstudiantes { get; set; } = new Dictionary<int, string>();
 
         private async Task<string> ObtenerNombreMateriaAsync(int inscripcionMateriaId)
         {
@@ -37,6 +40,70 @@ namespace SRAUMOAR.Pages.generales.listas
                 .Where(im => im.MateriasGrupoId == inscripcionMateriaId)
                 .Select(im => im.Materia.NombreMateria)
                 .FirstOrDefaultAsync();
+        }
+
+        private void VerificarEstadoPagosParciales(int cicloId, IList<MateriasInscritas> materiasInscritas)
+        {
+            try
+            {
+                // Verificar si hay un parcial activo en el rango de fechas actual
+                var fechaActual = DateTime.Today;
+
+                var parcialActivo = _context.ActividadesAcademicas
+                    .Where(a => a.TipoActividad == 2 && // Parcial
+                                a.CicloId == cicloId &&
+                                a.FechaInicio <= fechaActual &&
+                                a.FechaFin >= fechaActual)
+                    .FirstOrDefault();
+
+                // Solo si hay parcial activo, verificar estados
+                if (parcialActivo != null)
+                {
+                    foreach (var inscripcion in materiasInscritas)
+                    {
+                        string estadoPago = "";
+
+                        // Verificar si es becado
+                        var esBecado = _context.Becados
+                            .Any(b => b.AlumnoId == inscripcion.AlumnoId &&
+                                     b.CicloId == cicloId);
+
+                        if (esBecado)
+                        {
+                            estadoPago = " (Becado)";
+                        }
+                        else
+                        {
+                            // Verificar si pagó el arancel del parcial
+                            var haPagado = _context.DetallesCobrosArancel
+                                .Any(d => d.ArancelId == parcialActivo.ArancelId &&
+                                         d.CobroArancel.AlumnoId == inscripcion.AlumnoId &&
+                                         d.CobroArancel.CicloId == cicloId);
+
+                            estadoPago = haPagado ? " (Solvente)" : " (Pendiente)";
+                        }
+
+                        EstadoPagoEstudiantes[inscripcion.MateriasInscritasId] = estadoPago;
+                    }
+                }
+                else
+                {
+                    // No hay parcial activo, no mostrar estados
+                    foreach (var inscripcion in materiasInscritas)
+                    {
+                        EstadoPagoEstudiantes[inscripcion.MateriasInscritasId] = "";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // En caso de error, no mostrar estados
+                foreach (var inscripcion in materiasInscritas)
+                {
+                    EstadoPagoEstudiantes[inscripcion.MateriasInscritasId] = "";
+                }
+                System.Diagnostics.Debug.WriteLine($"Error verificando pagos de parciales: {ex.Message}");
+            }
         }
 
         public IActionResult OnGet(int id)
@@ -63,6 +130,9 @@ namespace SRAUMOAR.Pages.generales.listas
                 var materiaGrupo = _context.MateriasGrupo
                     .Include(mg => mg.Docente)
                     .FirstOrDefault(mg => mg.MateriasGrupoId == id);
+
+                // Verificar estado de pagos de parciales
+                VerificarEstadoPagosParciales(cicloactual.Id, materiasInscritas);
 
                 using var memoryStream = new MemoryStream();
 
@@ -205,8 +275,13 @@ namespace SRAUMOAR.Pages.generales.listas
                         .SetBorder(new SolidBorder(1)));
 
                     string nombreCompleto = $"{item?.Alumno?.Nombres ?? ""} {item?.Alumno?.Apellidos ?? ""}";
+                    string estadoPago = EstadoPagoEstudiantes.ContainsKey(item.MateriasInscritasId) 
+                        ? EstadoPagoEstudiantes[item.MateriasInscritasId] 
+                        : "";
+                    string nombreConEstado = nombreCompleto + estadoPago;
+                    
                     tablaEstudiantes.AddCell(new Cell()
-                        .Add(new Paragraph(nombreCompleto).SetFontSize(10).SetFont(normalFont))
+                        .Add(new Paragraph(nombreConEstado).SetFontSize(10).SetFont(normalFont))
                         .SetBorder(new SolidBorder(1)));
 
                     tablaEstudiantes.AddCell(new Cell()
