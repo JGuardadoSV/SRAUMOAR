@@ -53,6 +53,25 @@
                 </div>
             </a>
         </div>
+        <!-- Tarjeta de Mi Perfil -->
+        <div class="col-md-6 col-lg-4">
+            <a asp-page="/portal/docente/MiPerfil" class="text-decoration-none">
+                <div class="card h-100 shadow-lg border-0 hover-card-pro">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-circle bg-info text-white mb-3 mx-auto">
+                            <i class="bi bi-person-lines-fill fs-1"></i>
+                        </div>
+                        <h4 class="card-title mb-2 fw-semibold">Mi Perfil</h4>
+                        <p class="card-text text-muted small">
+                            Actualiza tu teléfono, dirección y correo electrónico
+                        </p>
+                    </div>
+                    <div class="card-footer bg-light text-center py-3 border-0">
+                        <span class="text-info fw-semibold">Ver perfil <i class="bi bi-arrow-right"></i></span>
+                    </div>
+                </div>
+            </a>
+        </div>
     </div>
 </div>
 
@@ -83,3 +102,65 @@
     .icon-circle { width: 56px; height: 56px; font-size: 1.5rem; }
 }
 </style>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">Cambiar contraseña</h5>
+                </div>
+                <div class="card-body">
+                    @if (TempData["PasswordSuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success">@TempData["PasswordSuccessMessage"]</div>
+                    }
+                    @if (TempData["PasswordErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger">@TempData["PasswordErrorMessage"]</div>
+                    }
+
+                    <form method="post" asp-page-handler="CambiarContrasena" id="docenteCambiarContrasenaForm">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <div class="mb-3">
+                            <label class="form-label">Contraseña actual</label>
+                            <input asp-for="ContrasenaActual" type="password" class="form-control" autocomplete="current-password" />
+                            <span asp-validation-for="ContrasenaActual" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Nueva contraseña</label>
+                            <input asp-for="NuevaContrasena" type="password" class="form-control" autocomplete="new-password" />
+                            <small class="text-muted">Mínimo 6 caracteres.</small>
+                            <span asp-validation-for="NuevaContrasena" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Confirmar nueva contraseña</label>
+                            <input asp-for="ConfirmarContrasena" type="password" class="form-control" autocomplete="new-password" />
+                            <span asp-validation-for="ConfirmarContrasena" class="text-danger"></span>
+                        </div>
+                        <div>
+                            <button type="submit" class="btn btn-secondary">Actualizar contraseña</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('docenteCambiarContrasenaForm');
+        if (form) {
+            form.addEventListener('submit', function() {
+                const btn = form.querySelector('button[type="submit"]');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Actualizando...';
+                }
+            });
+        }
+    });
+</script>
+}

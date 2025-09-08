@@ -1,0 +1,342 @@
+@page
+@model SRAUMOAR.Pages.administracion.RespaldosModel
+
+@{
+    ViewData["Title"] = "Respaldos de Base de Datos";
+}
+
+<style>
+    .bg-gradient-backup {
+        background: linear-gradient(90deg, #e3f2fd 0%, #f8f9fa 100%);
+    }
+    .backup-card {
+        transition: transform 0.2s ease-in-out;
+    }
+    .backup-card:hover {
+        transform: translateY(-5px);
+    }
+    .backup-icon {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-size: 1.5rem;
+    }
+    .file-size {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+    .backup-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    .status-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 0.5rem;
+    }
+    .status-success { background-color: #28a745; }
+    .status-warning { background-color: #ffc107; }
+    .status-danger { background-color: #dc3545; }
+</style>
+
+<div class="container-fluid py-4">
+    @Html.AntiForgeryToken()
+    
+    <!-- Mensajes -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["InfoMessage"] != null)
+    {
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <i class="bi bi-info-circle me-2"></i>
+            @TempData["InfoMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    
+    <!-- Header -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h3 mb-0">
+                    <i class="bi bi-database-gear me-2"></i>
+                    Respaldos de Base de Datos
+                </h1>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createBackupModal">
+                        <i class="bi bi-plus-circle me-1"></i>
+                        Crear Respaldo
+                    </button>
+                    <a asp-page="./Respaldos" class="btn btn-outline-light">
+                        <i class="bi bi-arrow-clockwise me-1"></i>
+                        Actualizar
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body bg-light">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <span class="status-indicator status-success"></span>
+                        <strong>Estado:</strong> <span class="ms-1">Conectado</span>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <strong>Base de Datos:</strong> raumoar
+                </div>
+                <div class="col-md-3">
+                    <strong>Total Respaldos:</strong> @Model.BackupHistory.Count
+                </div>
+                <div class="col-md-3">
+                    <strong>Último Respaldo:</strong> 
+                    @if (Model.BackupHistory.Any())
+                    {
+                        @Model.BackupHistory.First().CreatedDate.ToString("dd/MM/yyyy HH:mm")
+                    }
+                    else
+                    {
+                        <span class="text-muted">Ninguno</span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información del Sistema -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card backup-card h-100">
+                <div class="card-body text-center">
+                    <div class="backup-icon bg-primary text-white mx-auto mb-3">
+                        <i class="bi bi-database"></i>
+                    </div>
+                    <h5 class="card-title">SQL Server</h5>
+                    <p class="card-text text-muted">Base de datos principal del sistema</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card backup-card h-100">
+                <div class="card-body text-center">
+                    <div class="backup-icon bg-success text-white mx-auto mb-3">
+                        <i class="bi bi-file-earmark-zip"></i>
+                    </div>
+                    <h5 class="card-title">Comprimido</h5>
+                    <p class="card-text text-muted">Respaldos optimizados en formato ZIP</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card backup-card h-100">
+                <div class="card-body text-center">
+                    <div class="backup-icon bg-warning text-white mx-auto mb-3">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <h5 class="card-title">Seguro</h5>
+                    <p class="card-text text-muted">Solo administradores pueden acceder</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Historial de Respaldos -->
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="bi bi-clock-history me-2"></i>
+                Historial de Respaldos
+            </h5>
+        </div>
+        <div class="card-body">
+            @if (Model.BackupHistory.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Archivo</th>
+                                <th>Tamaño</th>
+                                <th>Fecha de Creación</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var backup in Model.BackupHistory)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-file-earmark-zip text-primary me-2"></i>
+                                            <span class="fw-semibold">@backup.FileName</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="file-size">@backup.SizeFormatted</span>
+                                    </td>
+                                    <td>
+                                        <span>@backup.CreatedDate.ToString("dd/MM/yyyy HH:mm:ss")</span>
+                                    </td>
+                                    <td>
+                                        <div class="backup-actions">
+                                            <a href="/backups/@backup.FileName" class="btn btn-outline-primary btn-sm" download>
+                                                <i class="bi bi-download me-1"></i>
+                                                Descargar
+                                            </a>
+                                            <button type="button" class="btn btn-outline-danger btn-sm" 
+                                                    onclick="confirmDelete('@backup.FileName')">
+                                                <i class="bi bi-trash me-1"></i>
+                                                Eliminar
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox display-1 text-muted mb-3"></i>
+                    <h4 class="text-muted">No hay respaldos disponibles</h4>
+                    <p class="text-muted">Crea tu primer respaldo de la base de datos</p>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createBackupModal">
+                        <i class="bi bi-plus-circle me-1"></i>
+                        Crear Primer Respaldo
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Modal para crear respaldo -->
+<div class="modal fade" id="createBackupModal" tabindex="-1" aria-labelledby="createBackupModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createBackupModalLabel">
+                    <i class="bi bi-database-gear me-2"></i>
+                    Crear Nuevo Respaldo
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Información:</strong> Se creará un respaldo completo de la base de datos "raumoar" y se comprimirá automáticamente.
+                </div>
+                <p>¿Está seguro de que desea crear un nuevo respaldo?</p>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="confirmBackup" required>
+                    <label class="form-check-label" for="confirmBackup">
+                        Confirmo que deseo crear el respaldo
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="post" asp-page-handler="CreateBackup" style="display: inline;">
+                    <button type="submit" class="btn btn-success" id="createBackupBtn">
+                        <i class="bi bi-database-gear me-1"></i>
+                        Crear Respaldo
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para confirmar eliminación -->
+<div class="modal fade" id="deleteBackupModal" tabindex="-1" aria-labelledby="deleteBackupModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteBackupModalLabel">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Está seguro de que desea eliminar este respaldo?</p>
+                <p class="text-muted">Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="post" asp-page-handler="DeleteBackup" style="display: inline;">
+                    <input type="hidden" id="deleteFileName" name="fileName" />
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-1"></i>
+                        Eliminar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Habilitar botón de crear respaldo cuando se confirme
+            const confirmCheckbox = document.getElementById('confirmBackup');
+            const createBackupBtn = document.getElementById('createBackupBtn');
+            
+            if (confirmCheckbox && createBackupBtn) {
+                confirmCheckbox.addEventListener('change', function() {
+                    createBackupBtn.disabled = !this.checked;
+                });
+                
+                // Validar antes de enviar
+                createBackupBtn.addEventListener('click', function(e) {
+                    if (!confirmCheckbox.checked) {
+                        e.preventDefault();
+                        alert('Por favor, confirme que desea crear el respaldo marcando la casilla.');
+                        return false;
+                    }
+                    
+                    // Mostrar loading
+                    this.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Creando...';
+                    this.disabled = true;
+                    
+                    // Permitir que el formulario se envíe
+                    return true;
+                });
+            }
+        });
+
+        // Función para confirmar eliminación
+        function confirmDelete(fileName) {
+            const deleteFileNameInput = document.getElementById('deleteFileName');
+            const deleteModal = document.getElementById('deleteBackupModal');
+            
+            if (deleteFileNameInput && deleteModal) {
+                deleteFileNameInput.value = fileName;
+                new bootstrap.Modal(deleteModal).show();
+            }
+        }
+    </script>
+}

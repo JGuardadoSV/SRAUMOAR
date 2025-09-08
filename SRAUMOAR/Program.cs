@@ -28,6 +28,9 @@ builder.Services.AddScoped<IAlumnoService, AlumnoService>();
 // Registrar el servicio de email
 builder.Services.AddScoped<IEmailService, EmailService>();
 
+// Registrar el servicio de respaldos
+builder.Services.AddScoped<IBackupService, BackupService>();
+
 
 
 // Add services to the container.

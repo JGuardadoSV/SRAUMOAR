@@ -9,6 +9,7 @@
   <ItemGroup>
     <Folder Include="Entidades\Colecturia\NewFolder\" />
     <Folder Include="Migrations\" />
+    <Folder Include="backups\" />
     <Folder Include="NewFolder\" />
     <Folder Include="wwwroot\fonts\" />
   </ItemGroup>
