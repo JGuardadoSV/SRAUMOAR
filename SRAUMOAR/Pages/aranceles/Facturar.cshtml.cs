@@ -26,7 +26,7 @@ namespace SRAUMOAR.Pages.aranceles
         private readonly SRAUMOAR.Modelos.Contexto _context;
         private readonly EmisorConfig _emisor;
         private readonly ICorrelativoService _correlativoService;
-        private int ambiente = 0;
+        private int ambiente = 1;
         public FacturarModel(SRAUMOAR.Modelos.Contexto context, IOptions<EmisorConfig> emisorOptions, ICorrelativoService correlativoService)
         {
             _context = context;
@@ -444,7 +444,7 @@ namespace SRAUMOAR.Pages.aranceles
                     using (HttpClient client = new HttpClient())
                     {
                         var response = client.PostAsJsonAsync(
-                                 ambiente == 1 ? "http://207.58.153.147:7122/api/procesar-dte" : "https://localhost:7122/api/procesar-dte",
+                                 ambiente == 1 ? "http://207.58.153.147:7122/api/procesar-dte" : "http://207.58.153.147:7122/api/procesar-dte",
                                   requestUnificado).Result;
                         var responseData = response.Content.ReadAsStringAsync().Result;
                         if (!response.IsSuccessStatusCode)

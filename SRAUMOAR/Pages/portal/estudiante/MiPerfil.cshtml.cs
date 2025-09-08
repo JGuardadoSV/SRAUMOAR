@@ -118,44 +118,66 @@ namespace SRAUMOAR.Pages.portal.estudiante
 
         public async Task<IActionResult> OnPostCambiarContrasenaAsync()
         {
-            // Validaciones de modelo para las contraseñas
-            if (!ModelState.IsValid)
-            {
-                TempData["PasswordErrorMessage"] = "Revisa los datos del formulario.";
-                return RedirectToPage();
-            }
-
             try
             {
-                // Identificar usuario autenticado y alumno
-                var userIdClaim = User.FindFirstValue("UserId") ?? "0";
-                if (!int.TryParse(userIdClaim, out var usuarioActualId))
+                // 1) Resolver alumno por AlumnoId posteado (fuente de verdad en este formulario)
+                Alumno? alumno = null;
+                if (Alumno != null && Alumno.AlumnoId != 0)
                 {
-                    TempData["PasswordErrorMessage"] = "No se pudo identificar al usuario actual.";
-                    return RedirectToPage();
+                    alumno = await _context.Alumno.FirstOrDefaultAsync(a => a.AlumnoId == Alumno.AlumnoId);
                 }
-
-                // Buscar alumno asociado al usuario autenticado
-                var alumno = await _context.Alumno.FirstOrDefaultAsync(a => a.UsuarioId == usuarioActualId);
+                // Respaldo: si no vino AlumnoId, intentar resolver por claim
                 if (alumno == null)
                 {
-                    TempData["PasswordErrorMessage"] = "No se encontró el alumno asociado al usuario actual.";
+                    var userIdClaim = User.FindFirstValue("UserId") ?? "0";
+                    if (int.TryParse(userIdClaim, out var usuarioActualIdTmp))
+                    {
+                        alumno = await _context.Alumno.FirstOrDefaultAsync(a => a.UsuarioId == usuarioActualIdTmp);
+                    }
+                }
+                if (alumno == null)
+                {
+                    TempData["PasswordErrorMessage"] = "No se pudo cargar el alumno para actualizar la contraseña.";
                     return RedirectToPage();
                 }
 
-                // Buscar usuario
-                var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.IdUsuario == usuarioActualId);
+                // Validación manual de contraseñas
+                if (string.IsNullOrWhiteSpace(ContrasenaActual)
+                    || string.IsNullOrWhiteSpace(NuevaContrasena)
+                    || string.IsNullOrWhiteSpace(ConfirmarContrasena))
+                {
+                    TempData["PasswordErrorMessage"] = "Completa todos los campos de contraseña.";
+                    return RedirectToPage(new { id = alumno.AlumnoId });
+                }
+                if (NuevaContrasena.Length < 6)
+                {
+                    TempData["PasswordErrorMessage"] = "La nueva contraseña debe tener al menos 6 caracteres.";
+                    return RedirectToPage(new { id = alumno.AlumnoId });
+                }
+                if (!string.Equals(NuevaContrasena, ConfirmarContrasena))
+                {
+                    TempData["PasswordErrorMessage"] = "La confirmación no coincide con la nueva contraseña.";
+                    return RedirectToPage(new { id = alumno.AlumnoId });
+                }
+
+                // 2) Buscar usuario por el UsuarioId asociado al alumno
+                if (alumno.UsuarioId == null)
+                {
+                    TempData["PasswordErrorMessage"] = "El alumno no tiene un usuario asociado.";
+                    return RedirectToPage(new { id = alumno.AlumnoId });
+                }
+                var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.IdUsuario == alumno.UsuarioId.Value);
                 if (usuario == null)
                 {
                     TempData["PasswordErrorMessage"] = "No se encontró el usuario.";
-                    return RedirectToPage();
+                    return RedirectToPage(new { id = alumno.AlumnoId });
                 }
 
                 // Validar contraseña actual
                 if (!string.Equals(usuario.Clave, ContrasenaActual))
                 {
                     TempData["PasswordErrorMessage"] = "La contraseña actual no es correcta. Si no la recuerdas, contacta al administrador.";
-                    return RedirectToPage();
+                    return RedirectToPage(new { id = alumno.AlumnoId });
                 }
 
                 // Actualizar contraseña
@@ -164,11 +186,21 @@ namespace SRAUMOAR.Pages.portal.estudiante
                 await _context.SaveChangesAsync();
 
                 TempData["PasswordSuccessMessage"] = "La contraseña se actualizó correctamente.";
-                return RedirectToPage();
+                return RedirectToPage(new { id = alumno.AlumnoId });
             }
             catch (Exception ex)
             {
                 TempData["PasswordErrorMessage"] = "Error al actualizar la contraseña: " + ex.Message;
+                // Intentar redirigir conservando el id del alumno
+                var userIdClaimCatch = User.FindFirstValue("UserId") ?? "0";
+                if (int.TryParse(userIdClaimCatch, out var usuarioIdCatch))
+                {
+                    var alumnoCatch = await _context.Alumno.FirstOrDefaultAsync(a => a.UsuarioId == usuarioIdCatch);
+                    if (alumnoCatch != null)
+                    {
+                        return RedirectToPage(new { id = alumnoCatch.AlumnoId });
+                    }
+                }
                 return RedirectToPage();
             }
         }

@@ -107,6 +107,7 @@
                     }
 
                     <form method="post" asp-page-handler="CambiarContrasena" id="cambiarContrasenaForm">
+                        <input type="hidden" asp-for="Alumno.AlumnoId" />
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
                         <div class="mb-3">
@@ -141,19 +142,28 @@
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
     <script>
-        $(document).ready(function () {
-            $('#perfilForm').on('submit', function () {
-                // Mostrar un indicador de carga
-                $(this).find('button[type="submit"]').prop('disabled', true).html(
-                    '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Guardando...'
-                );
-            });
+        document.addEventListener('DOMContentLoaded', function () {
+            const perfilForm = document.getElementById('perfilForm');
+            if (perfilForm) {
+                perfilForm.addEventListener('submit', function () {
+                    const btn = perfilForm.querySelector('button[type="submit"]');
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Guardando...';
+                    }
+                });
+            }
 
-            $('#cambiarContrasenaForm').on('submit', function () {
-                $(this).find('button[type="submit"]').prop('disabled', true).html(
-                    '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Actualizando...'
-                );
-            });
+            const cambiarContrasenaForm = document.getElementById('cambiarContrasenaForm');
+            if (cambiarContrasenaForm) {
+                cambiarContrasenaForm.addEventListener('submit', function () {
+                    const btn = cambiarContrasenaForm.querySelector('button[type="submit"]');
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Actualizando...';
+                    }
+                });
+            }
         });
     </script>
 }
