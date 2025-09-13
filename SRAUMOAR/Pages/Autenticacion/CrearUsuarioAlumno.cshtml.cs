@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using SRAUMOAR.Entidades.Accesos;
 using SRAUMOAR.Entidades.Alumnos;
 using SRAUMOAR.Modelos;
+using SRAUMOAR.Servicios;
 
 namespace SRAUMOAR.Pages.Autenticacion
 {
@@ -17,10 +18,12 @@ namespace SRAUMOAR.Pages.Autenticacion
     public class CrearUsuarioAlumnoModel : PageModel
     {
         private readonly SRAUMOAR.Modelos.Contexto _context;
+        private readonly IEmailService _emailService;
 
-        public CrearUsuarioAlumnoModel(SRAUMOAR.Modelos.Contexto context)
+        public CrearUsuarioAlumnoModel(SRAUMOAR.Modelos.Contexto context, IEmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
         [BindProperty(SupportsGet = true)]
         public int AlumnoId { get; set; }
@@ -50,23 +53,71 @@ namespace SRAUMOAR.Pages.Autenticacion
             {
                 return Page();
             }
-            Usuario.Activo = true;
-            _context.Usuarios.Add(Usuario);
-            await _context.SaveChangesAsync();
+            
+            try
+            {
+                Usuario.Activo = true;
+                _context.Usuarios.Add(Usuario);
+                await _context.SaveChangesAsync();
 
+                // Actualizando el id de usuario en el alumno
+                int nuevoUsuarioId = Usuario.IdUsuario;
 
-            //actualizando el id de usuario en el alumno
+                // Buscar el alumno correspondiente
+                Alumno? alumno = await _context.Alumno.FindAsync(AlumnoId);
+                if (alumno != null)
+                {
+                    Console.WriteLine($"=== ALUMNO ENCONTRADO ===");
+                    Console.WriteLine($"Alumno ID: {alumno.AlumnoId}");
+                    Console.WriteLine($"Email: {alumno.Email}");
+                    Console.WriteLine($"Nombres: {alumno.Nombres} {alumno.Apellidos}");
+                    
+                    alumno.UsuarioId = nuevoUsuarioId;
+                    await _context.SaveChangesAsync();
 
-            int nuevoUsuarioId = Usuario.IdUsuario;
+                    // Enviar notificación por email
+                    Console.WriteLine($"=== LLAMANDO MÉTODO DE ENVÍO DE EMAIL ===");
+                    await EnviarNotificacionCreacionUsuarioAsync(alumno.Email, Usuario.NombreUsuario, Usuario.Clave, $"{alumno.Nombres} {alumno.Apellidos}");
+                }
+                else
+                {
+                    Console.WriteLine($"=== ERROR: ALUMNO NO ENCONTRADO ===");
+                    Console.WriteLine($"AlumnoId buscado: {AlumnoId}");
+                }
 
-            // Buscar el alumno correspondiente (supongamos que tienes el AlumnoId disponible)
-            Alumno? alumno = await _context.Alumno.FindAsync(AlumnoId); // Reemplaza AlumnoId con la forma en que obtienes el ID del alumno
-            alumno.UsuarioId = nuevoUsuarioId;
-            // Guardar los cambios en el contexto
-            await _context.SaveChangesAsync();
-
-            return Redirect("/alumno");
-
+                TempData["SuccessMessage"] = "Usuario creado exitosamente. Se ha enviado un correo electrónico con las credenciales de acceso.";
+                return Redirect("/alumno");
+            }
+            catch (Exception ex)
+            {
+                // En caso de error, agregar mensaje de error y volver a la página
+                ModelState.AddModelError("", "Error al crear el usuario: " + ex.Message);
+                return Page();
+            }
         }
+
+        private async Task EnviarNotificacionCreacionUsuarioAsync(string email, string nombreUsuario, string contrasena, string nombreCompleto)
+        {
+            try
+            {
+                Console.WriteLine($"=== INICIANDO ENVÍO DE EMAIL ===");
+                Console.WriteLine($"Email: {email}");
+                Console.WriteLine($"Nombre Usuario: {nombreUsuario}");
+                Console.WriteLine($"Nombre Completo: {nombreCompleto}");
+                
+                // Usar el método que ya funciona en ResetearContrasenas
+                bool resultado = await _emailService.EnviarNotificacionCambioContrasenaAsync(email, nombreUsuario, contrasena, nombreCompleto);
+                
+                Console.WriteLine($"Resultado del envío: {resultado}");
+                Console.WriteLine($"=== FIN ENVÍO DE EMAIL ===");
+            }
+            catch (Exception ex)
+            {
+                // Log del error (en producción usar ILogger)
+                Console.WriteLine($"Error enviando email de creación de usuario: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            }
+        }
+
     }
 }

@@ -93,5 +93,60 @@ namespace SRAUMOAR.Pages.Autenticacion
             
         }
 
+        public async Task<IActionResult> OnPostEliminarUsuarioAsync()
+        {
+            try
+            {
+                if (Tipo == 1) // Es un alumno
+                {
+                    // Buscar el alumno por UsuarioId
+                    var alumno = await _context.Alumno.FirstOrDefaultAsync(a => a.UsuarioId == UsuarioId);
+                    if (alumno != null)
+                    {
+                        // Desasociar el usuario del alumno
+                        alumno.UsuarioId = null;
+                        _context.Update(alumno);
+                    }
+                }
+                else // Es un docente
+                {
+                    // Buscar el docente por UsuarioId
+                    var docente = await _context.Docentes.FirstOrDefaultAsync(d => d.UsuarioId == UsuarioId);
+                    if (docente != null)
+                    {
+                        // Desasociar el usuario del docente
+                        docente.UsuarioId = null;
+                        _context.Update(docente);
+                    }
+                }
+
+                // Eliminar el usuario
+                var usuario = await _context.Usuarios.FindAsync(UsuarioId);
+                if (usuario != null)
+                {
+                    _context.Usuarios.Remove(usuario);
+                }
+
+                // Guardar todos los cambios
+                await _context.SaveChangesAsync();
+
+                // Redirigir según el tipo
+                if (Tipo == 1)
+                {
+                    return Redirect("/alumno");
+                }
+                else
+                {
+                    return Redirect("/generales/docentes");
+                }
+            }
+            catch (Exception ex)
+            {
+                // En caso de error, redirigir con un mensaje de error
+                TempData["ErrorMessage"] = "Error al eliminar el usuario: " + ex.Message;
+                return RedirectToPage();
+            }
+        }
+
     }
 }

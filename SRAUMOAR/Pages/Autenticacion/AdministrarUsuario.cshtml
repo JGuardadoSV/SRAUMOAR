@@ -9,6 +9,15 @@
 <h1 class="text-center">Administracion de usuario</h1>
 
 <h4 class="text-center text-secondary mb-4">Alumno: @Model.nombre</h4>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
 <hr />
 <div class="row justify-content-center">
     <div class="col-md-4">
@@ -38,10 +47,23 @@
                 <input type="submit" value="Actualizar clave" class="btn btn-primary" />
             </div>
         </form>
+        
+        <!-- Botón para eliminar usuario -->
+        <div class="mt-3">
+            <form method="post" asp-page-handler="EliminarUsuario" onsubmit="return confirm('¿Está seguro que desea eliminar el usuario de este alumno? Esta acción no se puede deshacer.');">
+                <input type="hidden" name="UsuarioId" value="@ViewData["usuarioid"]" />
+                <input type="hidden" name="Tipo" value="@ViewData["tipo"]" />
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-outline-danger">
+                        <i class="bi bi-trash"></i> Eliminar Usuario del Alumno
+                    </button>
+                </div>
+            </form>
+        </div>
+        
         <div>
             <br />
-            <a asp-page="/Alumno/Index" class="btn btn-danger text-center">Cancelar</a>
-
+            <a asp-page="/Alumno/Index" class="btn btn-secondary text-center">Cancelar</a>
         </div>
     </div>
 </div>
