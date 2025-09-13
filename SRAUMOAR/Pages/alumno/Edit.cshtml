@@ -925,7 +925,7 @@
                                                     <span class="input-group-text"><i class="bi bi-calendar"></i></span>
                                                     <input asp-for="Alumno.DepartamentoNacimiento" class="form-control" type="text" />
                                                 </div>
-                                                <span asp-validation-for="Alumno.FechaDeNacimiento" class="text-danger validation-message"></span>
+                                                <span asp-validation-for="Alumno.DepartamentoNacimiento" class="text-danger validation-message"></span>
                                                 <div class="checkbox-item">
                                                     <input type="checkbox" asp-for="Alumno.Casado" id="Casado" />
                                                     <label for="Casado">
@@ -1088,7 +1088,7 @@
                                                 </label>
                                                 <div class="input-group">
                                                     <span class="input-group-text"><i class="bi bi-telephone"></i></span>
-                                                    <input asp-for="Alumno.TelefonoPrimario" class="form-control" placeholder="0000-0000" maxlength="8" oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
+                                                    <input asp-for="Alumno.TelefonoPrimario" class="form-control" placeholder="+503 7795-5947 o 7795-5947" />
                                                 </div>
                                                 <span asp-validation-for="Alumno.TelefonoPrimario" class="text-danger validation-message"></span>
                                             </div>
@@ -1104,7 +1104,7 @@
                                                 </label>
                                                 <div class="input-group">
                                                     <span class="input-group-text"><i class="bi bi-whatsapp"></i></span>
-                                                    <input asp-for="Alumno.Whatsapp" class="form-control" placeholder="+503 0000-0000" maxlength="12" oninput="this.value = this.value.replace(/[^0-9+]/g, '')" />
+                                                    <input asp-for="Alumno.Whatsapp" class="form-control" placeholder="+503 7795-5947 o 7795-5947" />
                                                 </div>
                                                 <span asp-validation-for="Alumno.Whatsapp" class="text-danger validation-message"></span>
                                             </div>
@@ -1117,7 +1117,7 @@
                                                 </label>
                                                 <div class="input-group">
                                                     <span class="input-group-text"><i class="bi bi-phone"></i></span>
-                                                    <input asp-for="Alumno.TelefonoSecundario" class="form-control" placeholder="0000-0000" maxlength="8" oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
+                                                    <input asp-for="Alumno.TelefonoSecundario" class="form-control" placeholder="+503 7795-5947 o 7795-5947" />
                                                 </div>
                                                 <span asp-validation-for="Alumno.TelefonoSecundario" class="text-danger validation-message"></span>
                                             </div>
@@ -1154,7 +1154,7 @@
                                                 </label>
                                                 <div class="input-group">
                                                     <span class="input-group-text"><i class="bi bi-telephone-fill"></i></span>
-                                                    <input asp-for="Alumno.NumeroDeEmergencia" class="form-control" placeholder="0000-0000" maxlength="8" oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
+                                                    <input asp-for="Alumno.NumeroDeEmergencia" class="form-control" placeholder="+503 7795-5947 o 7795-5947" />
                                                 </div>
                                                 <span asp-validation-for="Alumno.NumeroDeEmergencia" class="text-danger validation-message"></span>
                                             </div>
@@ -1282,13 +1282,10 @@
             })
         })()
 
-        // Formateo automático para teléfonos
+        // Formateo automático para teléfonos (opcional - solo para guía visual)
         function formatPhone(input) {
-            let value = input.value.replace(/\D/g, '');
-            if (value.length >= 4) {
-                value = value.substring(0, 4) + '-' + value.substring(4, 8);
-            }
-            input.value = value;
+            // Permitir todos los formatos: +50377955947, +503 7795-5947, 7795-5947, 77955947
+            // No aplicar formateo automático, dejar que el usuario escriba libremente
         }
 
         // Formateo automático para DUI
@@ -1302,12 +1299,8 @@
 
         // Aplicar formateo a campos específicos
         document.addEventListener('DOMContentLoaded', function() {
-            const phoneFields = document.querySelectorAll('input[asp-for="Alumno.TelefonoPrimario"], input[asp-for="Alumno.TelefonoSecundario"], input[asp-for="Alumno.NumeroDeEmergencia"]');
-            phoneFields.forEach(field => {
-                field.addEventListener('input', function() {
-                    formatPhone(this);
-                });
-            });
+            // Los campos de teléfono ahora permiten formato libre
+            // No se aplica formateo automático para permitir todos los formatos
 
             const duiField = document.querySelector('input[asp-for="Alumno.DUI"]');
             if (duiField) {
@@ -1420,8 +1413,8 @@
         });
 
         // Inicializar Select2
-        $(document).ready(function() {
-            $('.select2').select2({
+        jQuery(document).ready(function() {
+            jQuery('.select2').select2({
                 placeholder: "Buscar municipio...",
                 allowClear: true,
                 language: {
@@ -1442,12 +1435,12 @@
                 }
             }).on('select2:open', function() {
                 setTimeout(function() {
-                    $('.select2-search__field').focus();
+                    jQuery('.select2-search__field').focus();
                 }, 10);
             });
 
             // Mejorar accesibilidad
-            $('.select2-selection').attr('aria-label', 'Seleccionar municipio');
+            jQuery('.select2-selection').attr('aria-label', 'Seleccionar municipio');
         });
 
         function formatMunicipio(municipio) {
@@ -1455,7 +1448,7 @@
                 return municipio.text;
             }
 
-            return $('<div class="select2-result-municipio">' +
+            return jQuery('<div class="select2-result-municipio">' +
                      '<div class="select2-result-municipio__title">' +
                      '<i class="bi bi-geo-alt-fill me-2"></i>' + municipio.text +
                      '</div>' +

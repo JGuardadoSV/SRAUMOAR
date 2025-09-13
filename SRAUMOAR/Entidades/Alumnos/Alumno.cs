@@ -38,15 +38,15 @@ namespace SRAUMOAR.Entidades.Alumnos
 
         [Required(ErrorMessage = "El teléfono primario es obligatorio")]
         [Display(Name = "Teléfono primario")]
-        [RegularExpression(@"^\d{8}$", ErrorMessage = "El teléfono primario no tiene un formato válido (00000000)")]
+        [RegularExpression(@"^(\+\d{1,3}[\s-]?)?\d{4}[\s-]?\d{4}$", ErrorMessage = "El teléfono primario no tiene un formato válido (ej: +50377955947, +503 7795-5947, 7795-5947, 77955947)")]
         public string? TelefonoPrimario { get; set; }
 
-        [Required(ErrorMessage = "El teléfono primario es obligatorio")]
+        [Required(ErrorMessage = "El teléfono de Whatsapp es obligatorio")]
         [Display(Name = "Teléfono Whatsapp")]
-        [RegularExpression(@"^\+\d{2,3}\d{8}$", ErrorMessage = "El teléfono de Whatsapp no tiene un formato válido (+00000000000)")]
+        [RegularExpression(@"^(\+\d{1,3}[\s-]?)?\d{4}[\s-]?\d{4}$", ErrorMessage = "El teléfono de Whatsapp no tiene un formato válido (ej: +50377955947, +503 7795-5947, 7795-5947, 77955947)")]
         public string? Whatsapp { get; set; }
 
-        [RegularExpression(@"^\d{8}$", ErrorMessage = "El teléfono secundario no tiene un formato válido (00000000)")]
+        [RegularExpression(@"^(\+\d{1,3}[\s-]?)?\d{4}[\s-]?\d{4}$", ErrorMessage = "El teléfono secundario no tiene un formato válido (ej: +50377955947, +503 7795-5947, 7795-5947, 77955947)")]
         [Display(Name = "Teléfono de secundario")]
         public string? TelefonoSecundario { get; set; }
 
@@ -56,7 +56,7 @@ namespace SRAUMOAR.Entidades.Alumnos
 
         [Required(ErrorMessage = "El teléfono del contacto de emergencia es obligatorio")]
         [Display(Name = "Teléfono de emergencia")]
-        [RegularExpression(@"^\d{8}$", ErrorMessage = "El teléfono de emergencia no tiene un formato válido (00000000)")]
+        [RegularExpression(@"^(\+\d{1,3}[\s-]?)?\d{4}[\s-]?\d{4}$", ErrorMessage = "El teléfono de emergencia no tiene un formato válido (ej: +50377955947, +503 7795-5947, 7795-5947, 77955947)")]
         public string? NumeroDeEmergencia { get; set; }
 
         [Required(ErrorMessage = "El campo Dirección de residencia es obligatorio")]
@@ -71,7 +71,7 @@ namespace SRAUMOAR.Entidades.Alumnos
 
         public byte[]? Foto { get; set; }
 
-        public string? Carnet { get; set; }
+        public string? Carnet { get; set; } = string.Empty;
         
         [Required(ErrorMessage = "El campo género  es obligatorio")]
         [Display(Name = "Género")]
@@ -102,9 +102,9 @@ namespace SRAUMOAR.Entidades.Alumnos
         public bool PExamenOrina { get; set; }
         public bool PSolicitudEquivalencia { get; set; }
 
-        public string MunicipioNacimiento { get; set; }
-        public string DepartamentoNacimiento { get; set; }
-        public string EstudiosFinanciadoPor { get; set; }
+        public string MunicipioNacimiento { get; set; } = string.Empty;
+        public string DepartamentoNacimiento { get; set; } = string.Empty;
+        public string EstudiosFinanciadoPor { get; set; } = string.Empty;
         public bool Casado { get; set; }
 
 

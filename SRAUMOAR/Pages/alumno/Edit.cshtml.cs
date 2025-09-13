@@ -36,12 +36,22 @@ namespace SRAUMOAR.Pages.alumno
             }
             ViewData["CarreraId"] = new SelectList(_context.Carreras, "CarreraId", "NombreCarrera");
             ViewData["MunicipioId"] = new SelectList(_context.Municipios, "MunicipioId", "NombreMunicipio");
-            var alumno =  await _context.Alumno.FirstOrDefaultAsync(m => m.AlumnoId == id);
+            var alumno = await _context.Alumno
+                .Include(a => a.Carrera)
+                .Include(a => a.Municipio)
+                .FirstOrDefaultAsync(m => m.AlumnoId == id);
             if (alumno == null)
             {
                 return NotFound();
             }
             Alumno = alumno;
+            
+            // Debug: Verificar que los campos se cargan correctamente
+            System.Diagnostics.Debug.WriteLine($"Carnet: '{Alumno.Carnet}'");
+            System.Diagnostics.Debug.WriteLine($"MunicipioNacimiento: '{Alumno.MunicipioNacimiento}'");
+            System.Diagnostics.Debug.WriteLine($"DepartamentoNacimiento: '{Alumno.DepartamentoNacimiento}'");
+            System.Diagnostics.Debug.WriteLine($"EstudiosFinanciadoPor: '{Alumno.EstudiosFinanciadoPor}'");
+            
             return Page();
         }
 
@@ -78,37 +88,45 @@ namespace SRAUMOAR.Pages.alumno
                 }
             }
 
-            // Adjuntar la entidad y marcar solo los campos específicos como modificados
-            _context.Attach(Alumno);
+            // Buscar el alumno existente en la base de datos
+            var alumnoExistente = await _context.Alumno.FindAsync(Alumno.AlumnoId);
+            if (alumnoExistente == null)
+            {
+                return NotFound();
+            }
 
-            // Marcar como modificados solo los campos que quieres actualizar
-            // Elimina las líneas de los campos que NO quieres actualizar
-            _context.Entry(Alumno).Property(a => a.Nombres).IsModified = true;
-            _context.Entry(Alumno).Property(a => a.Apellidos).IsModified = true;
-            _context.Entry(Alumno).Property(a => a.FechaDeNacimiento).IsModified = true;
-            _context.Entry(Alumno).Property(a => a.FechaDeRegistro).IsModified = false;
-            _context.Entry(Alumno).Property(a => a.Email).IsModified = false;
-            _context.Entry(Alumno).Property(a => a.DUI).IsModified = true;
-            _context.Entry(Alumno).Property(a => a.TelefonoPrimario).IsModified = true;
-            _context.Entry(Alumno).Property(a => a.Whatsapp).IsModified = true;
-            _context.Entry(Alumno).Property(a => a.TelefonoSecundario).IsModified = true;
-            _context.Entry(Alumno).Property(a => a.ContactoDeEmergencia).IsModified = true;
-            _context.Entry(Alumno).Property(a => a.NumeroDeEmergencia).IsModified = true;
-            _context.Entry(Alumno).Property(a => a.DireccionDeResidencia).IsModified = true;
-            _context.Entry(Alumno).Property(a => a.Estado).IsModified = false;
-            _context.Entry(Alumno).Property(a => a.IngresoPorEquivalencias).IsModified = false;
-            _context.Entry(Alumno).Property(a => a.Fotografia).IsModified = false;
-            _context.Entry(Alumno).Property(a => a.Carnet).IsModified = true;
-            _context.Entry(Alumno).Property(a => a.Genero).IsModified = true;
-            _context.Entry(Alumno).Property(a => a.UsuarioId).IsModified = false;
-            _context.Entry(Alumno).Property(a => a.MunicipioId).IsModified = false;
-            _context.Entry(Alumno).Property(a => a.CarreraId).IsModified = true;
-            _context.Entry(Alumno).Property(a => a.PermiteInscripcionSinPago).IsModified = true;
-            _context.Entry(Alumno).Property(a => a.ExentoMora).IsModified = true;
-            // Solo marcar la foto como modificada si se subió una nueva
+            // Debug: Verificar los valores que vienen del formulario
+            System.Diagnostics.Debug.WriteLine($"POST - Carnet: '{Alumno.Carnet}'");
+            System.Diagnostics.Debug.WriteLine($"POST - MunicipioNacimiento: '{Alumno.MunicipioNacimiento}'");
+            System.Diagnostics.Debug.WriteLine($"POST - DepartamentoNacimiento: '{Alumno.DepartamentoNacimiento}'");
+            System.Diagnostics.Debug.WriteLine($"POST - EstudiosFinanciadoPor: '{Alumno.EstudiosFinanciadoPor}'");
+
+            // Actualizar solo los campos específicos
+            alumnoExistente.Nombres = Alumno.Nombres;
+            alumnoExistente.Apellidos = Alumno.Apellidos;
+            alumnoExistente.FechaDeNacimiento = Alumno.FechaDeNacimiento;
+            alumnoExistente.Email = Alumno.Email;
+            alumnoExistente.DUI = Alumno.DUI;
+            alumnoExistente.TelefonoPrimario = Alumno.TelefonoPrimario;
+            alumnoExistente.Whatsapp = Alumno.Whatsapp;
+            alumnoExistente.TelefonoSecundario = Alumno.TelefonoSecundario;
+            alumnoExistente.ContactoDeEmergencia = Alumno.ContactoDeEmergencia;
+            alumnoExistente.NumeroDeEmergencia = Alumno.NumeroDeEmergencia;
+            alumnoExistente.DireccionDeResidencia = Alumno.DireccionDeResidencia;
+            alumnoExistente.Carnet = Alumno.Carnet;
+            alumnoExistente.MunicipioNacimiento = Alumno.MunicipioNacimiento;
+            alumnoExistente.DepartamentoNacimiento = Alumno.DepartamentoNacimiento;
+            alumnoExistente.EstudiosFinanciadoPor = Alumno.EstudiosFinanciadoPor;
+            alumnoExistente.Genero = Alumno.Genero;
+            alumnoExistente.CarreraId = Alumno.CarreraId;
+            alumnoExistente.PermiteInscripcionSinPago = Alumno.PermiteInscripcionSinPago;
+            alumnoExistente.ExentoMora = Alumno.ExentoMora;
+            alumnoExistente.Casado = Alumno.Casado;
+
+            // Solo actualizar la foto si se subió una nueva
             if (FotoUpload != null)
             {
-                _context.Entry(Alumno).Property(a => a.Foto).IsModified = true;
+                alumnoExistente.Foto = Alumno.Foto;
             }
 
             try
