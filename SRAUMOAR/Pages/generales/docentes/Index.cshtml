@@ -11,6 +11,87 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@ViewData["Title"]</title>
+    <style>
+        :root {
+            --accent: #0d6efd;
+            --accent-600: #0b5ed7;
+            --ink: #212529;
+            --muted: #6c757d;
+            --bg-soft: #f8f9fa;
+            --card-border: #e9ecef;
+            --danger: #dc3545;
+        }
+
+        header.bg-primary {
+            background: linear-gradient(135deg, var(--accent) 0%, #4ea1ff 100%);
+            animation: fadeInDown 420ms ease-out both;
+        }
+
+        .btn.btn-primary.btn-custom {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-600) 100%);
+            border: none;
+            box-shadow: 0 8px 16px rgba(13,110,253,.2);
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+        }
+
+        .btn.btn-primary.btn-custom:hover {
+            filter: brightness(1.03);
+            box-shadow: 0 10px 22px rgba(13,110,253,.24);
+        }
+
+        .card.shadow-sm {
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(13, 110, 253, 0.06);
+        }
+
+        .card-body { padding: 1rem 1.25rem; }
+
+        .table { margin-bottom: 0; }
+        .table thead.table-dark {
+            background: linear-gradient(180deg, #2b3035 0%, #1f2327 100%);
+        }
+        .table thead th { white-space: nowrap; }
+        .table tbody td { vertical-align: middle; }
+
+        /* Scroll horizontal en móviles sin romper layout */
+        .card-body { overflow-x: auto; }
+        .table-hover tbody tr:hover { background-color: rgba(13, 110, 253, 0.05); }
+
+        /* Dropdown alineado y pulido */
+        .btn-group .btn.dropdown-toggle { min-width: 120px; }
+
+        /* Paginación */
+        .pagination .page-item .page-link {
+            color: var(--ink);
+            border-color: var(--card-border);
+        }
+        .pagination .page-item.active .page-link {
+            background-color: var(--accent);
+            border-color: var(--accent);
+        }
+        .pagination .page-item.disabled .page-link { color: var(--muted); }
+
+        /* Responsivo */
+        @@media (max-width: 992px) {
+            .btn.btn-primary.btn-custom { width: 100%; justify-content: center; }
+            .btn-group .btn.dropdown-toggle { width: 100%; }
+        }
+
+        @@media (max-width: 768px) {
+            .table thead { font-size: .9rem; }
+            .table tbody { font-size: .92rem; }
+        }
+
+        /* Animaciones */
+        @@keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
 <body>
     <header class="bg-primary text-white text-center py-3 mb-4">
