@@ -49,7 +49,37 @@ namespace SRAUMOAR.Pages.generales.docentes
                 return Page();
             }
 
+            // Cargar el docente existente para detectar cambios y obtener el UsuarioId real
+            var existingDocente = await _context.Docentes
+                .AsNoTracking()
+                .FirstOrDefaultAsync(d => d.DocenteId == Docente.DocenteId);
+
+            if (existingDocente == null)
+            {
+                return NotFound();
+            }
+
+            bool emailChanged = !string.Equals(existingDocente.Email, Docente.Email, StringComparison.OrdinalIgnoreCase);
+
             _context.Attach(Docente).State = EntityState.Modified;
+            // Evitar que se sobreescriba el UsuarioId si no viene en el formulario
+            _context.Entry(Docente).Property(d => d.UsuarioId).IsModified = false;
+            // Evitar modificar campos de solo registro
+            _context.Entry(Docente).Property(d => d.FechaDeRegistro).IsModified = false;
+
+            // Si cambió el email y el docente tiene usuario vinculado, sincronizar con Usuarios
+            if (emailChanged && existingDocente.UsuarioId.HasValue)
+            {
+                var usuario = await _context.Usuarios
+                    .FirstOrDefaultAsync(u => u.IdUsuario == existingDocente.UsuarioId.Value);
+
+                if (usuario != null)
+                {
+                    usuario.Email = Docente.Email;
+                    usuario.NombreUsuario = Docente.Email;
+                    // El usuario ya está siendo trackeado tras la consulta, no es necesario Attach/Update explícito
+                }
+            }
 
             try
             {
