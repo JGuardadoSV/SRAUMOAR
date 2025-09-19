@@ -1,0 +1,211 @@
+@page
+@model SRAUMOAR.Pages.administracion.GestionarNotasDuplicadasModel
+@{
+    ViewData["Title"] = "Gestionar Notas Duplicadas";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Gestión de Notas Duplicadas
+                    </h4>
+                </div>
+                <div class="card-body">
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
+                            @TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            @TempData["ErrorMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <!-- Estadísticas -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">Total Duplicados</h5>
+                                    <h3>@Model.TotalDuplicados</h3>
+                                    <small>Combinaciones duplicadas</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-warning text-dark">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">Total Registros</h5>
+                                    <h3>@Model.TotalRegistros</h3>
+                                    <small>Registros duplicados</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-info text-white">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">Registros Extra</h5>
+                                    <h3>@(Model.TotalRegistros - Model.TotalDuplicados)</h3>
+                                    <small>Que se pueden eliminar</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (Model.NotasDuplicadas.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Alumno</th>
+                                        <th>Materia</th>
+                                        <th>Grupo</th>
+                                        <th>Actividad</th>
+                                        <th>Tipo</th>
+                                        <th class="text-center">Nota</th>
+                                        <th class="text-center">Fecha</th>
+                                        <th class="text-center">Duplicados</th>
+                                        <th class="text-center">Info</th>
+                                        <th class="text-center">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{
+                                        var gruposDuplicados = Model.NotasDuplicadas
+                                            .GroupBy(n => new { n.MateriasInscritasId, n.ActividadAcademicaId })
+                                            .OrderBy(g => g.Key.MateriasInscritasId);
+                                    }
+
+                                    @foreach (var grupo in gruposDuplicados)
+                                    {
+                                        var notasGrupo = grupo.OrderByDescending(n => n.FechaRegistro).ToList();
+                                        var esPrimeraFila = true;
+
+                                        @foreach (var nota in notasGrupo)
+                                        {
+                                            <tr class="table-warning">
+                                                <td>
+                                                    @if (esPrimeraFila)
+                                                    {
+                                                        <strong>@nota.NombreAlumno</strong>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (esPrimeraFila)
+                                                    {
+                                                        <strong>@nota.NombreMateria</strong>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (esPrimeraFila)
+                                                    {
+                                                        <strong>@nota.NombreGrupo</strong>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (esPrimeraFila)
+                                                    {
+                                                        <strong>@nota.NombreActividad</strong>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (esPrimeraFila)
+                                                    {
+                                                        <span class="badge bg-secondary">@nota.TipoActividadTexto</span>
+                                                    }
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="badge bg-warning text-dark">
+                                                        @nota.Nota.ToString("N1")
+                                                    </span>
+                                                </td>
+                                                <td class="text-center">
+                                                    @nota.FechaRegistro.ToString("dd/MM/yyyy HH:mm")
+                                                </td>
+                                                <td class="text-center">
+                                                    @if (esPrimeraFila)
+                                                    {
+                                                        <span class="badge bg-warning">@nota.CantidadDuplicados</span>
+                                                    }
+                                                </td>
+                                                <td class="text-center">
+                                                    @if (nota.EsMasReciente == 1)
+                                                    {
+                                                        <span class="badge bg-info">Más Reciente</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-secondary">Anterior</span>
+                                                    }
+                                                </td>
+                                                <td class="text-center">
+                                                    <div class="btn-group" role="group">
+                                                        <form method="post" asp-page-handler="EliminarNota" class="d-inline">
+                                                            <input type="hidden" name="notasId" value="@nota.NotasId" />
+                                                            <button type="submit" class="btn btn-sm btn-danger" 
+                                                                    onclick="return confirm('¿Estás seguro de eliminar esta nota?')">
+                                                                <i class="fas fa-trash"></i> Eliminar
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            esPrimeraFila = false;
+                                        }
+
+                                        <!-- Botón para eliminar todos los duplicados de este grupo -->
+                                        <tr class="table-light">
+                                            <td colspan="9" class="text-end">
+                                                <strong>Acción grupal:</strong>
+                                            </td>
+                                            <td class="text-center">
+                                                <form method="post" asp-page-handler="EliminarDuplicados" class="d-inline">
+                                                    <input type="hidden" name="materiasInscritasId" value="@grupo.Key.MateriasInscritasId" />
+                                                    <input type="hidden" name="actividadAcademicaId" value="@grupo.Key.ActividadAcademicaId" />
+                                                    <button type="submit" class="btn btn-sm btn-warning" 
+                                                            onclick="return confirm('¿Eliminar todos los duplicados de este grupo? Se mantendrá solo la nota más reciente.')">
+                                                        <i class="fas fa-trash-alt"></i> Limpiar Grupo
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-check-circle fa-5x text-success mb-3"></i>
+                            <h4 class="text-success">¡Excelente!</h4>
+                            <p class="text-muted">No se encontraron notas duplicadas en el sistema.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Auto-ocultar alertas después de 5 segundos
+        setTimeout(function() {
+            jQuery('.alert').fadeOut('slow');
+        }, 5000);
+    </script>
+}

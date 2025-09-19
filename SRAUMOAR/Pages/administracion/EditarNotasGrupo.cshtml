@@ -73,8 +73,7 @@
 
     @if (Model.EstudiantesConNotas.Any())
     {
-        <form method="post" id="editarNotasForm">
-            @Html.AntiForgeryToken()
+        @Html.AntiForgeryToken()
             
             @foreach (var materia in Model.MateriasDelGrupo)
             {
@@ -101,11 +100,15 @@
                                             </th>
                                         }
                                         <th class="text-center" style="width: 10%">Promedio</th>
+                                        <th class="text-center" style="width: 10%">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach (var estudiante in Model.EstudiantesConNotas)
                                     {
+                                        var materiaInscrita = estudiante.MateriasInscritas.FirstOrDefault(mi => mi.MateriasGrupoId == materia.MateriasGrupoId);
+                                        if (materiaInscrita == null) continue;
+                                        
                                         var notasMateria = estudiante.Notas.Where(n => n.MateriasInscritas.MateriasGrupoId == materia.MateriasGrupoId).ToList();
                                         
                                         <tr>
@@ -126,13 +129,9 @@
                                                 
                                                 <td class="text-center">
                                                     <div class="d-flex justify-content-center align-items-center">
-                                                        <input type="hidden" name="NotasEditar[@estudiante.AlumnoId][@materia.MateriasGrupoId][@actividad.ActividadAcademicaId].NotasId" value="@notaId" />
-                                                        <input type="hidden" name="NotasEditar[@estudiante.AlumnoId][@materia.MateriasGrupoId][@actividad.ActividadAcademicaId].MateriasInscritasId" value="@estudiante.MateriasInscritasId" />
-                                                        <input type="hidden" name="NotasEditar[@estudiante.AlumnoId][@materia.MateriasGrupoId][@actividad.ActividadAcademicaId].ActividadAcademicaId" value="@actividad.ActividadAcademicaId" />
-                                                        
                                                         <input type="number" 
-                                                               name="NotasEditar[@estudiante.AlumnoId][@materia.MateriasGrupoId][@actividad.ActividadAcademicaId].Nota"
-                                                               value="@valorNota" 
+                                                               id="nota-@estudiante.AlumnoId-@materia.MateriasGrupoId-@actividad.ActividadAcademicaId"
+                                                               value="@valorNota.ToString("F1")" 
                                                                class="form-control nota-input" 
                                                                min="0" 
                                                                max="10" 
@@ -143,9 +142,17 @@
                                             }
                                             
                                             <td class="text-center">
-                                                <span class="badge bg-primary fs-6">
+                                                <span class="badge bg-primary fs-6" id="promedio-@estudiante.AlumnoId-@materia.MateriasGrupoId">
                                                     @estudiante.CalcularPromedioMateria(materia.MateriasGrupoId)
                                                 </span>
+                                            </td>
+                                            
+                                            <td class="text-center">
+                                                <button type="button" 
+                                                        class="btn btn-success btn-sm" 
+                                                        onclick="guardarNotas(@estudiante.AlumnoId, @materia.MateriasGrupoId, @materiaInscrita.MateriasInscritasId)">
+                                                    <i class="bi bi-check-circle"></i> Guardar
+                                                </button>
                                             </td>
                                         </tr>
                                     }
@@ -161,12 +168,11 @@
                     <i class="bi bi-arrow-left me-2"></i>
                     Volver a grupos
                 </a>
-                <button type="submit" class="btn btn-success btn-lg">
-                    <i class="bi bi-check-circle me-2"></i>
-                    Guardar Cambios
-                </button>
+                <div class="text-muted">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Usa el botón "Guardar" de cada fila para actualizar las notas individualmente
+                </div>
             </div>
-        </form>
     }
     else
     {
@@ -182,24 +188,152 @@
 
 @section Scripts {
     <script>
-        document.getElementById('editarNotasForm').addEventListener('submit', function(e) {
-            const inputs = document.querySelectorAll('input[type="number"]');
-            let hasInvalidInput = false;
+        // Función para guardar notas de un estudiante específico
+        async function guardarNotas(alumnoId, materiasGrupoId, materiasInscritasId) {
+            // Obtener el botón que fue clickeado
+            const boton = document.querySelector(`button[onclick*="guardarNotas(${alumnoId}, ${materiasGrupoId}, ${materiasInscritasId})"]`);
             
-            inputs.forEach(input => {
-                const value = parseFloat(input.value);
-                if (input.value !== '' && (value < 0 || value > 10)) {
-                    input.classList.add('is-invalid');
-                    hasInvalidInput = true;
+            try {
+                // Obtener todas las notas del estudiante para esta materia
+                const notas = [];
+                const actividades = @Html.Raw(Json.Serialize(Model.ActividadesAcademicas.Select(a => new { a.ActividadAcademicaId, a.Nombre })));
+                
+                actividades.forEach(actividad => {
+                    const inputId = `nota-${alumnoId}-${materiasGrupoId}-${actividad.actividadAcademicaId}`;
+                    const input = document.getElementById(inputId);
+                    
+                    if (input && input.value !== '') {
+                        const valor = parseFloat(input.value);
+                        if (!isNaN(valor) && valor >= 0 && valor <= 10) {
+                            notas.push({
+                                ActividadAcademicaId: actividad.actividadAcademicaId,
+                                Nota: valor
+                            });
+                        } else {
+                            input.classList.add('is-invalid');
+                            throw new Error(`Nota inválida en ${actividad.nombre}: ${input.value}`);
+                        }
+                    }
+                });
+                
+                if (notas.length === 0) {
+                    alert('No hay notas válidas para guardar');
+                    return;
+                }
+                
+                // Mostrar indicador de carga
+                const textoOriginal = boton.innerHTML;
+                boton.innerHTML = '<i class="bi bi-hourglass-split"></i> Guardando...';
+                boton.disabled = true;
+                
+                // Preparar datos para enviar
+                const datos = {
+                    AlumnoId: alumnoId,
+                    MateriasGrupoId: materiasGrupoId,
+                    MateriasInscritasId: materiasInscritasId,
+                    Notas: notas
+                };
+                
+                console.log('Datos a enviar:', datos);
+                console.log('Token de verificación:', document.querySelector('input[name="__RequestVerificationToken"]')?.value);
+                
+                // Enviar datos al servidor
+            const response = await fetch('/administracion/EditarNotasGrupo?handler=GuardarNotasEstudiante', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-XSRF-TOKEN': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                },
+                body: JSON.stringify(datos)
+            });
+                
+                console.log('Respuesta del servidor:', response.status, response.statusText);
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        // Actualizar promedio
+                        actualizarPromedio(alumnoId, materiasGrupoId, notas);
+                        
+                        // Mostrar mensaje de éxito
+                        mostrarMensaje('Notas guardadas exitosamente', 'success');
+                        
+                        // Marcar campos como válidos
+                        actividades.forEach(actividad => {
+                            const inputId = `nota-${alumnoId}-${materiasGrupoId}-${actividad.actividadAcademicaId}`;
+                            const input = document.getElementById(inputId);
+                            if (input) {
+                                input.classList.remove('is-invalid');
+                                input.classList.add('is-valid');
+                            }
+                        });
+                    } else {
+                        mostrarMensaje('Error: ' + result.message, 'error');
+                    }
                 } else {
-                    input.classList.remove('is-invalid');
+                    mostrarMensaje('Error del servidor: ' + response.status, 'error');
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                mostrarMensaje('Error: ' + error.message, 'error');
+            } finally {
+                // Restaurar botón
+                boton.innerHTML = '<i class="bi bi-check-circle"></i> Guardar';
+                boton.disabled = false;
+            }
+        }
+        
+        // Función para actualizar el promedio visualmente
+        function actualizarPromedio(alumnoId, materiasGrupoId, notas) {
+            // Esta función se puede implementar para calcular el promedio en el cliente
+            // Por ahora solo actualizamos el badge
+            const promedioElement = document.getElementById(`promedio-${alumnoId}-${materiasGrupoId}`);
+            if (promedioElement) {
+                promedioElement.innerHTML = '<i class="bi bi-hourglass-split"></i> Calculando...';
+                // Aquí podrías calcular el promedio localmente o hacer otra llamada al servidor
+            }
+        }
+        
+        // Función para mostrar mensajes
+        function mostrarMensaje(mensaje, tipo) {
+            const alertClass = tipo === 'success' ? 'alert-success' : 'alert-danger';
+            const icon = tipo === 'success' ? 'bi-check-circle' : 'bi-exclamation-circle';
+            
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                <i class="bi ${icon} me-2"></i>
+                ${mensaje}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            // Auto-remover después de 5 segundos
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv);
+                }
+            }, 5000);
+        }
+        
+        // Validación en tiempo real
+        document.querySelectorAll('input[type="number"]').forEach(input => {
+            input.addEventListener('input', function() {
+                const value = parseFloat(this.value);
+                
+                this.classList.remove('is-invalid', 'is-valid');
+                
+                if (this.value !== '' && !isNaN(value)) {
+                    if (value < 0 || value > 10) {
+                        this.classList.add('is-invalid');
+                    } else {
+                        this.classList.add('is-valid');
+                    }
                 }
             });
-            
-            if (hasInvalidInput) {
-                e.preventDefault();
-                alert('Por favor, ingrese notas válidas entre 0 y 10.');
-            }
         });
     </script>
 }

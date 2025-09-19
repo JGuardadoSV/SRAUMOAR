@@ -29,7 +29,7 @@ namespace SRAUMOAR.Pages.materiasGrupo
         public Grupo Grupo { get; set; } = default!;
         public string NombreMateria { get; set; } = default!;
         public string Actividad { get; set; } = "";
-        public bool IngresoPermitido { get; set; } = true;
+        public bool EsEdicion { get; set; } = false;
         public IActionResult OnGet(int idgrupo, string materia, int actividadid)
         {
 
@@ -45,9 +45,7 @@ namespace SRAUMOAR.Pages.materiasGrupo
 
             if (notas.Count>0)
             {
-                this.IngresoPermitido = false;
-
-
+                this.EsEdicion = true;
             }
             this.idgrupo = idgrupo;
             var cicloactual = _context.Ciclos.Where(x => x.Activo == true).First();
@@ -113,13 +111,28 @@ namespace SRAUMOAR.Pages.materiasGrupo
 
             foreach (var item in IngresoNotasView)
             {
-                Notas = new Notas
+                // Buscar si ya existe una nota para este alumno y actividad
+                var notaExistente = _context.Notas
+                    .FirstOrDefault(n => n.MateriasInscritasId == item.idincripcion && 
+                                       n.ActividadAcademicaId == item.actividadid);
+
+                if (notaExistente != null)
                 {
-                    Nota = item.nota,
-                    MateriasInscritasId = item.idincripcion,
-                    ActividadAcademicaId = item.actividadid
-                };
-                _context.Notas.Add(Notas);
+                    // Actualizar nota existente
+                    notaExistente.Nota = item.nota;
+                    notaExistente.FechaRegistro = DateTime.Now; // Actualizar fecha de modificación
+                }
+                else
+                {
+                    // Crear nueva nota
+                    Notas = new Notas
+                    {
+                        Nota = item.nota,
+                        MateriasInscritasId = item.idincripcion,
+                        ActividadAcademicaId = item.actividadid
+                    };
+                    _context.Notas.Add(Notas);
+                }
             }
             
             await _context.SaveChangesAsync();

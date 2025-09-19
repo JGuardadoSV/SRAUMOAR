@@ -104,13 +104,13 @@
                                             @Html.TextBoxFor(m => m.IngresoNotasView[i].nota,
                                                      new
                                                      {
-                                                         type = "number",
-                                                         @class = "form-control",
-                                                         min = "0",
-                                                         max = "10",
-                                                         step = "0.1",
-                                                         required = "required",
-                                                         placeholder = "Ingrese nota"
+                                                         type = "text",
+                                                         @class = "form-control nota-campo",
+                                                         inputmode = "decimal",
+                                                         lang = "es",
+                                                         pattern = "^[0-9]+([\\.,][0-9]{1,2})?$",
+                                                         placeholder = "Ingrese nota (0-10)",
+                                                         required = "required"
                                                      })
                                             <span class="input-group-text">/ 10</span>
                                         </div>
@@ -122,14 +122,14 @@
                 </div>
 
                 <div class="d-flex justify-content-end mt-4">
-                    @if(Model.IngresoPermitido){
                     <button type="submit" class="btn btn-success">
                         <i class="bi bi-check-circle me-2"></i>
-                        Guardar Calificaciones
+                        @if(Model.EsEdicion){
+                            <text>Actualizar Calificaciones</text>
+                        }else{
+                            <text>Guardar Calificaciones</text>
+                        }
                     </button>
-                    }else{
-                        <p>Estas notas ya estan ingresadas</p>
-                    }
                 </div>
             </form>
         </div>
@@ -145,6 +145,20 @@
             var forms = document.querySelectorAll('.needs-validation')
             Array.prototype.slice.call(forms).forEach(function (form) {
                 form.addEventListener('submit', function (event) {
+                    // Normalizar decimales (coma -> punto) antes de enviar
+                    var campos = form.querySelectorAll('.nota-campo');
+                    campos.forEach(function (input) {
+                        if (input.value) {
+                            var normalizado = input.value.replace(',', '.');
+                            // Limitar a 2 decimales y rango 0-10
+                            var num = parseFloat(normalizado);
+                            if (!isNaN(num)) {
+                                if (num < 0) num = 0;
+                                if (num > 10) num = 10;
+                                input.value = num.toString();
+                            }
+                        }
+                    });
                     if (!form.checkValidity()) {
                         event.preventDefault()
                         event.stopPropagation()

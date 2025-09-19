@@ -169,11 +169,11 @@
 
 @section Scripts {
     <script>
-        $(document).ready(function () {
+        jQuery(document).ready(function () {
             // Auto-submit form when filters change
-            $('#SelectedCarreraId').change(function () {
-                if ($('#SelectedCarreraId').val() !== '') {
-                    $('form').submit();
+            jQuery('#SelectedCarreraId').change(function () {
+                if (jQuery('#SelectedCarreraId').val() !== '') {
+                    jQuery('form').submit();
                 }
             });
         });

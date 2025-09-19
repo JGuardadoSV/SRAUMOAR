@@ -10,6 +10,7 @@ using System.ComponentModel.DataAnnotations;
 namespace SRAUMOAR.Pages.administracion
 {
     [Authorize(Roles = "Administrador,Administracion")]
+    [IgnoreAntiforgeryToken]
     public class EditarNotasGrupoModel : PageModel
     {
         private readonly SRAUMOAR.Modelos.Contexto _context;
@@ -37,6 +38,7 @@ namespace SRAUMOAR.Pages.administracion
             public string CodigoEstudiante { get; set; } = string.Empty;
             public int MateriasInscritasId { get; set; }
             public IList<Notas> Notas { get; set; } = new List<Notas>();
+            public List<MateriasInscritas> MateriasInscritas { get; set; } = new List<MateriasInscritas>();
 
             public decimal CalcularPromedioMateria(int materiasGrupoId)
             {
@@ -124,8 +126,9 @@ namespace SRAUMOAR.Pages.administracion
                     AlumnoId = g.Key,
                     NombreCompleto = g.First().Alumno.Nombres + " " + g.First().Alumno.Apellidos,
                     CodigoEstudiante = g.First().Alumno.Email?.Split('@')[0] ?? "",
-                    MateriasInscritasId = g.First().MateriasInscritasId,
-                    Notas = g.SelectMany(mi => mi.Notas).ToList()
+                    MateriasInscritasId = 0, // Se establecerá dinámicamente en la vista
+                    Notas = g.SelectMany(mi => mi.Notas).ToList(),
+                    MateriasInscritas = g.ToList() // Agregar todas las materias inscritas
                 })
                 .OrderBy(e => e.NombreCompleto)
                 .ToList();
@@ -133,22 +136,181 @@ namespace SRAUMOAR.Pages.administracion
             return Page();
         }
 
-        public async Task<IActionResult> OnPostAsync(int grupoId)
+        public async Task<IActionResult> OnPostGuardarNotasEstudianteAsync()
         {
-            if (!ModelState.IsValid)
-            {
-                await OnGetAsync(grupoId);
-                return Page();
-            }
-
             try
             {
+                Console.WriteLine("=== INICIO GuardarNotasEstudiante ===");
+                
+                // Leer el cuerpo de la solicitud
+                using var reader = new StreamReader(Request.Body);
+                var requestBody = await reader.ReadToEndAsync();
+                Console.WriteLine($"Request body: {requestBody}");
+                
+                if (string.IsNullOrEmpty(requestBody))
+                {
+                    Console.WriteLine("Request body está vacío");
+                    return new JsonResult(new { success = false, message = "No se recibieron datos" });
+                }
+                
+                // Deserializar JSON
+                var request = System.Text.Json.JsonSerializer.Deserialize<GuardarNotasRequest>(requestBody);
+                Console.WriteLine($"Request deserializado: {request != null}");
+                
+                if (request == null)
+                {
+                    Console.WriteLine("No se pudo deserializar el request");
+                    return new JsonResult(new { success = false, message = "Error al procesar los datos" });
+                }
+                
+                Console.WriteLine($"AlumnoId: {request.AlumnoId}");
+                Console.WriteLine($"MateriasGrupoId: {request.MateriasGrupoId}");
+                Console.WriteLine($"MateriasInscritasId: {request.MateriasInscritasId}");
+                Console.WriteLine($"Número de notas recibidas: {request.Notas?.Count ?? 0}");
+
+                if (request.Notas == null || !request.Notas.Any())
+                {
+                    return new JsonResult(new { success = false, message = "No hay notas para guardar" });
+                }
+
+                int notasActualizadas = 0;
+                int notasCreadas = 0;
+                
+                // Log de todas las notas existentes para este MateriasInscritasId
+                var notasExistentes = await _context.Notas
+                    .Where(n => n.MateriasInscritasId == request.MateriasInscritasId)
+                    .ToListAsync();
+                
+                Console.WriteLine($"=== NOTAS EXISTENTES EN BD ===");
+                Console.WriteLine($"MateriasInscritasId: {request.MateriasInscritasId}");
+                Console.WriteLine($"Total notas encontradas: {notasExistentes.Count}");
+                foreach (var nota in notasExistentes)
+                {
+                    Console.WriteLine($"  - NotasId: {nota.NotasId}, ActividadAcademicaId: {nota.ActividadAcademicaId}, Nota: {nota.Nota}");
+                }
+                
+                foreach (var notaData in request.Notas)
+                {
+                    Console.WriteLine($"=== PROCESANDO NOTA ===");
+                    Console.WriteLine($"MateriasInscritasId: {request.MateriasInscritasId}");
+                    Console.WriteLine($"ActividadAcademicaId: {notaData.ActividadAcademicaId}");
+                    Console.WriteLine($"Nota a guardar: {notaData.Nota}");
+                    
+                    // Buscar nota existente
+                    var notaExistente = await _context.Notas
+                        .FirstOrDefaultAsync(n => n.MateriasInscritasId == request.MateriasInscritasId && 
+                                                 n.ActividadAcademicaId == notaData.ActividadAcademicaId);
+
+                    if (notaExistente != null)
+                    {
+                        // Actualizar nota existente
+                        notaExistente.Nota = notaData.Nota;
+                        notaExistente.FechaRegistro = DateTime.Now;
+                        notasActualizadas++;
+                        Console.WriteLine($"✅ Nota actualizada: Actividad {notaData.ActividadAcademicaId}, Valor {notaData.Nota}");
+                    }
+                    else
+                    {
+                        // Crear nueva nota si no existe
+                        var nuevaNota = new Notas
+                        {
+                            MateriasInscritasId = request.MateriasInscritasId,
+                            ActividadAcademicaId = notaData.ActividadAcademicaId,
+                            Nota = notaData.Nota,
+                            FechaRegistro = DateTime.Now
+                        };
+                        
+                        _context.Notas.Add(nuevaNota);
+                        notasCreadas++;
+                        Console.WriteLine($"🆕 Nota creada: Actividad {notaData.ActividadAcademicaId}, Valor {notaData.Nota}");
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+                Console.WriteLine($"Total de notas actualizadas: {notasActualizadas}");
+                Console.WriteLine($"Total de notas creadas: {notasCreadas}");
+
+                string mensaje = "";
+                if (notasActualizadas > 0 && notasCreadas > 0)
+                {
+                    mensaje = $"Se actualizaron {notasActualizadas} notas y se crearon {notasCreadas} notas correctamente";
+                }
+                else if (notasActualizadas > 0)
+                {
+                    mensaje = $"Se actualizaron {notasActualizadas} notas correctamente";
+                }
+                else if (notasCreadas > 0)
+                {
+                    mensaje = $"Se crearon {notasCreadas} notas correctamente";
+                }
+                else
+                {
+                    mensaje = "No se procesaron notas";
+                }
+
+                return new JsonResult(new { success = true, message = mensaje });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al guardar notas: {ex.Message}");
+                Console.WriteLine($"StackTrace: {ex.StackTrace}");
+                return new JsonResult(new { success = false, message = "Error al guardar las notas: " + ex.Message });
+            }
+        }
+
+        public class GuardarNotasRequest
+        {
+            public int AlumnoId { get; set; }
+            public int MateriasGrupoId { get; set; }
+            public int MateriasInscritasId { get; set; }
+            public List<NotaSimple> Notas { get; set; } = new List<NotaSimple>();
+        }
+
+        public class NotaSimple
+        {
+            public int ActividadAcademicaId { get; set; }
+            public decimal Nota { get; set; }
+        }
+
+        public async Task<IActionResult> OnPostAsync(int grupoId)
+        {
+            try
+            {
+                // Deshabilitar validación automática temporalmente
+                ModelState.Clear();
+                
+                // Log para debugging
+                Console.WriteLine($"POST recibido para grupoId: {grupoId}");
+                Console.WriteLine($"NotasEditar es null: {NotasEditar == null}");
+                Console.WriteLine($"NotasEditar count: {NotasEditar?.Count ?? 0}");
+
+                // Validar que hay datos para procesar
+                if (NotasEditar == null || !NotasEditar.Any())
+                {
+                    Console.WriteLine("No hay datos de notas para procesar");
+                    TempData["ErrorMessage"] = "No hay datos de notas para procesar.";
+                    await OnGetAsync(grupoId);
+                    return Page();
+                }
+
+                Console.WriteLine("Procesando notas...");
+
+                int notasProcesadas = 0;
                 foreach (var alumnoNotas in NotasEditar.Values)
                 {
                     foreach (var materiaNotas in alumnoNotas.Values)
                     {
                         foreach (var notaData in materiaNotas.Values)
                         {
+                            Console.WriteLine($"Procesando nota: NotasId={notaData.NotasId}, Nota={notaData.Nota}, MateriasInscritasId={notaData.MateriasInscritasId}, ActividadAcademicaId={notaData.ActividadAcademicaId}");
+                            
+                            // Validación manual de la nota
+                            if (notaData.Nota < 0 || notaData.Nota > 10)
+                            {
+                                Console.WriteLine($"Nota inválida: {notaData.Nota}");
+                                continue;
+                            }
+                            
                             if (notaData.NotasId > 0)
                             {
                                 // Actualizar nota existente
@@ -156,33 +318,39 @@ namespace SRAUMOAR.Pages.administracion
                                 if (notaExistente != null)
                                 {
                                     notaExistente.Nota = notaData.Nota;
+                                    notaExistente.FechaRegistro = DateTime.Now; // Actualizar fecha de modificación
+                                    notasProcesadas++;
+                                    Console.WriteLine($"Nota actualizada: ID={notaData.NotasId}, Nuevo valor={notaData.Nota}");
+                                }
+                                else
+                                {
+                                    Console.WriteLine($"No se encontró la nota con ID: {notaData.NotasId}");
                                 }
                             }
-                            else if (notaData.Nota > 0)
+                            else
                             {
-                                // Crear nueva nota
-                                var nuevaNota = new Notas
-                                {
-                                    Nota = notaData.Nota,
-                                    MateriasInscritasId = notaData.MateriasInscritasId,
-                                    ActividadAcademicaId = notaData.ActividadAcademicaId,
-                                    FechaRegistro = DateTime.Now
-                                };
-                                _context.Notas.Add(nuevaNota);
+                                Console.WriteLine($"Nota con ID 0 ignorada (no se crean nuevas notas)");
                             }
                         }
                     }
                 }
+                
+                Console.WriteLine($"Total de notas procesadas: {notasProcesadas}");
 
                 await _context.SaveChangesAsync();
                 TempData["SuccessMessage"] = "Las notas se han actualizado correctamente.";
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error en OnPostAsync: {ex.Message}");
+                Console.WriteLine($"StackTrace: {ex.StackTrace}");
                 TempData["ErrorMessage"] = "Error al actualizar las notas: " + ex.Message;
+                await OnGetAsync(grupoId);
+                return Page();
             }
 
             return RedirectToPage("./EditarNotasGrupo", new { grupoId });
         }
     }
 }
+
