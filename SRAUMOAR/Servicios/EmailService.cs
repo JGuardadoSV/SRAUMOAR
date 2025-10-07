@@ -27,7 +27,7 @@ namespace SRAUMOAR.Servicios
             _servidor = _configuration["SMTP_SERVIDOR"] ?? "smtp.devselsalvador.com";
             _puerto = int.Parse(_configuration["SMTP_PUERTO"] ?? "587");
             _usuario = _configuration["SMTP_USUARIO"] ?? "facturas@devselsalvador.com";
-            _contrasena = _configuration["SMTP_CONTRASENA"] ?? "u$S(%wm$0";
+            _contrasena = _configuration["SMTP_CONTRASENA"] ?? "tcGa$S!T6";
             _emailRemitente = _configuration["SMTP_EMAIL_REMITENTE"] ?? "facturas@devselsalvador.com";
             _nombreRemitente = _configuration["SMTP_NOMBRE_REMITENTE"] ?? "Seguridad UMOAR";
             _opcionesSeguridad = _configuration["SMTP_OPCIONES_SEGURIDAD"] ?? "None";
