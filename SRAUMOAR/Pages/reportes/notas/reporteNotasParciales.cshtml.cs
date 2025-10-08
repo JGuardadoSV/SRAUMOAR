@@ -8,6 +8,7 @@ using iText.Layout.Properties;
 using iText.IO.Font.Constants;
 using iText.Kernel.Font;
 using iText.Layout.Borders;
+using iText.Kernel.Colors;
 using SRAUMOAR.Modelos;
 using SRAUMOAR.Entidades.Alumnos;
 using SRAUMOAR.Entidades.Procesos;
@@ -59,6 +60,19 @@ namespace SRAUMOAR.Pages.reportes.notas
                 .Where(mi => mi.AlumnoId == alumnoId && mi.MateriasGrupo!.Grupo!.CicloId == cicloActual.Id)
                 .ToList();
 
+            // Determinar estado de solvencia
+            var hoy = DateTime.Now.Date;
+            var esBecado = _context.Becados.Any(b => b.AlumnoId == alumnoId && b.CicloId == cicloActual.Id && b.Estado);
+            var arancelesObligatoriosVigentes = _context.Aranceles
+                .Where(a => a.CicloId == cicloActual.Id && a.Obligatorio && a.Activo && a.FechaInicio <= hoy)
+                .ToList();
+            var arancelesPagadosIds = _context.DetallesCobrosArancel
+                .Where(d => d.CobroArancel.AlumnoId == alumnoId && d.CobroArancel.CicloId == cicloActual.Id)
+                .Select(d => d.ArancelId)
+                .ToHashSet();
+            bool tienePendientes = arancelesObligatoriosVigentes.Any(a => !arancelesPagadosIds.Contains(a.ArancelId));
+            string estadoSolvencia = esBecado ? "Solvente (Becado)" : (tienePendientes ? "No solvente" : "Solvente");
+
             using var ms = new MemoryStream();
             using (var writer = new PdfWriter(ms))
             {
@@ -72,7 +86,7 @@ namespace SRAUMOAR.Pages.reportes.notas
                 {
                     var logoPath = Path.Combine("wwwroot", "images", "logoUmoar.jpg");
                     var logo = new iText.Layout.Element.Image(iText.IO.Image.ImageDataFactory.Create(logoPath)).SetWidth(60);
-                    headerTable.AddCell(new Cell().Add(logo).SetBorder(Border.NO_BORDER));
+                    headerTable.AddCell(new Cell().Add(logo).SetBorder(Border.NO_BORDER).SetVerticalAlignment(iText.Layout.Properties.VerticalAlignment.MIDDLE));
                 }
                 catch
                 {
@@ -83,7 +97,12 @@ namespace SRAUMOAR.Pages.reportes.notas
                 textCell.Add(new Paragraph($"Informe de notas parciales ciclo {cicloActual.NCiclo} - {cicloActual.anio}").SetFont(_fontBold).SetFontSize(12).SetTextAlignment(TextAlignment.CENTER));
                 headerTable.AddCell(textCell);
                 doc.Add(headerTable);
-                doc.Add(new Paragraph(" "));
+                // Línea separadora sutil
+                var separator = new Paragraph(" ")
+                    .SetBorderBottom(new SolidBorder(ColorConstants.LIGHT_GRAY, 1))
+                    .SetMarginTop(4)
+                    .SetMarginBottom(12);
+                doc.Add(separator);
 
                 // Datos del alumno
                 string carnet = (alumno.Email ?? string.Empty).Split('@').FirstOrDefault() ?? string.Empty;
@@ -100,12 +119,15 @@ namespace SRAUMOAR.Pages.reportes.notas
                 datos.AddCell(CeldaLabel("Carrera"));
                 datos.AddCell(CeldaSeparador());
                 datos.AddCell(CeldaValor(alumno.Carrera?.NombreCarrera ?? ""));
+                datos.AddCell(CeldaLabel("Estado"));
+                datos.AddCell(CeldaSeparador());
+                datos.AddCell(CeldaValor(estadoSolvencia));
                 doc.Add(datos);
 
                 doc.Add(new Paragraph(" "));
 
                 // Tabla de notas: COD, Materia, L1 P1 L2 P2 L3 P3, Nota final
-                var tabla = new Table(new float[] { 60, 200, 45, 45, 45, 45, 45, 45, 60 }).UseAllAvailableWidth();
+                var tabla = new Table(new float[] { 60, 220, 45, 45, 45, 45, 45, 45, 70 }).UseAllAvailableWidth();
                 EstiloEncabezado(tabla, "COD");
                 EstiloEncabezado(tabla, "Materia");
                 EstiloEncabezado(tabla, "LAB1");
@@ -116,6 +138,7 @@ namespace SRAUMOAR.Pages.reportes.notas
                 EstiloEncabezado(tabla, "PAR3");
                 EstiloEncabezado(tabla, "Nota final");
 
+                int rowIndex = 0;
                 foreach (var mi in materiasInscritas.OrderBy(x => x.MateriasGrupo!.Materia!.NombreMateria))
                 {
                     var materia = mi.MateriasGrupo!.Materia!;
@@ -137,23 +160,34 @@ namespace SRAUMOAR.Pages.reportes.notas
                     while (labs.Count < 3) labs.Add(null);
                     while (pars.Count < 3) pars.Add(null);
 
-                    tabla.AddCell(CeldaTexto(materia.CodigoMateria ?? ""));
-                    tabla.AddCell(CeldaTexto(materia.NombreMateria ?? ""));
-                    tabla.AddCell(CeldaNota(labs[0]));
-                    tabla.AddCell(CeldaNota(pars[0]));
-                    tabla.AddCell(CeldaNota(labs[1]));
-                    tabla.AddCell(CeldaNota(pars[1]));
-                    tabla.AddCell(CeldaNota(labs[2]));
-                    tabla.AddCell(CeldaNota(pars[2]));
-                    tabla.AddCell(CeldaNota(null)); // Nota final = 0 (placeholder)
+                    // Celdas de datos (con zebra striping)
+                    bool isAlt = (rowIndex % 2 == 1);
+                    tabla.AddCell(CeldaTexto(materia.CodigoMateria ?? "", isAlt));
+                    tabla.AddCell(CeldaTexto(materia.NombreMateria ?? "", isAlt));
+                    tabla.AddCell(CeldaNota(labs[0], isAlt));
+                    tabla.AddCell(CeldaNota(pars[0], isAlt));
+                    tabla.AddCell(CeldaNota(labs[1], isAlt));
+                    tabla.AddCell(CeldaNota(pars[1], isAlt));
+                    tabla.AddCell(CeldaNota(labs[2], isAlt));
+                    tabla.AddCell(CeldaNota(pars[2], isAlt));
+
+                    // Promedio final: (promedio LAB * 0.30) + (promedio PAR * 0.70)
+                    decimal labSum = (labs[0] ?? 0) + (labs[1] ?? 0) + (labs[2] ?? 0);
+                    decimal parSum = (pars[0] ?? 0) + (pars[1] ?? 0) + (pars[2] ?? 0);
+                    decimal labAvg = labSum / 3m;
+                    decimal parAvg = parSum / 3m;
+                    decimal notaFinal = Math.Round(labAvg * 0.30m + parAvg * 0.70m, 2);
+                    tabla.AddCell(CeldaNota(notaFinal, isAlt));
+
+                    rowIndex++;
                 }
 
                 doc.Add(tabla);
 
                 doc.Add(new Paragraph(" "));
                 var firmaTabla = new Table(new float[] { 1, 1 }).UseAllAvailableWidth();
-                firmaTabla.AddCell(new Cell().Add(new Paragraph("FIRMA")).SetBorderTop(new SolidBorder(1)).SetBorderLeft(Border.NO_BORDER).SetBorderRight(Border.NO_BORDER).SetBorderBottom(Border.NO_BORDER).SetTextAlignment(TextAlignment.CENTER));
-                firmaTabla.AddCell(new Cell().Add(new Paragraph("SELLO")).SetBorderTop(new SolidBorder(1)).SetBorderLeft(Border.NO_BORDER).SetBorderRight(Border.NO_BORDER).SetBorderBottom(Border.NO_BORDER).SetTextAlignment(TextAlignment.CENTER));
+                firmaTabla.AddCell(new Cell().Add(new Paragraph("FIRMA").SetFont(_fontBold)).SetBorderTop(new SolidBorder(1)).SetBorderLeft(Border.NO_BORDER).SetBorderRight(Border.NO_BORDER).SetBorderBottom(Border.NO_BORDER).SetTextAlignment(TextAlignment.CENTER));
+                firmaTabla.AddCell(new Cell().Add(new Paragraph("SELLO").SetFont(_fontBold)).SetBorderTop(new SolidBorder(1)).SetBorderLeft(Border.NO_BORDER).SetBorderRight(Border.NO_BORDER).SetBorderBottom(Border.NO_BORDER).SetTextAlignment(TextAlignment.CENTER));
                 doc.Add(firmaTabla);
 
                 doc.Close();
@@ -178,16 +212,25 @@ namespace SRAUMOAR.Pages.reportes.notas
         }
         private void EstiloEncabezado(Table tabla, string texto)
         {
-            tabla.AddCell(new Cell().Add(new Paragraph(texto).SetFont(_fontBold)).SetTextAlignment(TextAlignment.CENTER));
+            tabla.AddCell(new Cell()
+                .Add(new Paragraph(texto).SetFont(_fontBold))
+                .SetBackgroundColor(ColorConstants.LIGHT_GRAY)
+                .SetTextAlignment(TextAlignment.CENTER)
+                .SetBorder(new SolidBorder(1))
+                .SetPadding(6));
         }
-        private Cell CeldaTexto(string text)
+        private Cell CeldaTexto(string text, bool alt = false)
         {
-            return new Cell().Add(new Paragraph(text).SetFont(_fontNormal));
+            var cell = new Cell().Add(new Paragraph(text).SetFont(_fontNormal)).SetBorder(new SolidBorder(1)).SetPadding(5);
+            if (alt) cell.SetBackgroundColor(new DeviceRgb(248, 248, 248));
+            return cell;
         }
-        private Cell CeldaNota(decimal? valor)
+        private Cell CeldaNota(decimal? valor, bool alt = false)
         {
             var texto = valor.HasValue ? valor.Value.ToString("0.00") : "0.00";
-            return new Cell().Add(new Paragraph(texto).SetTextAlignment(TextAlignment.CENTER).SetFont(_fontNormal));
+            var cell = new Cell().Add(new Paragraph(texto).SetTextAlignment(TextAlignment.CENTER).SetFont(_fontNormal)).SetBorder(new SolidBorder(1)).SetPadding(5);
+            if (alt) cell.SetBackgroundColor(new DeviceRgb(248, 248, 248));
+            return cell;
         }
     }
 }

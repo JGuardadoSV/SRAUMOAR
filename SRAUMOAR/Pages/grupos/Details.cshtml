@@ -5,7 +5,7 @@
     ViewData["Title"] = "Details";
 }
 
-<h1>Details</h1>
+<h1>Detalle del Grupo</h1>
 
 <div>
     <h4>Grupo</h4>
@@ -18,7 +18,7 @@
             @Html.DisplayFor(model => model.Grupo.Limite)
         </dd>
         <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Grupo.Nombre)
+            Código
         </dt>
         <dd class="col-sm-10">
             @Html.DisplayFor(model => model.Grupo.Nombre)
@@ -30,19 +30,19 @@
             @Html.DisplayFor(model => model.Grupo.Activo)
         </dd>
         <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Grupo.Carrera)
+            Carrera
         </dt>
         <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Grupo.Carrera.CodigoCarrera)
+            @Html.DisplayFor(model => model.Grupo.Carrera.NombreCarrera)
         </dd>
         <dt class="col-sm-2">
             @Html.DisplayNameFor(model => model.Grupo.Ciclo)
         </dt>
         <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Grupo.Ciclo.Id)
+            @Model.Grupo.Ciclo.NCiclo-@Model.Grupo.Ciclo.anio
         </dd>
         <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Grupo.Docente)
+            Docente encargado
         </dt>
         <dd class="col-sm-10">
             @Html.DisplayFor(model => model.Grupo.Docente.Apellidos)
@@ -76,14 +76,13 @@
                             <thead>
                                 <tr>
                                     <th style="width: 30%">Estudiante (Apellidos Nombres)</th>
-                                    @foreach (var actividad in Model.ActividadesAcademicas)
-                                    {
-                                        <th class="text-center" style="white-space: nowrap;">
-                                            @actividad.Nombre
-                                            <br />
-                                            <small class="text-muted">@actividad.FechaInicio.ToString("dd/MM")</small>
-                                        </th>
-                                    }
+                                    <th class="text-center">LAB1</th>
+                                    <th class="text-center">PAR1</th>
+                                    <th class="text-center">LAB2</th>
+                                    <th class="text-center">PAR2</th>
+                                    <th class="text-center">LAB3</th>
+                                    <th class="text-center">PAR3</th>
+                                    <th class="text-center">Nota final</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -96,6 +95,24 @@
                                     }
 
                                     var notasMateria = estudiante.Notas.Where(n => n.MateriasInscritas.MateriasGrupoId == materia.MateriasGrupoId).ToList();
+                                    var labsList = notasMateria.Where(n => n.ActividadAcademica != null && n.ActividadAcademica.TipoActividad == 1)
+                                        .OrderBy(n => n.ActividadAcademica!.FechaInicio)
+                                        .Select(n => (decimal?)n.Nota)
+                                        .Take(3)
+                                        .ToList();
+                                    var parsList = notasMateria.Where(n => n.ActividadAcademica != null && n.ActividadAcademica.TipoActividad == 2)
+                                        .OrderBy(n => n.ActividadAcademica!.FechaInicio)
+                                        .Select(n => (decimal?)n.Nota)
+                                        .Take(3)
+                                        .ToList();
+                                    while (labsList.Count < 3) { labsList.Add(null); }
+                                    while (parsList.Count < 3) { parsList.Add(null); }
+
+                                    decimal labSum = (labsList[0] ?? 0) + (labsList[1] ?? 0) + (labsList[2] ?? 0);
+                                    decimal parSum = (parsList[0] ?? 0) + (parsList[1] ?? 0) + (parsList[2] ?? 0);
+                                    decimal labAvg = labSum / 3m;
+                                    decimal parAvg = parSum / 3m;
+                                    decimal notaFinal = Math.Round(labAvg * 0.30m + parAvg * 0.70m, 2);
                                     <tr>
                                         <td>
                                             <div class="d-flex align-items-center gap-2">
@@ -103,11 +120,13 @@
                                                 <span>@estudiante.NombreCompleto</span>
                                             </div>
                                         </td>
-                                        @foreach (var actividad in Model.ActividadesAcademicas)
-                                        {
-                                            var nota = notasMateria.FirstOrDefault(n => n.ActividadAcademicaId == actividad.ActividadAcademicaId)?.Nota;
-                                            <td class="text-center">@((nota.HasValue ? nota.Value.ToString("0.00") : "-"))</td>
-                                        }
+                                        <td class="text-center">@((labsList[0].HasValue ? labsList[0]!.Value.ToString("0.00") : "-"))</td>
+                                        <td class="text-center">@((parsList[0].HasValue ? parsList[0]!.Value.ToString("0.00") : "-"))</td>
+                                        <td class="text-center">@((labsList[1].HasValue ? labsList[1]!.Value.ToString("0.00") : "-"))</td>
+                                        <td class="text-center">@((parsList[1].HasValue ? parsList[1]!.Value.ToString("0.00") : "-"))</td>
+                                        <td class="text-center">@((labsList[2].HasValue ? labsList[2]!.Value.ToString("0.00") : "-"))</td>
+                                        <td class="text-center">@((parsList[2].HasValue ? parsList[2]!.Value.ToString("0.00") : "-"))</td>
+                                        <td class="text-center">@notaFinal.ToString("0.00")</td>
                                     </tr>
                                 }
                             </tbody>
