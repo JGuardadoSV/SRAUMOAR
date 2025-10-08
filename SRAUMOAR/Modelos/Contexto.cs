@@ -27,6 +27,7 @@ namespace SRAUMOAR.Modelos
         public DbSet<Facultad> Facultades { get; set; } = null!;
         public DbSet<Carrera> Carreras { get; set; } = null!;
         public DbSet<Profesion> Profesiones { get; set; } = null!;
+        public DbSet<CodigoActividadEconomica> CodigosActividadEconomica { get; set; } = null!;
 
 
         public DbSet<Materia> Materias { get; set; } 

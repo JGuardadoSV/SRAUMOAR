@@ -944,27 +944,27 @@ namespace SRAUMOAR.Pages.puntoventa
                     // Crear el objeto resumen
                     var resumen = new
                     {
-                        totalCompra = totalCompra,
-                        descu = totalDescuento,
-                        totalDescu = totalDescuento,
-                        subTotal = subTotal,
-                        ivaRete1 = ivaRete1,
-                        reteRenta = reteRenta,
-                        totalPagar = totalPagar,
+                        totalCompra = Math.Round(totalCompra, 2),
+                        descu = Math.Round(totalDescuento, 2),
+                        totalDescu = Math.Round(totalDescuento, 2),
+                        subTotal = Math.Round(subTotal, 2),
+                        ivaRete1 = Math.Round(ivaRete1, 2),
+                        reteRenta = Math.Round(reteRenta, 2),
+                        totalPagar = Math.Round(totalPagar, 2),
                         totalLetras = totalLetras,
-                        condicionOperacion = 1, // 1 = Contado, 2 = Crédito
+                        condicionOperacion = 1,
                         pagos = new[]
-                        {
-        new
-        {
-            codigo = "01", // Código del tipo de pago
-            montoPago = totalPagar, // Monto total de la compra
-            referencia = "0000",
-            periodo = (string)null,
-            plazo = (string)null
-        }
-    },
-                        observaciones = (string)null
+                         {
+                            new
+                            {
+                                codigo = "01",
+                                montoPago = Math.Round(totalPagar, 2),
+                                referencia = "0000",
+                                periodo = (string)null,
+                                plazo = (string)null
+                            }
+                        },
+                                            observaciones = (string)null
                     };
 
                     // Crear el apéndice (opcional)

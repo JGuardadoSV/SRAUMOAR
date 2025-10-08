@@ -31,6 +31,9 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 // Registrar el servicio de respaldos
 builder.Services.AddScoped<IBackupService, BackupService>();
 
+// Registrar el servicio de configuración del emisor
+builder.Services.AddScoped<EmisorConfigService>();
+
 
 
 // Add services to the container.

@@ -1,0 +1,199 @@
+@page
+@model SRAUMOAR.Pages.generales.codigoActividadEconomica.IndexModel
+
+@{
+    ViewData["Title"] = "Códigos de Actividad Económica";
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+</head>
+<body>
+    <header class="bg-primary text-white text-center py-3 mb-4">
+        <h1>Listado de Códigos de Actividad Económica</h1>
+    </header>
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-md-6">
+                <a asp-page="./Create" class="btn btn-primary btn-custom">
+                    <i class="bi bi-plus-circle btn-icon"></i>
+                    Nuevo
+                </a>
+            </div>
+            <div class="col-md-6">
+                <form method="get" class="d-flex">
+                    <input asp-for="FiltroBusqueda" class="form-control me-2" placeholder="Buscar por código o descripción..." />
+                    <input type="hidden" asp-for="OrdenActual" />
+                    <button type="submit" class="btn btn-outline-secondary">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    @if (!string.IsNullOrEmpty(Model.FiltroBusqueda))
+                    {
+                        <a asp-page="./Index" class="btn btn-outline-danger ms-2">
+                            <i class="bi bi-x-circle"></i>
+                        </a>
+                    }
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container-fluid mt-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                @if (Model.CodigoActividadEconomica.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>
+                                        <a asp-page="./Index" 
+                                           asp-route-filtroBusqueda="@Model.FiltroBusqueda" 
+                                           asp-route-ordenActual="@(Model.OrdenActual == "codigo" ? "codigo_desc" : "codigo")"
+                                           class="text-white text-decoration-none">
+                                            @Html.DisplayNameFor(model => model.CodigoActividadEconomica[0].Codigo)
+                                            @if (Model.OrdenActual == "codigo")
+                                            {
+                                                <i class="bi bi-arrow-up"></i>
+                                            }
+                                            else if (Model.OrdenActual == "codigo_desc")
+                                            {
+                                                <i class="bi bi-arrow-down"></i>
+                                            }
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a asp-page="./Index" 
+                                           asp-route-filtroBusqueda="@Model.FiltroBusqueda" 
+                                           asp-route-ordenActual="@(Model.OrdenActual == "descripcion" ? "descripcion_desc" : "descripcion")"
+                                           class="text-white text-decoration-none">
+                                            @Html.DisplayNameFor(model => model.CodigoActividadEconomica[0].Descripcion)
+                                            @if (Model.OrdenActual == "descripcion")
+                                            {
+                                                <i class="bi bi-arrow-up"></i>
+                                            }
+                                            else if (Model.OrdenActual == "descripcion_desc")
+                                            {
+                                                <i class="bi bi-arrow-down"></i>
+                                            }
+                                        </a>
+                                    </th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.CodigoActividadEconomica)
+                                {
+                                    <tr>
+                                        <td>@Html.DisplayFor(modelItem => item.Codigo)</td>
+                                        <td>@Html.DisplayFor(modelItem => item.Descripcion)</td>
+                                        <td class="text-center">
+                                            <div class="btn-group">
+                                                <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    Acciones
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    <li><a class="dropdown-item" asp-page="./Create">Nuevo <i class="bi bi-plus-circle"></i></a></li>
+                                                    <li><a class="dropdown-item" asp-page="./Edit" asp-route-id="@item.Id">Editar <i class="bi bi-pencil-square"></i></a></li>
+                                                    <li><a class="dropdown-item" asp-page="./Details" asp-route-id="@item.Id">Detalles <i class="bi bi-info-circle"></i></a></li>
+                                                    <li><a class="dropdown-item" asp-page="./Delete" asp-route-id="@item.Id">Eliminar <i class="bi bi-trash"></i></a></li>
+                                                </ul>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Paginación -->
+                    <nav aria-label="Navegación de páginas">
+                        <ul class="pagination justify-content-center">
+                            @if (Model.CodigoActividadEconomica.TienePaginaAnterior)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" asp-page="./Index" 
+                                       asp-route-filtroBusqueda="@Model.FiltroBusqueda" 
+                                       asp-route-ordenActual="@Model.OrdenActual"
+                                       asp-route-numeroPagina="@(Model.CodigoActividadEconomica.IndicePagina - 1)">
+                                        <i class="bi bi-chevron-left"></i> Anterior
+                                    </a>
+                                </li>
+                            }
+                            else
+                            {
+                                <li class="page-item disabled">
+                                    <span class="page-link">
+                                        <i class="bi bi-chevron-left"></i> Anterior
+                                    </span>
+                                </li>
+                            }
+
+                            @for (int i = Math.Max(1, Model.CodigoActividadEconomica.IndicePagina - 2); 
+                                 i <= Math.Min(Model.CodigoActividadEconomica.TotalPaginas, Model.CodigoActividadEconomica.IndicePagina + 2); 
+                                 i++)
+                            {
+                                <li class="page-item @(i == Model.CodigoActividadEconomica.IndicePagina ? "active" : "")">
+                                    <a class="page-link" asp-page="./Index" 
+                                       asp-route-filtroBusqueda="@Model.FiltroBusqueda" 
+                                       asp-route-ordenActual="@Model.OrdenActual"
+                                       asp-route-numeroPagina="@i">@i</a>
+                                </li>
+                            }
+
+                            @if (Model.CodigoActividadEconomica.TienePaginaSiguiente)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" asp-page="./Index" 
+                                       asp-route-filtroBusqueda="@Model.FiltroBusqueda" 
+                                       asp-route-ordenActual="@Model.OrdenActual"
+                                       asp-route-numeroPagina="@(Model.CodigoActividadEconomica.IndicePagina + 1)">
+                                        Siguiente <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </li>
+                            }
+                            else
+                            {
+                                <li class="page-item disabled">
+                                    <span class="page-link">
+                                        Siguiente <i class="bi bi-chevron-right"></i>
+                                    </span>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                    
+                    <!-- Información de paginación -->
+                    <div class="text-center text-muted">
+                        Mostrando @((Model.CodigoActividadEconomica.IndicePagina - 1) * 10 + 1) a 
+                        @(Math.Min(Model.CodigoActividadEconomica.IndicePagina * 10, Model.CodigoActividadEconomica.TotalRegistros)) 
+                        de @Model.CodigoActividadEconomica.TotalRegistros registros
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-5">
+                        <i class="bi bi-inbox display-1 text-muted"></i>
+                        <h4 class="text-muted mt-3">No se encontraron registros</h4>
+                        @if (!string.IsNullOrEmpty(Model.FiltroBusqueda))
+                        {
+                            <p class="text-muted">No hay códigos de actividad económica que coincidan con la búsqueda: "<strong>@Model.FiltroBusqueda</strong>"</p>
+                            <a asp-page="./Index" class="btn btn-primary">Ver todos los registros</a>
+                        }
+                        else
+                        {
+                            <p class="text-muted">No hay códigos de actividad económica registrados.</p>
+                            <a asp-page="./Create" class="btn btn-primary">Crear el primer registro</a>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</body>
+</html>

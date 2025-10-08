@@ -1,0 +1,460 @@
+@page
+@model SRAUMOAR.Pages.facturas.procesar.EditarJsonModel
+@{
+    ViewData["Title"] = "Editar JSON de Factura";
+}
+
+<style>
+    :root {
+        --primary-color: #168026;
+        --primary-dark: #0f5c1b;
+        --primary-light: #e8f5e8;
+        --text-dark: #2c3e50;
+        --border-color: #e0e0e0;
+        --warning-color: #ffc107;
+        --danger-color: #dc3545;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 300;
+        margin: 0;
+        text-align: center;
+    }
+
+    .page-subtitle {
+        text-align: center;
+        opacity: 0.9;
+        margin-top: 0.5rem;
+        font-size: 1.1rem;
+    }
+
+    .factura-info {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border: 1px solid var(--border-color);
+    }
+
+    .json-editor-container {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border: 1px solid var(--border-color);
+    }
+
+    .json-textarea {
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        line-height: 1.4;
+        border: 2px solid var(--border-color);
+        border-radius: 6px;
+        padding: 1rem;
+        min-height: 500px;
+        resize: vertical;
+        transition: all 0.3s ease;
+    }
+
+    .json-textarea:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(22, 128, 38, 0.1);
+        outline: none;
+    }
+
+    .btn-primary-custom {
+        background: var(--primary-color);
+        border: none;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-primary-custom:hover {
+        background: var(--primary-dark);
+        color: white;
+        text-decoration: none;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(22, 128, 38, 0.3);
+    }
+
+    .btn-secondary-custom {
+        background: #6c757d;
+        border: none;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-secondary-custom:hover {
+        background: #545b62;
+        color: white;
+        text-decoration: none;
+        transform: translateY(-1px);
+    }
+
+    .alert {
+        border-radius: 8px;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 1.5rem;
+    }
+
+    .alert-danger {
+        background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+        color: #721c24;
+        border-left: 4px solid #dc3545;
+    }
+
+    .alert-success {
+        background: linear-gradient(135deg, #d4edda, #c3e6cb);
+        color: #155724;
+        border-left: 4px solid #28a745;
+    }
+
+    .info-badge {
+        background: rgba(22, 128, 38, 0.1);
+        color: var(--primary-color);
+        border: 1px solid rgba(22, 128, 38, 0.2);
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .currency {
+        font-weight: 600;
+        color: var(--primary-color);
+    }
+
+    .json-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+
+    .json-actions .btn {
+        min-width: 150px;
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="page-header">
+        <div class="container">
+            <h1 class="page-title">
+                <i class="fas fa-code me-3"></i>
+                Editar JSON de Factura
+            </h1>
+            <p class="page-subtitle">Modificar el documento tributario electrónico</p>
+        </div>
+    </div>
+
+    <!-- Mensajes de notificación -->
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Información de la factura -->
+    <div class="factura-info">
+        <div class="row">
+            <div class="col-md-3">
+                <h6 class="text-muted mb-1">ID Factura</h6>
+                <p class="mb-0 fw-bold">#@Model.Factura.FacturaId</p>
+            </div>
+            <div class="col-md-3">
+                <h6 class="text-muted mb-1">Fecha</h6>
+                <p class="mb-0 fw-bold">@Model.Factura.Fecha.ToString("dd/MM/yyyy HH:mm")</p>
+            </div>
+            <div class="col-md-3">
+                <h6 class="text-muted mb-1">Tipo DTE</h6>
+                <p class="mb-0">
+                    @{
+                        var tipoDTEText = Model.Factura.TipoDTE switch
+                        {
+                            1 => "CF",
+                            3 => "CCF",
+                            5 => "NC",
+                            14 => "SE",
+                            15 => "DON",
+                            _ => Model.Factura.TipoDTE.ToString()
+                        };
+                        var tipoDTEClass = Model.Factura.TipoDTE switch
+                        {
+                            1 => "bg-primary",
+                            3 => "bg-success",
+                            5 => "bg-warning",
+                            14 => "bg-info",
+                            15 => "bg-secondary",
+                            _ => "bg-secondary"
+                        };
+                    }
+                    <span class="badge @tipoDTEClass">@tipoDTEText</span>
+                </p>
+            </div>
+            <div class="col-md-3">
+                <h6 class="text-muted mb-1">Total</h6>
+                <p class="mb-0 fw-bold currency">$@Model.Factura.TotalPagar.ToString("N2")</p>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <h6 class="text-muted mb-1">Código Generación</h6>
+                <p class="mb-0"><code>@Model.Factura.CodigoGeneracion</code></p>
+            </div>
+            <div class="col-md-6">
+                <h6 class="text-muted mb-1">Número Control</h6>
+                <p class="mb-0 fw-bold">@Model.Factura.NumeroControl</p>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-12">
+                <span class="info-badge">
+                    <i class="fas fa-clock me-1"></i>
+                    Estado: Pendiente de Procesamiento
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Editor de JSON -->
+    <div class="json-editor-container">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">
+                <i class="fas fa-code me-2"></i>
+                Documento Tributario Electrónico (JSON)
+            </h5>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="formatearJson()">
+                    <i class="fas fa-magic me-1"></i>
+                    Formatear
+                </button>
+                <button type="button" class="btn btn-outline-info btn-sm" onclick="validarJson()">
+                    <i class="fas fa-check-circle me-1"></i>
+                    Validar
+                </button>
+            </div>
+        </div>
+        
+        <form method="post">
+            <input type="hidden" name="id" value="@Model.Factura.FacturaId" />
+            
+            <div class="mb-3">
+                <label for="JsonEditado" class="form-label fw-semibold">
+                    <i class="fas fa-edit me-2"></i>
+                    Contenido JSON
+                </label>
+                <textarea asp-for="JsonEditado" 
+                          class="form-control json-textarea" 
+                          id="JsonEditado" 
+                          placeholder="Ingrese el contenido JSON del documento tributario electrónico..."
+                          rows="20"></textarea>
+                <div class="form-text">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Puede editar el JSON directamente. Use los botones de formatear y validar para verificar la sintaxis.
+                </div>
+            </div>
+
+            <div class="json-actions">
+                <button type="submit" class="btn btn-primary-custom">
+                    <i class="fas fa-save me-2"></i>
+                    Guardar y Continuar
+                </button>
+                <button type="submit" asp-page-handler="Consultar" class="btn btn-info">
+                    <i class="fas fa-search me-2"></i>
+                    Consultar Estado
+                </button>
+                <a asp-page="./Index" class="btn btn-secondary-custom">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Cancelar
+                </a>
+                <a asp-page="./EnviarContingencia" asp-route-id="@Model.Factura.FacturaId" class="btn btn-warning">
+                    <i class="fas fa-paper-plane me-2"></i>
+                    Ir Directo a Contingencia
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Resultado de Consulta -->
+    @if (!string.IsNullOrEmpty(Model.ConsultaResultado))
+    {
+        <div class="consulta-resultado mt-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-search me-2"></i>
+                        Resultado de Consulta
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <h6 class="text-muted mb-1">Estado</h6>
+                            <p class="mb-0">
+                                @if (Model.ConsultaEstado == "PROCESADO")
+                                {
+                                    <span class="badge bg-success">@Model.ConsultaEstado</span>
+                                }
+                                else if (Model.ConsultaEstado == "RECHAZADO")
+                                {
+                                    <span class="badge bg-danger">@Model.ConsultaEstado</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning">@Model.ConsultaEstado</span>
+                                }
+                            </p>
+                        </div>
+                        <div class="col-md-3">
+                            <h6 class="text-muted mb-1">Mensaje</h6>
+                            <p class="mb-0 fw-bold">@Model.ConsultaMensaje</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-1">Sello de Recepción</h6>
+                            <p class="mb-0">
+                                @if (!string.IsNullOrEmpty(Model.ConsultaSello))
+                                {
+                                    <code class="text-success">@Model.ConsultaSello</code>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">No disponible</span>
+                                }
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Lista de Errores -->
+                    @if (Model.ConsultaErrores != null && Model.ConsultaErrores.Any())
+                    {
+                        <div class="mt-3">
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-exclamation-triangle text-danger me-2"></i>
+                                Errores Encontrados (@Model.ConsultaErrores.Count)
+                            </h6>
+                            <div class="alert alert-danger">
+                                <ul class="mb-0">
+                                    @foreach (var error in Model.ConsultaErrores)
+                                    {
+                                        <li class="mb-1">@error</li>
+                                    }
+                                </ul>
+                            </div>
+                        </div>
+                    }
+                    
+                    <div class="mt-3">
+                        <h6 class="text-muted mb-2">
+                            <button class="btn btn-link p-0 text-decoration-none" type="button" data-bs-toggle="collapse" data-bs-target="#respuestaCompleta" aria-expanded="false" aria-controls="respuestaCompleta">
+                                <i class="fas fa-chevron-down me-1"></i>
+                                Respuesta Completa
+                            </button>
+                        </h6>
+                        <div class="collapse" id="respuestaCompleta">
+                            <pre class="bg-light p-3 rounded"><code>@Model.ConsultaResultado</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<script>
+    function formatearJson() {
+        const textarea = document.getElementById('JsonEditado');
+        try {
+            const jsonObject = JSON.parse(textarea.value);
+            textarea.value = JSON.stringify(jsonObject, null, 2);
+            
+            // Mostrar mensaje de éxito
+            mostrarMensaje('JSON formateado correctamente', 'success');
+        } catch (error) {
+            mostrarMensaje('Error al formatear JSON: ' + error.message, 'error');
+        }
+    }
+
+    function validarJson() {
+        const textarea = document.getElementById('JsonEditado');
+        try {
+            JSON.parse(textarea.value);
+            mostrarMensaje('JSON válido', 'success');
+        } catch (error) {
+            mostrarMensaje('JSON inválido: ' + error.message, 'error');
+        }
+    }
+
+    function mostrarMensaje(mensaje, tipo) {
+        // Crear elemento de mensaje
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${tipo === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+            <i class="fas fa-${tipo === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+            ${mensaje}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        // Insertar al inicio del contenedor
+        const container = document.querySelector('.container-fluid');
+        container.insertBefore(alertDiv, container.firstChild);
+        
+        // Auto-remover después de 5 segundos
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 5000);
+    }
+
+    // Auto-formatear al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+        const textarea = document.getElementById('JsonEditado');
+        if (textarea.value.trim()) {
+            formatearJson();
+        }
+    });
+</script>
+
+<!-- Font Awesome para los iconos -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">

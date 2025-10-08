@@ -1,0 +1,409 @@
+@page
+@model SRAUMOAR.Pages.facturas.procesar.EnviarContingenciaModel
+@{
+    ViewData["Title"] = "Envío por Contingencia";
+}
+
+<style>
+    :root {
+        --primary-color: #168026;
+        --primary-dark: #0f5c1b;
+        --primary-light: #e8f5e8;
+        --text-dark: #2c3e50;
+        --border-color: #e0e0e0;
+        --warning-color: #ffc107;
+        --danger-color: #dc3545;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--warning-color), #e0a800);
+        color: #212529;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 300;
+        margin: 0;
+        text-align: center;
+    }
+
+    .page-subtitle {
+        text-align: center;
+        opacity: 0.8;
+        margin-top: 0.5rem;
+        font-size: 1.1rem;
+    }
+
+    .factura-info {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border: 1px solid var(--border-color);
+    }
+
+    .process-container {
+        background: white;
+        border-radius: 8px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border: 1px solid var(--border-color);
+    }
+
+    .btn-warning-custom {
+        background: var(--warning-color);
+        border: none;
+        color: #212529;
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-warning-custom:hover {
+        background: #e0a800;
+        color: #212529;
+        text-decoration: none;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+    }
+
+    .btn-secondary-custom {
+        background: #6c757d;
+        border: none;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-secondary-custom:hover {
+        background: #545b62;
+        color: white;
+        text-decoration: none;
+        transform: translateY(-1px);
+    }
+
+    .alert {
+        border-radius: 8px;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 1.5rem;
+    }
+
+    .alert-danger {
+        background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+        color: #721c24;
+        border-left: 4px solid #dc3545;
+    }
+
+    .alert-success {
+        background: linear-gradient(135deg, #d4edda, #c3e6cb);
+        color: #155724;
+        border-left: 4px solid #28a745;
+    }
+
+    .alert-info {
+        background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+        color: #0c5460;
+        border-left: 4px solid #17a2b8;
+    }
+
+    .info-badge {
+        background: rgba(255, 193, 7, 0.1);
+        color: #856404;
+        border: 1px solid rgba(255, 193, 7, 0.2);
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .currency {
+        font-weight: 600;
+        color: var(--primary-color);
+    }
+
+    .process-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+
+    .process-actions .btn {
+        min-width: 200px;
+    }
+
+    .process-steps {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .step {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding: 0.75rem;
+        background: white;
+        border-radius: 6px;
+        border-left: 4px solid var(--warning-color);
+    }
+
+    .step:last-child {
+        margin-bottom: 0;
+    }
+
+    .step-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--warning-color);
+        color: #212529;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-weight: bold;
+    }
+
+    .step-content h6 {
+        margin: 0;
+        font-weight: 600;
+        color: var(--text-dark);
+    }
+
+    .step-content p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="page-header">
+        <div class="container">
+            <h1 class="page-title">
+                <i class="fas fa-paper-plane me-3"></i>
+                Envío por Contingencia
+            </h1>
+            <p class="page-subtitle">Procesar factura mediante sistema de contingencia</p>
+        </div>
+    </div>
+
+    <!-- Mensajes de notificación -->
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Info"] != null)
+    {
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <i class="fas fa-info-circle me-2"></i>
+            @TempData["Info"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Información de la factura -->
+    <div class="factura-info">
+        <div class="row">
+            <div class="col-md-3">
+                <h6 class="text-muted mb-1">ID Factura</h6>
+                <p class="mb-0 fw-bold">#@Model.Factura.FacturaId</p>
+            </div>
+            <div class="col-md-3">
+                <h6 class="text-muted mb-1">Fecha</h6>
+                <p class="mb-0 fw-bold">@Model.Factura.Fecha.ToString("dd/MM/yyyy HH:mm")</p>
+            </div>
+            <div class="col-md-3">
+                <h6 class="text-muted mb-1">Tipo DTE</h6>
+                <p class="mb-0">
+                    @{
+                        var tipoDTEText = Model.Factura.TipoDTE switch
+                        {
+                            1 => "CF",
+                            3 => "CCF",
+                            5 => "NC",
+                            14 => "SE",
+                            15 => "DON",
+                            _ => Model.Factura.TipoDTE.ToString()
+                        };
+                        var tipoDTEClass = Model.Factura.TipoDTE switch
+                        {
+                            1 => "bg-primary",
+                            3 => "bg-success",
+                            5 => "bg-warning",
+                            14 => "bg-info",
+                            15 => "bg-secondary",
+                            _ => "bg-secondary"
+                        };
+                    }
+                    <span class="badge @tipoDTEClass">@tipoDTEText</span>
+                </p>
+            </div>
+            <div class="col-md-3">
+                <h6 class="text-muted mb-1">Total</h6>
+                <p class="mb-0 fw-bold currency">$@Model.Factura.TotalPagar.ToString("N2")</p>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <h6 class="text-muted mb-1">Código Generación</h6>
+                <p class="mb-0"><code>@Model.Factura.CodigoGeneracion</code></p>
+            </div>
+            <div class="col-md-6">
+                <h6 class="text-muted mb-1">Número Control</h6>
+                <p class="mb-0 fw-bold">@Model.Factura.NumeroControl</p>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-12">
+                <span class="info-badge">
+                    <i class="fas fa-paper-plane me-1"></i>
+                    Lista para Envío por Contingencia
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Proceso de envío -->
+    <div class="process-container">
+        <h5 class="mb-4">
+            <i class="fas fa-cogs me-2"></i>
+            Proceso de Envío por Contingencia
+        </h5>
+
+        <div class="process-steps">
+            <div class="step">
+                <div class="step-icon">1</div>
+                <div class="step-content">
+                    <h6>Notificar Contingencia</h6>
+                    <p>Reportar el evento de contingencia al Ministerio de Hacienda</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-icon">2</div>
+                <div class="step-content">
+                    <h6>Modificar DTE</h6>
+                    <p>Marcar el documento en modo contingencia (tipoModelo=2, tipoOperacion=2)</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-icon">3</div>
+                <div class="step-content">
+                    <h6>Enviar DTE</h6>
+                    <p>Transmitir el documento modificado al sistema de facturación</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-icon">4</div>
+                <div class="step-content">
+                    <h6>Actualizar Estado</h6>
+                    <p>Guardar el sello de recepción y actualizar el estado de la factura</p>
+                </div>
+            </div>
+        </div>
+
+        <form method="post">
+            <input type="hidden" asp-for="Factura.FacturaId" />
+            
+            <div class="mb-3">
+                <label for="Observaciones" class="form-label fw-semibold">
+                    <i class="fas fa-comment me-2"></i>
+                    Observaciones (Opcional)
+                </label>
+                <textarea asp-for="Observaciones" 
+                          class="form-control" 
+                          id="Observaciones" 
+                          rows="3"
+                          placeholder="Agregar observaciones sobre el proceso de envío por contingencia..."></textarea>
+            </div>
+
+            <div class="process-actions">
+                <button type="submit" class="btn btn-warning-custom" onclick="return confirmarEnvio()">
+                    <i class="fas fa-paper-plane me-2"></i>
+                    Iniciar Envío por Contingencia
+                </button>
+                <a asp-page="./EditarJson" asp-route-id="@Model.Factura.FacturaId" class="btn btn-secondary-custom">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Volver a Editar
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Información adicional -->
+    <div class="alert alert-info">
+        <h6 class="alert-heading">
+            <i class="fas fa-info-circle me-2"></i>
+            Información Importante
+        </h6>
+        <p class="mb-0">
+            El proceso de envío por contingencia consta de dos pasos principales:
+        </p>
+        <ul class="mb-0 mt-2">
+            <li><strong>Notificación de Contingencia:</strong> Se reporta al MH el evento de contingencia con motivo "Falla en el sistema de facturacion"</li>
+            <li><strong>Envío del DTE:</strong> Se modifica el documento marcándolo en modo contingencia (tipoModelo=2, tipoOperacion=2) y se envía</li>
+        </ul>
+        <p class="mb-0 mt-2">
+            Una vez completado exitosamente, la factura recibirá su sello de recepción y será marcada como procesada.
+        </p>
+    </div>
+</div>
+
+<script>
+    function confirmarEnvio() {
+        return confirm('¿Está seguro que desea iniciar el proceso de envío por contingencia?\n\nEste proceso puede tomar varios minutos y no se puede cancelar una vez iniciado.');
+    }
+
+    // Mostrar indicador de carga al enviar el formulario
+    document.querySelector('form').addEventListener('submit', function() {
+        const button = document.querySelector('button[type="submit"]');
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Procesando...';
+        button.disabled = true;
+        
+        // Restaurar después de 10 segundos como fallback
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }, 10000);
+    });
+</script>
+
+<!-- Font Awesome para los iconos -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">

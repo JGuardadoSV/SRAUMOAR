@@ -204,7 +204,10 @@ namespace SRAUMOAR.Pages.facturas
                 var dteJson = factura.JsonDte; // Reemplazar con tu lógica
                 var selloRecibido = factura.SelloRecepcion; // Reemplazar con tu lógica
                 var tipo = factura.TipoDTE.ToString().PadLeft(2, '0');
-
+                if (tipo=="02")
+                {
+                    tipo = "03";
+                }
                 // Datos que necesitas enviar
                 var requestData = new
                 {

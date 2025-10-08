@@ -1,0 +1,442 @@
+@page
+@model SRAUMOAR.Pages.facturas.procesar.IndexModel
+@{
+    ViewData["Title"] = "Facturas Pendientes";
+}
+
+<style>
+    :root {
+        --primary-color: #168026;
+        --primary-dark: #0f5c1b;
+        --primary-light: #e8f5e8;
+        --text-dark: #2c3e50;
+        --border-color: #e0e0e0;
+        --warning-color: #ffc107;
+        --danger-color: #dc3545;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--warning-color), #e0a800);
+        color: #212529;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 300;
+        margin: 0;
+        text-align: center;
+    }
+
+    .page-subtitle {
+        text-align: center;
+        opacity: 0.8;
+        margin-top: 0.5rem;
+        font-size: 1.1rem;
+    }
+
+    .action-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding: 1rem;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .btn-warning-custom {
+        background: var(--warning-color);
+        border: none;
+        color: #212529;
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-warning-custom:hover {
+        background: #e0a800;
+        color: #212529;
+        text-decoration: none;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+    }
+
+    .table-container {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+        border: 1px solid var(--border-color);
+    }
+
+    .table-custom {
+        margin: 0;
+        font-size: 0.9rem;
+    }
+
+    .table-custom thead {
+        background: var(--warning-color);
+        color: #212529;
+    }
+
+    .table-custom thead th {
+        border: none;
+        padding: 1rem 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+    }
+
+    .table-custom tbody tr {
+        transition: all 0.2s ease;
+        border-bottom: 1px solid #f8f9fa;
+    }
+
+    .table-custom tbody tr:hover {
+        background-color: rgba(255, 193, 7, 0.1);
+        transform: scale(1.01);
+    }
+
+    .table-custom tbody td {
+        padding: 1rem 0.75rem;
+        vertical-align: middle;
+        border: none;
+    }
+
+    .status-pendiente {
+        background: rgba(255, 193, 7, 0.1);
+        color: #856404;
+        border: 1px solid rgba(255, 193, 7, 0.2);
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-procesar {
+        background: #17a2b8;
+        color: white;
+        padding: 0.4rem 0.8rem;
+        border-radius: 4px;
+        text-decoration: none;
+        font-size: 0.8rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+    }
+
+    .btn-procesar:hover {
+        background: #138496;
+        color: white;
+        text-decoration: none;
+    }
+
+    .currency {
+        font-weight: 600;
+        color: var(--primary-color);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: #6c757d;
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+
+    .filters-container {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border: 1px solid var(--border-color);
+    }
+
+    .filters-container .form-label {
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-dark);
+    }
+
+    .filters-container .form-control {
+        border: 2px solid var(--border-color);
+        border-radius: 6px;
+        padding: 0.75rem;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+
+    .filters-container .form-control:focus {
+        border-color: var(--warning-color);
+        box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.1);
+        outline: none;
+    }
+
+    .filters-container .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .filters-container .btn-warning {
+        background: var(--warning-color);
+        border-color: var(--warning-color);
+        color: #212529;
+    }
+
+    .filters-container .btn-warning:hover {
+        background: #e0a800;
+        border-color: #e0a800;
+        transform: translateY(-1px);
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="page-header">
+        <div class="container">
+            <h1 class="page-title">
+                <i class="fas fa-clock me-3"></i>
+                Facturas Pendientes
+            </h1>
+            <p class="page-subtitle">Procesar facturas sin sello de recepción</p>
+        </div>
+    </div>
+
+    <div class="action-bar">
+        <a asp-page="../Index" class="btn-warning-custom">
+            <i class="fas fa-arrow-left"></i>
+            Volver a Facturas
+        </a>
+
+        <div class="d-flex align-items-center">
+            <span class="badge bg-warning text-dark me-2">
+                <i class="fas fa-exclamation-triangle"></i>
+                @Model.TotalRegistros facturas pendientes
+            </span>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filters-container">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label for="FechaInicio" class="form-label fw-semibold text-muted">
+                    <i class="fas fa-calendar-alt me-2"></i>Fecha Inicio
+                </label>
+                <input type="date" class="form-control" id="FechaInicio" name="FechaInicio" 
+                       value="@(Model.FechaInicio?.ToString("yyyy-MM-dd") ?? DateTime.Today.ToString("yyyy-MM-dd"))" />
+            </div>
+            <div class="col-md-4">
+                <label for="FechaFin" class="form-label fw-semibold text-muted">
+                    <i class="fas fa-calendar-alt me-2"></i>Fecha Fin
+                </label>
+                <input type="date" class="form-control" id="FechaFin" name="FechaFin" 
+                       value="@(Model.FechaFin?.ToString("yyyy-MM-dd") ?? DateTime.Today.ToString("yyyy-MM-dd"))" />
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-search me-2"></i>Filtrar
+                    </button>
+                    <a href="@Url.Page("./Index")" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-2"></i>Limpiar
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="table-container">
+        <div class="table-responsive">
+            @if (Model.FacturasPendientes != null && Model.FacturasPendientes.Any())
+            {
+                <table class="table table-custom">
+                    <thead>
+                        <tr>
+                            <th>Estado</th>
+                            <th>Fecha</th>
+                            <th>Tipo DTE</th>
+                            <th>Código Generación</th>
+                            <th>Número Control</th>
+                            <th>Total a Pagar</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.FacturasPendientes)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="status-pendiente">
+                                        <i class="fas fa-clock me-1"></i>
+                                        Pendiente
+                                    </span>
+                                </td>
+                                <td>
+                                    <strong>@item.Fecha.ToString("dd/MM/yyyy HH:mm")</strong>
+                                </td>
+                                <td>
+                                    @{
+                                        var tipoDTEText = item.TipoDTE switch
+                                        {
+                                            1 => "CF",
+                                            3 => "CCF",
+                                            5 => "NC",
+                                            14 => "SE",
+                                            15 => "DON",
+                                            _ => item.TipoDTE.ToString()
+                                        };
+                                        var tipoDTEClass = item.TipoDTE switch
+                                        {
+                                            1 => "bg-primary",
+                                            3 => "bg-success",
+                                            5 => "bg-warning",
+                                            14 => "bg-info",
+                                            15 => "bg-secondary",
+                                            _ => "bg-secondary"
+                                        };
+                                    }
+                                    <span class="badge @tipoDTEClass" title="@item.TipoDTE">@tipoDTEText</span>
+                                </td>
+                                <td>
+                                    <code>@item.CodigoGeneracion</code>
+                                </td>
+                                <td>
+                                    <span class="fw-bold">@item.NumeroControl</span>
+                                </td>
+                                <td>
+                                    <strong class="currency" style="font-size: 1.1em;">$@item.TotalPagar.ToString("N2")</strong>
+                                </td>
+                                <td>
+                                    <a asp-page="./EditarJson" asp-route-id="@item.FacturaId" class="btn-procesar">
+                                        <i class="fas fa-edit me-1"></i>
+                                        Procesar
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                <!-- Paginación -->
+                @if (Model.TotalPaginas > 1)
+                {
+                    <div class="pagination-container" style="background: white; border-radius: 8px; padding: 1.5rem; margin-top: 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid var(--border-color);">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <p class="mb-0 text-muted">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Mostrando @(((Model.PaginaActual - 1) * Model.RegistrosPorPagina) + 1) - 
+                                    @Math.Min(Model.PaginaActual * Model.RegistrosPorPagina, Model.TotalRegistros) 
+                                    de @Model.TotalRegistros registros
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <nav aria-label="Navegación de páginas">
+                                    <ul class="pagination justify-content-end mb-0">
+                                        <!-- Botón Anterior -->
+                                        @if (Model.PaginaActual > 1)
+                                        {
+                                            <li class="page-item">
+                                                <a class="page-link" href="@Url.Page("./Index", new { 
+                                                    FechaInicio = Model.FechaInicio?.ToString("yyyy-MM-dd"), 
+                                                    FechaFin = Model.FechaFin?.ToString("yyyy-MM-dd"), 
+                                                    PaginaActual = Model.PaginaActual - 1 
+                                                })">
+                                                    <i class="fas fa-chevron-left"></i>
+                                                </a>
+                                            </li>
+                                        }
+                                        else
+                                        {
+                                            <li class="page-item disabled">
+                                                <span class="page-link">
+                                                    <i class="fas fa-chevron-left"></i>
+                                                </span>
+                                            </li>
+                                        }
+
+                                        <!-- Números de página -->
+                                        @{
+                                            int inicio = Math.Max(1, Model.PaginaActual - 2);
+                                            int fin = Math.Min(Model.TotalPaginas, Model.PaginaActual + 2);
+                                        }
+
+                                        @for (int i = inicio; i <= fin; i++)
+                                        {
+                                            <li class="page-item @(i == Model.PaginaActual ? "active" : "")">
+                                                <a class="page-link" href="@Url.Page("./Index", new { 
+                                                    FechaInicio = Model.FechaInicio?.ToString("yyyy-MM-dd"), 
+                                                    FechaFin = Model.FechaFin?.ToString("yyyy-MM-dd"), 
+                                                    PaginaActual = i 
+                                                })">@i</a>
+                                            </li>
+                                        }
+
+                                        <!-- Botón Siguiente -->
+                                        @if (Model.PaginaActual < Model.TotalPaginas)
+                                        {
+                                            <li class="page-item">
+                                                <a class="page-link" href="@Url.Page("./Index", new { 
+                                                    FechaInicio = Model.FechaInicio?.ToString("yyyy-MM-dd"), 
+                                                    FechaFin = Model.FechaFin?.ToString("yyyy-MM-dd"), 
+                                                    PaginaActual = Model.PaginaActual + 1 
+                                                })">
+                                                    <i class="fas fa-chevron-right"></i>
+                                                </a>
+                                            </li>
+                                        }
+                                        else
+                                        {
+                                            <li class="page-item disabled">
+                                                <span class="page-link">
+                                                    <i class="fas fa-chevron-right"></i>
+                                                </span>
+                                            </li>
+                                        }
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-check-circle text-success"></i>
+                    </div>
+                    <h3>¡Excelente!</h3>
+                    <p>No hay facturas pendientes de procesar</p>
+                    <a asp-page="../Index" class="btn-warning-custom mt-3">
+                        <i class="fas fa-arrow-left"></i>
+                        Volver a Facturas
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Font Awesome para los iconos -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">

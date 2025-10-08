@@ -1,0 +1,71 @@
+@page
+@model SRAUMOAR.Pages.generales.codigoActividadEconomica.EditModel
+
+@{
+    ViewData["Title"] = "Editar";
+}
+
+<header class="bg-primary text-white text-center py-3 mb-4">
+    <h1> Edición Código de Actividad Económica</h1>
+</header>
+<hr />
+<div class="container mt-5">
+    <div class="card shadow-lg">
+        <div class="card-header bg-dark text-white text-center">
+            <h4 class="fs-4 fw-semibold text-white formal-text">Código de Actividad Económica</h4>
+        </div>
+        <div class="container mt-1">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <form method="post">
+                            <div asp-validation-summary="ModelOnly" class="alert alert-danger d-flex align-items-center" role="alert"></div>
+                            <input type="hidden" asp-for="CodigoActividadEconomica.Id" />
+                            <div class="mb-3">
+                                <label asp-for="CodigoActividadEconomica.Codigo" class="form-label fs-4 fw-semibold text-dark formal-text">Código</label>
+                                <br>
+                                <br>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-hash"></i></span>
+                                    <input asp-for="CodigoActividadEconomica.Codigo" class="form-control" placeholder="Ingrese el código (ej: 0112122)" />
+                                </div>
+                                <br>
+                                <span asp-validation-for="CodigoActividadEconomica.Codigo" class="text-danger"></span>
+                            </div>
+                            <div class="mb-3">
+                                <label asp-for="CodigoActividadEconomica.Descripcion" class="form-label fs-4 fw-semibold text-dark formal-text">Descripción</label>
+                                <br>
+                                <br>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-text-paragraph"></i></span>
+                                    <textarea asp-for="CodigoActividadEconomica.Descripcion" class="form-control" rows="3" placeholder="Ingrese la descripción de la actividad económica"></textarea>
+                                </div>
+                                <br>
+                                <span asp-validation-for="CodigoActividadEconomica.Descripcion" class="text-danger"></span>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-arrow-clockwise"></i> Actualizar
+                                </button>
+                            </div>
+                            <br>
+                        </form>
+                    </div>
+                    <br>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<br>
+<div class="text-center mt-3">
+    <a asp-page="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Volver a la lista
+    </a>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

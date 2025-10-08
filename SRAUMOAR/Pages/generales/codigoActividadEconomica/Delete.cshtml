@@ -1,0 +1,49 @@
+@page
+@model SRAUMOAR.Pages.generales.codigoActividadEconomica.DeleteModel
+
+@{
+    ViewData["Title"] = "Eliminar";
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<body>
+    <header class="bg-danger text-white text-center py-4">
+        <h1>Eliminar Código de Actividad Económica</h1>
+    </header>
+    <div class="container mt-5">
+        <div class="card shadow-lg border-danger">
+            <div class="card-header bg-danger text-white text-center">
+                <h4 class="fs-4 fw-semibold text-white">¿Está seguro que desea eliminar este registro?</h4>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-3 text-left fw-semibold fs-5">
+                        <i class="bi bi-hash"></i> @Html.DisplayNameFor(model => model.CodigoActividadEconomica.Codigo)
+                    </dt>
+                    <dd class="col-sm-9 text-left fs-5">
+                        @Html.DisplayFor(model => model.CodigoActividadEconomica.Codigo)
+                    </dd>
+                    <dt class="col-sm-3 text-left fw-semibold fs-5">
+                        <i class="bi bi-text-paragraph"></i> @Html.DisplayNameFor(model => model.CodigoActividadEconomica.Descripcion)
+                    </dt>
+                    <dd class="col-sm-9 text-left fs-5">
+                        @Html.DisplayFor(model => model.CodigoActividadEconomica.Descripcion)
+                    </dd>
+                </dl>
+            </div>
+            <div class="card-footer text-end">
+                <form method="post">
+                    <input type="hidden" asp-for="CodigoActividadEconomica.Id" />
+                    <button type="submit" class="btn btn-danger btn-lg">
+                        <i class="bi bi-trash"></i> Eliminar
+                    </button>
+                    <a asp-page="./Index" class="btn btn-secondary btn-lg ms-2">
+                        <i class="bi bi-arrow-left"></i> Cancelar
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
