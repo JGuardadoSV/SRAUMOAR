@@ -49,6 +49,15 @@
         </dd>
     </dl>
 </div>
+<script>
+    function abrirPdfEnPopup(url) {
+        const ancho = Math.min(window.innerWidth * 0.9, 1000);
+        const alto = Math.min(window.innerHeight * 0.9, 800);
+        const left = (window.innerWidth - ancho) / 2;
+        const top = (window.innerHeight - alto) / 2;
+        window.open(url, 'VistaPreviaPDF', `width=${ancho},height=${alto},left=${left},top=${top},resizable=yes,scrollbars=yes`);
+    }
+</script>
 <div>
     <h4>Notas por Materia</h4>
     <hr />
@@ -89,7 +98,10 @@
                                     var notasMateria = estudiante.Notas.Where(n => n.MateriasInscritas.MateriasGrupoId == materia.MateriasGrupoId).ToList();
                                     <tr>
                                         <td>
-                                            @estudiante.NombreCompleto
+                                            <div class="d-flex align-items-center gap-2">
+                                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="abrirPdfEnPopup('/reportes/notas/reporteNotasParciales?alumnoId=@estudiante.AlumnoId')">Previsualizar</button>
+                                                <span>@estudiante.NombreCompleto</span>
+                                            </div>
                                         </td>
                                         @foreach (var actividad in Model.ActividadesAcademicas)
                                         {

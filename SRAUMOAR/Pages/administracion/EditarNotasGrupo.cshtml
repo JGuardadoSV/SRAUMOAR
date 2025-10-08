@@ -17,6 +17,10 @@
         border-bottom: 2px solid #1976d2;
         font-size: 1rem;
         letter-spacing: 0.03em;
+        position: sticky;
+        top: 0;
+        background: #f8f9fa;
+        z-index: 2;
     }
     .table-modern tbody tr {
         transition: background 0.15s;
@@ -25,7 +29,7 @@
         background: #e3f2fd;
     }
     .nota-input {
-        width: 80px;
+        width: 64px;
         text-align: center;
     }
     .btn-edit-nota {
@@ -35,6 +39,17 @@
     .materia-header {
         background-color: #f8f9fa;
         border-left: 4px solid #1976d2;
+    }
+    /* Ajustes similares a grupos: nombre multilínea y columnas compactas */
+    .col-estudiante {
+        max-width: 260px;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-wrap: break-word;
+    }
+    .col-nota {
+        width: 80px;
+        white-space: nowrap;
     }
 </style>
 
@@ -90,10 +105,10 @@
                             <table class="table table-modern mb-0">
                                 <thead class="table-light">
                                     <tr>
-                                        <th style="width: 30%">Estudiante</th>
+                                        <th class="col-estudiante">Estudiante</th>
                                         @foreach (var actividad in Model.ActividadesAcademicas)
                                         {
-                                            <th class="text-center" style="width: 15%">
+                                            <th class="text-center col-nota">
                                                 @actividad.Nombre
                                                 <br>
                                                 <small class="text-muted">(@actividad.Porcentaje%)</small>
@@ -112,11 +127,10 @@
                                         var notasMateria = estudiante.Notas.Where(n => n.MateriasInscritas.MateriasGrupoId == materia.MateriasGrupoId).ToList();
                                         
                                         <tr>
-                                            <td>
+                                            <td class="col-estudiante">
                                                 <div class="d-flex align-items-center">
                                                     <div class="ms-2">
                                                         <p class="fw-bold mb-0">@estudiante.NombreCompleto</p>
-                                                        <small class="text-muted">@estudiante.CodigoEstudiante</small>
                                                     </div>
                                                 </div>
                                             </td>
@@ -127,7 +141,7 @@
                                                 var notaId = nota?.NotasId ?? 0;
                                                 var valorNota = nota?.Nota ?? 0;
                                                 
-                                                <td class="text-center">
+                                                <td class="text-center col-nota">
                                                     <div class="d-flex justify-content-center align-items-center">
                                                         <input type="number" 
                                                                id="nota-@estudiante.AlumnoId-@materia.MateriasGrupoId-@actividad.ActividadAcademicaId"

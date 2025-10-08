@@ -104,10 +104,10 @@ namespace SRAUMOAR.Pages.administracion
                 })
                 .ToListAsync();
 
-            // Obtener actividades académicas del ciclo
+            // Obtener actividades académicas del ciclo ordenadas por FechaInicio
             ActividadesAcademicas = await _context.ActividadesAcademicas
                 .Where(a => a.CicloId == grupo.CicloId)
-                .OrderBy(a => a.Nombre)
+                .OrderBy(a => a.FechaInicio)
                 .ToListAsync();
 
             // Obtener estudiantes con sus notas
@@ -124,7 +124,8 @@ namespace SRAUMOAR.Pages.administracion
                 .Select(g => new EstudianteConNotas
                 {
                     AlumnoId = g.Key,
-                    NombreCompleto = g.First().Alumno.Nombres + " " + g.First().Alumno.Apellidos,
+                    // Formato: Apellidos Nombres
+                    NombreCompleto = ($"{g.First().Alumno.Apellidos} {g.First().Alumno.Nombres}").Trim(),
                     CodigoEstudiante = g.First().Alumno.Email?.Split('@')[0] ?? "",
                     MateriasInscritasId = 0, // Se establecerá dinámicamente en la vista
                     Notas = g.SelectMany(mi => mi.Notas).ToList(),
