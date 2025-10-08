@@ -293,29 +293,20 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label>Giro</label>
-                                                <input type="text" class="form-control" asp-for="Factura.Receptor.DescActividad" placeholder="Ingrese el giro del receptor" />
+                                                <input type="text" class="form-control" asp-for="Factura.Receptor.DescActividad" placeholder="Se llenará automáticamente al seleccionar código" readonly />
                                             </div>
                                         </div>
-                                        <div class="col-md-4">
+                                        <div class="col-md-6">
                                             <div class="form-group">
                                                 <label>Código de Actividad Económica</label>
-                                                <input type="text" class="form-control" asp-for="Factura.Receptor.CodActividad" placeholder="Ej: 85499" />
+                                                <select class="form-control select2" id="codigoActividadSelect" asp-for="Factura.Receptor.CodActividad">
+                                                    <option value="">Seleccione un código...</option>
+                                                </select>
                                             </div>
                                         </div>
-                                        <div class="col-md-2">
-                                            <div class="form-group">
-                                                <label>&nbsp;</label>
-                                                <button type="button" class="btn btn-info btn-block" onclick="abrirClasificacionBCR()" title="Buscar en clasificación BCR">
-                                                    <i class="fas fa-search"></i> BUSCAR
-                                                </button>
-                                            </div>
-                                        </div>
+                                       
                                     </div>
-                                    <small class="text-muted">
-                                        <i class="fas fa-info-circle"></i> 
-                                        Estos campos son requeridos únicamente para documentos de Crédito Fiscal. 
-                                        Haga clic en el botón de búsqueda para consultar la clasificación oficial del BCR.
-                                    </small>
+                                    
                                 </div>
                             </div>
                         </div>
@@ -522,10 +513,18 @@
 </section>
 
 @section Scripts {
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    
     <script>
         // Auto-focus en el campo de código después de agregar producto
         jQuery(document).ready(function() {
             jQuery('#Factura_CodigoProducto').focus();
+            
+            // Inicializar Select2 para el selector de códigos de actividad económica
+            inicializarSelectorCodigoActividad();
             
             // Guardar posición del scroll antes de enviar el formulario
             var scrollPosition = 0;
@@ -1006,6 +1005,77 @@
             return true;
         });
 
+        // Función para inicializar el selector de códigos de actividad económica
+        function inicializarSelectorCodigoActividad() {
+            jQuery('#codigoActividadSelect').select2({
+                placeholder: 'Buscar código de actividad económica...',
+                allowClear: true,
+                width: '100%',
+                ajax: {
+                    url: '/api/CodigoActividadEconomicaApi/buscar',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            term: params.term
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: jQuery.map(data, function (item) {
+                                return {
+                                    id: item.codigo,
+                                    text: item.textoCompleto,
+                                    descripcion: item.descripcion
+                                };
+                            })
+                        };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 1,
+                language: {
+                    inputTooShort: function () {
+                        return 'Ingrese al menos 1 carácter para buscar';
+                    },
+                    noResults: function () {
+                        return 'No se encontraron resultados';
+                    },
+                    searching: function () {
+                        return 'Buscando...';
+                    }
+                }
+            });
+
+            // Manejar la selección de un código
+            jQuery('#codigoActividadSelect').on('select2:select', function (e) {
+                var data = e.params.data;
+                var codigo = data.id;
+                var descripcion = data.descripcion;
+                
+                // Asegurar que solo se guarde el código, no el texto completo
+                jQuery('#codigoActividadSelect').val(codigo);
+                
+                // Llenar el campo de giro con la descripción
+                jQuery('#Factura_Receptor_DescActividad').val(descripcion);
+            });
+
+            // Limpiar campos cuando se deselecciona
+            jQuery('#codigoActividadSelect').on('select2:clear', function (e) {
+                jQuery('#Factura_Receptor_DescActividad').val('');
+            });
+
+            // Asegurar que el valor del select siempre sea solo el código
+            jQuery('#codigoActividadSelect').on('change', function (e) {
+                var valor = jQuery(this).val();
+                // Si el valor contiene un guión, extraer solo la parte del código
+                if (valor && valor.includes(' - ')) {
+                    var codigo = valor.split(' - ')[0];
+                    jQuery(this).val(codigo);
+                }
+            });
+        }
+
         // Función para mostrar overlay de carga
         function showLoadingOverlay() {
             // Crear overlay si no existe
@@ -1285,6 +1355,44 @@
         
         .card-warning.card-outline .card-body {
             background-color: #fff8e1;
+        }
+        
+        /* Estilos para Select2 */
+        .select2-container--default .select2-selection--single {
+            height: 38px;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+        }
+        
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 36px;
+            padding-left: 12px;
+            color: #495057;
+        }
+        
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px;
+            right: 8px;
+        }
+        
+        .select2-dropdown {
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+        }
+        
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #007bff;
+        }
+        
+        .select2-container--default .select2-results__option[aria-selected=true] {
+            background-color: #e9ecef;
+        }
+        
+        /* Estilo para el campo de giro cuando está readonly */
+        .campos-credito-fiscal input[readonly] {
+            background-color: #f8f9fa;
+            border-color: #dee2e6;
+            color: #6c757d;
         }
     </style>
 }

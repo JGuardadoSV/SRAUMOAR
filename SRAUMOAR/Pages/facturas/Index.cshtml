@@ -753,6 +753,16 @@
                                         <button class="btn btn-outline-danger btn-sm" onclick="verPDF(@item.FacturaId)" title="Ver PDF">
                                                 PDF
                                             </button>
+                                        @if (!string.IsNullOrEmpty(item.SelloRecepcion))
+                                        {
+                                            var correoReceptor = Model.CorreosReceptores.ContainsKey(item.FacturaId) ? Model.CorreosReceptores[item.FacturaId] : "";
+                                            <button class="btn btn-outline-primary btn-sm" 
+                                                    onclick="enviarCorreo(@item.FacturaId, this.dataset.correo)" 
+                                                    data-correo="@correoReceptor"
+                                                    title="Enviar por Correo">
+                                                <i class="fas fa-envelope"></i>
+                                            </button>
+                                        }
                                         </div>
                                 
                                     @Html.AntiForgeryToken()
@@ -999,13 +1009,157 @@
             button.disabled = true;
 
             // Hacer la llamada al método para generar el PDF
-             window.open(`@Url.Page("./Facturas")?handler=GenerarPdf&id=${id}`, '_blank');
+            const pdfUrl = '@Url.Page("./Facturas")' + '?handler=GenerarPdf&id=' + id;
+            window.open(pdfUrl, '_blank');
 
             // Restaurar el botón después de un breve delay
             setTimeout(() => {
                 button.innerHTML = originalText;
                 button.disabled = false;
             }, 2000);
+        }
+
+        // Función auxiliar para mostrar mensajes
+        function mostrarMensaje(tipo, mensaje) {
+            const alertClass = tipo === 'success' ? 'alert-success' : 'alert-danger';
+            const iconClass = tipo === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+            const titulo = tipo === 'success' ? 'Éxito' : 'Error';
+            
+            const alert = document.createElement('div');
+            alert.className = `alert ${alertClass} alert-dismissible fade show`;
+            alert.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                min-width: 300px;
+                max-width: 500px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                border: none;
+                border-radius: 8px;
+            `;
+            alert.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas ${iconClass} me-3" style="font-size: 1.2em;"></i>
+                    <div class="flex-grow-1">
+                        <strong>${titulo}</strong><br>
+                        <span style="font-size: 0.9em;">${mensaje}</span>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+            
+            // Insertar al final del body para que aparezca como toast
+            document.body.appendChild(alert);
+            
+            // Auto-ocultar el mensaje después de 7 segundos
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.classList.remove('show');
+                    setTimeout(() => {
+                        if (alert.parentNode) {
+                            alert.remove();
+                        }
+                    }, 300); // Esperar a que termine la animación
+                }
+            }, 7000);
+        }
+
+        // Función para enviar por correo
+        function enviarCorreo(id, correoPorDefecto = '') {
+            const correo = prompt('Ingrese el correo electrónico para enviar la factura:', correoPorDefecto);
+            
+            if (correo === null) {
+                return; // Usuario canceló
+            }
+            
+            if (correo.trim() === '') {
+                alert('Por favor ingrese un correo electrónico válido.');
+                return;
+            }
+
+            // Validar formato de correo básico
+            var tieneArroba = correo.indexOf(String.fromCharCode(64)) !== -1;
+            var tienePunto = correo.indexOf(String.fromCharCode(46)) !== -1;
+            var tieneEspacio = correo.indexOf(String.fromCharCode(32)) !== -1;
+            if (!tieneArroba || !tienePunto || tieneEspacio) {
+                alert('Por favor ingrese un correo electrónico válido.');
+                return;
+            }
+
+            if (confirm(`¿Está seguro que desea enviar la factura al correo ${correo}?`)) {
+                // Mostrar indicador de carga
+                const button = event.target;
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                button.disabled = true;
+
+                // Obtener el token de verificación
+                const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+                if (!token) {
+                    alert('Error: No se pudo obtener el token de verificación. Recarga la página e intenta nuevamente.');
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                    return;
+                }
+
+                // Crear FormData para enviar POST
+                const formData = new FormData();
+                formData.append('__RequestVerificationToken', token);
+                formData.append('id', id);
+                formData.append('correo', correo);
+                formData.append('__handler', 'EnviarCorreo');
+
+                // Hacer la petición AJAX con el handler correcto
+                const url = `${window.location.pathname}?handler=EnviarCorreo`;
+                console.log('Enviando petición a:', url);
+                console.log('Datos del formulario:', Object.fromEntries(formData));
+                
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                })
+                .then(response => {
+                    console.log('Respuesta recibida:', response.status, response.statusText);
+                    console.log('Content-Type:', response.headers.get('content-type'));
+                    
+                    // Verificar si la respuesta es JSON
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        return response.json();
+                    } else {
+                        // Si no es JSON, leer como texto para ver qué está devolviendo
+                        return response.text().then(text => {
+                            console.error('Respuesta no JSON recibida (primeros 500 caracteres):', text.substring(0, 500));
+                            console.error('Status de la respuesta:', response.status);
+                            throw new Error(`El servidor devolvió una respuesta no válida (Status: ${response.status}). Verifique la consola para más detalles.`);
+                        });
+                    }
+                })
+                .then(data => {
+                    console.log('Datos recibidos del servidor:', data);
+                    if (data.success) {
+                        // Mostrar mensaje de éxito
+                        mostrarMensaje('success', data.message);
+                    } else {
+                        // Mostrar error específico
+                        console.error('Error del servidor:', data.message);
+                        mostrarMensaje('error', data.message || 'Error desconocido al enviar el correo');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error de red:', error);
+                    mostrarMensaje('error', `Error de conexión: ${error.message}`);
+                })
+                .finally(() => {
+                    // Restaurar el botón
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                });
+            }
         }
 
         // Función para mostrar mensaje de confirmación al generar reportes

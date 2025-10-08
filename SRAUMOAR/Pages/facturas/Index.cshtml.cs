@@ -24,6 +24,7 @@ using iText.Layout.Properties;
 using iText.Kernel.Colors;
 using iText.Layout.Borders;
 using System.Globalization;
+using SRAUMOAR.Servicios;
 
 namespace SRAUMOAR.Pages.facturas
 {
@@ -31,14 +32,19 @@ namespace SRAUMOAR.Pages.facturas
     {
         private readonly SRAUMOAR.Modelos.Contexto _context;
         private readonly IHttpClientFactory _httpClientFactory;
-        public IndexModel(SRAUMOAR.Modelos.Contexto context, IHttpClientFactory httpClientFactory)
+        private readonly EmisorConfigService _emisorConfig;
+        
+        public IndexModel(SRAUMOAR.Modelos.Contexto context, IHttpClientFactory httpClientFactory, EmisorConfigService emisorConfig)
         {
             _context = context;
             _httpClientFactory = httpClientFactory;
-            
+            _emisorConfig = emisorConfig;
         }
 
         public IList<Factura> Factura { get;set; } = default!;
+
+        // Propiedad para almacenar correos de receptores
+        public Dictionary<int, string> CorreosReceptores { get; set; } = new Dictionary<int, string>();
 
         [BindProperty(SupportsGet = true)]
         public DateTime? FechaInicio { get; set; } = DateTime.Today;
@@ -97,6 +103,28 @@ namespace SRAUMOAR.Pages.facturas
                 .ToListAsync();
 
             Factura = facturasPaginadas;
+
+            // Extraer correos de receptores del JSON
+            CorreosReceptores.Clear();
+            foreach (var factura in Factura)
+            {
+                if (!string.IsNullOrEmpty(factura.JsonDte))
+                {
+                    try
+                    {
+                        var jsonObj = JObject.Parse(factura.JsonDte);
+                        var correo = jsonObj?["receptor"]?["correo"]?.ToString() ?? "";
+                        if (!string.IsNullOrEmpty(correo))
+                        {
+                            CorreosReceptores[factura.FacturaId] = correo;
+                        }
+                    }
+                    catch
+                    {
+                        // Si hay error al parsear el JSON, continuar sin el correo
+                    }
+                }
+            }
         }
 
         // Método para obtener todas las facturas filtradas (sin paginación)
@@ -1024,6 +1052,145 @@ namespace SRAUMOAR.Pages.facturas
             catch (Exception ex)
             {
                 TempData["Error"] = $"Error al generar reporte Excel: {ex.Message}";
+                return RedirectToPage();
+            }
+        }
+
+        public async Task<IActionResult> OnPostEnviarCorreoAsync(int id, string correo)
+        {
+            try
+            {
+                // Siempre devolver JSON para peticiones AJAX
+                var isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+                Console.WriteLine($"[DEBUG] OnPostEnviarCorreoAsync llamado - ID: {id}, Correo: {correo}, IsAjax: {isAjax}");
+                string observacion;
+                var factura = await _context.Facturas.FindAsync(id);
+
+                CobroArancel? arancel =await _context.CobrosArancel
+                    .Where(c => c.CodigoGeneracion == factura.CodigoGeneracion)
+                    .FirstOrDefaultAsync();
+                string carrera= string.Empty;
+
+                observacion = arancel?.nota ?? string.Empty;
+                if (arancel != null)
+                {
+                    Alumno? alumno = await _context.Alumno
+                        .Where(a => a.AlumnoId == arancel.AlumnoId).Include(a => a.Carrera)
+                        .FirstOrDefaultAsync();
+                    carrera= alumno?.Carrera?.NombreCarrera ?? string.Empty;
+                }
+
+                if (factura == null)
+                {
+                    if (isAjax)
+                    {
+                        return new JsonResult(new { success = false, message = "Factura no encontrada." });
+                    }
+                    TempData["Error"] = "Factura no encontrada.";
+                    return RedirectToPage();
+                }
+
+                // Verificar que la factura tenga sello de recepción
+                if (string.IsNullOrEmpty(factura.SelloRecepcion))
+                {
+                    if (isAjax)
+                    {
+                        return new JsonResult(new { success = false, message = "Esta factura no tiene sello de recepción y no puede ser enviada por correo." });
+                    }
+                    TempData["Error"] = "Esta factura no tiene sello de recepción y no puede ser enviada por correo.";
+                    return RedirectToPage();
+                }
+
+                if (string.IsNullOrEmpty(factura.JsonDte))
+                {
+                    if (isAjax)
+                    {
+                        return new JsonResult(new { success = false, message = "No hay JSON asociado a esta factura." });
+                    }
+                    TempData["Error"] = "No hay JSON asociado a esta factura.";
+                    return RedirectToPage();
+                }
+
+                var jsonObj = JObject.Parse(factura.JsonDte);
+                var correoReceptor = jsonObj?["receptor"]?["correo"]?.ToString() ?? "";
+
+                // Si no se proporciona correo, usar el del receptor
+                if (string.IsNullOrEmpty(correo))
+                {
+                    correo = correoReceptor;
+                }
+
+                if (string.IsNullOrEmpty(correo))
+                {
+                    if (isAjax)
+                    {
+                        return new JsonResult(new { success = false, message = "No se ha proporcionado un correo electrónico válido." });
+                    }
+                    TempData["Error"] = "No se ha proporcionado un correo electrónico válido.";
+                    return RedirectToPage();
+                }
+
+                // Extraer tipo DTE del número de control
+                var partes = factura.NumeroControl.Split('-');
+                var tipoDte = partes.Length > 1 ? partes[1] : factura.TipoDTE.ToString();
+
+                // Datos para enviar
+                var requestData = new
+                {
+                    dteJson = factura.JsonDte,
+                    selloRecibido = factura.SelloRecepcion,
+                    tipoDte = tipoDte,
+                    correoCliente = correo,
+                    codigoGeneracion = factura.CodigoGeneracion,
+                    observaciones= observacion,
+                    carrera= carrera
+                };
+
+                using (var client = _httpClientFactory.CreateClient())
+                {
+                    Console.WriteLine($"[DEBUG] Enviando petición a API: {_emisorConfig.ApiUrl}/api/enviar-correo");
+                    var response = await client.PostAsJsonAsync($"{_emisorConfig.ApiUrl}/api/enviar-correo", requestData);
+                    
+                    Console.WriteLine($"[DEBUG] Respuesta de API - Status: {response.StatusCode}");
+                    
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var responseContent = await response.Content.ReadAsStringAsync();
+                        Console.WriteLine($"[DEBUG] Respuesta exitosa de API: {responseContent}");
+                        
+                        if (isAjax)
+                        {
+                            return new JsonResult(new { success = true, message = $"Correo enviado exitosamente a {correo}" });
+                        }
+                        TempData["Success"] = $"Correo enviado exitosamente a {correo}";
+                    }
+                    else
+                    {
+                        var errorMessage = await response.Content.ReadAsStringAsync();
+                        Console.WriteLine($"[DEBUG] Error de API - Status: {response.StatusCode}, Mensaje: {errorMessage}");
+                        
+                        if (isAjax)
+                        {
+                            return new JsonResult(new { success = false, message = $"Error al enviar correo (Status {response.StatusCode}): {errorMessage}" });
+                        }
+                        TempData["Error"] = $"Error al enviar correo: {errorMessage}";
+                    }
+                }
+
+                if (isAjax)
+                {
+                    return new JsonResult(new { success = false, message = "Error inesperado al procesar la solicitud." });
+                }
+                return RedirectToPage();
+            }
+            catch (Exception ex)
+            {
+                var isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+                if (isAjax)
+                {
+                    return new JsonResult(new { success = false, message = $"Error al enviar correo: {ex.Message}" });
+                }
+                TempData["Error"] = $"Error al enviar correo: {ex.Message}";
                 return RedirectToPage();
             }
         }
