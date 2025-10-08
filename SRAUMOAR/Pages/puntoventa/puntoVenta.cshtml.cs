@@ -294,7 +294,7 @@ namespace SRAUMOAR.Pages.puntoventa
 
                     int numero = (int)await _correlativoService.ObtenerSiguienteCorrelativo("01", ambiente == 1 ? "01" : "00");
                     string numeroFormateado = numero.ToString("D15");
-                    string numeroControl = "DTE-" + "01" + "-" + "U000M001" + "-" + numeroFormateado;
+                    string numeroControl = "DTE-" + "01" + "-" + "M001P001" + "-" + numeroFormateado;
 
                     // ESQUEMA PARA UN DTE DE CONSUMIDOR FINAL DTE 01
                     string fecEmi = DateTime.Now.ToString("yyyy-MM-dd");
@@ -349,10 +349,10 @@ namespace SRAUMOAR.Pages.puntoventa
                             complemento = _emisor.DIRECCION
                         },
                         telefono = _emisor.TELEFONO,
-                        codEstableMH = (string)null,
-                        codEstable = (string)null,
-                        codPuntoVentaMH = (string)null,
-                        codPuntoVenta = (string)null,
+                        codEstableMH = "M001",
+                        codEstable = "M001",
+                        codPuntoVentaMH = "P001",
+                        codPuntoVenta = "P001",
                         correo = _emisor.EMAIL
                     };
 
@@ -571,7 +571,7 @@ namespace SRAUMOAR.Pages.puntoventa
                   
                     int numero = (int)await _correlativoService.ObtenerSiguienteCorrelativo("03", ambiente == 1 ? "01" : "00");
                     string numeroFormateado = numero.ToString("D15");
-                    string numeroControl = "DTE-" + "03" + "-" + "U000M001" + "-" + numeroFormateado;
+                    string numeroControl = "DTE-" + "03" + "-" + "M001P001" + "-" + numeroFormateado;
 
                     string fecEmi = DateTime.Now.ToString("yyyy-MM-dd");
                     string horEmi = DateTime.Now.ToString("HH:mm:ss");
@@ -625,10 +625,10 @@ namespace SRAUMOAR.Pages.puntoventa
                             complemento = _emisor.DIRECCION
                         },
                         telefono = _emisor.TELEFONO,
-                        codEstableMH = (string)null,
-                        codEstable = (string)null,
-                        codPuntoVentaMH = (string)null,
-                        codPuntoVenta = (string)null,
+                        codEstableMH = "M001",
+                        codEstable = "M001",
+                        codPuntoVentaMH = "P001",
+                        codPuntoVenta = "P001",
                         correo = _emisor.EMAIL
                     };
 
@@ -840,7 +840,7 @@ namespace SRAUMOAR.Pages.puntoventa
 
                     int numero = (int)await _correlativoService.ObtenerSiguienteCorrelativo("14", ambiente == 1 ? "01" : "00");
                     string numeroFormateado = numero.ToString("D15");
-                    string numeroControl = "DTE-" + "14" + "-" + "U000M001" + "-" + numeroFormateado;
+                    string numeroControl = "DTE-" + "14" + "-" + "M001P001" + "-" + numeroFormateado;
 
                     string fecEmi = DateTime.Now.ToString("yyyy-MM-dd");
                     string horEmi = DateTime.Now.ToString("HH:mm:ss");
@@ -891,10 +891,10 @@ namespace SRAUMOAR.Pages.puntoventa
                             complemento = _emisor.DIRECCION
                         },
                         telefono = _emisor.TELEFONO,
-                        codEstableMH = (string)null,
-                        codEstable = (string)null, // Ejemplo: "F001"
-                        codPuntoVentaMH = (string)null,
-                        codPuntoVenta = (string)null, // Ejemplo: "C001"
+                        codEstableMH = "M001",
+                        codEstable = "M001", // Ejemplo: "F001"
+                        codPuntoVentaMH = "P001",
+                        codPuntoVenta = "P001", // Ejemplo: "C001"
                         correo = _emisor.EMAIL
                     };
 
@@ -1061,7 +1061,7 @@ namespace SRAUMOAR.Pages.puntoventa
                     // Generar número de control
                     int numero = (int)await _correlativoService.ObtenerSiguienteCorrelativo("15", ambiente == 1 ? "01" : "00");
                     string numeroFormateado = numero.ToString("D15");
-                    string numeroControl = "DTE-" + "15" + "-" + "U000M001" + "-" + numeroFormateado;
+                    string numeroControl = "DTE-" + "15" + "-" + "M001P001" + "-" + numeroFormateado;
 
                     string fecEmi = DateTime.Now.ToString("yyyy-MM-dd");
                     string horEmi = DateTime.Now.ToString("HH:mm:ss");
@@ -1115,10 +1115,10 @@ namespace SRAUMOAR.Pages.puntoventa
                         },
                         telefono = _emisor.TELEFONO,
                         correo = _emisor.EMAIL,
-                        codEstableMH = (string)null,
-                        codEstable = (string)null,
-                        codPuntoVentaMH = (string)null,
-                        codPuntoVenta = (string)null
+                        codEstableMH = "M001",
+                        codEstable = "M001",
+                        codPuntoVentaMH = "P001",
+                        codPuntoVenta = "P001"
                     };
 
                     // Crear el objeto para el donante (equivalente al sujeto excluido)

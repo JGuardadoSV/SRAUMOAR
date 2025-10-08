@@ -50,6 +50,67 @@
     </dl>
 </div>
 <div>
+    <h4>Notas por Materia</h4>
+    <hr />
+    @if (Model.MateriasDelGrupo != null && Model.MateriasDelGrupo.Any() && Model.EstudiantesConNotas.Any())
+    {
+        @foreach (var materia in Model.MateriasDelGrupo)
+        {
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <strong>@materia.NombreMateria</strong>
+                    <small class="text-muted">(@materia.CodigoMateria)</small>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width: 30%">Estudiante (Apellidos Nombres)</th>
+                                    @foreach (var actividad in Model.ActividadesAcademicas)
+                                    {
+                                        <th class="text-center" style="white-space: nowrap;">
+                                            @actividad.Nombre
+                                            <br />
+                                            <small class="text-muted">@actividad.FechaInicio.ToString("dd/MM")</small>
+                                        </th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var estudiante in Model.EstudiantesConNotas)
+                                {
+                                    var materiaInscrita = estudiante.MateriasInscritas.FirstOrDefault(mi => mi.MateriasGrupoId == materia.MateriasGrupoId);
+                                    if (materiaInscrita == null)
+                                    {
+                                        continue;
+                                    }
+
+                                    var notasMateria = estudiante.Notas.Where(n => n.MateriasInscritas.MateriasGrupoId == materia.MateriasGrupoId).ToList();
+                                    <tr>
+                                        <td>
+                                            @estudiante.NombreCompleto
+                                        </td>
+                                        @foreach (var actividad in Model.ActividadesAcademicas)
+                                        {
+                                            var nota = notasMateria.FirstOrDefault(n => n.ActividadAcademicaId == actividad.ActividadAcademicaId)?.Nota;
+                                            <td class="text-center">@((nota.HasValue ? nota.Value.ToString("0.00") : "-"))</td>
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="alert alert-info">No hay notas para mostrar en este grupo.</div>
+    }
+</div>
+<div>
     <a asp-page="./Edit" asp-route-id="@Model.Grupo.GrupoId">Edit</a> |
     <a asp-page="./Index">Back to List</a>
 </div>

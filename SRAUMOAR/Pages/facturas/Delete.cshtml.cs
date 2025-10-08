@@ -153,10 +153,10 @@ namespace SRAUMOAR.Pages.facturas
                     nombre = emisorJson["nombre"].ToString(),
                     tipoEstablecimiento = emisorJson["tipoEstablecimiento"].ToString(),
                     nomEstablecimiento = emisorJson["nombreComercial"].ToString(),
-                    codEstableMH = procesarSiNulo(emisorJson["codEstableMH"]),
-                    codEstable = procesarSiNulo(emisorJson["codEstable"]),
-                    codPuntoVentaMH = procesarSiNulo(emisorJson["codPuntoVentaMH"]),
-                    codPuntoVenta = procesarSiNulo(emisorJson["codPuntoVenta"]),
+                    codEstableMH = procesarSiNulo(emisorJson["codEstableMH"])??"M001",
+                    codEstable = procesarSiNulo(emisorJson["codEstable"])??"M001",
+                    codPuntoVentaMH = procesarSiNulo(emisorJson["codPuntoVentaMH"]) ?? "P001",
+                    codPuntoVenta = procesarSiNulo(emisorJson["codPuntoVenta"]) ?? "P001",
                     telefono = emisorJson["telefono"].ToString(),
                     correo = emisorJson["correo"].ToString()
                 };
