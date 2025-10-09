@@ -13,6 +13,7 @@ using SRAUMOAR.Modelos;
 using SRAUMOAR.Entidades.Alumnos;
 using SRAUMOAR.Entidades.Procesos;
 using System.Text.RegularExpressions;
+using System.Web;
 
 namespace SRAUMOAR.Pages.reportes.notas
 {
@@ -193,8 +194,14 @@ namespace SRAUMOAR.Pages.reportes.notas
                 doc.Close();
             }
 
-            var fileName = $"NotasParciales_{alumno.Apellidos}_{alumno.Nombres}_{DateTime.Now:yyyyMMddHHmmss}.pdf";
-            Response.Headers["Content-Disposition"] = $"inline; filename={fileName}";
+            // Crear nombre de archivo sin caracteres especiales para evitar errores en headers HTTP
+            var apellidosLimpios = Regex.Replace(alumno.Apellidos ?? "", @"[^\w\s-]", "").Replace(" ", "_");
+            var nombresLimpios = Regex.Replace(alumno.Nombres ?? "", @"[^\w\s-]", "").Replace(" ", "_");
+            var fileName = $"NotasParciales_{apellidosLimpios}_{nombresLimpios}_{DateTime.Now:yyyyMMddHHmmss}.pdf";
+            
+            // Codificar el nombre del archivo para headers HTTP usando RFC 5987
+            var encodedFileName = System.Web.HttpUtility.UrlEncode(fileName);
+            Response.Headers["Content-Disposition"] = $"inline; filename*=UTF-8''{encodedFileName}";
             return File(ms.ToArray(), "application/pdf");
         }
 
