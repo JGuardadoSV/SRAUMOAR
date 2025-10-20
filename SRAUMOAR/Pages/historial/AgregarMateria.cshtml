@@ -94,7 +94,7 @@
                                     </div>
                                 </div>
                                 <div class="row mb-3">
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="aprobada" checked>
                                             <label class="form-check-label" for="aprobada">
@@ -102,7 +102,7 @@
                                             </label>
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="equivalencia">
                                             <label class="form-check-label" for="equivalencia">
@@ -110,7 +110,15 @@
                                             </label>
                                         </div>
                                     </div>
-                                    <div class="col-md-4 text-end">
+                                    <div class="col-md-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="examenSuficiencia">
+                                            <label class="form-check-label" for="examenSuficiencia">
+                                                Examen de Suficiencia
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 text-end">
                                         <button type="button" class="btn btn-primary" id="btnAgregarMateria">
                                             <i class="bi bi-plus-circle me-2"></i>
                                             Agregar Materia
@@ -199,7 +207,8 @@
                 nota6: parseFloat(jQuery('#nota6').val()) || 0,
                 promedio: parseFloat(jQuery('#promedio').val()) || 0,
                 aprobada: jQuery('#aprobada').is(':checked'),
-                equivalencia: jQuery('#equivalencia').is(':checked')
+                equivalencia: jQuery('#equivalencia').is(':checked'),
+                examenSuficiencia: jQuery('#examenSuficiencia').is(':checked')
             };
 
             materiasAgregadas.push(materia);
@@ -221,7 +230,7 @@
                     <div class="alert alert-success d-flex justify-content-between align-items-center">
                         <div>
                             <strong>${materia.nombreMateria}</strong><br>
-                            <small>Promedio: ${materia.promedio} | Aprobada: ${materia.aprobada ? 'Sí' : 'No'} | Equivalencia: ${materia.equivalencia ? 'Sí' : 'No'}</small>
+                            <small>Promedio: ${materia.promedio} | Aprobada: ${materia.aprobada ? 'Sí' : 'No'} | Equivalencia: ${materia.equivalencia ? 'Sí' : 'No'} | Examen de Suficiencia: ${materia.examenSuficiencia ? 'Sí' : 'No'}</small>
                         </div>
                         <button type="button" class="btn btn-danger btn-sm" onclick="eliminarMateria(${index})">
                             <i class="bi bi-trash"></i>
@@ -245,6 +254,7 @@
             jQuery('#promedio').val('');
             jQuery('#aprobada').prop('checked', true);
             jQuery('#equivalencia').prop('checked', false);
+            jQuery('#examenSuficiencia').prop('checked', false);
         }
 
         function habilitarBotonGuardar() {
@@ -329,6 +339,12 @@
                     type: 'hidden',
                     name: `Materias[${index}].Equivalencia`,
                     value: materia.equivalencia
+                }).appendTo('form');
+                
+                jQuery('<input>').attr({
+                    type: 'hidden',
+                    name: `Materias[${index}].ExamenSuficiencia`,
+                    value: materia.examenSuficiencia
                 }).appendTo('form');
             });
         });

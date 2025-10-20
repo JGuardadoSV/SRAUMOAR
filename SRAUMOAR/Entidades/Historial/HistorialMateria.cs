@@ -50,6 +50,8 @@ namespace SRAUMOAR.Entidades.Historial
         
         public bool Equivalencia { get; set; }
         
+        public bool ExamenSuficiencia { get; set; }
+        
         [ScaffoldColumn(false)]
         public DateTime FechaRegistro { get; set; } = DateTime.Now;
         
