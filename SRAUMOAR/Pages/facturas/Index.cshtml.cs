@@ -825,7 +825,7 @@ namespace SRAUMOAR.Pages.facturas
                     wsAnexoCCF.Cells[1, i + 1].Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
                 }
                 var ccfValidas = facturas
-                    .Where(f => f.TipoDTE == 3 && !f.Anulada && !string.IsNullOrEmpty(f.SelloRecepcion))
+                    .Where(f => (f.TipoDTE == 2 || f.TipoDTE == 3) && !f.Anulada && !string.IsNullOrEmpty(f.SelloRecepcion))
                     .OrderBy(f => f.Fecha)
                     .ToList();
                 var rowCCF = 2;
@@ -977,7 +977,7 @@ namespace SRAUMOAR.Pages.facturas
                     wsExcluidasCCF.Cells[1, i + 1].Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
                 }
                 var ccfExcluidas = facturas
-                    .Where(f => f.TipoDTE == 3 && (f.Anulada || string.IsNullOrEmpty(f.SelloRecepcion)))
+                    .Where(f => (f.TipoDTE == 2 || f.TipoDTE == 3) && (f.Anulada || string.IsNullOrEmpty(f.SelloRecepcion)))
                     .OrderBy(f => f.Fecha)
                     .ToList();
                 var rowExCCF = 2;
@@ -1041,6 +1041,158 @@ namespace SRAUMOAR.Pages.facturas
                 totalRangeExCCF.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
                 totalRangeExCCF.Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
                 wsExcluidasCCF.Cells.AutoFitColumns();
+
+                // =============================
+                // Hoja: ANEXO DONACIONES
+                // (Detalle individual DON válidas)
+                // =============================
+                var wsAnexoDON = package.Workbook.Worksheets.Add("ANEXO DONACIONES");
+                var headersAnexoDON = new[] {
+                    "Fecha", "Tipo", "Número Control", "Código Generación", "Sello Recepción",
+                    "Gravado", "Exento", "IVA", "Total", "Estado"
+                };
+                for (int i = 0; i < headersAnexoDON.Length; i++)
+                {
+                    wsAnexoDON.Cells[1, i + 1].Value = headersAnexoDON[i];
+                    wsAnexoDON.Cells[1, i + 1].Style.Font.Bold = true;
+                    wsAnexoDON.Cells[1, i + 1].Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                    wsAnexoDON.Cells[1, i + 1].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                    wsAnexoDON.Cells[1, i + 1].Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
+                }
+                var donValidas = facturas
+                    .Where(f => f.TipoDTE == 15 && !f.Anulada && !string.IsNullOrEmpty(f.SelloRecepcion))
+                    .OrderBy(f => f.Fecha)
+                    .ToList();
+                var rowDON = 2;
+                foreach (var f in donValidas)
+                {
+                    wsAnexoDON.Cells[rowDON, 1].Value = f.Fecha.ToString("dd/MM/yyyy");
+                    wsAnexoDON.Cells[rowDON, 2].Value = "DON";
+                    wsAnexoDON.Cells[rowDON, 3].Value = f.NumeroControl ?? "";
+                    wsAnexoDON.Cells[rowDON, 4].Value = f.CodigoGeneracion ?? "";
+                    wsAnexoDON.Cells[rowDON, 5].Value = f.SelloRecepcion ?? "";
+                    wsAnexoDON.Cells[rowDON, 6].Value = f.TotalGravado;
+                    wsAnexoDON.Cells[rowDON, 7].Value = f.TotalExento;
+                    wsAnexoDON.Cells[rowDON, 8].Value = f.TotalIva;
+                    wsAnexoDON.Cells[rowDON, 9].Value = f.TotalPagar;
+                    wsAnexoDON.Cells[rowDON, 10].Value = "Válida";
+
+                    wsAnexoDON.Cells[rowDON, 6].Style.Numberformat.Format = "#,##0.00";
+                    wsAnexoDON.Cells[rowDON, 7].Style.Numberformat.Format = "#,##0.00";
+                    wsAnexoDON.Cells[rowDON, 8].Style.Numberformat.Format = "#,##0.00";
+                    wsAnexoDON.Cells[rowDON, 9].Style.Numberformat.Format = "#,##0.00";
+
+                    for (int c = 1; c <= 10; c++)
+                    {
+                        wsAnexoDON.Cells[rowDON, c].Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
+                    }
+                    rowDON++;
+                }
+                // Totales DON válidas
+                wsAnexoDON.Cells[rowDON, 1].Value = "";
+                rowDON++;
+                var totalGravadoDON = donValidas.Sum(x => x.TotalGravado);
+                var totalExentoDON = donValidas.Sum(x => x.TotalExento);
+                var totalIvaDON = donValidas.Sum(x => x.TotalIva);
+                var totalGeneralDON = donValidas.Sum(x => x.TotalPagar);
+                var totalRegsDON = donValidas.Count;
+
+                wsAnexoDON.Cells[rowDON, 1].Value = "TOTALES:";
+                wsAnexoDON.Cells[rowDON, 6].Value = totalGravadoDON;
+                wsAnexoDON.Cells[rowDON, 7].Value = totalExentoDON;
+                wsAnexoDON.Cells[rowDON, 8].Value = totalIvaDON;
+                wsAnexoDON.Cells[rowDON, 9].Value = totalGeneralDON;
+                wsAnexoDON.Cells[rowDON, 10].Value = $"Registros: {totalRegsDON}";
+
+                wsAnexoDON.Cells[rowDON, 6].Style.Numberformat.Format = "#,##0.00";
+                wsAnexoDON.Cells[rowDON, 7].Style.Numberformat.Format = "#,##0.00";
+                wsAnexoDON.Cells[rowDON, 8].Style.Numberformat.Format = "#,##0.00";
+                wsAnexoDON.Cells[rowDON, 9].Style.Numberformat.Format = "#,##0.00";
+
+                var totalRangeDON = wsAnexoDON.Cells[rowDON, 1, rowDON, 10];
+                totalRangeDON.Style.Font.Bold = true;
+                totalRangeDON.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                totalRangeDON.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                totalRangeDON.Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
+                wsAnexoDON.Cells.AutoFitColumns();
+
+                // ==========================================
+                // Hoja: EXCLUIDAS DONACIONES (DON)
+                // ==========================================
+                var wsExcluidasDON = package.Workbook.Worksheets.Add("EXCLUIDAS DONACIONES");
+                for (int i = 0; i < headersExcluidas.Length; i++)
+                {
+                    wsExcluidasDON.Cells[1, i + 1].Value = headersExcluidas[i];
+                    wsExcluidasDON.Cells[1, i + 1].Style.Font.Bold = true;
+                    wsExcluidasDON.Cells[1, i + 1].Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                    wsExcluidasDON.Cells[1, i + 1].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                    wsExcluidasDON.Cells[1, i + 1].Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
+                }
+                var donExcluidas = facturas
+                    .Where(f => f.TipoDTE == 15 && (f.Anulada || string.IsNullOrEmpty(f.SelloRecepcion)))
+                    .OrderBy(f => f.Fecha)
+                    .ToList();
+                var rowExDON = 2;
+                foreach (var f in donExcluidas)
+                {
+                    var estado = f.Anulada ? "Anulada" : (string.IsNullOrEmpty(f.SelloRecepcion) ? "Pendiente" : "Válida");
+                    var motivo = f.Anulada ? "ANULADA" : (string.IsNullOrEmpty(f.SelloRecepcion) ? "SIN SELLO RECEPCION" : "");
+
+                    wsExcluidasDON.Cells[rowExDON, 1].Value = f.Fecha.ToString("dd/MM/yyyy");
+                    wsExcluidasDON.Cells[rowExDON, 2].Value = "DON";
+                    wsExcluidasDON.Cells[rowExDON, 3].Value = f.NumeroControl ?? "";
+                    wsExcluidasDON.Cells[rowExDON, 4].Value = f.CodigoGeneracion ?? "";
+                    wsExcluidasDON.Cells[rowExDON, 5].Value = f.SelloRecepcion ?? "";
+                    wsExcluidasDON.Cells[rowExDON, 6].Value = f.TotalGravado;
+                    wsExcluidasDON.Cells[rowExDON, 7].Value = f.TotalExento;
+                    wsExcluidasDON.Cells[rowExDON, 8].Value = f.TotalIva;
+                    wsExcluidasDON.Cells[rowExDON, 9].Value = f.TotalPagar;
+                    wsExcluidasDON.Cells[rowExDON, 10].Value = estado;
+                    wsExcluidasDON.Cells[rowExDON, 11].Value = motivo;
+
+                    if (!string.IsNullOrEmpty(f.CodigoGeneracion))
+                    {
+                        var url = $"https://admin.factura.gob.sv/consultaPublica?ambiente=01&codGen={f.CodigoGeneracion}&fechaEmi={f.Fecha:yyyy-MM-dd}";
+                        wsExcluidasDON.Cells[rowExDON, 12].Value = "VERIFICAR";
+                        wsExcluidasDON.Cells[rowExDON, 12].Hyperlink = new Uri(url);
+                    }
+                    else
+                    {
+                        wsExcluidasDON.Cells[rowExDON, 12].Value = "N/A";
+                    }
+
+                    wsExcluidasDON.Cells[rowExDON, 6].Style.Numberformat.Format = "#,##0.00";
+                    wsExcluidasDON.Cells[rowExDON, 7].Style.Numberformat.Format = "#,##0.00";
+                    wsExcluidasDON.Cells[rowExDON, 8].Style.Numberformat.Format = "#,##0.00";
+                    wsExcluidasDON.Cells[rowExDON, 9].Style.Numberformat.Format = "#,##0.00";
+
+                    for (int c = 1; c <= 12; c++)
+                    {
+                        wsExcluidasDON.Cells[rowExDON, c].Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
+                    }
+
+                    rowExDON++;
+                }
+                // Totales Excluidas DON
+                wsExcluidasDON.Cells[rowExDON, 1].Value = "";
+                rowExDON++;
+                var totalSinSelloDON = donExcluidas.Where(v => !v.Anulada && string.IsNullOrEmpty(v.SelloRecepcion)).Count();
+                var montoSinSelloDON = donExcluidas.Where(v => !v.Anulada && string.IsNullOrEmpty(v.SelloRecepcion)).Sum(v => v.TotalPagar);
+                var totalAnuladasDON = donExcluidas.Where(v => v.Anulada).Count();
+                var montoAnuladasDON = donExcluidas.Where(v => v.Anulada).Sum(v => v.TotalPagar);
+                var totalGeneralExDON = donExcluidas.Sum(v => v.TotalPagar);
+
+                wsExcluidasDON.Cells[rowExDON, 1].Value = "TOTALES:";
+                wsExcluidasDON.Cells[rowExDON, 9].Value = totalGeneralExDON;
+                wsExcluidasDON.Cells[rowExDON, 9].Style.Numberformat.Format = "#,##0.00";
+                wsExcluidasDON.Cells[rowExDON, 11].Value = $"Sin Sello: {totalSinSelloDON} (${montoSinSelloDON:N2}) | Anuladas: {totalAnuladasDON} (${montoAnuladasDON:N2})";
+
+                var totalRangeExDON = wsExcluidasDON.Cells[rowExDON, 1, rowExDON, 12];
+                totalRangeExDON.Style.Font.Bold = true;
+                totalRangeExDON.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                totalRangeExDON.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                totalRangeExDON.Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
+                wsExcluidasDON.Cells.AutoFitColumns();
 
                 var fileName = $"ReporteFacturas_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
                 var content = package.GetAsByteArray();
