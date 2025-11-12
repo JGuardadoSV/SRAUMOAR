@@ -42,17 +42,51 @@
     .table-modern tbody tr:hover {
         background: #e3f2fd;
     }
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+    }
+    .card {
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+    .hover-card-pro {
+        transition: transform 0.3s cubic-bezier(.4,2,.6,1), box-shadow 0.3s;
+    }
+    .hover-card-pro:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 12px 40px rgba(25, 118, 210, 0.2) !important;
+    }
+    .icon-circle {
+        transition: transform 0.3s ease;
+    }
+    .hover-card-pro:hover .icon-circle {
+        transform: scale(1.1) rotate(5deg);
+    }
+    
+    @@media (max-width: 767.98px) {
+        .display-5 { font-size: 2rem; }
+        .icon-circle { width: 56px; height: 56px; font-size: 1.5rem; }
+    }
 </style>
 
 <div class="container py-5">
-    <div class="row justify-content-center mb-4">
-        <div class="col-lg-8">
-            <div class="bg-gradient-admin rounded-4 shadow p-4 text-center position-relative overflow-hidden">
-                <div class="position-absolute top-0 start-0 w-100 h-100 opacity-10" style="background: url('/wwwroot/assets/img/AdminLTELogo.png') center/contain no-repeat;"></div>
-                <h1 class="fw-bold display-5 mb-2 text-primary">
-                    <i class="bi bi-pencil-square me-2"></i>Editar Notas - Administración
-                </h1>
-                <p class="lead text-secondary mb-0">Seleccione un grupo para gestionar las calificaciones</p>
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-10">
+            <div class="bg-gradient-admin rounded-4 shadow-lg p-5 text-center position-relative overflow-hidden">
+                <div class="position-absolute top-0 start-0 w-100 h-100 opacity-5" style="background: url('/wwwroot/assets/img/AdminLTELogo.png') center/contain no-repeat;"></div>
+                <div class="position-relative z-1">
+                    <div class="mb-3">
+                        <i class="bi bi-clipboard-data-fill text-primary" style="font-size: 3.5rem;"></i>
+                    </div>
+                    <h1 class="fw-bold display-4 mb-3 text-primary">
+                        Gestión de Calificaciones
+                    </h1>
+                    <p class="lead text-secondary mb-2 fw-semibold">Administración Académica</p>
+                    <p class="text-muted mb-0">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Seleccione un grupo para editar y gestionar las notas de los estudiantes
+                    </p>
+                </div>
             </div>
         </div>
     </div>
@@ -64,24 +98,63 @@
             {
                 <div class="col-md-6 col-lg-4">
                     <a asp-page="./EditarNotasGrupo" asp-route-grupoId="@grupo.GrupoId" class="text-decoration-none">
-                        <div class="card h-100 shadow-lg border-0 hover-card-pro">
-                            <div class="card-body text-center p-4">
-                                <div class="icon-circle bg-primary text-white mb-3 mx-auto">
-                                    <i class="bi bi-people-fill fs-1"></i>
+                        <div class="card h-100 shadow-lg border-0 hover-card-pro position-relative overflow-hidden">
+                            <!-- Badge decorativo superior -->
+                            <div class="position-absolute top-0 end-0 bg-primary opacity-10" style="width: 50px; height: 50px; border-radius: 0 0 0 50px; z-index: 0;"></div>
+                            
+                            <div class="card-body p-4 position-relative" style="z-index: 1;">
+                                <!-- Header con icono y título -->
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="icon-circle bg-primary text-white me-3 flex-shrink-0" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                                        <i class="bi bi-people-fill"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h4 class="card-title mb-0 fw-bold text-dark">@grupo.NombreGrupo</h4>
+                                        <small class="text-muted">Grupo Académico</small>
+                                    </div>
                                 </div>
-                                <h4 class="card-title mb-2 fw-semibold">@grupo.NombreGrupo</h4>
-                                <p class="card-text text-muted small mb-2">
-                                    <strong>Carrera:</strong> @grupo.NombreCarrera
-                                </p>
-                                <p class="card-text text-muted small mb-2">
-                                    <strong>Materias:</strong> @grupo.CantidadMaterias
-                                </p>
-                                <p class="card-text text-muted small">
-                                    <strong>Estudiantes:</strong> @grupo.CantidadEstudiantes
-                                </p>
+
+                                <!-- Información del grupo -->
+                                <div class="mb-3">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="bi bi-mortarboard-fill text-primary me-2"></i>
+                                        <span class="text-dark"><strong>Carrera:</strong> <span class="text-muted">@grupo.NombreCarrera</span></span>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="bi bi-person-badge-fill text-success me-2"></i>
+                                        <span class="text-dark"><strong>Docente:</strong> <span class="text-muted">@grupo.NombreDocente</span></span>
+                                    </div>
+                                </div>
+
+                                <!-- Estadísticas -->
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <div class="bg-light rounded p-2 text-center">
+                                            <div class="d-flex align-items-center justify-content-center mb-1">
+                                                <i class="bi bi-book-fill text-info me-1"></i>
+                                                <span class="fw-bold text-dark fs-5">@grupo.CantidadMaterias</span>
+                                            </div>
+                                            <small class="text-muted d-block">Materias</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="bg-light rounded p-2 text-center">
+                                            <div class="d-flex align-items-center justify-content-center mb-1">
+                                                <i class="bi bi-people-fill text-warning me-1"></i>
+                                                <span class="fw-bold text-dark fs-5">@grupo.CantidadEstudiantes</span>
+                                            </div>
+                                            <small class="text-muted d-block">Estudiantes</small>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="card-footer bg-light text-center py-3 border-0">
-                                <span class="text-primary fw-semibold">Editar notas <i class="bi bi-arrow-right"></i></span>
+                            
+                            <!-- Footer con acción -->
+                            <div class="card-footer bg-gradient-primary text-white text-center py-3 border-0">
+                                <span class="fw-semibold">
+                                    <i class="bi bi-pencil-square me-2"></i>Editar Notas
+                                    <i class="bi bi-arrow-right ms-2"></i>
+                                </span>
                             </div>
                         </div>
                     </a>
@@ -104,8 +177,3 @@
         </div>
     }
 </div>
-
-@@media (max-width: 767.98px) {
-    .display-5 { font-size: 2rem; }
-    .icon-circle { width: 56px; height: 56px; font-size: 1.5rem; }
-}

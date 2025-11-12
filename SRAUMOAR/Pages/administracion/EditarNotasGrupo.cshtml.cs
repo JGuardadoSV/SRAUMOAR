@@ -31,6 +31,39 @@ namespace SRAUMOAR.Pages.administracion
         [BindProperty]
         public Dictionary<int, Dictionary<int, Dictionary<int, NotaEditar>>> NotasEditar { get; set; } = new();
 
+        // Método estático compartido para calcular el promedio
+        private static decimal CalcularPromedioMateriaComun(ICollection<Notas> notas, IList<ActividadAcademica> actividadesAcademicas)
+        {
+            if (actividadesAcademicas == null || !actividadesAcademicas.Any())
+                return 0;
+
+            decimal sumaPonderada = 0;
+            decimal totalPorcentaje = 0;
+
+            // Iterar sobre TODAS las actividades académicas del ciclo
+            foreach (var actividad in actividadesAcademicas)
+            {
+                if (actividad == null) continue;
+
+                int porcentaje = actividad.Porcentaje;
+                totalPorcentaje += porcentaje;
+
+                // Buscar si existe una nota registrada para esta actividad
+                var notaRegistrada = notas
+                    ?.FirstOrDefault(n => n.ActividadAcademicaId == actividad.ActividadAcademicaId);
+
+                // Si existe nota registrada, usar su valor; si no, usar 0
+                decimal valorNota = notaRegistrada?.Nota ?? 0;
+
+                sumaPonderada += valorNota * porcentaje;
+            }
+
+            // Si no hay porcentajes, retornar 0
+            if (totalPorcentaje <= 0) return 0;
+
+            return Math.Round(sumaPonderada / totalPorcentaje, 2);
+        }
+
         public class EstudianteConNotas
         {
             public int AlumnoId { get; set; }
@@ -42,40 +75,13 @@ namespace SRAUMOAR.Pages.administracion
 
             public decimal CalcularPromedioMateria(int materiasGrupoId, IList<ActividadAcademica> actividadesAcademicas)
             {
-                if (actividadesAcademicas == null || !actividadesAcademicas.Any())
-                    return 0;
-
                 // Obtener las notas registradas para esta materia
                 var notasMateria = Notas
                     .Where(n => n.MateriasInscritas != null && 
                                n.MateriasInscritas.MateriasGrupoId == materiasGrupoId)
                     .ToList();
 
-                decimal sumaPonderada = 0;
-                decimal totalPorcentaje = 0;
-
-                // Iterar sobre TODAS las actividades académicas del ciclo
-                foreach (var actividad in actividadesAcademicas)
-                {
-                    if (actividad == null) continue;
-
-                    int porcentaje = actividad.Porcentaje;
-                    totalPorcentaje += porcentaje;
-
-                    // Buscar si existe una nota registrada para esta actividad
-                    var notaRegistrada = notasMateria
-                        .FirstOrDefault(n => n.ActividadAcademicaId == actividad.ActividadAcademicaId);
-
-                    // Si existe nota registrada, usar su valor; si no, usar 0
-                    decimal valorNota = notaRegistrada?.Nota ?? 0;
-
-                    sumaPonderada += valorNota * porcentaje;
-                }
-
-                // Si no hay porcentajes, retornar 0
-                if (totalPorcentaje <= 0) return 0;
-
-                return Math.Round(sumaPonderada / totalPorcentaje, 2);
+                return CalcularPromedioMateriaComun(notasMateria, actividadesAcademicas);
             }
         }
 
@@ -84,6 +90,7 @@ namespace SRAUMOAR.Pages.administracion
             public int MateriasGrupoId { get; set; }
             public string NombreMateria { get; set; } = string.Empty;
             public string CodigoMateria { get; set; } = string.Empty;
+            public string NombreDocente { get; set; } = string.Empty;
         }
 
         public class NotaEditar
@@ -116,12 +123,14 @@ namespace SRAUMOAR.Pages.administracion
             // Obtener materias del grupo
             MateriasDelGrupo = await _context.MateriasGrupo
                 .Include(mg => mg.Materia)
+                .Include(mg => mg.Docente)
                 .Where(mg => mg.GrupoId == grupoId)
                 .Select(mg => new MateriaDelGrupo
                 {
                     MateriasGrupoId = mg.MateriasGrupoId,
                     NombreMateria = mg.Materia.NombreMateria,
-                    CodigoMateria = mg.Materia.CodigoMateria
+                    CodigoMateria = mg.Materia.CodigoMateria,
+                    NombreDocente = mg.Docente != null ? $"{mg.Docente.Nombres} {mg.Docente.Apellidos}" : "Sin asignar"
                 })
                 .ToListAsync();
 
@@ -251,6 +260,29 @@ namespace SRAUMOAR.Pages.administracion
                 await _context.SaveChangesAsync();
                 Console.WriteLine($"Total de notas actualizadas: {notasActualizadas}");
                 Console.WriteLine($"Total de notas creadas: {notasCreadas}");
+
+                // Actualizar el promedio en MateriasInscritas
+                var materiaInscrita = await _context.MateriasInscritas
+                    .Include(mi => mi.MateriasGrupo)
+                        .ThenInclude(mg => mg.Grupo)
+                    .Include(mi => mi.Notas)
+                        .ThenInclude(n => n.ActividadAcademica)
+                    .FirstOrDefaultAsync(mi => mi.MateriasInscritasId == request.MateriasInscritasId);
+
+                if (materiaInscrita != null)
+                {
+                    // Obtener todas las actividades académicas del ciclo
+                    var actividadesAcademicas = await _context.ActividadesAcademicas
+                        .Where(a => a.CicloId == materiaInscrita.MateriasGrupo.Grupo.CicloId)
+                        .ToListAsync();
+
+                    // Calcular el promedio usando el mismo método compartido
+                    materiaInscrita.NotaPromedio = CalcularPromedioMateriaComun(materiaInscrita.Notas, actividadesAcademicas);
+                    
+                    _context.MateriasInscritas.Update(materiaInscrita);
+                    await _context.SaveChangesAsync();
+                    Console.WriteLine($"✅ Promedio actualizado: {materiaInscrita.NotaPromedio}");
+                }
 
                 string mensaje = "";
                 if (notasActualizadas > 0 && notasCreadas > 0)

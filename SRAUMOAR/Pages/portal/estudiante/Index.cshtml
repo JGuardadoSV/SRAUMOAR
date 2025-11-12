@@ -4,7 +4,7 @@
 }
 <div class="container py-4">
 
-    @if (Model.Arancel.Any(a => !Model.DetallesCobroArancel
+    @if (!Model.EsBecado && Model.Arancel.Any(a => !Model.DetallesCobroArancel
     .Any(dc => dc.ArancelId == a.ArancelId && dc.CobroArancel.AlumnoId == Model.Alumno.AlumnoId)
     && (a.FechaFin < DateTime.Now)))
     {
@@ -261,9 +261,21 @@
                                             <td>@materia.MateriasGrupo.FormatearHora12Horas(materia.MateriasGrupo.HoraInicio) - @materia.MateriasGrupo.FormatearHora12Horas(materia.MateriasGrupo.HoraFin)</td>
                                             <td>@materia.MateriasGrupo.Aula</td>
                                             <td class="text-center">
-                                                <span class="badge bg-primary rounded-pill px-3 py-2">
-                                                    @(materia.NotaPromedio.ToString("N1") ?? "N/A")
-                                                </span>
+                                                @if (!Model.EsBecado && Model.TieneArancelesRetrasados)
+                                                {
+                                                    <span class="text-danger fw-bold fs-4" 
+                                                          data-bs-toggle="tooltip" 
+                                                          data-bs-placement="top" 
+                                                          title="Aranceles pendientes">
+                                                        -
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-primary rounded-pill px-3 py-2">
+                                                        @(materia.NotaPromedio.ToString("N2") ?? "N/A")
+                                                    </span>
+                                                }
                                             </td>
                                             <td class="text-center">
                                                 @if (materia.NotaPromedio >= 6)
@@ -276,9 +288,16 @@
                                                 }
                                             </td>
                                             <td class="text-center">
-                                                <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalNotas_@materia.MateriasInscritasId">
-                                                    Ver notas
-                                                </button>
+                                                @if (!Model.EsBecado && Model.TieneArancelesRetrasados)
+                                                {
+                                                    <span class="text-muted">-</span>
+                                                }
+                                                else
+                                                {
+                                                    <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalNotas_@materia.MateriasInscritasId">
+                                                        Ver notas
+                                                    </button>
+                                                }
                                             </td>
                                         </tr>
                                     }
@@ -611,6 +630,15 @@
             button.disabled = false;
         }, 2000);
     }
+
+    // Inicializar tooltips de Bootstrap
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar todos los tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
 
     // Funcionalidad para actualizar foto
     document.addEventListener('DOMContentLoaded', function() {

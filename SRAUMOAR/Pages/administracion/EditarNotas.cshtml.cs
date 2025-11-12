@@ -26,6 +26,7 @@ namespace SRAUMOAR.Pages.administracion
             public string NombreCarrera { get; set; } = string.Empty;
             public int CantidadMaterias { get; set; }
             public int CantidadEstudiantes { get; set; }
+            public string NombreDocente { get; set; } = string.Empty;
         }
 
         public async Task OnGetAsync()
@@ -43,18 +44,25 @@ namespace SRAUMOAR.Pages.administracion
             GruposConMaterias = await _context.MateriasGrupo
                 .Include(mg => mg.Grupo)
                     .ThenInclude(g => g.Carrera)
+                .Include(mg => mg.Grupo)
+                    .ThenInclude(g => g.Docente)
                 .Include(mg => mg.Materia)
                 .Where(mg => mg.Grupo.CicloId == cicloActual.Id)
                 .GroupBy(mg => new { 
                     mg.Grupo.GrupoId, 
                     mg.Grupo.Nombre, 
-                    mg.Grupo.Carrera.NombreCarrera 
+                    mg.Grupo.Carrera.NombreCarrera,
+                    DocenteNombres = mg.Grupo.Docente != null ? mg.Grupo.Docente.Nombres : "",
+                    DocenteApellidos = mg.Grupo.Docente != null ? mg.Grupo.Docente.Apellidos : ""
                 })
                 .Select(g => new GrupoConMaterias
                 {
                     GrupoId = g.Key.GrupoId,
                     NombreGrupo = g.Key.Nombre,
                     NombreCarrera = g.Key.NombreCarrera,
+                    NombreDocente = !string.IsNullOrEmpty(g.Key.DocenteNombres) 
+                        ? $"{g.Key.DocenteNombres} {g.Key.DocenteApellidos}".Trim()
+                        : "Sin asignar",
                     CantidadMaterias = g.Count(),
                     CantidadEstudiantes = _context.MateriasInscritas
                         .Where(mi => mi.MateriasGrupo.GrupoId == g.Key.GrupoId)

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using SRAUMOAR.Entidades.Alumnos;
+using SRAUMOAR.Entidades.Becas;
 using SRAUMOAR.Entidades.Colecturia;
 using SRAUMOAR.Entidades.Procesos;
 using System.Net.Http;
@@ -34,12 +35,14 @@ namespace SRAUMOAR.Pages.portal.estudiante
         }
         public Alumno Alumno { get; set; } = default!;
         public Ciclo Ciclo { get; set; } = default!;
+        public bool EsBecado { get; set; } = false;
+        public bool TieneArancelesRetrasados { get; set; } = false;
         [BindProperty]
         public IList<MateriasInscritas> MateriasInscritas { get; set; } = default!;
         public IList<Arancel> Arancel { get; set; } = default!;
         public IList<ActividadAcademica> ActividadAcademica { get; set; } = default!;
         public IList<DetallesCobroArancel> DetallesCobroArancel { get; set; } = default!;
-        public IActionResult OnGet()
+        public async Task<IActionResult> OnGetAsync()
         {
             var userId = User.FindFirstValue("UserId") ?? "0"; 
             int idusuario = int.Parse(userId);
@@ -48,8 +51,14 @@ namespace SRAUMOAR.Pages.portal.estudiante
 
             Ciclo = _context.Ciclos.Where(x => x.Activo == true).First();
 
+            // Verificar si el alumno es becado en el ciclo actual
+            EsBecado = await _context.Becados
+                .AnyAsync(b => b.AlumnoId == Alumno.AlumnoId && 
+                              b.CicloId == Ciclo.Id && 
+                              b.Estado == true);
+
             //seleccionar todas las materias inscritas por el alumno
-            MateriasInscritas = _context.MateriasInscritas
+            MateriasInscritas = await _context.MateriasInscritas
      .Include(mi => mi.MateriasGrupo)
          .ThenInclude(mg => mg.Materia)
      .Include(mi => mi.MateriasGrupo)
@@ -60,21 +69,58 @@ namespace SRAUMOAR.Pages.portal.estudiante
          .ThenInclude(n => n.ActividadAcademica)
      .Where(mi => mi.MateriasGrupo.Grupo.CicloId == Ciclo.Id &&
                   mi.Alumno.AlumnoId == Alumno.AlumnoId)
-     .ToList();
+     .ToListAsync();
+
+            // Obtener actividades académicas del ciclo para calcular promedios
+            ActividadAcademica = await _context.ActividadesAcademicas
+                .Include(a => a.Arancel)
+                .Include(a => a.Ciclo)
+                .Where(c => c.CicloId == Ciclo.Id)
+                .ToListAsync();
+
+            // Calcular y actualizar promedios si están en 0.0 o desactualizados
+            bool hayCambios = false;
+            foreach (var materia in MateriasInscritas)
+            {
+                // Recalcular el promedio si hay actividades académicas definidas
+                if (ActividadAcademica != null && ActividadAcademica.Any())
+                {
+                    var promedioCalculado = CalcularPromedioMateria(materia.Notas, ActividadAcademica);
+                    
+                    // Actualizar si el promedio calculado es diferente al almacenado
+                    if (materia.NotaPromedio != promedioCalculado)
+                    {
+                        materia.NotaPromedio = promedioCalculado;
+                        _context.MateriasInscritas.Update(materia);
+                        hayCambios = true;
+                    }
+                }
+            }
+
+            // Guardar cambios si hubo actualizaciones
+            if (hayCambios)
+            {
+                await _context.SaveChangesAsync();
+            }
 
             // Consulta modificada para manejar m�ltiples pagos
-            Arancel =  _context.Aranceles.Where(x => x.Ciclo.Id == Ciclo.Id)
-                 .Include(a => a.Ciclo).ToList();
+            Arancel = await _context.Aranceles.Where(x => x.Ciclo.Id == Ciclo.Id)
+                 .Include(a => a.Ciclo).ToListAsync();
 
-            DetallesCobroArancel = _context.DetallesCobrosArancel
+            DetallesCobroArancel = await _context.DetallesCobrosArancel
                 .Include(x => x.CobroArancel)
                 .Include(x => x.Arancel)
-                .Where(x => x.CobroArancel.CicloId == Ciclo.Id && x.CobroArancel.AlumnoId == Alumno.AlumnoId).ToList();
+                .Where(x => x.CobroArancel.CicloId == Ciclo.Id && x.CobroArancel.AlumnoId == Alumno.AlumnoId).ToListAsync();
+
+            // Verificar si tiene aranceles retrasados (solo si no es becado)
+            if (!EsBecado)
+            {
+                TieneArancelesRetrasados = Arancel.Any(a => !DetallesCobroArancel
+                    .Any(dc => dc.ArancelId == a.ArancelId && dc.CobroArancel.AlumnoId == Alumno.AlumnoId)
+                    && (a.FechaFin < DateTime.Now));
+            }
 
 
-            ActividadAcademica =  _context.ActividadesAcademicas
-                .Include(a => a.Arancel)
-                .Include(a => a.Ciclo).Where(c => c.CicloId == Ciclo.Id).ToList();
             // var alumnos = _context.Alumno.Include(c => c.Carrera).Where(c => c.UsuarioId == idusuario).First();
 
 
@@ -223,6 +269,39 @@ namespace SRAUMOAR.Pages.portal.estudiante
             {
                 return new JsonResult(new { success = false, message = $"Error al actualizar la foto: {ex.Message}" });
             }
+        }
+
+        // Método para calcular el promedio de una materia usando todas las actividades académicas
+        private static decimal CalcularPromedioMateria(ICollection<Notas> notas, IList<ActividadAcademica> actividadesAcademicas)
+        {
+            if (actividadesAcademicas == null || !actividadesAcademicas.Any())
+                return 0;
+
+            decimal sumaPonderada = 0;
+            decimal totalPorcentaje = 0;
+
+            // Iterar sobre TODAS las actividades académicas del ciclo
+            foreach (var actividad in actividadesAcademicas)
+            {
+                if (actividad == null) continue;
+
+                int porcentaje = actividad.Porcentaje;
+                totalPorcentaje += porcentaje;
+
+                // Buscar si existe una nota registrada para esta actividad
+                var notaRegistrada = notas
+                    ?.FirstOrDefault(n => n.ActividadAcademicaId == actividad.ActividadAcademicaId);
+
+                // Si existe nota registrada, usar su valor; si no, usar 0
+                decimal valorNota = notaRegistrada?.Nota ?? 0;
+
+                sumaPonderada += valorNota * porcentaje;
+            }
+
+            // Si no hay porcentajes, retornar 0
+            if (totalPorcentaje <= 0) return 0;
+
+            return Math.Round(sumaPonderada / totalPorcentaje, 2);
         }
 
         private async Task<byte[]> OptimizarImagenAsync(IFormFile imagen)
