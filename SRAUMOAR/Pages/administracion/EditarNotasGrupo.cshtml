@@ -157,7 +157,7 @@
                                             
                                             <td class="text-center">
                                                 <span class="badge bg-primary fs-6" id="promedio-@estudiante.AlumnoId-@materia.MateriasGrupoId">
-                                                    @estudiante.CalcularPromedioMateria(materia.MateriasGrupoId)
+                                                    @estudiante.CalcularPromedioMateria(materia.MateriasGrupoId, Model.ActividadesAcademicas)
                                                 </span>
                                             </td>
                                             
@@ -210,7 +210,7 @@
             try {
                 // Obtener todas las notas del estudiante para esta materia
                 const notas = [];
-                const actividades = @Html.Raw(Json.Serialize(Model.ActividadesAcademicas.Select(a => new { a.ActividadAcademicaId, a.Nombre })));
+                const actividades = @Html.Raw(Json.Serialize(Model.ActividadesAcademicas.Select(a => new { a.ActividadAcademicaId, a.Nombre, a.Porcentaje })));
                 
                 actividades.forEach(actividad => {
                     const inputId = `nota-${alumnoId}-${materiasGrupoId}-${actividad.actividadAcademicaId}`;
@@ -299,14 +299,50 @@
         }
         
         // Función para actualizar el promedio visualmente
-        function actualizarPromedio(alumnoId, materiasGrupoId, notas) {
-            // Esta función se puede implementar para calcular el promedio en el cliente
-            // Por ahora solo actualizamos el badge
+        function actualizarPromedio(alumnoId, materiasGrupoId, notasGuardadas) {
             const promedioElement = document.getElementById(`promedio-${alumnoId}-${materiasGrupoId}`);
-            if (promedioElement) {
-                promedioElement.innerHTML = '<i class="bi bi-hourglass-split"></i> Calculando...';
-                // Aquí podrías calcular el promedio localmente o hacer otra llamada al servidor
+            if (!promedioElement) return;
+            
+            // Obtener todas las actividades académicas con sus porcentajes
+            const actividades = @Html.Raw(Json.Serialize(Model.ActividadesAcademicas.Select(a => new { a.ActividadAcademicaId, a.Porcentaje })));
+            
+            if (!actividades || actividades.length === 0) {
+                promedioElement.innerHTML = '0';
+                return;
             }
+            
+            let sumaPonderada = 0;
+            let totalPorcentaje = 0;
+            
+            // Iterar sobre TODAS las actividades académicas
+            actividades.forEach(actividad => {
+                if (!actividad || actividad.porcentaje == null) return;
+                
+                const porcentaje = parseInt(actividad.porcentaje) || 0;
+                totalPorcentaje += porcentaje;
+                
+                // Buscar si existe una nota guardada para esta actividad
+                const notaGuardada = notasGuardadas?.find(n => n.ActividadAcademicaId === actividad.actividadAcademicaId);
+                
+                // Si existe nota guardada, usar su valor; si no, buscar en el input (puede ser 0 o vacío)
+                let valorNota = 0;
+                if (notaGuardada) {
+                    valorNota = parseFloat(notaGuardada.Nota) || 0;
+                } else {
+                    // Buscar el valor en el input del formulario
+                    const inputId = `nota-${alumnoId}-${materiasGrupoId}-${actividad.actividadAcademicaId}`;
+                    const input = document.getElementById(inputId);
+                    if (input && input.value !== '') {
+                        valorNota = parseFloat(input.value) || 0;
+                    }
+                }
+                
+                sumaPonderada += valorNota * porcentaje;
+            });
+            
+            // Calcular promedio
+            const promedio = totalPorcentaje > 0 ? (sumaPonderada / totalPorcentaje).toFixed(2) : '0.00';
+            promedioElement.innerHTML = promedio;
         }
         
         // Función para mostrar mensajes
@@ -333,7 +369,7 @@
             }, 5000);
         }
         
-        // Validación en tiempo real
+        // Validación y cálculo de promedio en tiempo real
         document.querySelectorAll('input[type="number"]').forEach(input => {
             input.addEventListener('input', function() {
                 const value = parseFloat(this.value);
@@ -346,6 +382,16 @@
                     } else {
                         this.classList.add('is-valid');
                     }
+                }
+                
+                // Actualizar promedio en tiempo real
+                // Extraer alumnoId y materiasGrupoId del ID del input
+                const inputId = this.id;
+                const match = inputId.match(/nota-(\d+)-(\d+)-(\d+)/);
+                if (match) {
+                    const alumnoId = parseInt(match[1]);
+                    const materiasGrupoId = parseInt(match[2]);
+                    actualizarPromedio(alumnoId, materiasGrupoId, null);
                 }
             });
         });

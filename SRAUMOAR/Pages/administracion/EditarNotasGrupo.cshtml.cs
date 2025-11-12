@@ -40,21 +40,42 @@ namespace SRAUMOAR.Pages.administracion
             public IList<Notas> Notas { get; set; } = new List<Notas>();
             public List<MateriasInscritas> MateriasInscritas { get; set; } = new List<MateriasInscritas>();
 
-            public decimal CalcularPromedioMateria(int materiasGrupoId)
+            public decimal CalcularPromedioMateria(int materiasGrupoId, IList<ActividadAcademica> actividadesAcademicas)
             {
-                var notasMateria = Notas.Where(n => n.MateriasInscritas.MateriasGrupoId == materiasGrupoId).ToList();
-                if (!notasMateria.Any()) return 0;
+                if (actividadesAcademicas == null || !actividadesAcademicas.Any())
+                    return 0;
+
+                // Obtener las notas registradas para esta materia
+                var notasMateria = Notas
+                    .Where(n => n.MateriasInscritas != null && 
+                               n.MateriasInscritas.MateriasGrupoId == materiasGrupoId)
+                    .ToList();
 
                 decimal sumaPonderada = 0;
                 decimal totalPorcentaje = 0;
 
-                foreach (var nota in notasMateria)
+                // Iterar sobre TODAS las actividades académicas del ciclo
+                foreach (var actividad in actividadesAcademicas)
                 {
-                    sumaPonderada += nota.Nota * (nota.ActividadAcademica?.Porcentaje ?? 0);
-                    totalPorcentaje += nota.ActividadAcademica?.Porcentaje ?? 0;
+                    if (actividad == null) continue;
+
+                    int porcentaje = actividad.Porcentaje;
+                    totalPorcentaje += porcentaje;
+
+                    // Buscar si existe una nota registrada para esta actividad
+                    var notaRegistrada = notasMateria
+                        .FirstOrDefault(n => n.ActividadAcademicaId == actividad.ActividadAcademicaId);
+
+                    // Si existe nota registrada, usar su valor; si no, usar 0
+                    decimal valorNota = notaRegistrada?.Nota ?? 0;
+
+                    sumaPonderada += valorNota * porcentaje;
                 }
 
-                return totalPorcentaje > 0 ? Math.Round(sumaPonderada / totalPorcentaje, 2) : 0;
+                // Si no hay porcentajes, retornar 0
+                if (totalPorcentaje <= 0) return 0;
+
+                return Math.Round(sumaPonderada / totalPorcentaje, 2);
             }
         }
 
