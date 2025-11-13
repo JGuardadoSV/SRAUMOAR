@@ -409,26 +409,33 @@
                                         }
                                     </td>
                                     <td>
-                                        @if (item.FechaFin.HasValue)
+                                        @if (!Model.EsBecado)
                                         {
-                                            if (diasRestantes > 0)
+                                            @if (item.FechaFin.HasValue)
                                             {
-                                                if (!arancelPagado)
+                                                if (diasRestantes > 0)
                                                 {
-                                                    <span class="text-info">Faltan @diasRestantes días</span>
+                                                    if (!arancelPagado)
+                                                    {
+                                                        <span class="text-info">Faltan @diasRestantes días</span>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    if (!arancelPagado)
+                                                    {
+                                                        <span class="text-danger">Atrasado @diasAtraso días</span>
+                                                    }
                                                 }
                                             }
                                             else
                                             {
-                                                if (!arancelPagado)
-                                                {
-                                                    <span class="text-danger">Atrasado @diasAtraso días</span>
-                                                }
+                                                <span class="text-muted">Sin fecha límite</span>
                                             }
                                         }
                                         else
                                         {
-                                            <span class="text-muted">Sin fecha límite</span>
+                                            <span class="text-muted">-</span>
                                         }
                                     </td>
                                    
