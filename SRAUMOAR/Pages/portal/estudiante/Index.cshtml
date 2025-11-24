@@ -316,6 +316,13 @@
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                             </div>
                                             <div class="modal-body">
+                                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                                    <span class="fw-semibold text-muted">Promedio acumulado</span>
+                                                    <span class="badge bg-primary rounded-pill px-3 py-2 fs-6">
+                                                        @(materia.NotaPromedio.ToString("N2") ?? "N/A")
+                                                    </span>
+                                                </div>
+                                                <hr class="text-muted" />
                                                 @if (materia.Notas != null && materia.Notas.Any())
                                                 {
                                                     <div class="table-responsive">
