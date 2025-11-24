@@ -111,6 +111,9 @@
         <button class="btn btn-primary" onclick="abrirPdfEnPopup('/reportes/inscripcion/reporteInscripcion?id=@Model.Alumno.AlumnoId')">
             Imprimir hoja de inscripción
         </button>
+        <form method="post" asp-page-handler="Desinscribir" asp-route-id="@Model.Alumno.AlumnoId" style="display:inline;" onsubmit="return confirm('¿Está seguro de desinscribir completamente al alumno del ciclo actual? Esto eliminará todas las materias inscritas.');">
+            <button type="submit" class="btn btn-danger">Desinscribir del ciclo</button>
+        </form>
     </p>
 
     <table class="table table-hover">

@@ -151,6 +151,13 @@
             border: none;
         }
 
+    .action-column {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
     .action-btn {
         padding: 0.5rem;
         border-radius: 8px;
@@ -427,7 +434,7 @@
                                     <th style="width: 30%;">
                                         <i class="bi bi-person me-1"></i>Alumno
                                     </th>
-                                    <th style="width: 25%;">
+                                    <th style="width: 22%;">
                                         <i class="bi bi-mortarboard me-1"></i>Carrera
                                     </th>
                                     <th style="width: 10%;" class="text-center">
@@ -436,7 +443,7 @@
                                     <th style="width: 13%;" class="text-center">
                                         <i class="bi bi-calendar3 me-1"></i>Ciclo
                                     </th>
-                                    <th style="width: 5%;" class="text-center">
+                                    <th style="width: 13%;" class="text-center">
                                         <i class="bi bi-gear"></i>
                                     </th>
                                 </tr>
@@ -495,13 +502,18 @@
                                                 @item.Ciclo.NCiclo-@item.Ciclo.anio
                                             </span>
                                         </td>
-                                        <td class="text-center">
+                                        <td class="action-column text-center">
                                             <button class="btn btn-primary action-btn"
                                                     onclick="abrirPdfEnPopup('/reportes/inscripcion/reporteInscripcion?id=@item.Alumno.AlumnoId')"
                                                     title="Imprimir reporte">
                                                 <i class="bi bi-printer"></i>
                                             </button>
-                                            <a class="dropdown-item" asp-page="/inscripcion/MateriasInscritas" asp-route-id="@item.Alumno.AlumnoId">Administrar<i class="bi bi-arrow-right-circle"></i></a>
+                                            <a class="btn btn-outline-success action-btn"
+                                               asp-page="/inscripcion/MateriasInscritas"
+                                               asp-route-id="@item.Alumno.AlumnoId"
+                                               title="Administrar inscripción">
+                                                <i class="bi bi-arrow-right-circle"></i>
+                                            </a>
                                         </td>
                                     </tr>
                                     correlativo++;

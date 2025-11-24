@@ -67,5 +67,41 @@ namespace SRAUMOAR.Pages.inscripcion
             // Si no se encuentra, recarga la página actual
             return RedirectToPage();
         }
+
+        // Método para desinscribir completamente al alumno del ciclo
+        public IActionResult OnPostDesinscribir(int id)
+        {
+            var cicloactual = _context.Ciclos.Where(x => x.Activo == true).FirstOrDefault()?.Id ?? 0;
+            
+            // Buscar la inscripción del alumno en el ciclo actual
+            var inscripcion = _context.Inscripciones
+                .FirstOrDefault(i => i.AlumnoId == id && i.CicloId == cicloactual);
+
+            if (inscripcion != null)
+            {
+                // Eliminar todas las materias inscritas del alumno en el ciclo actual
+                var materiasInscritas = _context.MateriasInscritas
+                    .Include(mi => mi.MateriasGrupo)
+                        .ThenInclude(mg => mg.Grupo)
+                    .Where(mi => mi.AlumnoId == id && 
+                                mi.MateriasGrupo.Grupo.CicloId == cicloactual)
+                    .ToList();
+
+                if (materiasInscritas.Any())
+                {
+                    _context.MateriasInscritas.RemoveRange(materiasInscritas);
+                }
+
+                // Eliminar la inscripción del ciclo
+                _context.Inscripciones.Remove(inscripcion);
+                _context.SaveChanges();
+
+                // Redirigir a la página de inscripción
+                return RedirectToPage("./Create", new { id = id });
+            }
+
+            // Si no se encuentra la inscripción, redirigir a la página de inscripción
+            return RedirectToPage("./Create", new { id = id });
+        }
     }
 }
