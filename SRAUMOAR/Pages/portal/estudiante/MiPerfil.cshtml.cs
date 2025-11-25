@@ -43,6 +43,8 @@ namespace SRAUMOAR.Pages.portal.estudiante
         [Required(ErrorMessage = "Confirma la nueva contraseña")]
         public string ConfirmarContrasena { get; set; } = string.Empty;
 
+        public List<string> DocumentosPendientes { get; set; } = new List<string>();
+
         public async Task<IActionResult> OnGetAsync(int? id)
         {
             if (id == null)
@@ -59,6 +61,10 @@ namespace SRAUMOAR.Pages.portal.estudiante
            ViewData["CarreraId"] = new SelectList(_context.Carreras, "CarreraId", "CodigoCarrera");
            ViewData["MunicipioId"] = new SelectList(_context.Municipios, "MunicipioId", "NombreMunicipio");
            ViewData["UsuarioId"] = new SelectList(_context.Usuarios, "IdUsuario", "Clave");
+
+            // Calcular documentos pendientes
+            DocumentosPendientes = ObtenerDocumentosPendientes(alumno);
+
             return Page();
         }
 
@@ -208,6 +214,38 @@ namespace SRAUMOAR.Pages.portal.estudiante
         private bool AlumnoExists(int id)
         {
             return _context.Alumno.Any(e => e.AlumnoId == id);
+        }
+
+        private List<string> ObtenerDocumentosPendientes(Alumno alumno)
+        {
+            var pendientes = new List<string>();
+
+            if (!alumno.PPartida)
+                pendientes.Add("Partida de Nacimiento");
+
+            if (!alumno.PTitulo)
+                pendientes.Add("Título de Bachillerato");
+
+            if (!alumno.PFotografias)
+                pendientes.Add("2 Fotografías");
+
+            if (!alumno.PExamenOrina)
+                pendientes.Add("Examen de Orina Original");
+
+            if (!alumno.PHemograma)
+                pendientes.Add("Examen de Hemograma");
+
+            if (!alumno.PPreuniversitario)
+                pendientes.Add("Curso Pre-Universitario");
+
+            if (!alumno.PPaes)
+                pendientes.Add("PAES ó AVANZO");
+
+            // Solo mostrar solicitud de equivalencias si el alumno ingresó por equivalencias
+            if (alumno.IngresoPorEquivalencias && !alumno.PSolicitudEquivalencia)
+                pendientes.Add("Cancelar $10 para solicitud de equivalencias");
+
+            return pendientes;
         }
     }
 }
