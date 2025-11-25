@@ -12,6 +12,8 @@ using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Png;
 
 namespace SRAUMOAR.Pages.administracion
 {
@@ -688,25 +690,52 @@ namespace SRAUMOAR.Pages.administracion
         {
             try
             {
-                var webRootPath = _environment.WebRootPath;
-                if (string.IsNullOrEmpty(webRootPath))
+                // Intentar múltiples rutas posibles
+                var posiblesRutas = new List<string>
                 {
-                    webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                    Path.Combine(_environment.WebRootPath ?? "", "images", "logoUmoar.jpg"),
+                    Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "logoUmoar.jpg"),
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "wwwroot", "images", "logoUmoar.jpg"),
+                    @"C:\Users\Facturacion\source\repos\JGuardadoSV\SRAUMOAR\SRAUMOAR\wwwroot\images\logoUmoar.jpg"
+                };
+
+                string? logoPath = null;
+                foreach (var ruta in posiblesRutas)
+                {
+                    Console.WriteLine($"Probando ruta: {ruta}, Exists: {System.IO.File.Exists(ruta)}");
+                    if (System.IO.File.Exists(ruta))
+                    {
+                        logoPath = ruta;
+                        break;
+                    }
                 }
-                
-                var logoPath = Path.Combine(webRootPath, "images", "logoUmoar.jpg");
-                Console.WriteLine($"Logo path: {logoPath}, Exists: {System.IO.File.Exists(logoPath)}");
-                
-                if (System.IO.File.Exists(logoPath))
+
+                if (!string.IsNullOrEmpty(logoPath))
                 {
-                    var picture = worksheet.AddPicture(logoPath);
-                    picture.MoveTo(worksheet.Cell(1, 1), 5, 5);
-                    picture.Scale(0.5);
+                    Console.WriteLine($"Usando logo desde: {logoPath}");
+                    
+                    // Convertir JPG a PNG en memoria usando ImageSharp
+                    using var image = SixLabors.ImageSharp.Image.Load(logoPath);
+                    using var pngStream = new MemoryStream();
+                    image.SaveAsPng(pngStream);
+                    pngStream.Position = 0;
+                    
+                    var picture = worksheet.AddPicture(pngStream, "Logo");
+                    picture.MoveTo(worksheet.Cell(1, 1));
+                    picture.Width = 80;
+                    picture.Height = 80;
+                    
+                    Console.WriteLine("Logo insertado correctamente");
+                }
+                else
+                {
+                    Console.WriteLine("No se encontró el archivo del logo en ninguna ruta");
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error al insertar logo: {ex.Message}");
+                Console.WriteLine($"StackTrace: {ex.StackTrace}");
             }
         }
 
