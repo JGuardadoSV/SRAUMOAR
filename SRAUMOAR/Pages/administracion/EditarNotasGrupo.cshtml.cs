@@ -21,6 +21,7 @@ namespace SRAUMOAR.Pages.administracion
     {
         private readonly SRAUMOAR.Modelos.Contexto _context;
         private readonly IWebHostEnvironment _environment;
+        private static readonly XLColor NotaBackgroundColor = XLColor.FromHtml("#AED99E");
 
         public EditarNotasGrupoModel(SRAUMOAR.Modelos.Contexto context, IWebHostEnvironment environment)
         {
@@ -386,6 +387,9 @@ namespace SRAUMOAR.Pages.administracion
             using var workbook = new XLWorkbook();
             var worksheet = workbook.Worksheets.Add("Notas");
 
+            // Insertar logo primero
+            InsertarLogo(worksheet);
+
             ConstruirEncabezadoGeneral(worksheet, grupo, materiaGrupo);
 
             var actividadesReposicion = actividades
@@ -400,7 +404,7 @@ namespace SRAUMOAR.Pages.administracion
             var ultimaFila = LlenarDetalleTabla(worksheet, actividadesPrincipales, actividadReposicion, estudiantes, columnasActividades, columnaTotal, columnaReposicion, columnaNotaFinal, columnaObservaciones);
 
             AplicarFormatoTabla(worksheet, ultimaFila, columnaObservaciones, columnaTotal, columnaReposicion, columnaNotaFinal, columnaObservaciones);
-            InsertarLogo(worksheet);
+            InsertarPieDePagina(worksheet, ultimaFila, estudiantes);
 
             using var stream = new MemoryStream();
             workbook.SaveAs(stream);
@@ -411,40 +415,61 @@ namespace SRAUMOAR.Pages.administracion
         private void ConstruirEncabezadoGeneral(IXLWorksheet worksheet, Grupo grupo, MateriasGrupo materiaGrupo)
         {
             worksheet.Range(1, 3, 1, 19).Merge();
-            worksheet.Cell(1, 3).Value = "UNIVERSIDAD MONSEÑOR OSCAR ARNULFO ROMERO";
+            var cellUniversidad = worksheet.Cell(1, 3);
+            cellUniversidad.Value = "UNIVERSIDAD MONSEÑOR OSCAR ARNULFO ROMERO";
+            cellUniversidad.Style.Font.FontSize = 16;
+            cellUniversidad.Style.Font.Bold = true;
+            cellUniversidad.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
             worksheet.Range(2, 3, 2, 19).Merge();
-            worksheet.Cell(2, 3).Value = "ADMINISTRACIÓN DE REGISTRO ACADÉMICO";
+            var cellRegistro = worksheet.Cell(2, 3);
+            cellRegistro.Value = "ADMINISTRACIÓN DE REGISTRO ACADÉMICO";
+            cellRegistro.Style.Font.FontSize = 16;
+            cellRegistro.Style.Font.Bold = true;
+            cellRegistro.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
             worksheet.Range(3, 3, 3, 10).Merge();
             worksheet.Cell(3, 3).Value = $"CUADROS DE CALIFICACIONES FINALES DEL CICLO {grupo.Ciclo?.NCiclo}/{grupo.Ciclo?.anio}";
             worksheet.Range(4, 3, 4, 10).Merge();
-            worksheet.Cell(4, 3).Value = materiaGrupo.Materia?.NombreMateria ?? (grupo.Carrera?.NombreCarrera ?? string.Empty);
+            worksheet.Cell(4, 3).Value = (grupo.Carrera?.NombreCarrera ?? string.Empty).ToUpperInvariant();
 
-            worksheet.Range(1, 3, 4, 19).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-            worksheet.Range(1, 3, 4, 19).Style.Font.Bold = true;
+            worksheet.Range(3, 3, 4, 10).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            worksheet.Range(3, 3, 4, 10).Style.Font.Bold = true;
 
-            var info = new (string Label, string Value)[]
-            {
-                ("ASIGNATURA :", materiaGrupo.Materia?.NombreMateria ?? "-"),
-                ("CÓDIGO:", materiaGrupo.Materia?.CodigoMateria ?? "-"),
-                ("DÍA:", materiaGrupo.Dia.GetDisplayName()),
-                ("HORARIO:", $"{materiaGrupo.FormatearHora12Horas(materiaGrupo.HoraInicio)} a {materiaGrupo.FormatearHora12Horas(materiaGrupo.HoraFin)}"),
-                ("CATEDRÁTICO:", materiaGrupo.Docente != null ? $"{materiaGrupo.Docente.Nombres} {materiaGrupo.Docente.Apellidos}".Trim() : "Sin asignar")
-            };
-
+            // Bloque derecho: información de la materia en formato "ETIQUETA: VALOR" en una sola celda combinada por fila
             int labelColumn = 11; // Columna K
-            for (int i = 0; i < info.Length; i++)
-            {
-                int row = 3 + i;
-                worksheet.Cell(row, labelColumn).Value = info[i].Label;
-                worksheet.Cell(row, labelColumn).Style.Font.Bold = true;
-                worksheet.Cell(row, labelColumn).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+            
+            // Fila 3: ASIGNATURA
+            var rangoAsignatura = worksheet.Range(3, labelColumn, 3, 19);
+            rangoAsignatura.Merge();
+            rangoAsignatura.Value = $"ASIGNATURA: {materiaGrupo.Materia?.NombreMateria ?? "-"}";
+            rangoAsignatura.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+            rangoAsignatura.Style.Font.Bold = true;
 
-                var valorRange = worksheet.Range(row, labelColumn + 1, row, 19);
-                valorRange.Merge();
-                valorRange.Value = info[i].Value;
-                valorRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
-            }
+            // Fila 4: CÓDIGO
+            var rangoCodigo = worksheet.Range(4, labelColumn, 4, 19);
+            rangoCodigo.Merge();
+            rangoCodigo.Value = $"CÓDIGO: {materiaGrupo.Materia?.CodigoMateria ?? "-"}";
+            rangoCodigo.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+
+            // Fila 5: DÍA
+            var rangoDia = worksheet.Range(5, labelColumn, 5, 19);
+            rangoDia.Merge();
+            rangoDia.Value = $"DÍA: {materiaGrupo.Dia.GetDisplayName()}";
+            rangoDia.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+
+            // Fila 6: HORARIO
+            var rangoHorario = worksheet.Range(6, labelColumn, 6, 19);
+            rangoHorario.Merge();
+            rangoHorario.Value = $"HORARIO: {materiaGrupo.FormatearHora12Horas(materiaGrupo.HoraInicio)} a {materiaGrupo.FormatearHora12Horas(materiaGrupo.HoraFin)}";
+            rangoHorario.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+
+            // Fila 7: CATEDRÁTICO
+            var rangoDocente = worksheet.Range(7, labelColumn, 7, 19);
+            rangoDocente.Merge();
+            var nombreDocente = materiaGrupo.Docente != null ? $"{materiaGrupo.Docente.Nombres} {materiaGrupo.Docente.Apellidos}".Trim() : "Sin asignar";
+            rangoDocente.Value = $"CATEDRÁTICO: {nombreDocente}";
+            rangoDocente.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
         }
 
         private Dictionary<int, (int notaColumna, int ponderacionColumna)> ConstruirEncabezadoTabla(
@@ -473,7 +498,6 @@ namespace SRAUMOAR.Pages.administracion
                 rango.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 rango.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
                 rango.Style.Font.Bold = true;
-                rango.Style.Fill.BackgroundColor = XLColor.FromHtml("#d9ead3");
                 rango.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
             }
 
@@ -484,22 +508,27 @@ namespace SRAUMOAR.Pages.administracion
             {
                 var rangoTitulo = worksheet.Range(filaEncabezado, columnaActual, filaEncabezado, columnaActual + 1);
                 rangoTitulo.Merge();
-                rangoTitulo.Value = actividad.Nombre?.ToUpperInvariant();
+                var nombreActividad = ObtenerNombreCompletoActividad(actividad);
+                rangoTitulo.Value = nombreActividad.ToUpperInvariant();
                 rangoTitulo.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 rangoTitulo.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                rangoTitulo.Style.Alignment.WrapText = true;
                 rangoTitulo.Style.Font.Bold = true;
-                rangoTitulo.Style.Fill.BackgroundColor = XLColor.FromHtml("#cfe2f3");
+                rangoTitulo.Style.Font.FontSize = 9;
                 rangoTitulo.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+
+                worksheet.Column(columnaActual).Width = 7;
+                worksheet.Column(columnaActual + 1).Width = 7;
 
                 worksheet.Cell(filaSubEncabezado, columnaActual).Value = "NOTA";
                 worksheet.Cell(filaSubEncabezado, columnaActual + 1).Value = $"{actividad.Porcentaje}%";
+                worksheet.Cell(filaSubEncabezado, columnaActual).Style.Font.FontSize = 9;
+                worksheet.Cell(filaSubEncabezado, columnaActual + 1).Style.Font.FontSize = 9;
 
                 worksheet.Range(filaSubEncabezado, columnaActual, filaSubEncabezado, columnaActual + 1)
                     .Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 worksheet.Range(filaSubEncabezado, columnaActual, filaSubEncabezado, columnaActual + 1)
                     .Style.Font.Bold = true;
-                worksheet.Range(filaSubEncabezado, columnaActual, filaSubEncabezado, columnaActual + 1)
-                    .Style.Fill.BackgroundColor = XLColor.FromHtml("#e7f3fe");
                 worksheet.Range(filaSubEncabezado, columnaActual, filaSubEncabezado, columnaActual + 1)
                     .Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
 
@@ -525,7 +554,6 @@ namespace SRAUMOAR.Pages.administracion
                 rango.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
                 rango.Style.Alignment.WrapText = true;
                 rango.Style.Font.Bold = true;
-                rango.Style.Fill.BackgroundColor = XLColor.FromHtml("#f4cccc");
                 rango.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
 
                 indicesFinales[finalCol.Key] = columnaActual;
@@ -572,8 +600,10 @@ namespace SRAUMOAR.Pages.administracion
                     var nota = materiaInscrita.Notas?
                         .FirstOrDefault(n => n.ActividadAcademicaId == actividad.ActividadAcademicaId)?.Nota ?? 0;
 
-                    worksheet.Cell(filaActual, columnas.notaColumna).Value = nota;
-                    worksheet.Cell(filaActual, columnas.notaColumna).Style.NumberFormat.Format = "0.00";
+                    var notaCell = worksheet.Cell(filaActual, columnas.notaColumna);
+                    notaCell.Value = nota;
+                    notaCell.Style.NumberFormat.Format = "0.00";
+                    notaCell.Style.Fill.BackgroundColor = NotaBackgroundColor;
 
                     var ponderado = Math.Round(nota * actividad.Porcentaje / 100m, 2);
                     worksheet.Cell(filaActual, columnas.ponderacionColumna).Value = ponderado;
@@ -604,7 +634,7 @@ namespace SRAUMOAR.Pages.administracion
                 worksheet.Cell(filaActual, columnaNotaFinal).Value = notaFinalRedondeada;
                 worksheet.Cell(filaActual, columnaNotaFinal).Style.NumberFormat.Format = "0.00";
 
-                worksheet.Cell(filaActual, columnaObservaciones).Value = notaFinal >= 6 ? "APROBADO" : "REPROBADO";
+                // worksheet.Cell(filaActual, columnaObservaciones).Value = notaFinal >= 6 ? "APROBADO" : "REPROBADO";
                 filaActual++;
             }
 
@@ -625,38 +655,114 @@ namespace SRAUMOAR.Pages.administracion
             rango.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
 
             worksheet.Column(3).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
-            worksheet.Columns().AdjustToContents();
 
             worksheet.Row(9).Height = 32;
             worksheet.Row(10).Height = 20;
 
-            worksheet.Column(1).Width = Math.Max(worksheet.Column(1).Width, 6);
-            worksheet.Column(2).Width = Math.Max(worksheet.Column(2).Width, 14);
-            worksheet.Column(3).Width = Math.Max(worksheet.Column(3).Width, 30);
-
-            for (int col = 4; col <= ultimaColumna; col++)
-            {
-                if (worksheet.Column(col).Width < 12)
-                {
-                    worksheet.Column(col).Width = 12;
-                }
-            }
-
-            worksheet.Column(columnaTotal).Width = Math.Max(worksheet.Column(columnaTotal).Width, 14);
-            worksheet.Column(columnaReposicion).Width = Math.Max(worksheet.Column(columnaReposicion).Width, 14);
-            worksheet.Column(columnaNotaFinal).Width = Math.Max(worksheet.Column(columnaNotaFinal).Width, 14);
-            worksheet.Column(columnaObservaciones).Width = Math.Max(worksheet.Column(columnaObservaciones).Width, 18);
+            // ========================================
+            // BLOQUE DE ANCHOS DE COLUMNAS - AJUSTAR MANUALMENTE AQUÍ
+            // ========================================
+            worksheet.Column(1).Width = 4;      // N°
+            worksheet.Column(2).Width = 10;     // N° CARNET
+            worksheet.Column(3).Width = 35;     // NOMBRE EN ORDEN
+            worksheet.Column(4).Width = 6;      // PRIMER LAB - NOTA
+            worksheet.Column(5).Width = 6;      // PRIMER LAB - %
+            worksheet.Column(6).Width = 6;      // PRIMER PARCIAL - NOTA
+            worksheet.Column(7).Width = 6;      // PRIMER PARCIAL - %
+            worksheet.Column(8).Width = 6;      // SEGUNDO LAB - NOTA
+            worksheet.Column(9).Width = 6;      // SEGUNDO LAB - %
+            worksheet.Column(10).Width = 6;     // SEGUNDO PARCIAL - NOTA
+            worksheet.Column(11).Width = 6;     // SEGUNDO PARCIAL - %
+            worksheet.Column(12).Width = 6;     // TERCER LAB - NOTA
+            worksheet.Column(13).Width = 6;     // TERCER LAB - %
+            worksheet.Column(14).Width = 6;     // TERCER PARCIAL - NOTA
+            worksheet.Column(15).Width = 6;     // TERCER PARCIAL - %
+            worksheet.Column(16).Width = 10;    // TOTAL DE PUNTOS
+            worksheet.Column(17).Width = 12;    // NOTA DE REPOSICIÓN
+            worksheet.Column(18).Width = 8;     // NOTA FINAL
+            worksheet.Column(19).Width = 14;    // OBSERVACIONES
+            // ========================================
         }
 
         private void InsertarLogo(IXLWorksheet worksheet)
         {
-            var logoPath = Path.Combine(_environment.WebRootPath ?? string.Empty, "images", "logoUmoar.jpg");
-            if (System.IO.File.Exists(logoPath))
+            try
             {
-                worksheet.AddPicture(logoPath)
-                    .MoveTo(worksheet.Cell(1, 1))
-                    .WithSize(85, 85);
+                var webRootPath = _environment.WebRootPath;
+                if (string.IsNullOrEmpty(webRootPath))
+                {
+                    webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                }
+                
+                var logoPath = Path.Combine(webRootPath, "images", "logoUmoar.jpg");
+                Console.WriteLine($"Logo path: {logoPath}, Exists: {System.IO.File.Exists(logoPath)}");
+                
+                if (System.IO.File.Exists(logoPath))
+                {
+                    var picture = worksheet.AddPicture(logoPath);
+                    picture.MoveTo(worksheet.Cell(1, 1), 5, 5);
+                    picture.Scale(0.5);
+                }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al insertar logo: {ex.Message}");
+            }
+        }
+
+        private void InsertarPieDePagina(IXLWorksheet worksheet, int filaInicio, IList<MateriasInscritas> estudiantes)
+        {
+            // Contar aprobados y reprobados por género
+            int aprobadosMasculinos = 0;
+            int aprobadosFemeninos = 0;
+            int reprobadosMasculinos = 0;
+            int reprobadosFemeninos = 0;
+            int retiradosMasculinos = 0;
+            int retiradosFemeninos = 0;
+
+            foreach (var mi in estudiantes)
+            {
+                var alumno = mi.Alumno;
+                if (alumno == null) continue;
+
+                bool esMasculino = alumno.Genero == 0; // 0 = Masculino, 1 = Femenino
+                bool aprobado = mi.NotaPromedio >= 6;
+
+                if (aprobado)
+                {
+                    if (esMasculino) aprobadosMasculinos++;
+                    else aprobadosFemeninos++;
+                }
+                else
+                {
+                    if (esMasculino) reprobadosMasculinos++;
+                    else reprobadosFemeninos++;
+                }
+            }
+
+            int filaActual = filaInicio + 2;
+
+            // Fila de aprobados
+            worksheet.Cell(filaActual, 1).Value = $"APROBADOS : MASCULINOS:__{aprobadosMasculinos}___FEMENINOS :__{aprobadosFemeninos}__";
+            worksheet.Range(filaActual, 1, filaActual, 8).Merge();
+            
+            worksheet.Cell(filaActual, 12).Value = $"FECHA DE ENTREGA : {DateTime.Now:dd/MM/yyyy}";
+            worksheet.Range(filaActual, 12, filaActual, 19).Merge();
+            
+            filaActual++;
+
+            // Fila de reprobados
+            worksheet.Cell(filaActual, 1).Value = $"REPROBADOS : MASCULINOS :__{reprobadosMasculinos}___FEMENINOS :__{reprobadosFemeninos}__";
+            worksheet.Range(filaActual, 1, filaActual, 8).Merge();
+            
+            worksheet.Cell(filaActual, 12).Value = "FIRMA DEL DOCENTE :________________________";
+            worksheet.Range(filaActual, 12, filaActual, 19).Merge();
+            
+            filaActual++;
+
+            // Fila de retirados
+            worksheet.Cell(filaActual, 1).Value = $"RETIRADOS : MASCULINO :__{retiradosMasculinos}__ FEMENINO__{retiradosFemeninos}__";
+            worksheet.Range(filaActual, 1, filaActual, 8).Merge();
         }
 
         private static bool EsActividadReposicion(ActividadAcademica? actividad)
@@ -691,6 +797,40 @@ namespace SRAUMOAR.Pages.administracion
             }
 
             return string.Empty;
+        }
+
+        private static string ObtenerNombreCompletoActividad(ActividadAcademica actividad)
+        {
+            if (actividad == null || string.IsNullOrWhiteSpace(actividad.Nombre))
+            {
+                return string.Empty;
+            }
+
+            var nombre = actividad.Nombre.Trim();
+
+            // Mapear abreviaturas comunes a nombres completos
+            var mapeoNombres = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "LAB 1", "PRIMER LABORATORIO" },
+                { "LAB1", "PRIMER LABORATORIO" },
+                { "PAR 1", "PRIMER PARCIAL" },
+                { "PAR1", "PRIMER PARCIAL" },
+                { "LAB 2", "SEGUNDO LABORATORIO" },
+                { "LAB2", "SEGUNDO LABORATORIO" },
+                { "PAR 2", "SEGUNDO PARCIAL" },
+                { "PAR2", "SEGUNDO PARCIAL" },
+                { "LAB 3", "TERCER LABORATORIO" },
+                { "LAB3", "TERCER LABORATORIO" },
+                { "PAR 3", "TERCER PARCIAL" },
+                { "PAR3", "TERCER PARCIAL" }
+            };
+
+            if (mapeoNombres.TryGetValue(nombre, out var nombreCompleto))
+            {
+                return nombreCompleto;
+            }
+
+            return nombre;
         }
 
         public async Task<IActionResult> OnPostAsync(int grupoId)
