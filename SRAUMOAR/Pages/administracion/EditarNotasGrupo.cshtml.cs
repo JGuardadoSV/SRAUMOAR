@@ -1,4 +1,7 @@
+using ClosedXML.Excel;
+using System;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -6,6 +9,9 @@ using SRAUMOAR.Entidades.Alumnos;
 using SRAUMOAR.Entidades.Procesos;
 using SRAUMOAR.Modelos;
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
+using System.IO;
+using System.Linq;
 
 namespace SRAUMOAR.Pages.administracion
 {
@@ -14,10 +20,12 @@ namespace SRAUMOAR.Pages.administracion
     public class EditarNotasGrupoModel : PageModel
     {
         private readonly SRAUMOAR.Modelos.Contexto _context;
+        private readonly IWebHostEnvironment _environment;
 
-        public EditarNotasGrupoModel(SRAUMOAR.Modelos.Contexto context)
+        public EditarNotasGrupoModel(SRAUMOAR.Modelos.Contexto context, IWebHostEnvironment environment)
         {
             _context = context;
+            _environment = environment;
         }
 
         public int GrupoId { get; set; }
@@ -165,6 +173,53 @@ namespace SRAUMOAR.Pages.administracion
                 .ToList();
 
             return Page();
+        }
+
+        public async Task<IActionResult> OnGetExportarMateriaAsync(int grupoId, int materiasGrupoId)
+        {
+            var grupo = await _context.Grupo
+                .Include(g => g.Carrera)
+                .Include(g => g.Ciclo)
+                .FirstOrDefaultAsync(g => g.GrupoId == grupoId);
+
+            if (grupo == null)
+            {
+                return NotFound("El grupo solicitado no existe.");
+            }
+
+            var materiaGrupo = await _context.MateriasGrupo
+                .Include(mg => mg.Materia)
+                .Include(mg => mg.Docente)
+                .FirstOrDefaultAsync(mg => mg.MateriasGrupoId == materiasGrupoId && mg.GrupoId == grupoId);
+
+            if (materiaGrupo == null)
+            {
+                return NotFound("No se encontró la materia solicitada dentro del grupo.");
+            }
+
+            var actividades = await _context.ActividadesAcademicas
+                .Where(a => a.CicloId == grupo.CicloId)
+                .OrderBy(a => a.FechaInicio)
+                .ToListAsync();
+
+            if (!actividades.Any())
+            {
+                return NotFound("No hay actividades académicas configuradas para el ciclo actual.");
+            }
+
+            var estudiantes = await _context.MateriasInscritas
+                .Include(mi => mi.Alumno)
+                .Include(mi => mi.Notas!)
+                    .ThenInclude(n => n.ActividadAcademica)
+                .Where(mi => mi.MateriasGrupoId == materiasGrupoId)
+                .OrderBy(mi => mi.Alumno!.Apellidos)
+                .ThenBy(mi => mi.Alumno!.Nombres)
+                .ToListAsync();
+
+            var archivo = GenerarExcelMateria(grupo, materiaGrupo, actividades, estudiantes);
+            var nombreArchivo = $"Notas_{materiaGrupo.Materia?.NombreMateria ?? "Materia"}_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
+
+            return File(archivo, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", nombreArchivo);
         }
 
         public async Task<IActionResult> OnPostGuardarNotasEstudianteAsync()
@@ -324,6 +379,318 @@ namespace SRAUMOAR.Pages.administracion
         {
             public int ActividadAcademicaId { get; set; }
             public decimal Nota { get; set; }
+        }
+
+        private byte[] GenerarExcelMateria(Grupo grupo, MateriasGrupo materiaGrupo, IList<ActividadAcademica> actividades, IList<MateriasInscritas> estudiantes)
+        {
+            using var workbook = new XLWorkbook();
+            var worksheet = workbook.Worksheets.Add("Notas");
+
+            ConstruirEncabezadoGeneral(worksheet, grupo, materiaGrupo);
+
+            var actividadesReposicion = actividades
+                .Where(a => EsActividadReposicion(a))
+                .ToList();
+            var actividadReposicion = actividadesReposicion.FirstOrDefault();
+            var actividadesPrincipales = actividades
+                .Where(a => !EsActividadReposicion(a))
+                .ToList();
+
+            var columnasActividades = ConstruirEncabezadoTabla(worksheet, actividadesPrincipales, out var columnaTotal, out var columnaReposicion, out var columnaNotaFinal, out var columnaObservaciones);
+            var ultimaFila = LlenarDetalleTabla(worksheet, actividadesPrincipales, actividadReposicion, estudiantes, columnasActividades, columnaTotal, columnaReposicion, columnaNotaFinal, columnaObservaciones);
+
+            AplicarFormatoTabla(worksheet, ultimaFila, columnaObservaciones, columnaTotal, columnaReposicion, columnaNotaFinal, columnaObservaciones);
+            InsertarLogo(worksheet);
+
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+            stream.Position = 0;
+            return stream.ToArray();
+        }
+
+        private void ConstruirEncabezadoGeneral(IXLWorksheet worksheet, Grupo grupo, MateriasGrupo materiaGrupo)
+        {
+            worksheet.Range(1, 3, 1, 19).Merge();
+            worksheet.Cell(1, 3).Value = "UNIVERSIDAD MONSEÑOR OSCAR ARNULFO ROMERO";
+            worksheet.Range(2, 3, 2, 19).Merge();
+            worksheet.Cell(2, 3).Value = "ADMINISTRACIÓN DE REGISTRO ACADÉMICO";
+
+            worksheet.Range(3, 3, 3, 10).Merge();
+            worksheet.Cell(3, 3).Value = $"CUADROS DE CALIFICACIONES FINALES DEL CICLO {grupo.Ciclo?.NCiclo}/{grupo.Ciclo?.anio}";
+            worksheet.Range(4, 3, 4, 10).Merge();
+            worksheet.Cell(4, 3).Value = materiaGrupo.Materia?.NombreMateria ?? (grupo.Carrera?.NombreCarrera ?? string.Empty);
+
+            worksheet.Range(1, 3, 4, 19).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            worksheet.Range(1, 3, 4, 19).Style.Font.Bold = true;
+
+            var info = new (string Label, string Value)[]
+            {
+                ("ASIGNATURA :", materiaGrupo.Materia?.NombreMateria ?? "-"),
+                ("CÓDIGO:", materiaGrupo.Materia?.CodigoMateria ?? "-"),
+                ("DÍA:", materiaGrupo.Dia.GetDisplayName()),
+                ("HORARIO:", $"{materiaGrupo.FormatearHora12Horas(materiaGrupo.HoraInicio)} a {materiaGrupo.FormatearHora12Horas(materiaGrupo.HoraFin)}"),
+                ("CATEDRÁTICO:", materiaGrupo.Docente != null ? $"{materiaGrupo.Docente.Nombres} {materiaGrupo.Docente.Apellidos}".Trim() : "Sin asignar")
+            };
+
+            int labelColumn = 11; // Columna K
+            for (int i = 0; i < info.Length; i++)
+            {
+                int row = 3 + i;
+                worksheet.Cell(row, labelColumn).Value = info[i].Label;
+                worksheet.Cell(row, labelColumn).Style.Font.Bold = true;
+                worksheet.Cell(row, labelColumn).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+
+                var valorRange = worksheet.Range(row, labelColumn + 1, row, 19);
+                valorRange.Merge();
+                valorRange.Value = info[i].Value;
+                valorRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+            }
+        }
+
+        private Dictionary<int, (int notaColumna, int ponderacionColumna)> ConstruirEncabezadoTabla(
+            IXLWorksheet worksheet,
+            IList<ActividadAcademica> actividades,
+            out int columnaTotalPuntos,
+            out int columnaReposicion,
+            out int columnaNotaFinal,
+            out int columnaObservaciones)
+        {
+            const int filaEncabezado = 9;
+            const int filaSubEncabezado = 10;
+
+            var headersSimples = new[]
+            {
+                (Titulo: "N°", Columna: 1),
+                (Titulo: "N° CARNET", Columna: 2),
+                (Titulo: "NOMBRE EN ORDEN", Columna: 3)
+            };
+
+            foreach (var header in headersSimples)
+            {
+                var rango = worksheet.Range(filaEncabezado, header.Columna, filaSubEncabezado, header.Columna);
+                rango.Merge();
+                rango.Value = header.Titulo;
+                rango.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                rango.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                rango.Style.Font.Bold = true;
+                rango.Style.Fill.BackgroundColor = XLColor.FromHtml("#d9ead3");
+                rango.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+            }
+
+            int columnaActual = 4;
+            var mapaColumnas = new Dictionary<int, (int notaColumna, int ponderacionColumna)>();
+
+            foreach (var actividad in actividades)
+            {
+                var rangoTitulo = worksheet.Range(filaEncabezado, columnaActual, filaEncabezado, columnaActual + 1);
+                rangoTitulo.Merge();
+                rangoTitulo.Value = actividad.Nombre?.ToUpperInvariant();
+                rangoTitulo.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                rangoTitulo.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                rangoTitulo.Style.Font.Bold = true;
+                rangoTitulo.Style.Fill.BackgroundColor = XLColor.FromHtml("#cfe2f3");
+                rangoTitulo.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+
+                worksheet.Cell(filaSubEncabezado, columnaActual).Value = "NOTA";
+                worksheet.Cell(filaSubEncabezado, columnaActual + 1).Value = $"{actividad.Porcentaje}%";
+
+                worksheet.Range(filaSubEncabezado, columnaActual, filaSubEncabezado, columnaActual + 1)
+                    .Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                worksheet.Range(filaSubEncabezado, columnaActual, filaSubEncabezado, columnaActual + 1)
+                    .Style.Font.Bold = true;
+                worksheet.Range(filaSubEncabezado, columnaActual, filaSubEncabezado, columnaActual + 1)
+                    .Style.Fill.BackgroundColor = XLColor.FromHtml("#e7f3fe");
+                worksheet.Range(filaSubEncabezado, columnaActual, filaSubEncabezado, columnaActual + 1)
+                    .Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+
+                mapaColumnas[actividad.ActividadAcademicaId] = (columnaActual, columnaActual + 1);
+                columnaActual += 2;
+            }
+
+            var columnasFinales = new Dictionary<string, string>
+            {
+                { "TOTAL DE PUNTOS", $"TOTAL DE{Environment.NewLine}PUNTOS" },
+                { "NOTA DE REPOSICIÓN", $"NOTA DE{Environment.NewLine}REPOSICIÓN" },
+                { "NOTA FINAL", $"NOTA{Environment.NewLine}FINAL" },
+                { "OBSERVACIONES", $"OBSERVA{Environment.NewLine}CIONES" }
+            };
+
+            var indicesFinales = new Dictionary<string, int>();
+            foreach (var finalCol in columnasFinales)
+            {
+                var rango = worksheet.Range(filaEncabezado, columnaActual, filaSubEncabezado, columnaActual);
+                rango.Merge();
+                rango.Value = finalCol.Value;
+                rango.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                rango.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                rango.Style.Alignment.WrapText = true;
+                rango.Style.Font.Bold = true;
+                rango.Style.Fill.BackgroundColor = XLColor.FromHtml("#f4cccc");
+                rango.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+
+                indicesFinales[finalCol.Key] = columnaActual;
+                columnaActual++;
+            }
+
+            columnaTotalPuntos = indicesFinales["TOTAL DE PUNTOS"];
+            columnaReposicion = indicesFinales["NOTA DE REPOSICIÓN"];
+            columnaNotaFinal = indicesFinales["NOTA FINAL"];
+            columnaObservaciones = indicesFinales["OBSERVACIONES"];
+
+            return mapaColumnas;
+        }
+
+        private int LlenarDetalleTabla(
+            IXLWorksheet worksheet,
+            IList<ActividadAcademica> actividades,
+            ActividadAcademica? actividadReposicion,
+            IList<MateriasInscritas> estudiantes,
+            Dictionary<int, (int notaColumna, int ponderacionColumna)> mapaColumnas,
+            int columnaTotal,
+            int columnaReposicion,
+            int columnaNotaFinal,
+            int columnaObservaciones)
+        {
+            int filaActual = 11;
+            int correlativo = 1;
+
+            foreach (var materiaInscrita in estudiantes)
+            {
+                var alumno = materiaInscrita.Alumno;
+                worksheet.Cell(filaActual, 1).Value = correlativo++;
+                worksheet.Cell(filaActual, 2).Value = ObtenerCarnet(alumno);
+                worksheet.Cell(filaActual, 3).Value = $"{alumno?.Apellidos} {alumno?.Nombres}".Trim();
+
+                decimal totalPuntos = 0;
+                foreach (var actividad in actividades)
+                {
+                    if (!mapaColumnas.TryGetValue(actividad.ActividadAcademicaId, out var columnas))
+                    {
+                        continue;
+                    }
+
+                    var nota = materiaInscrita.Notas?
+                        .FirstOrDefault(n => n.ActividadAcademicaId == actividad.ActividadAcademicaId)?.Nota ?? 0;
+
+                    worksheet.Cell(filaActual, columnas.notaColumna).Value = nota;
+                    worksheet.Cell(filaActual, columnas.notaColumna).Style.NumberFormat.Format = "0.00";
+
+                    var ponderado = Math.Round(nota * actividad.Porcentaje / 100m, 2);
+                    worksheet.Cell(filaActual, columnas.ponderacionColumna).Value = ponderado;
+                    worksheet.Cell(filaActual, columnas.ponderacionColumna).Style.NumberFormat.Format = "0.00";
+
+                    totalPuntos += ponderado;
+                }
+
+                worksheet.Cell(filaActual, columnaTotal).Value = Math.Round(totalPuntos, 2);
+                worksheet.Cell(filaActual, columnaTotal).Style.NumberFormat.Format = "0.00";
+
+                decimal notaReposicion = 0;
+                if (actividadReposicion != null)
+                {
+                    notaReposicion = materiaInscrita.Notas?
+                        .FirstOrDefault(n => n.ActividadAcademicaId == actividadReposicion.ActividadAcademicaId)?.Nota ?? 0;
+                }
+                worksheet.Cell(filaActual, columnaReposicion).Value = notaReposicion;
+                worksheet.Cell(filaActual, columnaReposicion).Style.NumberFormat.Format = "0.00";
+
+                var notaFinal = materiaInscrita.NotaPromedio > 0 ? materiaInscrita.NotaPromedio : totalPuntos;
+                if (notaReposicion > notaFinal)
+                {
+                    notaFinal = notaReposicion;
+                }
+
+                var notaFinalRedondeada = Math.Round(notaFinal * 10m, 0, MidpointRounding.AwayFromZero) / 10m;
+                worksheet.Cell(filaActual, columnaNotaFinal).Value = notaFinalRedondeada;
+                worksheet.Cell(filaActual, columnaNotaFinal).Style.NumberFormat.Format = "0.00";
+
+                worksheet.Cell(filaActual, columnaObservaciones).Value = notaFinal >= 6 ? "APROBADO" : "REPROBADO";
+                filaActual++;
+            }
+
+            return filaActual - 1;
+        }
+
+        private void AplicarFormatoTabla(IXLWorksheet worksheet, int ultimaFila, int ultimaColumna, int columnaTotal, int columnaReposicion, int columnaNotaFinal, int columnaObservaciones)
+        {
+            if (ultimaFila < 11)
+            {
+                ultimaFila = 11;
+            }
+
+            var rango = worksheet.Range(9, 1, ultimaFila, ultimaColumna);
+            rango.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+            rango.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+            rango.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            rango.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+
+            worksheet.Column(3).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+            worksheet.Columns().AdjustToContents();
+
+            worksheet.Row(9).Height = 32;
+            worksheet.Row(10).Height = 20;
+
+            worksheet.Column(1).Width = Math.Max(worksheet.Column(1).Width, 6);
+            worksheet.Column(2).Width = Math.Max(worksheet.Column(2).Width, 14);
+            worksheet.Column(3).Width = Math.Max(worksheet.Column(3).Width, 30);
+
+            for (int col = 4; col <= ultimaColumna; col++)
+            {
+                if (worksheet.Column(col).Width < 12)
+                {
+                    worksheet.Column(col).Width = 12;
+                }
+            }
+
+            worksheet.Column(columnaTotal).Width = Math.Max(worksheet.Column(columnaTotal).Width, 14);
+            worksheet.Column(columnaReposicion).Width = Math.Max(worksheet.Column(columnaReposicion).Width, 14);
+            worksheet.Column(columnaNotaFinal).Width = Math.Max(worksheet.Column(columnaNotaFinal).Width, 14);
+            worksheet.Column(columnaObservaciones).Width = Math.Max(worksheet.Column(columnaObservaciones).Width, 18);
+        }
+
+        private void InsertarLogo(IXLWorksheet worksheet)
+        {
+            var logoPath = Path.Combine(_environment.WebRootPath ?? string.Empty, "images", "logoUmoar.jpg");
+            if (System.IO.File.Exists(logoPath))
+            {
+                worksheet.AddPicture(logoPath)
+                    .MoveTo(worksheet.Cell(1, 1))
+                    .WithSize(85, 85);
+            }
+        }
+
+        private static bool EsActividadReposicion(ActividadAcademica? actividad)
+        {
+            if (actividad?.Nombre == null)
+            {
+                return false;
+            }
+
+            return actividad.Nombre.Contains("repos", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string ObtenerCarnet(Alumno? alumno)
+        {
+            if (alumno == null)
+            {
+                return string.Empty;
+            }
+
+            if (!string.IsNullOrWhiteSpace(alumno.Carnet))
+            {
+                return alumno.Carnet;
+            }
+
+            if (!string.IsNullOrWhiteSpace(alumno.Email))
+            {
+                var parts = alumno.Email.Split('@');
+                if (parts.Length > 0)
+                {
+                    return parts[0];
+                }
+            }
+
+            return string.Empty;
         }
 
         public async Task<IActionResult> OnPostAsync(int grupoId)
