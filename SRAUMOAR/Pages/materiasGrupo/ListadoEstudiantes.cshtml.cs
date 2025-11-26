@@ -439,10 +439,23 @@ namespace SRAUMOAR.Pages.materiasGrupo
                 worksheet.Cell(filaActual, columnaReposicion).Value = notaRecuperacion;
                 worksheet.Cell(filaActual, columnaReposicion).Style.NumberFormat.Format = "0.00";
 
-                // Si hay nota de recuperación, esa es la nota final; si no, usar el promedio
-                var notaFinal = materiaInscrita.NotaRecuperacion.HasValue 
-                    ? materiaInscrita.NotaRecuperacion.Value 
-                    : (materiaInscrita.NotaPromedio > 0 ? materiaInscrita.NotaPromedio : totalPuntos);
+                // Calcular nota final para el Excel
+                decimal notaFinal;
+                if (materiaInscrita.NotaRecuperacion.HasValue && materiaInscrita.NotaRecuperacion.Value >= 7)
+                {
+                    // Si aprobó recuperación (>=7), la nota final es 7
+                    notaFinal = 7;
+                }
+                else if (materiaInscrita.NotaRecuperacion.HasValue)
+                {
+                    // Si tiene nota de recuperación pero reprobó (<7), usar esa nota
+                    notaFinal = materiaInscrita.NotaRecuperacion.Value;
+                }
+                else
+                {
+                    // Si no tiene nota de recuperación, usar el promedio
+                    notaFinal = materiaInscrita.NotaPromedio > 0 ? materiaInscrita.NotaPromedio : totalPuntos;
+                }
 
                 var notaFinalRedondeada = Math.Round(notaFinal * 10m, 0, MidpointRounding.AwayFromZero) / 10m;
                 worksheet.Cell(filaActual, columnaNotaFinal).Value = notaFinalRedondeada;
