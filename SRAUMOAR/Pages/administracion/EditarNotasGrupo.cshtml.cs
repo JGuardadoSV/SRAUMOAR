@@ -617,26 +617,20 @@ namespace SRAUMOAR.Pages.administracion
                 worksheet.Cell(filaActual, columnaTotal).Value = Math.Round(totalPuntos, 2);
                 worksheet.Cell(filaActual, columnaTotal).Style.NumberFormat.Format = "0.00";
 
-                decimal notaReposicion = 0;
-                if (actividadReposicion != null)
-                {
-                    notaReposicion = materiaInscrita.Notas?
-                        .FirstOrDefault(n => n.ActividadAcademicaId == actividadReposicion.ActividadAcademicaId)?.Nota ?? 0;
-                }
-                worksheet.Cell(filaActual, columnaReposicion).Value = notaReposicion;
+                // Usar la nota de recuperación del registro (campo NotaRecuperacion)
+                decimal notaRecuperacion = materiaInscrita.NotaRecuperacion ?? 0;
+                worksheet.Cell(filaActual, columnaReposicion).Value = notaRecuperacion;
                 worksheet.Cell(filaActual, columnaReposicion).Style.NumberFormat.Format = "0.00";
 
-                var notaFinal = materiaInscrita.NotaPromedio > 0 ? materiaInscrita.NotaPromedio : totalPuntos;
-                if (notaReposicion > notaFinal)
-                {
-                    notaFinal = notaReposicion;
-                }
+                // Si hay nota de recuperación, esa es la nota final; si no, usar el promedio
+                var notaFinal = materiaInscrita.NotaRecuperacion.HasValue 
+                    ? materiaInscrita.NotaRecuperacion.Value 
+                    : (materiaInscrita.NotaPromedio > 0 ? materiaInscrita.NotaPromedio : totalPuntos);
 
                 var notaFinalRedondeada = Math.Round(notaFinal * 10m, 0, MidpointRounding.AwayFromZero) / 10m;
                 worksheet.Cell(filaActual, columnaNotaFinal).Value = notaFinalRedondeada;
                 worksheet.Cell(filaActual, columnaNotaFinal).Style.NumberFormat.Format = "0.00";
 
-                // worksheet.Cell(filaActual, columnaObservaciones).Value = notaFinal >= 6 ? "APROBADO" : "REPROBADO";
                 filaActual++;
             }
 
@@ -755,7 +749,9 @@ namespace SRAUMOAR.Pages.administracion
                 if (alumno == null) continue;
 
                 bool esMasculino = alumno.Genero == 0; // 0 = Masculino, 1 = Femenino
-                bool aprobado = mi.NotaPromedio >= 6;
+                // Si hay nota de recuperación, esa determina si aprobó (nota mínima 7)
+                var notaFinal = mi.NotaRecuperacion ?? mi.NotaPromedio;
+                bool aprobado = notaFinal >= 7;
 
                 if (aprobado)
                 {

@@ -124,6 +124,37 @@ namespace SRAUMOAR.Pages.materiasGrupo
             }
         }
 
+        public async Task<IActionResult> OnPostGuardarRecuperacionAsync(int materiaInscritaId, decimal notaRecuperacion, int idgrupo)
+        {
+            var materiaInscrita = await _context.MateriasInscritas
+                .FirstOrDefaultAsync(m => m.MateriasInscritasId == materiaInscritaId);
+
+            if (materiaInscrita == null)
+            {
+                return NotFound("No se encontró la materia inscrita.");
+            }
+
+            // Validar que la nota esté en rango válido
+            if (notaRecuperacion < 0 || notaRecuperacion > 10)
+            {
+                TempData["Error"] = "La nota de recuperación debe estar entre 0 y 10.";
+                return RedirectToPage(new { id = idgrupo });
+            }
+
+            // Guardar la nota de recuperación
+            materiaInscrita.NotaRecuperacion = notaRecuperacion;
+            materiaInscrita.FechaRecuperacion = DateTime.Now;
+
+            // Si hay nota de recuperación, esa es la nota final para determinar si aprobó
+            materiaInscrita.Aprobada = notaRecuperacion >= 7;
+
+            _context.MateriasInscritas.Update(materiaInscrita);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Nota de recuperación guardada correctamente.";
+            return RedirectToPage(new { id = idgrupo });
+        }
+
         public async Task<IActionResult> OnGetExportarExcelAsync(int id)
         {
             var cicloactual = await _context.Ciclos.Where(x => x.Activo == true).FirstAsync();
@@ -403,20 +434,15 @@ namespace SRAUMOAR.Pages.materiasGrupo
                 worksheet.Cell(filaActual, columnaTotal).Value = Math.Round(totalPuntos, 2);
                 worksheet.Cell(filaActual, columnaTotal).Style.NumberFormat.Format = "0.00";
 
-                decimal notaReposicion = 0;
-                if (actividadReposicion != null)
-                {
-                    notaReposicion = materiaInscrita.Notas?
-                        .FirstOrDefault(n => n.ActividadAcademicaId == actividadReposicion.ActividadAcademicaId)?.Nota ?? 0;
-                }
-                worksheet.Cell(filaActual, columnaReposicion).Value = notaReposicion;
+                // Usar la nota de recuperación del registro (campo NotaRecuperacion)
+                decimal notaRecuperacion = materiaInscrita.NotaRecuperacion ?? 0;
+                worksheet.Cell(filaActual, columnaReposicion).Value = notaRecuperacion;
                 worksheet.Cell(filaActual, columnaReposicion).Style.NumberFormat.Format = "0.00";
 
-                var notaFinal = materiaInscrita.NotaPromedio > 0 ? materiaInscrita.NotaPromedio : totalPuntos;
-                if (notaReposicion > notaFinal)
-                {
-                    notaFinal = notaReposicion;
-                }
+                // Si hay nota de recuperación, esa es la nota final; si no, usar el promedio
+                var notaFinal = materiaInscrita.NotaRecuperacion.HasValue 
+                    ? materiaInscrita.NotaRecuperacion.Value 
+                    : (materiaInscrita.NotaPromedio > 0 ? materiaInscrita.NotaPromedio : totalPuntos);
 
                 var notaFinalRedondeada = Math.Round(notaFinal * 10m, 0, MidpointRounding.AwayFromZero) / 10m;
                 worksheet.Cell(filaActual, columnaNotaFinal).Value = notaFinalRedondeada;
@@ -523,7 +549,9 @@ namespace SRAUMOAR.Pages.materiasGrupo
                 if (alumno == null) continue;
 
                 bool esMasculino = alumno.Genero == 0;
-                bool aprobado = mi.NotaPromedio >= 6;
+                // Si hay nota de recuperación, esa determina si aprobó
+                var notaFinal = mi.NotaRecuperacion ?? mi.NotaPromedio;
+                bool aprobado = notaFinal >= 7;
 
                 if (aprobado)
                 {

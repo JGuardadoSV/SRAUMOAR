@@ -33,6 +33,16 @@ namespace SRAUMOAR.Entidades.Procesos
         //columna para guardar si esta aprovada
         public bool Aprobada { get; set; } = false;
 
+        // Nota de recuperación específica para esta materia inscrita
+        [Display(Name = "Nota de Recuperación")]
+        [Range(0, 10, ErrorMessage = "La nota de recuperación debe estar entre 0 y 10")]
+        [Column(TypeName = "decimal(5,2)")]
+        public decimal? NotaRecuperacion { get; set; }
+
+        [Display(Name = "Fecha de Recuperación")]
+        [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true)]
+        public DateTime? FechaRecuperacion { get; set; }
+
         //propiedad de navegacion con notas
         public virtual ICollection<Notas>? Notas { get; set; }
 
