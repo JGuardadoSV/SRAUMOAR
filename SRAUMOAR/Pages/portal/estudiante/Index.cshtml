@@ -294,7 +294,26 @@
                                                 }
                                                 else
                                                 {
-                                                    <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalNotas_@materia.MateriasInscritasId">
+                                                    var notasData = (materia.Notas ?? Enumerable.Empty<SRAUMOAR.Entidades.Procesos.Notas>())
+                                                        .OrderBy(x => x.ActividadAcademica != null ? x.ActividadAcademica.FechaInicio : DateTime.MaxValue)
+                                                        .Select(n => new {
+                                                            actividad = n.ActividadAcademica?.Nombre ?? "-",
+                                                            tipo = n.ActividadAcademica?.GetNombreTipo() ?? "-",
+                                                            porcentaje = n.ActividadAcademica?.Porcentaje ?? 0,
+                                                            nota = n.Nota,
+                                                            fecha = n.FechaRegistro.ToString("dd/MM/yyyy")
+                                                        }).ToList();
+
+                                                    var notasJson = System.Text.Json.JsonSerializer.Serialize(notasData);
+
+                                                    <button type="button"
+                                                            class="btn btn-outline-primary btn-sm ver-notas-btn"
+                                                            data-materia-nombre="@materia.MateriasGrupo.Materia.NombreMateria"
+                                                            data-grupo-nombre="@materia.MateriasGrupo.Grupo.Nombre"
+                                                            data-promedio="@materia.NotaPromedio.ToString("N2")"
+                                                            data-notas='@Html.Raw(notasJson)'
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#modalNotasDinamico">
                                                         Ver notas
                                                     </button>
                                                 }
@@ -303,66 +322,6 @@
                                     }
                                 </tbody>
                             </table>
-                            @* Renderizar modales fuera de la tabla para evitar problemas de maquetado *@
-                            @foreach (var materia in Model.MateriasInscritas)
-                            {
-                                <div class="modal fade" id="modalNotas_@materia.MateriasInscritasId" tabindex="-1" aria-labelledby="modalNotasLabel_@materia.MateriasInscritasId" aria-hidden="true">
-                                    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title" id="modalNotasLabel_@materia.MateriasInscritasId">
-                                                    Notas - @materia.MateriasGrupo.Materia.NombreMateria (@materia.MateriasGrupo.Grupo.Nombre)
-                                                </h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                                    <span class="fw-semibold text-muted">Promedio acumulado</span>
-                                                    <span class="badge bg-primary rounded-pill px-3 py-2 fs-6">
-                                                        @(materia.NotaPromedio.ToString("N2") ?? "N/A")
-                                                    </span>
-                                                </div>
-                                                <hr class="text-muted" />
-                                                @if (materia.Notas != null && materia.Notas.Any())
-                                                {
-                                                    <div class="table-responsive">
-                                                        <table class="table table-sm align-middle">
-                                                            <thead class="table-light">
-                                                                <tr>
-                                                                    <th>Actividad</th>
-                                                                    <th>Tipo</th>
-                                                                    <th class="text-center">Porcentaje</th>
-                                                                    <th class="text-center">Nota</th>
-                                                                    <th class="text-center">Fecha registro</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                @foreach (var n in (materia.Notas?.OrderBy(x => x.ActividadAcademica != null ? x.ActividadAcademica.FechaInicio : DateTime.MaxValue) ?? Enumerable.Empty<SRAUMOAR.Entidades.Procesos.Notas>()))
-                                                                {
-                                                                    <tr>
-                                                                        <td>@(n.ActividadAcademica?.Nombre ?? "-")</td>
-                                                                        <td>@(n.ActividadAcademica?.GetNombreTipo() ?? "-")</td>
-                                                                        <td class="text-center">@(n.ActividadAcademica?.Porcentaje ?? 0)%</td>
-                                                                        <td class="text-center">@n.Nota.ToString("N1")</td>
-                                                                        <td class="text-center">@n.FechaRegistro.ToString("dd/MM/yyyy")</td>
-                                                                    </tr>
-                                                                }
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                }
-                                                else
-                                                {
-                                                    <div class="text-center text-muted">Sin notas registradas.</div>
-                                                }
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            }
                     </div>
                 </div>
             </div>
@@ -567,6 +526,35 @@
 
  </div>
 
+<!-- Modal Dinámico para Ver Notas (Único) -->
+<div class="modal fade" id="modalNotasDinamico" tabindex="-1" aria-labelledby="modalNotasDinamicoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalNotasDinamicoLabel">
+                    Notas - <span id="modalMateriaNombre"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="fw-semibold text-muted">Promedio acumulado</span>
+                    <span class="badge bg-primary rounded-pill px-3 py-2 fs-6" id="modalPromedio">
+                        0.00
+                    </span>
+                </div>
+                <hr class="text-muted" />
+                <div id="modalNotasContainer">
+                    <!-- Las notas se cargarán dinámicamente aquí -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal para editar foto -->
 <div class="modal fade" id="editarFotoModal" tabindex="-1" aria-labelledby="editarFotoModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -652,6 +640,83 @@
         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
+    });
+
+    // Funcionalidad para el modal dinámico de notas
+    document.addEventListener('DOMContentLoaded', function() {
+        const modalNotasDinamico = document.getElementById('modalNotasDinamico');
+
+        if (modalNotasDinamico) {
+            modalNotasDinamico.addEventListener('show.bs.modal', function (event) {
+                // Botón que activó el modal
+                const button = event.relatedTarget;
+
+                // Extraer datos de los atributos data-*
+                const materiaNombre = button.getAttribute('data-materia-nombre');
+                const grupoNombre = button.getAttribute('data-grupo-nombre');
+                const promedio = button.getAttribute('data-promedio');
+                const notasJson = button.getAttribute('data-notas');
+
+                // Actualizar el contenido del modal
+                document.getElementById('modalMateriaNombre').textContent = `${materiaNombre} (${grupoNombre})`;
+                document.getElementById('modalPromedio').textContent = promedio;
+
+                // Parsear y renderizar las notas
+                const notasContainer = document.getElementById('modalNotasContainer');
+
+                try {
+                    const notas = JSON.parse(notasJson);
+
+                    if (notas && notas.length > 0) {
+                        // Crear tabla de notas
+                        let tableHtml = `
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Actividad</th>
+                                            <th>Tipo</th>
+                                            <th class="text-center">Porcentaje</th>
+                                            <th class="text-center">Nota</th>
+                                            <th class="text-center">Fecha registro</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                        `;
+
+                        notas.forEach(function(nota) {
+                            tableHtml += `
+                                <tr>
+                                    <td>${nota.actividad}</td>
+                                    <td>${nota.tipo}</td>
+                                    <td class="text-center">${nota.porcentaje}%</td>
+                                    <td class="text-center">${nota.nota.toFixed(1)}</td>
+                                    <td class="text-center">${nota.fecha}</td>
+                                </tr>
+                            `;
+                        });
+
+                        tableHtml += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
+
+                        notasContainer.innerHTML = tableHtml;
+                    } else {
+                        notasContainer.innerHTML = '<div class="text-center text-muted">Sin notas registradas.</div>';
+                    }
+                } catch (error) {
+                    console.error('Error al parsear las notas:', error);
+                    notasContainer.innerHTML = '<div class="text-center text-danger">Error al cargar las notas.</div>';
+                }
+            });
+
+            // Limpiar el contenido al cerrar el modal (optimización para móvil)
+            modalNotasDinamico.addEventListener('hidden.bs.modal', function () {
+                document.getElementById('modalNotasContainer').innerHTML = '<div class="text-center text-muted"><i class="bi bi-hourglass-split"></i> Cargando...</div>';
+            });
+        }
     });
 
     // Funcionalidad para actualizar foto
@@ -1105,15 +1170,90 @@
             align-items: flex-start;
             gap: 0.75rem;
         }
-        
+
         .arancel-actions-compact {
             align-items: flex-start;
             flex-direction: row;
             gap: 0.5rem;
         }
-        
+
         .arancel-details {
             gap: 0.5rem;
         }
+    }
+</style>
+
+<style>
+    /* Optimizaciones para dispositivos móviles - Modal Dinámico */
+    #modalNotasDinamico .modal-dialog {
+        /* Evitar scroll complejo en móvil */
+        max-height: 90vh;
+    }
+
+    #modalNotasDinamico .modal-body {
+        /* Optimizar scroll en móvil */
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        max-height: 60vh;
+    }
+
+    /* Mejora de rendimiento general */
+    #modalNotasDinamico {
+        /* Usar aceleración por hardware */
+        transform: translateZ(0);
+        backface-visibility: hidden;
+        perspective: 1000px;
+    }
+
+    #modalNotasDinamico .modal-content {
+        /* Optimizar renderizado */
+        will-change: transform;
+    }
+
+    /* Optimización de tabla en móvil */
+    #modalNotasDinamico .table-responsive {
+        /* Scroll suave en móvil */
+        -webkit-overflow-scrolling: touch;
+        overflow-x: auto;
+    }
+
+    /* Reducir complejidad visual en móvil para mejor rendimiento */
+    @@media (max-width: 768px) {
+        #modalNotasDinamico .modal-dialog {
+            margin: 0.5rem;
+            max-width: calc(100% - 1rem);
+        }
+
+        #modalNotasDinamico .modal-body {
+            padding: 0.75rem;
+        }
+
+        #modalNotasDinamico .table {
+            font-size: 0.85rem;
+        }
+
+        #modalNotasDinamico .table th,
+        #modalNotasDinamico .table td {
+            padding: 0.5rem 0.25rem;
+        }
+
+        /* Simplificar animaciones en móvil */
+        #modalNotasDinamico.modal.fade .modal-dialog {
+            transition: transform 0.2s ease-out;
+        }
+    }
+
+    /* Prevenir reflow innecesario */
+    .ver-notas-btn {
+        /* Mantener tamaño fijo para evitar reflow */
+        min-width: 85px;
+    }
+
+    /* Loading state optimizado */
+    #modalNotasContainer {
+        min-height: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 </style>
