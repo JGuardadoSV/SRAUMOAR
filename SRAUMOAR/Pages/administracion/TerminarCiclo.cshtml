@@ -1,0 +1,311 @@
+@page
+@model SRAUMOAR.Pages.administracion.TerminarCicloModel
+
+@{
+    ViewData["Title"] = "Terminar Ciclo";
+}
+
+<style>
+    .bg-gradient-admin {
+        background: linear-gradient(90deg, #e3f2fd 0%, #f8f9fa 100%);
+    }
+    .icon-circle {
+        width: 70px;
+        height: 70px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-size: 2rem;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+    .table-modern th, .table-modern td {
+        vertical-align: middle;
+        border-top: none;
+    }
+    .table-modern thead th {
+        border-bottom: 2px solid #1976d2;
+        font-size: 0.9rem;
+        letter-spacing: 0.03em;
+        padding: 0.5rem;
+    }
+    .table-modern tbody td {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+    }
+    .col-carrera {
+        max-width: 200px;
+        width: 200px;
+        word-wrap: break-word;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+    .table-modern tbody tr {
+        transition: background 0.15s;
+    }
+    .table-modern tbody tr:hover {
+        background: #e3f2fd;
+    }
+    .badge-solvente {
+        background-color: #28a745;
+        color: white;
+        padding: 0.35em 0.65em;
+        border-radius: 0.25rem;
+    }
+    .badge-no-solvente {
+        background-color: #dc3545;
+        color: white;
+        padding: 0.35em 0.65em;
+        border-radius: 0.25rem;
+    }
+</style>
+
+<div class="container py-3">
+    <div class="row justify-content-center mb-3">
+        <div class="col-lg-12">
+            <div class="bg-gradient-admin rounded shadow p-3 text-center">
+                <div class="d-flex align-items-center justify-content-center gap-3">
+                    <i class="bi bi-calendar-check-fill text-primary" style="font-size: 2rem;"></i>
+                    <div>
+                        <h3 class="fw-bold mb-0 text-primary">Terminar Ciclo Académico</h3>
+                        @if (Model.CicloActual != null)
+                        {
+                            <small class="text-muted">Ciclo: @Model.CicloActual.NCiclo-@Model.CicloActual.anio</small>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @Html.AntiForgeryToken()
+    
+    @if (Model.CicloActual == null)
+    {
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            No hay un ciclo activo en el sistema.
+        </div>
+    }
+    else
+    {
+        <div class="row mb-3">
+            <div class="col-md-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white py-2">
+                        <h6 class="mb-0">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Resumen del Ciclo
+                        </h6>
+                    </div>
+                    <div class="card-body py-2">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <small><strong>Ciclo:</strong> @Model.CicloActual.NCiclo-@Model.CicloActual.anio</small><br>
+                                <small><strong>Inicio:</strong> @Model.CicloActual.FechaInicio.ToString("dd/MM/yyyy")</small><br>
+                                <small><strong>Fin:</strong> @Model.CicloActual.FechaFin.ToString("dd/MM/yyyy")</small>
+                            </div>
+                            <div class="col-md-3">
+                                <small><strong>Total Materias:</strong> @Model.Materias.Count</small><br>
+                                <small><strong>Solventes:</strong> <span class="text-success">@Model.Materias.Count(m => m.Solvente)</span></small><br>
+                                <small><strong>No Solventes:</strong> <span class="text-danger">@Model.Materias.Count(m => !m.Solvente)</span></small>
+                            </div>
+                            <div class="col-md-3">
+                                <small><strong>Total Alumnos:</strong> @Model.TotalAlumnos</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white py-2">
+                        <h6 class="mb-0">
+                            <i class="bi bi-list-check me-2"></i>
+                            Estado de Solvencia de Materias
+                        </h6>
+                    </div>
+                    <div class="card-body py-2">
+                        @if (Model.Materias.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-modern table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th class="col-carrera">Carrera</th>
+                                            <th>Materia</th>
+                                            <th>Grupo</th>
+                                            <th class="text-center">Estado</th>
+                                            <th class="text-center">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var materia in Model.Materias.OrderBy(m => m.NombreCarrera).ThenBy(m => m.NombreGrupo).ThenBy(m => m.NombreMateria))
+                                        {
+                                            <tr>
+                                                <td class="col-carrera">@materia.NombreCarrera</td>
+                                                <td>@materia.NombreMateria</td>
+                                                <td>@materia.NombreGrupo</td>
+                                                <td class="text-center">
+                                                    <input type="checkbox" class="form-check-input solvente-checkbox-terminar" 
+                                                           data-materias-grupo-id="@materia.MateriasGrupoId" 
+                                                           @(materia.Solvente ? "checked" : "") />
+                                                    <br>
+                                                    <small>
+                                                        @if (materia.Solvente)
+                                                        {
+                                                            <span class="text-success">
+                                                                <i class="bi bi-check-circle me-1"></i>Solvente
+                                                            </span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="text-danger">
+                                                                <i class="bi bi-x-circle me-1"></i>No Solvente
+                                                            </span>
+                                                        }
+                                                    </small>
+                                                </td>
+                                                <td class="text-center">
+                                                    <a asp-page="/administracion/EditarNotasGrupo" 
+                                                       asp-route-grupoId="@materia.GrupoId" 
+                                                       class="btn btn-sm btn-primary" 
+                                                       title="Revisar notas">
+                                                        <i class="bi bi-clipboard-check me-1"></i>
+                                                        Ver Notas
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted text-center mb-0">No hay materias registradas en este ciclo.</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card shadow-sm border-warning">
+                    <div class="card-header bg-warning text-dark py-2">
+                        <h6 class="mb-0">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            Proceso de Terminación de Ciclo
+                        </h6>
+                    </div>
+                    <div class="card-body py-2">
+                        <div class="alert alert-info py-2 mb-2">
+                            <small><strong><i class="bi bi-info-circle me-1"></i>Instrucciones:</strong> Verifique que todas las materias estén marcadas como <strong>Solventes</strong> antes de proceder. Este proceso creará o actualizará el historial académico de todos los alumnos del ciclo y es <strong>irreversible</strong>.</small>
+                        </div>
+
+                        @if (Model.Materias.Any(m => !m.Solvente))
+                        {
+                            <div class="alert alert-danger py-2 mb-2">
+                                <small><i class="bi bi-x-circle me-1"></i><strong>No se puede terminar el ciclo:</strong> Hay @Model.Materias.Count(m => !m.Solvente) materia(s) que no están marcadas como solventes. Marque todas las materias como solventes en la página de edición de grupos antes de continuar.</small>
+                            </div>
+                        }
+
+                        <form method="post" asp-page-handler="TerminarCiclo" onsubmit="return confirmarTerminacion();">
+                            <div class="text-center">
+                                <button type="submit" 
+                                        class="btn btn-success @(Model.Materias.Any(m => !m.Solvente) ? "disabled" : "")" 
+                                        @(Model.Materias.Any(m => !m.Solvente) ? "disabled" : "")>
+                                    <i class="bi bi-check-circle me-2"></i>
+                                    Terminar Ciclo y Alimentar Historial
+                                </button>
+                                <a asp-page="/administracion/EditarNotas" class="btn btn-secondary ms-2">
+                                    <i class="bi bi-arrow-left me-2"></i>
+                                    Volver
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        function confirmarTerminacion() {
+            return confirm('¿Está seguro de que desea terminar el ciclo? Este proceso creará o actualizará el historial académico de todos los alumnos. Esta acción no se puede deshacer.');
+        }
+
+        // Manejar cambio de checkbox de solvencia en la página de terminar ciclo
+        jQuery(document).ready(function() {
+            jQuery('.solvente-checkbox-terminar').on('change', function() {
+                var materiasGrupoId = jQuery(this).data('materias-grupo-id');
+                var esSolvente = jQuery(this).is(':checked');
+                var checkbox = jQuery(this);
+                
+                jQuery.ajax({
+                    url: '?handler=MarcarSolvente',
+                    type: 'POST',
+                    data: jQuery.param({
+                        materiasGrupoId: materiasGrupoId,
+                        solvente: esSolvente
+                    }),
+                    contentType: 'application/x-www-form-urlencoded',
+                    dataType: 'json',
+                    success: function(result) {
+                        if (result && result.success) {
+                            // Actualizar el texto del estado
+                            var smallElement = checkbox.closest('td').find('small');
+                            if (esSolvente) {
+                                smallElement.html('<span class="text-success"><i class="bi bi-check-circle me-1"></i>Solvente</span>');
+                            } else {
+                                smallElement.html('<span class="text-danger"><i class="bi bi-x-circle me-1"></i>No Solvente</span>');
+                            }
+                            // Recargar la página para actualizar el resumen
+                            setTimeout(function() {
+                                window.location.reload();
+                            }, 500);
+                        } else {
+                            alert(result ? (result.message || 'Error al actualizar el estado de solvencia') : 'Error desconocido');
+                            // Revertir el checkbox
+                            checkbox.prop('checked', !esSolvente);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error AJAX:', {xhr: xhr, status: status, error: error});
+                        console.error('Response Text:', xhr.responseText);
+                        console.error('Request URL:', '?handler=MarcarSolvente');
+                        console.error('Request Data:', {materiasGrupoId: materiasGrupoId, solvente: esSolvente});
+                        alert('Error técnico al actualizar el estado. Por favor, recargue la página e intente nuevamente.');
+                        // Revertir el checkbox
+                        checkbox.prop('checked', !esSolvente);
+                    }
+                });
+            });
+        });
+    </script>
+}
+

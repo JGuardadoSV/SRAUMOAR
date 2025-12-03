@@ -242,6 +242,28 @@ namespace SRAUMOAR.Pages.grupos
             }
         }
 
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> OnPostMarcarSolventeAsync(int materiasGrupoId, bool solvente)
+        {
+            try
+            {
+                var materiaGrupo = await _context.MateriasGrupo.FindAsync(materiasGrupoId);
+                if (materiaGrupo == null)
+                {
+                    return new JsonResult(new { success = false, message = "No se encontró la materia del grupo." });
+                }
+
+                materiaGrupo.Solvente = solvente;
+                await _context.SaveChangesAsync();
+
+                return new JsonResult(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return new JsonResult(new { success = false, message = "Error al actualizar el estado de solvencia: " + ex.Message });
+            }
+        }
+
         private bool GrupoExists(int id)
         {
             return _context.Grupo.Any(e => e.GrupoId == id);

@@ -156,6 +156,7 @@
                                 <th>@Html.DisplayNameFor(model => model.ListadoMateriasGrupo[0].Docente)</th>
                                 <th>Horario</th>
                                 <th>Inscritos</th>
+                                <th>Solvente</th>
                                 <th></th>
                                 <th></th>
                             </tr>
@@ -169,6 +170,11 @@
                                     <td>@Html.DisplayFor(modelItem => item.Docente.Nombres) @Html.DisplayFor(modelItem => item.Docente.Apellidos)</td>
                                     <td>@Html.DisplayFor(m => item.Dia) @item.FormatearHora12Horas(item.HoraInicio) - @item.FormatearHora12Horas(item.HoraFin)</td>
                                     <td>@Html.DisplayFor(modelItem => item.TotalInscritos)</td>
+                                    <td class="text-center">
+                                        <input type="checkbox" class="form-check-input solvente-checkbox" 
+                                               data-materias-grupo-id="@item.MateriasGrupoId" 
+                                               @(item.Solvente ? "checked" : "") />
+                                    </td>
                                     <td class="text-center">
                                         <button type="button" class="btn btn-warning edit-btn"
                                                 data-id="@item.MateriasGrupoId"
@@ -381,6 +387,36 @@
                     },
                     error: function(xhr) {
                         alert('Error técnico: ' + xhr.responseText);
+                    }
+                });
+            });
+
+            // Manejar cambio de checkbox de solvencia
+            $('.solvente-checkbox').on('change', function() {
+                var materiasGrupoId = $(this).data('materias-grupo-id');
+                var esSolvente = $(this).is(':checked');
+                
+                $.ajax({
+                    url: '?handler=MarcarSolvente',
+                    type: 'POST',
+                    data: {
+                        materiasGrupoId: materiasGrupoId,
+                        solvente: esSolvente
+                    },
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(result) {
+                        if (!result.success) {
+                            alert(result.message || 'Error al actualizar el estado de solvencia');
+                            // Revertir el checkbox
+                            $('.solvente-checkbox[data-materias-grupo-id="' + materiasGrupoId + '"]').prop('checked', !esSolvente);
+                        }
+                    },
+                    error: function(xhr) {
+                        alert('Error técnico: ' + xhr.responseText);
+                        // Revertir el checkbox
+                        $('.solvente-checkbox[data-materias-grupo-id="' + materiasGrupoId + '"]').prop('checked', !esSolvente);
                     }
                 });
             });

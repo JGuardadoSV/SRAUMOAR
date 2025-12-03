@@ -83,6 +83,9 @@ namespace SRAUMOAR.Entidades.Procesos
 
         public string FormatearHora12Horas(TimeSpan hora) { DateTime dt = DateTime.Today.Add(hora); return dt.ToString("hh:mm tt"); }
 
+        [Display(Name = "Solvente")]
+        public bool Solvente { get; set; }
+
         //propiedad de navegacion MateriasInscritas
         public virtual ICollection<MateriasInscritas>? MateriasInscritas { get; set; }
 

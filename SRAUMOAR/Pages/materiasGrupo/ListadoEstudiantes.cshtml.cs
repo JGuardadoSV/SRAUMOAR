@@ -17,6 +17,7 @@ using SRAUMOAR.Modelos;
 
 namespace SRAUMOAR.Pages.materiasGrupo
 {
+    [IgnoreAntiforgeryToken]
     public class ListadoEstudiantesModel : PageModel
     {
         private readonly SRAUMOAR.Modelos.Contexto _context;
@@ -35,6 +36,8 @@ namespace SRAUMOAR.Pages.materiasGrupo
         public string NombreMateria { get; set; } = default!;
         public bool lista { get; set; }
         public int idgrupo { get; set; } = default!;
+        public int MateriasGrupoId { get; set; }
+        public bool Solvente { get; set; }
 
         // Método para calcular el promedio correctamente
         private static decimal CalcularPromedioMateriaComun(ICollection<Notas> notas, IList<ActividadAcademica> actividadesAcademicas)
@@ -84,14 +87,24 @@ namespace SRAUMOAR.Pages.materiasGrupo
                 "Id",
                 "Descripcion"
             );
-            Grupo = await _context.MateriasGrupo
+            var materiaGrupo = await _context.MateriasGrupo
                 .Include(g => g.Grupo)
                     .ThenInclude(g => g.Carrera)
                 .Include(g => g.Grupo)
                     .ThenInclude(g => g.Docente)
                 .Where(mg => mg.MateriasGrupoId == id)
-                .Select(mg => mg.Grupo)
-                .FirstOrDefaultAsync() ?? new Grupo();
+                .FirstOrDefaultAsync();
+            
+            if (materiaGrupo != null)
+            {
+                Grupo = materiaGrupo.Grupo ?? new Grupo();
+                MateriasGrupoId = materiaGrupo.MateriasGrupoId;
+                Solvente = materiaGrupo.Solvente;
+            }
+            else
+            {
+                Grupo = new Grupo();
+            }
 
             MateriasInscritas = await _context.MateriasInscritas
                 .Include(m => m.Alumno)
@@ -121,6 +134,38 @@ namespace SRAUMOAR.Pages.materiasGrupo
             if (hayCambios)
             {
                 await _context.SaveChangesAsync();
+            }
+        }
+
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> OnPostMarcarSolventeAsync()
+        {
+            try
+            {
+                if (!int.TryParse(Request.Form["materiasGrupoId"].ToString(), out int materiasGrupoId))
+                {
+                    return new JsonResult(new { success = false, message = "Parámetro materiasGrupoId inválido." });
+                }
+
+                if (!bool.TryParse(Request.Form["solvente"].ToString(), out bool solvente))
+                {
+                    return new JsonResult(new { success = false, message = "Parámetro solvente inválido." });
+                }
+
+                var materiaGrupo = await _context.MateriasGrupo.FindAsync(materiasGrupoId);
+                if (materiaGrupo == null)
+                {
+                    return new JsonResult(new { success = false, message = "No se encontró la materia del grupo." });
+                }
+
+                materiaGrupo.Solvente = solvente;
+                await _context.SaveChangesAsync();
+
+                return new JsonResult(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return new JsonResult(new { success = false, message = "Error al actualizar el estado de solvencia: " + ex.Message });
             }
         }
 

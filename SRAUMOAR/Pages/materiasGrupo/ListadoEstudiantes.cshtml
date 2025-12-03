@@ -60,9 +60,32 @@
                 </div>
             </div>
 
-            <!-- Botón de Exportar Excel -->
+            <!-- Estado Solvente y Botón de Exportar Excel -->
             <div class="row mb-3">
-                <div class="col-12 text-end">
+                <div class="col-md-6">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input solvente-checkbox-listado" 
+                               type="checkbox" 
+                               id="solvente-@Model.MateriasGrupoId" 
+                               data-materias-grupo-id="@Model.MateriasGrupoId" 
+                               @(Model.Solvente ? "checked" : "")>
+                        <label class="form-check-label fw-bold" for="solvente-@Model.MateriasGrupoId">
+                            <i class="bi bi-check-circle me-1"></i>
+                            Materia Solvente
+                        </label>
+                        <small class="d-block text-muted">
+                            @if (Model.Solvente)
+                            {
+                                <span class="text-success">La materia está marcada como solvente (todas las notas y procesos están completos)</span>
+                            }
+                            else
+                            {
+                                <span class="text-danger">La materia no está marcada como solvente</span>
+                            }
+                        </small>
+                    </div>
+                </div>
+                <div class="col-md-6 text-end">
                     <a asp-page="./ListadoEstudiantes" asp-page-handler="ExportarExcel" asp-route-id="@Model.idgrupo" 
                        class="btn btn-success">
                         <i class="bi bi-file-earmark-excel me-1"></i>
@@ -262,6 +285,47 @@
                 document.getElementById('materiaInscritaId').value = id;
                 document.getElementById('nombreEstudiante').textContent = nombre;
                 document.getElementById('notaRecuperacion').value = nota;
+            });
+
+            // Manejar cambio de checkbox de solvencia
+            jQuery('.solvente-checkbox-listado').on('change', function() {
+                var materiasGrupoId = jQuery(this).data('materias-grupo-id');
+                var esSolvente = jQuery(this).is(':checked');
+                var checkbox = jQuery(this);
+                
+                jQuery.ajax({
+                    url: '?handler=MarcarSolvente',
+                    type: 'POST',
+                    data: jQuery.param({
+                        materiasGrupoId: materiasGrupoId,
+                        solvente: esSolvente
+                    }),
+                    contentType: 'application/x-www-form-urlencoded',
+                    dataType: 'json',
+                    success: function(result) {
+                        if (result && result.success) {
+                            // Actualizar el texto del estado
+                            var label = checkbox.next('label');
+                            var small = label.next('small');
+                            if (esSolvente) {
+                                small.html('<span class="text-success">La materia está marcada como solvente (todas las notas y procesos están completos)</span>');
+                            } else {
+                                small.html('<span class="text-danger">La materia no está marcada como solvente</span>');
+                            }
+                        } else {
+                            alert(result ? (result.message || 'Error al actualizar el estado de solvencia') : 'Error desconocido');
+                            // Revertir el checkbox
+                            checkbox.prop('checked', !esSolvente);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error AJAX:', {xhr: xhr, status: status, error: error});
+                        console.error('Response Text:', xhr.responseText);
+                        alert('Error técnico al actualizar el estado. Por favor, recargue la página e intente nuevamente.');
+                        // Revertir el checkbox
+                        checkbox.prop('checked', !esSolvente);
+                    }
+                });
             });
         });
     </script>
