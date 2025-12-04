@@ -2,53 +2,356 @@
 @model SRAUMOAR.Pages.grupos.DetailsModel
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Detalle del Grupo";
 }
 
-<h1>Detalle del Grupo</h1>
+<style>
+    .header-gradient {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 1.5rem 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 15px rgba(30, 60, 114, 0.3);
+    }
+    .header-gradient h1 {
+        margin: 0;
+        font-weight: 600;
+        letter-spacing: -0.5px;
+    }
+    .header-gradient .badge-ciclo {
+        background: rgba(255,255,255,0.2);
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+    }
+    .info-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .info-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    }
+    .info-item {
+        padding: 1rem;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .info-item:last-child {
+        border-bottom: none;
+    }
+    .info-item .label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #6c757d;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+    .info-item .value {
+        font-size: 1rem;
+        font-weight: 500;
+        color: #2c3e50;
+    }
+    .materia-card {
+        border: none;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        margin-bottom: 1.5rem;
+    }
+    .materia-header {
+        background: linear-gradient(90deg, #f8f9fa 0%, #e9ecef 100%);
+        border-left: 4px solid #1e3c72;
+        padding: 1rem 1.25rem;
+    }
+    .materia-header h5 {
+        margin: 0;
+        color: #1e3c72;
+        font-weight: 600;
+    }
+    .table-notas {
+        margin: 0;
+    }
+    .table-notas thead {
+        background: #f8f9fa;
+    }
+    .table-notas thead th {
+        border: none;
+        padding: 0.875rem 0.75rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #495057;
+    }
+    .table-notas tbody tr {
+        transition: background 0.15s;
+    }
+    .table-notas tbody tr:hover {
+        background: #f0f7ff;
+    }
+    .table-notas tbody td {
+        padding: 0.75rem;
+        vertical-align: middle;
+        border-color: #f0f0f0;
+    }
+    .nota-cell {
+        font-weight: 500;
+        font-size: 0.95rem;
+    }
+    .nota-alta {
+        color: #28a745;
+    }
+    .nota-media {
+        color: #ffc107;
+    }
+    .nota-baja {
+        color: #dc3545;
+    }
+    .nota-final {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        color: white;
+        font-weight: 600;
+        border-radius: 6px;
+        padding: 0.35rem 0.75rem;
+        display: inline-block;
+        min-width: 50px;
+    }
+    .nota-final.aprobado {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    }
+    .nota-final.reprobado {
+        background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+    }
+    .btn-preview {
+        padding: 0.35rem 0.75rem;
+        font-size: 0.8rem;
+        border-radius: 6px;
+        transition: all 0.2s;
+    }
+    .btn-preview:hover {
+        transform: scale(1.05);
+    }
+    .estudiante-nombre {
+        font-weight: 500;
+        color: #2c3e50;
+    }
+    .section-title {
+        color: #1e3c72;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e9ecef;
+    }
+    .action-buttons {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e9ecef;
+    }
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        background: #f8f9fa;
+        border-radius: 12px;
+    }
+    .empty-state i {
+        font-size: 3rem;
+        color: #adb5bd;
+        margin-bottom: 1rem;
+    }
+</style>
 
-<div>
-    <h4>Grupo</h4>
-    <hr />
-    <dl class="row">
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Grupo.Limite)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Grupo.Limite)
-        </dd>
-        <dt class="col-sm-2">
-            Código
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Grupo.Nombre)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Grupo.Activo)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Grupo.Activo)
-        </dd>
-        <dt class="col-sm-2">
-            Carrera
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Grupo.Carrera.NombreCarrera)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Grupo.Ciclo)
-        </dt>
-        <dd class="col-sm-10">
-            @Model.Grupo.Ciclo.NCiclo-@Model.Grupo.Ciclo.anio
-        </dd>
-        <dt class="col-sm-2">
-            Docente encargado
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Grupo.Docente.Apellidos)
-        </dd>
-    </dl>
+<!-- Header con gradiente -->
+<div class="header-gradient">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1><i class="bi bi-people-fill me-2"></i>@Model.Grupo.Nombre</h1>
+            <p class="mb-0 mt-2 opacity-75">
+                <i class="bi bi-mortarboard me-1"></i> @Model.Grupo.Carrera?.NombreCarrera
+            </p>
+        </div>
+        <div class="badge-ciclo">
+            <i class="bi bi-calendar3 me-1"></i> Ciclo @Model.Grupo.Ciclo?.NCiclo - @Model.Grupo.Ciclo?.anio
+        </div>
+    </div>
 </div>
+
+<!-- Información del Grupo -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card info-card">
+            <div class="card-body p-0">
+                <div class="row g-0">
+                    <div class="col-md-3">
+                        <div class="info-item h-100">
+                            <div class="label"><i class="bi bi-hash me-1"></i>Código</div>
+                            <div class="value">@Model.Grupo.Nombre</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="info-item h-100">
+                            <div class="label"><i class="bi bi-people me-1"></i>Límite</div>
+                            <div class="value">@Model.Grupo.Limite estudiantes</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="info-item h-100">
+                            <div class="label"><i class="bi bi-person-badge me-1"></i>Docente</div>
+                            <div class="value">@Model.Grupo.Docente?.Apellidos @Model.Grupo.Docente?.Nombres</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="info-item h-100">
+                            <div class="label"><i class="bi bi-toggle-on me-1"></i>Estado</div>
+                            <div class="value">
+                                @if (Model.Grupo.Activo)
+                                {
+                                    <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Activo</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary"><i class="bi bi-x-circle me-1"></i>Inactivo</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notas por Materia -->
+<h4 class="section-title"><i class="bi bi-journal-text me-2"></i>Notas por Materia</h4>
+
+@if (Model.MateriasDelGrupo != null && Model.MateriasDelGrupo.Any() && Model.EstudiantesConNotas.Any())
+{
+    @foreach (var materia in Model.MateriasDelGrupo)
+    {
+        <div class="card materia-card">
+            <div class="materia-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5>
+                        <i class="bi bi-book me-2"></i>@materia.NombreMateria
+                        <small class="text-muted fw-normal">(@materia.CodigoMateria)</small>
+                    </h5>
+                    <span class="badge bg-primary">
+                        @Model.EstudiantesConNotas.Count(e => e.MateriasInscritas.Any(mi => mi.MateriasGrupoId == materia.MateriasGrupoId)) estudiantes
+                    </span>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-notas">
+                        <thead>
+                            <tr>
+                                <th style="width: 28%">Estudiante</th>
+                                <th class="text-center" style="width: 9%">LAB 1</th>
+                                <th class="text-center" style="width: 9%">PAR 1</th>
+                                <th class="text-center" style="width: 9%">LAB 2</th>
+                                <th class="text-center" style="width: 9%">PAR 2</th>
+                                <th class="text-center" style="width: 9%">LAB 3</th>
+                                <th class="text-center" style="width: 9%">PAR 3</th>
+                                <th class="text-center" style="width: 12%">Nota Final</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var estudiante in Model.EstudiantesConNotas)
+                            {
+                                var materiaInscrita = estudiante.MateriasInscritas.FirstOrDefault(mi => mi.MateriasGrupoId == materia.MateriasGrupoId);
+                                if (materiaInscrita == null)
+                                {
+                                    continue;
+                                }
+
+                                var notasMateria = estudiante.Notas.Where(n => n.MateriasInscritas.MateriasGrupoId == materia.MateriasGrupoId).ToList();
+                                var labsList = notasMateria.Where(n => n.ActividadAcademica != null && n.ActividadAcademica.TipoActividad == 1)
+                                    .OrderBy(n => n.ActividadAcademica!.FechaInicio)
+                                    .Select(n => (decimal?)n.Nota)
+                                    .Take(3)
+                                    .ToList();
+                                var parsList = notasMateria.Where(n => n.ActividadAcademica != null && n.ActividadAcademica.TipoActividad == 2)
+                                    .OrderBy(n => n.ActividadAcademica!.FechaInicio)
+                                    .Select(n => (decimal?)n.Nota)
+                                    .Take(3)
+                                    .ToList();
+                                while (labsList.Count < 3) { labsList.Add(null); }
+                                while (parsList.Count < 3) { parsList.Add(null); }
+
+                                decimal notaFinal = SRAUMOAR.Pages.grupos.DetailsModel.CalcularNotaFinal(materiaInscrita, notasMateria, Model.ActividadesAcademicas);
+                                string claseNotaFinal = notaFinal >= 7 ? "aprobado" : "reprobado";
+                                
+                                string GetNotaClass(decimal? nota) {
+                                    if (!nota.HasValue) return "";
+                                    if (nota >= 7) return "nota-alta";
+                                    if (nota >= 5) return "nota-media";
+                                    return "nota-baja";
+                                }
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <button type="button" class="btn btn-outline-primary btn-preview" 
+                                                    onclick="abrirPdfEnPopup('/reportes/notas/reporteNotasParciales?alumnoId=@estudiante.AlumnoId')"
+                                                    title="Ver reporte de notas">
+                                                <i class="bi bi-file-earmark-pdf"></i>
+                                            </button>
+                                            <span class="estudiante-nombre">@estudiante.NombreCompleto</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-center nota-cell @GetNotaClass(labsList[0])">
+                                        @(labsList[0].HasValue ? labsList[0]!.Value.ToString("0.00") : "-")
+                                    </td>
+                                    <td class="text-center nota-cell @GetNotaClass(parsList[0])">
+                                        @(parsList[0].HasValue ? parsList[0]!.Value.ToString("0.00") : "-")
+                                    </td>
+                                    <td class="text-center nota-cell @GetNotaClass(labsList[1])">
+                                        @(labsList[1].HasValue ? labsList[1]!.Value.ToString("0.00") : "-")
+                                    </td>
+                                    <td class="text-center nota-cell @GetNotaClass(parsList[1])">
+                                        @(parsList[1].HasValue ? parsList[1]!.Value.ToString("0.00") : "-")
+                                    </td>
+                                    <td class="text-center nota-cell @GetNotaClass(labsList[2])">
+                                        @(labsList[2].HasValue ? labsList[2]!.Value.ToString("0.00") : "-")
+                                    </td>
+                                    <td class="text-center nota-cell @GetNotaClass(parsList[2])">
+                                        @(parsList[2].HasValue ? parsList[2]!.Value.ToString("0.00") : "-")
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="nota-final @claseNotaFinal">
+                                            @notaFinal.ToString("0.00")
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+}
+else
+{
+    <div class="empty-state">
+        <i class="bi bi-inbox"></i>
+        <h5 class="text-muted">No hay notas para mostrar</h5>
+        <p class="text-muted mb-0">Este grupo no tiene estudiantes inscritos o no se han registrado notas aún.</p>
+    </div>
+}
+
+<!-- Botones de acción -->
+<div class="action-buttons d-flex justify-content-between">
+    <a asp-page="./Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-2"></i>Volver al listado
+    </a>
+    <a asp-page="./Edit" asp-route-id="@Model.Grupo.GrupoId" class="btn btn-primary">
+        <i class="bi bi-pencil me-2"></i>Editar grupo
+    </a>
+</div>
+
 <script>
     function abrirPdfEnPopup(url) {
         const ancho = Math.min(window.innerWidth * 0.9, 1000);
@@ -58,90 +361,3 @@
         window.open(url, 'VistaPreviaPDF', `width=${ancho},height=${alto},left=${left},top=${top},resizable=yes,scrollbars=yes`);
     }
 </script>
-<div>
-    <h4>Notas por Materia</h4>
-    <hr />
-    @if (Model.MateriasDelGrupo != null && Model.MateriasDelGrupo.Any() && Model.EstudiantesConNotas.Any())
-    {
-        @foreach (var materia in Model.MateriasDelGrupo)
-        {
-            <div class="card shadow-sm mb-4">
-                <div class="card-header">
-                    <strong>@materia.NombreMateria</strong>
-                    <small class="text-muted">(@materia.CodigoMateria)</small>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover mb-0">
-                            <thead>
-                                <tr>
-                                    <th style="width: 30%">Estudiante (Apellidos Nombres)</th>
-                                    <th class="text-center">LAB1</th>
-                                    <th class="text-center">PAR1</th>
-                                    <th class="text-center">LAB2</th>
-                                    <th class="text-center">PAR2</th>
-                                    <th class="text-center">LAB3</th>
-                                    <th class="text-center">PAR3</th>
-                                    <th class="text-center">Nota final</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var estudiante in Model.EstudiantesConNotas)
-                                {
-                                    var materiaInscrita = estudiante.MateriasInscritas.FirstOrDefault(mi => mi.MateriasGrupoId == materia.MateriasGrupoId);
-                                    if (materiaInscrita == null)
-                                    {
-                                        continue;
-                                    }
-
-                                    var notasMateria = estudiante.Notas.Where(n => n.MateriasInscritas.MateriasGrupoId == materia.MateriasGrupoId).ToList();
-                                    var labsList = notasMateria.Where(n => n.ActividadAcademica != null && n.ActividadAcademica.TipoActividad == 1)
-                                        .OrderBy(n => n.ActividadAcademica!.FechaInicio)
-                                        .Select(n => (decimal?)n.Nota)
-                                        .Take(3)
-                                        .ToList();
-                                    var parsList = notasMateria.Where(n => n.ActividadAcademica != null && n.ActividadAcademica.TipoActividad == 2)
-                                        .OrderBy(n => n.ActividadAcademica!.FechaInicio)
-                                        .Select(n => (decimal?)n.Nota)
-                                        .Take(3)
-                                        .ToList();
-                                    while (labsList.Count < 3) { labsList.Add(null); }
-                                    while (parsList.Count < 3) { parsList.Add(null); }
-
-                                    decimal labSum = (labsList[0] ?? 0) + (labsList[1] ?? 0) + (labsList[2] ?? 0);
-                                    decimal parSum = (parsList[0] ?? 0) + (parsList[1] ?? 0) + (parsList[2] ?? 0);
-                                    decimal labAvg = labSum / 3m;
-                                    decimal parAvg = parSum / 3m;
-                                    decimal notaFinal = Math.Round(labAvg * 0.30m + parAvg * 0.70m, 2);
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center gap-2">
-                                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="abrirPdfEnPopup('/reportes/notas/reporteNotasParciales?alumnoId=@estudiante.AlumnoId')">Previsualizar</button>
-                                                <span>@estudiante.NombreCompleto</span>
-                                            </div>
-                                        </td>
-                                        <td class="text-center">@((labsList[0].HasValue ? labsList[0]!.Value.ToString("0.00") : "-"))</td>
-                                        <td class="text-center">@((parsList[0].HasValue ? parsList[0]!.Value.ToString("0.00") : "-"))</td>
-                                        <td class="text-center">@((labsList[1].HasValue ? labsList[1]!.Value.ToString("0.00") : "-"))</td>
-                                        <td class="text-center">@((parsList[1].HasValue ? parsList[1]!.Value.ToString("0.00") : "-"))</td>
-                                        <td class="text-center">@((labsList[2].HasValue ? labsList[2]!.Value.ToString("0.00") : "-"))</td>
-                                        <td class="text-center">@((parsList[2].HasValue ? parsList[2]!.Value.ToString("0.00") : "-"))</td>
-                                        <td class="text-center">@notaFinal.ToString("0.00")</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        }
-    }
-    else
-    {
-        <div class="alert alert-info">No hay notas para mostrar en este grupo.</div>
-    }
-</div>
-<div>
-    <a asp-page="./Edit" asp-route-id="@Model.Grupo.GrupoId">Edit</a> |
-    <a asp-page="./Index">Back to List</a>
-</div>

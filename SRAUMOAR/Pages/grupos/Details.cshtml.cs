@@ -42,6 +42,61 @@ namespace SRAUMOAR.Pages.grupos
             public string CodigoMateria { get; set; } = string.Empty;
         }
 
+        /// <summary>
+        /// Calcula el promedio ponderado de notas usando los porcentajes configurados en las actividades académicas
+        /// </summary>
+        public static decimal CalcularPromedioMateriaComun(ICollection<Notas> notas, IList<ActividadAcademica> actividadesAcademicas)
+        {
+            if (actividadesAcademicas == null || !actividadesAcademicas.Any())
+                return 0;
+
+            decimal sumaPonderada = 0;
+            decimal totalPorcentaje = 0;
+
+            foreach (var actividad in actividadesAcademicas)
+            {
+                if (actividad == null) continue;
+
+                int porcentaje = actividad.Porcentaje;
+                totalPorcentaje += porcentaje;
+
+                var notaRegistrada = notas?.FirstOrDefault(n => n.ActividadAcademicaId == actividad.ActividadAcademicaId);
+                decimal valorNota = notaRegistrada?.Nota ?? 0;
+                sumaPonderada += valorNota * porcentaje;
+            }
+
+            if (totalPorcentaje <= 0) return 0;
+
+            return Math.Round(sumaPonderada / totalPorcentaje, 2);
+        }
+
+        /// <summary>
+        /// Calcula la nota final aplicando las reglas de reposición
+        /// </summary>
+        public static decimal CalcularNotaFinal(MateriasInscritas materiaInscrita, ICollection<Notas> notasMateria, IList<ActividadAcademica> actividadesAcademicas)
+        {
+            // Calcular promedio base
+            decimal promedio = CalcularPromedioMateriaComun(notasMateria, actividadesAcademicas);
+
+            // Aplicar regla de reposición
+            if (materiaInscrita.NotaRecuperacion.HasValue)
+            {
+                if (materiaInscrita.NotaRecuperacion.Value >= 7)
+                {
+                    // Si aprobó recuperación (>=7), la nota final es 7
+                    return 7;
+                }
+                else
+                {
+                    // Si tiene nota de recuperación pero reprobó (<7), usar esa nota
+                    return materiaInscrita.NotaRecuperacion.Value;
+                }
+            }
+
+            // Si no tiene nota de recuperación, usar el promedio calculado
+            return promedio;
+        }
+
         public async Task<IActionResult> OnGetAsync(int? id)
         {
             if (id == null)
