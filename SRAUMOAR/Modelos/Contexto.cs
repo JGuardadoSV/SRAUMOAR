@@ -114,8 +114,6 @@ namespace SRAUMOAR.Modelos
                 .HasForeignKey(hm => hm.MateriaId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-
-
             modelBuilder.Entity<HistorialCiclo>()
                 .HasOne(hc => hc.Pensum)
                 .WithMany()

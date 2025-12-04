@@ -38,6 +38,33 @@
                                 </h6>
                             </div>
                             <div class="card-body">
+                                <!-- Selección de modo -->
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Modo de registro:</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" asp-for="UsarPensumExistente" value="true" id="modoPensumExistente" checked />
+                                            <label class="form-check-label" for="modoPensumExistente">
+                                                Usar pensúm existente
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" asp-for="UsarPensumExistente" value="false" id="modoPensumManual" />
+                                            <label class="form-check-label" for="modoPensumManual">
+                                                Ingresar pensúm manualmente
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6" id="grupoPensumLibre" style="display:none;">
+                                        <label asp-for="PensumNombreLibre" class="form-label"></label>
+                                        <input asp-for="PensumNombreLibre" class="form-control" />
+                                        <span asp-validation-for="PensumNombreLibre" class="text-danger"></span>
+                                        <small class="form-text text-muted">
+                                            En este modo no se cargarán materias desde el pensúm, se agregarán manualmente después.
+                                        </small>
+                                    </div>
+                                </div>
+
                                 <div class="row">
                                     <div class="col-md-3">
                                         <label asp-for="CicloTexto" class="form-label">Ciclo:</label>
@@ -50,9 +77,9 @@
                                             <option value="">-- Seleccione una carrera --</option>
                                         </select>
                                     </div>
-                                    <div class="col-md-3">
+                                    <div class="col-md-3" id="grupoPensumExistente">
                                         <label asp-for="PensumId" class="form-label">Pensúm:</label>
-                                        <select asp-for="PensumId" asp-items="@Model.PensumsList" class="form-select" required disabled>
+                                        <select asp-for="PensumId" asp-items="@Model.PensumsList" class="form-select" disabled>
                                             <option value="">-- Seleccione un pensúm --</option>
                                         </select>
                                         <span asp-validation-for="PensumId" class="text-danger"></span>
@@ -81,7 +108,7 @@
                         </div>
 
                         <!-- Formulario de Nueva Materia -->
-                        <div class="card mb-3">
+                        <div class="card mb-3" id="grupoMaterias">
                             <div class="card-header">
                                 <h6 class="mb-0">
                                     <i class="bi bi-book me-2"></i>
@@ -89,19 +116,48 @@
                                 </h6>
                             </div>
                             <div class="card-body">
-                                                                 <div class="row mb-3">
-                                     <div class="col-md-6">
-                                         <label for="materiaSelect" class="form-label">Materia:</label>
-                                         <select id="materiaSelect" class="form-select">
-                                             <option value="">-- Seleccione una materia --</option>
-                                         </select>
-                                     </div>
-                                     <div class="col-md-6">
-                                         <label for="promedio" class="form-label">Promedio:</label>
-                                         <input type="number" id="promedio" class="form-control" min="0" max="10" step="0.01" >
-                                         <small class="form-text text-muted">Ingrese el promedio calculado (cada nota tiene peso diferente)</small>
-                                     </div>
-                                 </div>
+                                <!-- Formulario para materia del pensum -->
+                                <div id="formularioMateriaPensum">
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="materiaSelect" class="form-label">Materia:</label>
+                                            <select id="materiaSelect" class="form-select">
+                                                <option value="">-- Seleccione una materia --</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="promedio" class="form-label">Promedio:</label>
+                                            <input type="number" id="promedio" class="form-control" min="0" max="10" step="0.01" >
+                                            <small class="form-text text-muted">Ingrese el promedio calculado (cada nota tiene peso diferente)</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Formulario para materia manual -->
+                                <div id="formularioMateriaManual" style="display:none;">
+                                    <div class="alert alert-info mb-3">
+                                        <i class="bi bi-info-circle me-2"></i>
+                                        <strong>Materia manual:</strong> Ingrese los datos de la materia manualmente (código, nombre y unidades valorativas).
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-3">
+                                            <label class="form-label" for="materiaCodigoLibre">Código materia: <span class="text-danger">*</span></label>
+                                            <input type="text" id="materiaCodigoLibre" class="form-control" placeholder="Ej: MAT101" />
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label" for="materiaNombreLibre">Nombre materia: <span class="text-danger">*</span></label>
+                                            <input type="text" id="materiaNombreLibre" class="form-control" placeholder="Ej: Matemática I" />
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label" for="materiaUvLibre">U.V.: <span class="text-danger">*</span></label>
+                                            <input type="number" id="materiaUvLibre" class="form-control" min="1" step="1" placeholder="Ej: 4" />
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="promedioManual" class="form-label">Promedio:</label>
+                                            <input type="number" id="promedioManual" class="form-control" min="0" max="10" step="0.01" placeholder="0.00" />
+                                        </div>
+                                    </div>
+                                </div>
                                 
                                 <div class="row mb-3">
                                     <div class="col-md-2">
@@ -200,6 +256,20 @@
         let materiasDisponibles = [];
 
         jQuery(document).ready(function() {
+            // Inicializar modo
+            toggleModoPensum();
+            
+            // Habilitar botón si ya está en modo manual al cargar
+            var usarPensumInicial = jQuery('input[name="UsarPensumExistente"]:checked').val() === 'true';
+            if (!usarPensumInicial) {
+                jQuery('#btnGuardar').prop('disabled', false);
+            }
+
+            // Cambio de modo
+            jQuery('input[name="UsarPensumExistente"]').change(function() {
+                toggleModoPensum();
+            });
+
             // Habilitar carreras cuando se ingrese el ciclo
             jQuery('#CicloTexto').on('input', function() {
                 var cicloTexto = jQuery(this).val().trim();
@@ -207,7 +277,9 @@
                     jQuery('#carreraSelect').prop('disabled', false);
                 } else {
                     jQuery('#carreraSelect').prop('disabled', true);
-                    jQuery('#PensumId').prop('disabled', true);
+                    if (jQuery('input[name="UsarPensumExistente"]:checked').val() === 'true') {
+                        jQuery('#PensumId').prop('disabled', true);
+                    }
                     jQuery('#carreraSelect').val('');
                     jQuery('#PensumId').val('');
                 }
@@ -216,9 +288,13 @@
             // Cargar pensúms cuando se seleccione carrera
             jQuery('#carreraSelect').change(function() {
                 var carreraId = jQuery(this).val();
-                if (carreraId) {
+                var usarPensum = jQuery('input[name="UsarPensumExistente"]:checked').val() === 'true';
+                if (carreraId && usarPensum) {
                     cargarPensums(carreraId);
                     jQuery('#PensumId').prop('disabled', false);
+                } else if (!usarPensum) {
+                    jQuery('#PensumId').prop('disabled', true);
+                    jQuery('#PensumId').val('');
                 } else {
                     jQuery('#PensumId').prop('disabled', true);
                     jQuery('#PensumId').val('');
@@ -241,6 +317,42 @@
             // El promedio se ingresa manualmente (no se calcula automáticamente)
             // porque cada nota tiene un peso diferente
         });
+
+        function toggleModoPensum() {
+            var usarPensum = jQuery('input[name="UsarPensumExistente"]:checked').val() === 'true';
+
+            if (usarPensum) {
+                jQuery('#grupoPensumLibre').hide();
+                jQuery('#grupoPensumExistente').show();
+                jQuery('#formularioMateriaPensum').show();
+                jQuery('#formularioMateriaManual').hide();
+                // Deshabilitar campos manuales para que no se validen
+                jQuery('#materiaCodigoLibre, #materiaNombreLibre, #materiaUvLibre, #promedioManual').prop('disabled', true);
+                // Habilitar campos del pensum
+                jQuery('#materiaSelect, #promedio').prop('disabled', false);
+                jQuery('#carreraSelect').prop('disabled', false);
+                var carreraId = jQuery('#carreraSelect').val();
+                if (carreraId) {
+                    jQuery('#PensumId').prop('disabled', false);
+                    cargarPensums(carreraId);
+                }
+            } else {
+                jQuery('#grupoPensumLibre').show();
+                jQuery('#grupoPensumExistente').hide();
+                jQuery('#formularioMateriaPensum').hide();
+                jQuery('#formularioMateriaManual').show();
+                // Habilitar campos manuales
+                jQuery('#materiaCodigoLibre, #materiaNombreLibre, #materiaUvLibre, #promedioManual').prop('disabled', false);
+                // Deshabilitar campos del pensum para que no se validen
+                jQuery('#materiaSelect, #promedio').prop('disabled', true);
+                jQuery('#carreraSelect').prop('disabled', false);
+                jQuery('#PensumId').prop('disabled', true).val('');
+                materiasAgregadas = [];
+                actualizarListaMaterias();
+                // En modo manual, habilitar el botón de guardar inmediatamente
+                jQuery('#btnGuardar').prop('disabled', false);
+            }
+        }
 
         // Las carreras ya están cargadas en el modelo, no necesitamos cargarlas por AJAX
 
@@ -272,28 +384,56 @@
 
 
         function agregarMateria() {
-            var materiaId = jQuery('#materiaSelect').val();
-            var materiaText = jQuery('#materiaSelect option:selected').text();
+            var usarPensum = jQuery('input[name="UsarPensumExistente"]:checked').val() === 'true';
             
-            if (!materiaId) {
-                alert('Por favor seleccione una materia');
-                return;
-            }
-
+            // Obtener el promedio según el modo activo
+            var promedio = usarPensum 
+                ? parseFloat(jQuery('#promedio').val()) || 0
+                : parseFloat(jQuery('#promedioManual').val()) || 0;
+            
             var materia = {
-                materiaId: materiaId,
-                nombreMateria: materiaText,
                 nota1: parseFloat(jQuery('#nota1').val()) || 0,
                 nota2: parseFloat(jQuery('#nota2').val()) || 0,
                 nota3: parseFloat(jQuery('#nota3').val()) || 0,
                 nota4: parseFloat(jQuery('#nota4').val()) || 0,
                 nota5: parseFloat(jQuery('#nota5').val()) || 0,
                 nota6: parseFloat(jQuery('#nota6').val()) || 0,
-                promedio: parseFloat(jQuery('#promedio').val()) || 0,
+                promedio: promedio,
                 aprobada: jQuery('#aprobada').is(':checked'),
                 equivalencia: jQuery('#equivalencia').is(':checked'),
                 examenSuficiencia: jQuery('#examenSuficiencia').is(':checked')
             };
+
+            if (usarPensum) {
+                // Modo pensum: validar selección de materia
+                var materiaId = jQuery('#materiaSelect').val();
+                var materiaText = jQuery('#materiaSelect option:selected').text();
+                
+                if (!materiaId) {
+                    alert('Por favor seleccione una materia');
+                    return;
+                }
+
+                materia.materiaId = materiaId;
+                materia.nombreMateria = materiaText;
+            } else {
+                // Modo manual: validar campos libres
+                materia.materiaCodigoLibre = jQuery('#materiaCodigoLibre').val().trim();
+                materia.materiaNombreLibre = jQuery('#materiaNombreLibre').val().trim();
+                materia.materiaUvLibre = parseInt(jQuery('#materiaUvLibre').val(), 10) || 0;
+
+                if (!materia.materiaCodigoLibre || !materia.materiaNombreLibre || materia.materiaUvLibre <= 0) {
+                    alert('Debe ingresar código, nombre y U.V. válidos para la materia.');
+                    return;
+                }
+
+                materia.nombreMateria = materia.materiaCodigoLibre + ' - ' + materia.materiaNombreLibre + ' (' + materia.materiaUvLibre + ' UV)';
+            }
+
+            if (materia.promedio <= 0) {
+                alert('Debe ingresar un promedio válido');
+                return;
+            }
 
             materiasAgregadas.push(materia);
             actualizarListaMaterias();
@@ -333,46 +473,89 @@
         }
 
         function limpiarFormularioMateria() {
-            jQuery('#materiaSelect').val('');
+            var usarPensum = jQuery('input[name="UsarPensumExistente"]:checked').val() === 'true';
+            
+            if (usarPensum) {
+                jQuery('#materiaSelect').val('');
+                jQuery('#promedio').val('');
+            } else {
+                jQuery('#materiaCodigoLibre').val('');
+                jQuery('#materiaNombreLibre').val('');
+                jQuery('#materiaUvLibre').val('');
+                jQuery('#promedioManual').val('');
+            }
+            
             jQuery('input[id^="nota"]').val('');
-            jQuery('#promedio').val('');
             jQuery('#aprobada').prop('checked', true);
             jQuery('#equivalencia').prop('checked', false);
             jQuery('#examenSuficiencia').prop('checked', false);
-            
-            // Limpiar también el dropdown de materias
-            jQuery('#materiaSelect').empty().append('<option value="">-- Seleccione una materia --</option>');
         }
 
         function habilitarBotonGuardar() {
-            jQuery('#btnGuardar').prop('disabled', materiasAgregadas.length === 0);
+            var usarPensum = jQuery('input[name="UsarPensumExistente"]:checked').val() === 'true';
+            // En modo manual, permitir guardar sin materias
+            if (!usarPensum) {
+                jQuery('#btnGuardar').prop('disabled', false);
+            } else {
+                // En modo pensum existente, requerir al menos una materia
+                jQuery('#btnGuardar').prop('disabled', materiasAgregadas.length === 0);
+            }
         }
 
         // Enviar formulario
         jQuery('form').submit(function(e) {
-            if (materiasAgregadas.length === 0) {
+            var usarPensum = jQuery('input[name="UsarPensumExistente"]:checked').val() === 'true';
+
+            if (usarPensum && materiasAgregadas.length === 0) {
                 e.preventDefault();
                 alert('Debe agregar al menos una materia antes de guardar');
                 return false;
             }
             
-            // Validar que todas las materias tengan notas válidas
-            for (let i = 0; i < materiasAgregadas.length; i++) {
-                var materia = materiasAgregadas[i];
-                if (materia.promedio <= 0) {
-                    e.preventDefault();
-                    alert(`La materia "${materia.nombreMateria}" debe tener al menos una nota válida`);
-                    return false;
+            // Validar que todas las materias tengan notas válidas (solo en modo pensum existente)
+            if (usarPensum) {
+                for (let i = 0; i < materiasAgregadas.length; i++) {
+                    var materia = materiasAgregadas[i];
+                    if (materia.promedio <= 0) {
+                        e.preventDefault();
+                        alert(`La materia "${materia.nombreMateria}" debe tener al menos una nota válida`);
+                        return false;
+                    }
                 }
             }
 
             // Agregar las materias al formulario antes de enviar
             materiasAgregadas.forEach(function(materia, index) {
-                jQuery('<input>').attr({
-                    type: 'hidden',
-                    name: `Materias[${index}].MateriaId`,
-                    value: materia.materiaId
-                }).appendTo('form');
+                // Determinar si la materia es manual (tiene campos libres) o del pensum
+                var esMateriaManual = materia.materiaCodigoLibre || materia.materiaNombreLibre || materia.materiaUvLibre;
+                
+                if (!esMateriaManual) {
+                    // Materia del pensum
+                    jQuery('<input>').attr({
+                        type: 'hidden',
+                        name: `Materias[${index}].MateriaId`,
+                        value: materia.materiaId
+                    }).appendTo('form');
+                } else {
+                    // Materia manual
+                    jQuery('<input>').attr({
+                        type: 'hidden',
+                        name: `Materias[${index}].MateriaCodigoLibre`,
+                        value: materia.materiaCodigoLibre
+                    }).appendTo('form');
+
+                    jQuery('<input>').attr({
+                        type: 'hidden',
+                        name: `Materias[${index}].MateriaNombreLibre`,
+                        value: materia.materiaNombreLibre
+                    }).appendTo('form');
+
+                    jQuery('<input>').attr({
+                        type: 'hidden',
+                        name: `Materias[${index}].MateriaUnidadesValorativasLibre`,
+                        value: materia.materiaUvLibre
+                    }).appendTo('form');
+                }
                 
                 jQuery('<input>').attr({
                     type: 'hidden',

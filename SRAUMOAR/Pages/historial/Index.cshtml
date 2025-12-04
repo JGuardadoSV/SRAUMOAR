@@ -104,12 +104,39 @@
 </div>
 
 @section Scripts {
+    <style>
+        /* Estilos para el menú del autocomplete */
+        .ui-autocomplete {
+            max-height: 300px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            z-index: 9999 !important;
+        }
+        
+        .ui-autocomplete .ui-menu-item {
+            padding: 0;
+        }
+        
+        .ui-autocomplete .ui-menu-item-wrapper {
+            padding: 8px 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .ui-autocomplete .ui-menu-item-wrapper:hover {
+            background-color: #f5f5f5;
+        }
+        
+        /* Asegurar que el contenedor del input tenga posición relativa */
+        #buscadorAlumno {
+            position: relative;
+        }
+    </style>
     <script>
         let alumnoSeleccionado = null;
 
         jQuery(document).ready(function() {
             // Configurar autocompletado del buscador
-            jQuery('#buscadorAlumno').autocomplete({
+            var autocompleteWidget = jQuery('#buscadorAlumno').autocomplete({
                 source: function(request, response) {
                     if (request.term.length < 3) {
                         response([]);
@@ -126,6 +153,13 @@
                 },
                 minLength: 3,
                 delay: 300,
+                appendTo: jQuery('#buscadorAlumno').parent(),
+                position: {
+                    my: "left top",
+                    at: "left bottom",
+                    of: jQuery('#buscadorAlumno'),
+                    collision: "flip"
+                },
                 select: function(event, ui) {
                     alumnoSeleccionado = {
                         id: ui.item.id,
@@ -136,7 +170,10 @@
                     mostrarResultadoBusqueda();
                     return false;
                 }
-            }).autocomplete("instance")._renderItem = function(ul, item) {
+            });
+            
+            // Configurar el renderizado de items
+            autocompleteWidget.autocomplete("instance")._renderItem = function(ul, item) {
                 return jQuery("<li>")
                     .append("<div><strong>" + item.value + "</strong><br><small class='text-muted'>Carnet: " + item.carnet + "</small></div>")
                     .appendTo(ul);

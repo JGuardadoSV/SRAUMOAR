@@ -5,6 +5,11 @@ namespace SRAUMOAR.Modelos
     public class MateriaHistorialModel
     {
         public int MateriaId { get; set; }
+
+        // Campos para materias ingresadas manualmente (sin relación con tabla Materias)
+        public string? MateriaCodigoLibre { get; set; }
+        public string? MateriaNombreLibre { get; set; }
+        public int? MateriaUnidadesValorativasLibre { get; set; }
         
         [Range(0, 10, ErrorMessage = "La nota debe estar entre 0 y 10")]
         public decimal Nota1 { get; set; }
@@ -30,5 +35,7 @@ namespace SRAUMOAR.Modelos
         public bool Aprobada { get; set; }
         
         public bool Equivalencia { get; set; }
+
+        public bool ExamenSuficiencia { get; set; }
     }
 }

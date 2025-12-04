@@ -17,9 +17,18 @@ namespace SRAUMOAR.Entidades.Historial
         [Required]
         [StringLength(10)]
         public string CicloTexto { get; set; } = string.Empty;
-        
-        [Required]
-        public int PensumId { get; set; }
+
+        /// <summary>
+        /// Pensúm asociado cuando se utiliza un pensúm existente.
+        /// Puede ser null cuando el ciclo se registra en modo manual.
+        /// </summary>
+        public int? PensumId { get; set; }
+
+        /// <summary>
+        /// Nombre del pensúm ingresado manualmente cuando no existe un pensúm asociado.
+        /// </summary>
+        [StringLength(150)]
+        public string? PensumNombreLibre { get; set; }
         
         [ScaffoldColumn(false)]
         public DateTime FechaRegistro { get; set; } = DateTime.Now;

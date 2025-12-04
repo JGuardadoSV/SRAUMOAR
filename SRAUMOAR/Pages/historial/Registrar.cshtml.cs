@@ -29,11 +29,17 @@ namespace SRAUMOAR.Pages.historial
         public string CicloTexto { get; set; } = string.Empty;
 
         [BindProperty]
-        [Required(ErrorMessage = "El pensúm es requerido")]
         public int PensumId { get; set; }
 
         [BindProperty]
         public int? CarreraId { get; set; }
+
+        [BindProperty]
+        public bool UsarPensumExistente { get; set; } = true;
+
+        [BindProperty]
+        [Display(Name = "Nombre del pensúm")]
+        public string? PensumNombreLibre { get; set; }
 
         [BindProperty]
         public List<MateriaHistorialModel> Materias { get; set; } = new List<MateriaHistorialModel>();
@@ -70,15 +76,34 @@ namespace SRAUMOAR.Pages.historial
 
         public async Task<IActionResult> OnPostAsync()
         {
-            if (!ModelState.IsValid)
+            // Validación condicional según modo
+            if (UsarPensumExistente)
             {
-                await CargarListas();
-                return Page();
+                if (PensumId == 0)
+                {
+                    ModelState.AddModelError(nameof(PensumId), "Debe seleccionar un pensúm.");
+                }
+
+                if (Materias == null || !Materias.Any())
+                {
+                    ModelState.AddModelError("", "Debe agregar al menos una materia");
+                }
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(PensumNombreLibre))
+                {
+                    ModelState.AddModelError(nameof(PensumNombreLibre), "Debe ingresar el nombre del pensúm.");
+                }
+
+                if (!CarreraId.HasValue || CarreraId.Value == 0)
+                {
+                    ModelState.AddModelError(nameof(CarreraId), "Debe seleccionar la carrera para el historial.");
+                }
             }
 
-            if (Materias == null || !Materias.Any())
+            if (!ModelState.IsValid)
             {
-                ModelState.AddModelError("", "Debe agregar al menos una materia");
                 await CargarListas();
                 return Page();
             }
@@ -87,26 +112,30 @@ namespace SRAUMOAR.Pages.historial
             {
                 using var transaction = await _context.Database.BeginTransactionAsync();
 
-                // Si es primer registro (CarreraId es null), usar la carrera del pensum seleccionado
+                // Calcular carreraIdParaHistorial según el modo
                 int carreraIdParaHistorial;
-                if (!CarreraId.HasValue || CarreraId.Value == 0)
+
+                if (UsarPensumExistente)
                 {
-                    var pensum = await _context.Pensums
+                    int carreraDesdePensum = await _context.Pensums
                         .Where(p => p.PensumId == PensumId)
                         .Select(p => p.CarreraId)
                         .FirstOrDefaultAsync();
-                    
-                    if (pensum != 0)
+
+                    if (carreraDesdePensum == 0)
                     {
-                        carreraIdParaHistorial = pensum;
+                        throw new InvalidOperationException("No se pudo determinar la carrera del pensúm seleccionado.");
                     }
-                    else
-                    {
-                        throw new InvalidOperationException("No se pudo determinar la carrera del pensum seleccionado.");
-                    }
+
+                    carreraIdParaHistorial = CarreraId ?? carreraDesdePensum;
                 }
                 else
                 {
+                    // En modo manual usamos la carrera seleccionada explícitamente
+                    if (!CarreraId.HasValue || CarreraId.Value == 0)
+                    {
+                        throw new InvalidOperationException("Debe seleccionar la carrera para el historial.");
+                    }
                     carreraIdParaHistorial = CarreraId.Value;
                 }
 
@@ -133,40 +162,68 @@ namespace SRAUMOAR.Pages.historial
                 {
                     HistorialAcademicoId = historialAcademico.HistorialAcademicoId,
                     CicloTexto = CicloTexto,
-                    PensumId = PensumId,
+                    PensumId = UsarPensumExistente ? PensumId : (int?)null,
+                    PensumNombreLibre = UsarPensumExistente ? null : PensumNombreLibre,
                     FechaRegistro = DateTime.Now
                 };
 
                 _context.HistorialCiclo.Add(historialCiclo);
                 await _context.SaveChangesAsync();
 
-                // Crear historial de materias
-                foreach (var materia in Materias)
+                // Crear historial de materias (tanto del pensum como manuales)
+                if (Materias != null && Materias.Any())
                 {
-                    var historialMateria = new HistorialMateria
+                    foreach (var materia in Materias)
                     {
-                        HistorialCicloId = historialCiclo.HistorialCicloId,
-                        MateriaId = materia.MateriaId,
-                        Nota1 = materia.Nota1,
-                        Nota2 = materia.Nota2,
-                        Nota3 = materia.Nota3,
-                        Nota4 = materia.Nota4,
-                        Nota5 = materia.Nota5,
-                        Nota6 = materia.Nota6,
-                        Promedio = materia.Promedio,
-                        Aprobada = materia.Aprobada,
-                        Equivalencia = materia.Equivalencia,
-                        FechaRegistro = DateTime.Now
-                    };
+                        // Determinar si esta materia es manual (tiene campos libres) o del pensum
+                        bool esMateriaManual = !string.IsNullOrEmpty(materia.MateriaCodigoLibre) 
+                            || !string.IsNullOrEmpty(materia.MateriaNombreLibre) 
+                            || materia.MateriaUnidadesValorativasLibre.HasValue;
 
-                    _context.HistorialMateria.Add(historialMateria);
+                        var historialMateria = new HistorialMateria
+                        {
+                            HistorialCicloId = historialCiclo.HistorialCicloId,
+                            Nota1 = materia.Nota1,
+                            Nota2 = materia.Nota2,
+                            Nota3 = materia.Nota3,
+                            Nota4 = materia.Nota4,
+                            Nota5 = materia.Nota5,
+                            Nota6 = materia.Nota6,
+                            Promedio = materia.Promedio,
+                            Aprobada = materia.Aprobada,
+                            Equivalencia = materia.Equivalencia,
+                            ExamenSuficiencia = materia.ExamenSuficiencia,
+                            FechaRegistro = DateTime.Now
+                        };
+
+                        if (esMateriaManual)
+                        {
+                            // Materia manual: usar campos libres
+                            historialMateria.MateriaId = null;
+                            historialMateria.MateriaCodigoLibre = materia.MateriaCodigoLibre;
+                            historialMateria.MateriaNombreLibre = materia.MateriaNombreLibre;
+                            historialMateria.MateriaUnidadesValorativasLibre = materia.MateriaUnidadesValorativasLibre;
+                        }
+                        else
+                        {
+                            // Materia del pensum: usar MateriaId
+                            historialMateria.MateriaId = materia.MateriaId;
+                        }
+
+                        _context.HistorialMateria.Add(historialMateria);
+                    }
+
+                    await _context.SaveChangesAsync();
                 }
 
-                await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                TempData["SuccessMessage"] = "Historial académico registrado exitosamente.";
-                return RedirectToPage("/historial/Ver", new { alumnoId = AlumnoId });
+                TempData["SuccessMessage"] = UsarPensumExistente
+                    ? "Historial académico registrado exitosamente."
+                    : "Historial académico registrado. Puede agregar las materias manualmente.";
+
+                // Redirigir a Ver con el carreraId para que muestre el historial correcto
+                return RedirectToPage("/historial/Ver", new { alumnoId = AlumnoId, carreraId = carreraIdParaHistorial });
             }
             catch (Exception ex)
             {

@@ -82,12 +82,20 @@ namespace SRAUMOAR.Pages.historial
                     if (historialPorCarrera != null)
                     {
                         HistorialCiclos = historialPorCarrera.CiclosHistorial?.ToList() ?? new List<HistorialCiclo>();
-                        
-                        // Calcular totales solo para esta carrera
-                        TotalMaterias = HistorialCiclos.Sum(hc => hc.MateriasHistorial?.Count ?? 0);
-                        TotalUV = HistorialCiclos.Sum(hc => hc.MateriasHistorial?.Sum(hm => hm.Materia?.uv ?? 0) ?? 0);
                     }
                 }
+                else
+                {
+                    // Si no hay carrera seleccionada, mostrar todos los ciclos de todos los historiales
+                    HistorialCiclos = historialAcademico
+                        .SelectMany(h => h.CiclosHistorial ?? new List<HistorialCiclo>())
+                        .ToList();
+                }
+                
+                // Calcular totales considerando materias libres
+                TotalMaterias = HistorialCiclos.Sum(hc => hc.MateriasHistorial?.Count ?? 0);
+                TotalUV = HistorialCiclos.Sum(hc => hc.MateriasHistorial?.Sum(hm => 
+                    hm.Materia != null ? hm.Materia.uv : (hm.MateriaUnidadesValorativasLibre ?? 0)) ?? 0);
             }
 
             return Page();

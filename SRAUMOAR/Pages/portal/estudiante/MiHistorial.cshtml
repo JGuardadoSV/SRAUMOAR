@@ -102,7 +102,15 @@
                 <div class="card-header bg-gradient-info text-white">
                     <h6 class="mb-0">
                         <i class="bi bi-calendar me-2"></i>
-                        Ciclo @ciclo.CicloTexto | Pensúm @ciclo.Pensum.Anio
+                        Ciclo @ciclo.CicloTexto | 
+                        @if (ciclo.Pensum != null)
+                        {
+                            <text>Pensúm @ciclo.Pensum.Anio</text>
+                        }
+                        else
+                        {
+                            <text>@(ciclo.PensumNombreLibre ?? "Pensúm manual")</text>
+                        }
                     </h6>
                 </div>
                 <div class="card-body p-0">
@@ -118,14 +126,32 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach (var materia in ciclo.MateriasHistorial.OrderBy(m => m.Materia.NombreMateria))
+                                    @foreach (var materia in ciclo.MateriasHistorial.OrderBy(m => m.Materia != null ? m.Materia.NombreMateria : m.MateriaNombreLibre ?? ""))
                                     {
                                         <tr class="border-0">
                                             <td class="ps-4">
                                                 <div class="d-flex align-items-center">
                                                     <div class="me-3">
-                                                        <strong class="d-block text-dark">@materia.Materia.NombreMateria</strong>
-                                                        <small class="text-muted">@materia.Materia.CodigoMateria</small>
+                                                        <strong class="d-block text-dark">
+                                                            @if (materia.Materia != null)
+                                                            {
+                                                                @materia.Materia.NombreMateria
+                                                            }
+                                                            else
+                                                            {
+                                                                @(materia.MateriaNombreLibre ?? "Sin nombre")
+                                                            }
+                                                        </strong>
+                                                        <small class="text-muted">
+                                                            @if (materia.Materia != null)
+                                                            {
+                                                                @materia.Materia.CodigoMateria
+                                                            }
+                                                            else
+                                                            {
+                                                                @($"{materia.MateriaCodigoLibre} ({materia.MateriaUnidadesValorativasLibre} UV)")
+                                                            }
+                                                        </small>
                                                     </div>
                                                 </div>
                                             </td>

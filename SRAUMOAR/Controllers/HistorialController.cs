@@ -49,13 +49,18 @@ namespace SRAUMOAR.Controllers
                     return NotFound(new { success = false, message = "Materia no encontrada" });
                 }
 
+                // Obtener nombre de la materia (puede ser de Materia o libre)
+                string nombreMateria = historialMateria.Materia != null 
+                    ? historialMateria.Materia.NombreMateria 
+                    : (historialMateria.MateriaNombreLibre ?? "Materia sin nombre");
+
                 // Eliminar la materia del historial
                 _context.HistorialMateria.Remove(historialMateria);
                 await _context.SaveChangesAsync();
 
                 return Ok(new { 
                     success = true, 
-                    message = $"Materia '{historialMateria.Materia.NombreMateria}' eliminada exitosamente" 
+                    message = $"Materia '{nombreMateria}' eliminada exitosamente" 
                 });
             }
             catch (Exception ex)

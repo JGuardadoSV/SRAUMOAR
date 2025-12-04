@@ -13,8 +13,28 @@ namespace SRAUMOAR.Entidades.Historial
         [Required]
         public int HistorialCicloId { get; set; }
         
-        [Required]
-        public int MateriaId { get; set; }
+        /// <summary>
+        /// Materia asociada cuando proviene de un pensúm existente.
+        /// Puede ser null cuando la materia se registra en modo manual.
+        /// </summary>
+        public int? MateriaId { get; set; }
+
+        /// <summary>
+        /// Código de la materia cuando se registra manualmente.
+        /// </summary>
+        [StringLength(50)]
+        public string? MateriaCodigoLibre { get; set; }
+
+        /// <summary>
+        /// Nombre de la materia cuando se registra manualmente.
+        /// </summary>
+        [StringLength(200)]
+        public string? MateriaNombreLibre { get; set; }
+
+        /// <summary>
+        /// Unidades valorativas de la materia cuando se registra manualmente.
+        /// </summary>
+        public int? MateriaUnidadesValorativasLibre { get; set; }
         
         // Notas individuales
         [Range(0, 10, ErrorMessage = "La nota debe estar entre 0 y 10")]
