@@ -17,14 +17,14 @@ using System.Web;
 
 namespace SRAUMOAR.Pages.reportes.notas
 {
-    public class reporteNotasParcialesModel : PageModel
+    public class reporteNotasParcialesHistoricoModel : PageModel
     {
         private readonly Contexto _context;
 
         private PdfFont _fontNormal;
         private PdfFont _fontBold;
 
-        public reporteNotasParcialesModel(Contexto context)
+        public reporteNotasParcialesHistoricoModel(Contexto context)
         {
             _context = context;
         }
@@ -90,14 +90,14 @@ namespace SRAUMOAR.Pages.reportes.notas
             _fontBold = PdfFontFactory.CreateFont(StandardFonts.TIMES_BOLD);
         }
 
-        public IActionResult OnGet(int alumnoId)
+        public IActionResult OnGet(int alumnoId, int cicloId)
         {
             InitializeFonts();
 
-            var cicloActual = _context.Ciclos.FirstOrDefault(c => c.Activo);
-            if (cicloActual == null)
+            var ciclo = _context.Ciclos.FirstOrDefault(c => c.Id == cicloId);
+            if (ciclo == null)
             {
-                return NotFound("No hay ciclo activo");
+                return NotFound("El ciclo especificado no existe");
             }
 
             var alumno = _context.Alumno
@@ -113,30 +113,30 @@ namespace SRAUMOAR.Pages.reportes.notas
             var materiasInscritas = _context.MateriasInscritas
                 .Include(mi => mi.MateriasGrupo)!.ThenInclude(mg => mg!.Materia)
                 .Include(mi => mi.Notas)!.ThenInclude(n => n!.ActividadAcademica)
-                .Where(mi => mi.AlumnoId == alumnoId && mi.MateriasGrupo!.Grupo!.CicloId == cicloActual.Id)
+                .Where(mi => mi.AlumnoId == alumnoId && mi.MateriasGrupo!.Grupo!.CicloId == cicloId)
                 .ToList();
 
-            // Obtener actividades académicas del ciclo para calcular promedios correctamente
+            // Obtener actividades académicas del ciclo histórico para calcular promedios correctamente
             var actividadesAcademicas = _context.ActividadesAcademicas
-                .Where(a => a.CicloId == cicloActual.Id)
+                .Where(a => a.CicloId == cicloId)
                 .OrderBy(a => a.FechaInicio)
                 .ToList();
 
-            // Título del reporte - siempre parcial
-            string tituloReporte = $"Informe de notas parciales ciclo {cicloActual.NCiclo} - {cicloActual.anio}";
+            // Título del reporte histórico
+            string tituloReporte = $"Informe de notas finales ciclo {ciclo.NCiclo} - {ciclo.anio}";
 
-            // Determinar estado de solvencia
+            // Determinar estado de solvencia del ciclo histórico
             var hoy = DateTime.Now.Date;
-            var esBecado = _context.Becados.Any(b => b.AlumnoId == alumnoId && b.CicloId == cicloActual.Id && b.Estado);
+            var esBecado = _context.Becados.Any(b => b.AlumnoId == alumnoId && b.CicloId == cicloId && b.Estado);
             var arancelesObligatoriosVigentes = _context.Aranceles
-                .Where(a => a.CicloId == cicloActual.Id && a.Obligatorio && a.Activo && a.FechaInicio <= hoy)
+                .Where(a => a.CicloId == cicloId && a.Obligatorio && a.Activo && a.FechaInicio <= hoy)
                 .ToList();
             var arancelesPagadosIds = _context.DetallesCobrosArancel
-                .Where(d => d.CobroArancel.AlumnoId == alumnoId && d.CobroArancel.CicloId == cicloActual.Id)
+                .Where(d => d.CobroArancel.AlumnoId == alumnoId && d.CobroArancel.CicloId == cicloId)
                 .Select(d => d.ArancelId)
                 .ToHashSet();
             bool tienePendientes = arancelesObligatoriosVigentes.Any(a => !arancelesPagadosIds.Contains(a.ArancelId));
-            string estadoSolvencia = esBecado ? "Solvente (Becado)" : (tienePendientes ? "No solvente" : "Solvente");
+            string estadoSolvencia = esBecado ? "Solvente" : (tienePendientes ? "No solvente" : "Solvente");
 
             using var ms = new MemoryStream();
             using (var writer = new PdfWriter(ms))
@@ -159,51 +159,63 @@ namespace SRAUMOAR.Pages.reportes.notas
                 }
                 var textCell = new Cell().SetBorder(Border.NO_BORDER);
                 textCell.Add(new Paragraph("UNIVERSIDAD MONSEÑOR OSCAR ARNULFO ROMERO").SetFont(_fontBold).SetFontSize(14).SetTextAlignment(TextAlignment.CENTER));
-                textCell.Add(new Paragraph(tituloReporte).SetFont(_fontBold).SetFontSize(12).SetTextAlignment(TextAlignment.CENTER));
+                textCell.Add(new Paragraph(tituloReporte.ToUpper()).SetFont(_fontBold).SetFontSize(12).SetTextAlignment(TextAlignment.CENTER));
                 headerTable.AddCell(textCell);
                 doc.Add(headerTable);
-                // Línea separadora sutil
-                var separator = new Paragraph(" ")
+                
+                // Línea separadora con estado a la derecha
+                var separatorTable = new Table(new float[] { 1, 1 }).UseAllAvailableWidth();
+                var separatorCell = new Cell()
+                    .SetBorder(Border.NO_BORDER)
+                    .SetPadding(0);
+                separatorCell.Add(new Paragraph(" ")
                     .SetBorderBottom(new SolidBorder(ColorConstants.LIGHT_GRAY, 1))
                     .SetMarginTop(4)
-                    .SetMarginBottom(12);
-                doc.Add(separator);
+                    .SetMarginBottom(12));
+                separatorTable.AddCell(separatorCell);
+                
+                // Estado a la derecha sobre la línea
+                var estadoCell = new Cell()
+                    .SetBorder(Border.NO_BORDER)
+                    .SetPadding(0)
+                    .SetTextAlignment(TextAlignment.RIGHT)
+                    .SetVerticalAlignment(VerticalAlignment.BOTTOM);
+                string estadoTexto = estadoSolvencia.ToUpper();
+                estadoCell.Add(new Paragraph(estadoTexto)
+                    .SetFont(_fontBold)
+                    .SetFontSize(10)
+                    .SetTextAlignment(TextAlignment.RIGHT)
+                    .SetMarginTop(0)
+                    .SetMarginBottom(2));
+                separatorTable.AddCell(estadoCell);
+                doc.Add(separatorTable);
 
                 // Datos del alumno
-                string carnet = (alumno.Email ?? string.Empty).Split('@').FirstOrDefault() ?? string.Empty;
-                var datos = new Table(new float[] { 120, 10, 400 }).UseAllAvailableWidth();
-                datos.AddCell(CeldaLabel("Nombre"));
-                datos.AddCell(CeldaSeparador());
+                string carnet = !string.IsNullOrWhiteSpace(alumno.Carnet) ? alumno.Carnet : ((alumno.Email ?? string.Empty).Split('@').FirstOrDefault() ?? string.Empty);
+                var datos = new Table(new float[] { 70, 460 }).UseAllAvailableWidth();
+                datos.AddCell(CeldaLabel("Nombre:"));
                 datos.AddCell(CeldaValor($"{alumno.Apellidos} {alumno.Nombres}"));
-                datos.AddCell(CeldaLabel("Carnet"));
-                datos.AddCell(CeldaSeparador());
+                datos.AddCell(CeldaLabel("Carnet:"));
                 datos.AddCell(CeldaValor(carnet));
-                datos.AddCell(CeldaLabel("Facultad"));
-                datos.AddCell(CeldaSeparador());
+                datos.AddCell(CeldaLabel("Facultad:"));
                 datos.AddCell(CeldaValor(alumno.Carrera?.Facultad?.NombreFacultad ?? ""));
-                datos.AddCell(CeldaLabel("Carrera"));
-                datos.AddCell(CeldaSeparador());
+                datos.AddCell(CeldaLabel("Carrera:"));
                 datos.AddCell(CeldaValor(alumno.Carrera?.NombreCarrera ?? ""));
-                datos.AddCell(CeldaLabel("Estado"));
-                datos.AddCell(CeldaSeparador());
-                datos.AddCell(CeldaValor(estadoSolvencia));
                 doc.Add(datos);
 
                 doc.Add(new Paragraph(" "));
 
-                // Tabla de notas: COD, Materia, L1 P1 L2 P2 L3 P3, Nota final
-                var tabla = new Table(new float[] { 60, 220, 45, 45, 45, 45, 45, 45, 70 }).UseAllAvailableWidth();
-                EstiloEncabezado(tabla, "COD");
-                EstiloEncabezado(tabla, "Materia");
-                EstiloEncabezado(tabla, "LAB1");
-                EstiloEncabezado(tabla, "PAR1");
-                EstiloEncabezado(tabla, "LAB2");
-                EstiloEncabezado(tabla, "PAR2");
-                EstiloEncabezado(tabla, "LAB3");
-                EstiloEncabezado(tabla, "PAR3");
-                EstiloEncabezado(tabla, "Nota final");
+                // Tabla de notas histórico: COD, Materia, Nota Final, Nota Recuperación, Estado, Observación
+                var tabla = new Table(new float[] { 50, 290, 70, 80, 80, 70 }).UseAllAvailableWidth();
+                tabla.SetBorder(Border.NO_BORDER); // Tabla sin bordes generales
+                
+                EstiloEncabezado(tabla, "Código");
+                EstiloEncabezado(tabla, "Nombre de la asignatura");
+                EstiloEncabezado(tabla, "Nota Final");
+                EstiloEncabezado(tabla, "Nota Rep.");
+                EstiloEncabezado(tabla, "Resultado");
+                EstiloEncabezado(tabla, "Observación");
 
-                int rowIndex = 0;
                 foreach (var mi in materiasInscritas.OrderBy(x => x.MateriasGrupo!.Materia!.CodigoMateria))
                 {
                     var materia = mi.MateriasGrupo!.Materia!;
@@ -211,44 +223,78 @@ namespace SRAUMOAR.Pages.reportes.notas
                         .Where(n => n.ActividadAcademica != null)
                         .ToList();
 
-                    var labs = notas.Where(n => n.ActividadAcademica!.TipoActividad == 1)
-                                    .OrderBy(n => n.ActividadAcademica!.FechaInicio)
-                                    .Take(3)
-                                    .Select(n => (decimal?)n.Nota)
-                                    .ToList();
-                    var pars = notas.Where(n => n.ActividadAcademica!.TipoActividad == 2)
-                                    .OrderBy(n => n.ActividadAcademica!.FechaInicio)
-                                    .Take(3)
-                                    .Select(n => (decimal?)n.Nota)
-                                    .ToList();
-
-                    while (labs.Count < 3) labs.Add(null);
-                    while (pars.Count < 3) pars.Add(null);
-
-                    // Celdas de datos (con zebra striping)
-                    bool isAlt = (rowIndex % 2 == 1);
-                    tabla.AddCell(CeldaTexto(materia.CodigoMateria ?? "", isAlt));
-                    tabla.AddCell(CeldaTexto(materia.NombreMateria ?? "", isAlt));
-                    tabla.AddCell(CeldaNota(labs[0], isAlt));
-                    tabla.AddCell(CeldaNota(pars[0], isAlt));
-                    tabla.AddCell(CeldaNota(labs[1], isAlt));
-                    tabla.AddCell(CeldaNota(pars[1], isAlt));
-                    tabla.AddCell(CeldaNota(labs[2], isAlt));
-                    tabla.AddCell(CeldaNota(pars[2], isAlt));
-
                     // Calcular nota final usando porcentajes configurados y regla de reposición
                     decimal notaFinal = CalcularNotaFinal(mi, notas, actividadesAcademicas);
-                    tabla.AddCell(CeldaNota(notaFinal, isAlt));
+                    
+                    // Calcular nota de recuperación según reglas
+                    decimal? notaRecuperacion = null;
+                    if (mi.NotaRecuperacion.HasValue)
+                    {
+                        if (mi.NotaRecuperacion.Value >= 7)
+                        {
+                            // Si aprobó recuperación (>=7), la nota final es 7
+                            notaRecuperacion = 7;
+                        }
+                        else
+                        {
+                            // Si tiene nota de recuperación pero reprobó (<7), usar esa nota
+                            notaRecuperacion = mi.NotaRecuperacion.Value;
+                        }
+                    }
 
-                    rowIndex++;
+                    // Determinar estado: APROBADO o REPROBADO
+                    string estado = notaFinal >= 7 ? "APROBADO" : "REPROBADO";
+
+                    // Observación (puede estar vacía o tener algún valor)
+                    string observacion = ""; // Por ahora vacía, se puede agregar lógica adicional si es necesario
+
+                    // Celdas de datos sin bordes ni fondo
+                    tabla.AddCell(CeldaTextoSinBorde(materia.CodigoMateria ?? ""));
+                    tabla.AddCell(CeldaTextoSinBorde(materia.NombreMateria ?? ""));
+                    tabla.AddCell(CeldaNotaSinBorde(notaFinal));
+                    tabla.AddCell(CeldaNotaSinBorde(notaRecuperacion));
+                    tabla.AddCell(CeldaTextoSinBorde(estado));
+                    tabla.AddCell(CeldaTextoSinBorde(observacion));
                 }
 
                 doc.Add(tabla);
 
                 doc.Add(new Paragraph(" "));
-                var firmaTabla = new Table(new float[] { 1, 1 }).UseAllAvailableWidth();
-                firmaTabla.AddCell(new Cell().Add(new Paragraph("FIRMA").SetFont(_fontBold)).SetBorderTop(new SolidBorder(1)).SetBorderLeft(Border.NO_BORDER).SetBorderRight(Border.NO_BORDER).SetBorderBottom(Border.NO_BORDER).SetTextAlignment(TextAlignment.CENTER));
-                firmaTabla.AddCell(new Cell().Add(new Paragraph("SELLO").SetFont(_fontBold)).SetBorderTop(new SolidBorder(1)).SetBorderLeft(Border.NO_BORDER).SetBorderRight(Border.NO_BORDER).SetBorderBottom(Border.NO_BORDER).SetTextAlignment(TextAlignment.CENTER));
+                doc.Add(new Paragraph(" "));
+                doc.Add(new Paragraph(" "));
+                doc.Add(new Paragraph(" "));
+                doc.Add(new Paragraph(" "));
+                doc.Add(new Paragraph(" "));
+                doc.Add(new Paragraph(" "));
+                doc.Add(new Paragraph(" "));
+                doc.Add(new Paragraph(" "));
+                doc.Add(new Paragraph(" "));
+                doc.Add(new Paragraph(" "));
+                doc.Add(new Paragraph(" "));
+
+                // Firma y Sello en la misma línea, cada una con su línea arriba, alineadas a la derecha
+                var firmaTabla = new Table(new float[] { 120, 120 }).SetWidth(240).SetHorizontalAlignment(HorizontalAlignment.RIGHT);
+                
+                // Columna FIRMA: línea arriba y texto abajo
+                var firmaColumna = new Cell()
+                    .SetBorder(Border.NO_BORDER)
+                    .SetPadding(0)
+                    .SetTextAlignment(TextAlignment.CENTER);
+                firmaColumna.Add(new Paragraph(" ").SetBorderBottom(new SolidBorder(1)).SetMargin(0).SetMarginBottom(3));
+                firmaColumna.Add(new Paragraph("FIRMA").SetFont(_fontBold).SetMargin(0).SetMarginTop(0));
+                
+                // Columna SELLO: línea arriba y texto abajo
+                var selloColumna = new Cell()
+                    .SetBorder(Border.NO_BORDER)
+                    .SetPadding(0)
+                    .SetTextAlignment(TextAlignment.CENTER);
+                selloColumna.Add(new Paragraph(" ").SetBorderBottom(new SolidBorder(1)).SetMargin(0).SetMarginBottom(3));
+                selloColumna.Add(new Paragraph("SELLO").SetFont(_fontBold).SetMargin(0).SetMarginTop(0));
+                
+                // Agregar celdas: FIRMA y SELLO en la misma fila
+                firmaTabla.AddCell(firmaColumna);
+                firmaTabla.AddCell(selloColumna);
+                
                 doc.Add(firmaTabla);
 
                 doc.Close();
@@ -257,7 +303,7 @@ namespace SRAUMOAR.Pages.reportes.notas
             // Crear nombre de archivo sin caracteres especiales para evitar errores en headers HTTP
             var apellidosLimpios = Regex.Replace(alumno.Apellidos ?? "", @"[^\w\s-]", "").Replace(" ", "_");
             var nombresLimpios = Regex.Replace(alumno.Nombres ?? "", @"[^\w\s-]", "").Replace(" ", "_");
-            var fileName = $"NotasParciales_{apellidosLimpios}_{nombresLimpios}_{DateTime.Now:yyyyMMddHHmmss}.pdf";
+            var fileName = $"NotasParciales_Historico_{ciclo.NCiclo}_{ciclo.anio}_{apellidosLimpios}_{nombresLimpios}_{DateTime.Now:yyyyMMddHHmmss}.pdf";
             
             // Codificar el nombre del archivo para headers HTTP usando RFC 5987
             var encodedFileName = System.Web.HttpUtility.UrlEncode(fileName);
@@ -280,11 +326,11 @@ namespace SRAUMOAR.Pages.reportes.notas
         private void EstiloEncabezado(Table tabla, string texto)
         {
             tabla.AddCell(new Cell()
-                .Add(new Paragraph(texto).SetFont(_fontBold))
-                .SetBackgroundColor(ColorConstants.LIGHT_GRAY)
+                .Add(new Paragraph(texto).SetFont(_fontBold).SetFontSize(10))
                 .SetTextAlignment(TextAlignment.CENTER)
                 .SetBorder(new SolidBorder(1))
-                .SetPadding(6));
+                .SetPadding(8)
+                .SetVerticalAlignment(VerticalAlignment.MIDDLE));
         }
         private Cell CeldaTexto(string text, bool alt = false)
         {
@@ -299,7 +345,24 @@ namespace SRAUMOAR.Pages.reportes.notas
             if (alt) cell.SetBackgroundColor(new DeviceRgb(248, 248, 248));
             return cell;
         }
+        private Cell CeldaTextoSinBorde(string text)
+        {
+            return new Cell()
+                .Add(new Paragraph(text).SetFont(_fontNormal).SetFontSize(10))
+                .SetBorder(Border.NO_BORDER)
+                .SetPadding(8)
+                .SetTextAlignment(TextAlignment.LEFT)
+                .SetVerticalAlignment(VerticalAlignment.MIDDLE);
+        }
+        private Cell CeldaNotaSinBorde(decimal? valor)
+        {
+            var texto = valor.HasValue ? valor.Value.ToString("0.00") : "-";
+            return new Cell()
+                .Add(new Paragraph(texto).SetTextAlignment(TextAlignment.CENTER).SetFont(_fontNormal).SetFontSize(10))
+                .SetBorder(Border.NO_BORDER)
+                .SetPadding(8)
+                .SetVerticalAlignment(VerticalAlignment.MIDDLE);
+        }
     }
 }
-
 

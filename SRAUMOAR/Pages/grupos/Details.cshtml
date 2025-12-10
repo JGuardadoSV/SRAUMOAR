@@ -2,7 +2,7 @@
 @model SRAUMOAR.Pages.grupos.DetailsModel
 
 @{
-    ViewData["Title"] = "Detalle del Grupo";
+    ViewData["Title"] = Model.EsConsultaHistorica ? "Detalle del Grupo - Consulta Histórica" : "Detalle del Grupo";
 }
 
 <style>
@@ -168,10 +168,29 @@
 <div class="header-gradient">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
         <div>
-            <h1><i class="bi bi-people-fill me-2"></i>@Model.Grupo.Nombre</h1>
+            <h1>
+                <i class="bi bi-people-fill me-2"></i>@Model.Grupo.Nombre
+                @if (Model.EsConsultaHistorica)
+                {
+                    <span class="badge bg-warning text-dark ms-2" style="font-size: 0.6rem; vertical-align: middle;">
+                        <i class="bi bi-clock-history me-1"></i>Consulta Histórica
+                    </span>
+                }
+            </h1>
             <p class="mb-0 mt-2 opacity-75">
                 <i class="bi bi-mortarboard me-1"></i> @Model.Grupo.Carrera?.NombreCarrera
             </p>
+            @if (Model.AlumnoFiltrado != null)
+            {
+                <div class="alert alert-info mt-2 mb-0 py-2 px-3" style="font-size: 0.9rem; max-width: 600px;">
+                    <i class="bi bi-funnel me-2"></i>
+                    <strong>Filtrado por alumno:</strong> @Model.AlumnoFiltrado.Apellidos @Model.AlumnoFiltrado.Nombres
+                    @if (!string.IsNullOrEmpty(Model.AlumnoFiltrado.Carnet))
+                    {
+                        <span class="badge bg-primary ms-2">Carnet: @Model.AlumnoFiltrado.Carnet</span>
+                    }
+                </div>
+            }
         </div>
         <div class="badge-ciclo">
             <i class="bi bi-calendar3 me-1"></i> Ciclo @Model.Grupo.Ciclo?.NCiclo - @Model.Grupo.Ciclo?.anio
@@ -233,14 +252,28 @@
     {
         <div class="card materia-card">
             <div class="materia-header">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5>
-                        <i class="bi bi-book me-2"></i>@materia.NombreMateria
-                        <small class="text-muted fw-normal">(@materia.CodigoMateria)</small>
-                    </h5>
-                    <span class="badge bg-primary">
-                        @Model.EstudiantesConNotas.Count(e => e.MateriasInscritas.Any(mi => mi.MateriasGrupoId == materia.MateriasGrupoId)) estudiantes
-                    </span>
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h5>
+                            <i class="bi bi-book me-2"></i>@materia.NombreMateria
+                            <small class="text-muted fw-normal">(@materia.CodigoMateria)</small>
+                        </h5>
+                        <span class="badge bg-primary">
+                            @Model.EstudiantesConNotas.Count(e => e.MateriasInscritas.Any(mi => mi.MateriasGrupoId == materia.MateriasGrupoId)) estudiantes
+                        </span>
+                    </div>
+                    @if (Model.EsConsultaHistorica)
+                    {
+                        <a class="btn btn-outline-success btn-sm" 
+                           asp-page-handler="ExportarMateria"
+                           asp-route-grupoId="@Model.Grupo.GrupoId"
+                           asp-route-materiasGrupoId="@materia.MateriasGrupoId"
+                           asp-route-cicloId="@Model.CicloIdSeleccionado"
+                           asp-route-buscarAlumno="@Model.BuscarAlumno">
+                            <i class="bi bi-file-earmark-excel me-1"></i>
+                            Exportar Excel
+                        </a>
+                    }
                 </div>
             </div>
             <div class="card-body p-0">
@@ -344,12 +377,28 @@ else
 
 <!-- Botones de acción -->
 <div class="action-buttons d-flex justify-content-between">
-    <a asp-page="./Index" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left me-2"></i>Volver al listado
-    </a>
-    <a asp-page="./Edit" asp-route-id="@Model.Grupo.GrupoId" class="btn btn-primary">
-        <i class="bi bi-pencil me-2"></i>Editar grupo
-    </a>
+    @if (Model.EsConsultaHistorica)
+    {
+        <a asp-page="./Historico" 
+           asp-route-CicloId="@Model.CicloIdSeleccionado" 
+           asp-route-CarreraId="@(ViewContext.HttpContext.Request.Query["CarreraId"].ToString())"
+           asp-route-BuscarAlumno="@Model.BuscarAlumno" 
+           class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Volver a Consultas Históricas
+        </a>
+    }
+    else
+    {
+        <a asp-page="./Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Volver al listado
+        </a>
+    }
+    @if (!Model.EsConsultaHistorica)
+    {
+        <a asp-page="./Edit" asp-route-id="@Model.Grupo.GrupoId" class="btn btn-primary">
+            <i class="bi bi-pencil me-2"></i>Editar grupo
+        </a>
+    }
 </div>
 
 <script>

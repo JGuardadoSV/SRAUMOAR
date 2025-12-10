@@ -1,0 +1,519 @@
+@page
+@model SRAUMOAR.Pages.grupos.HistoricoModel
+@{
+    ViewData["Title"] = "Consultas Históricas de Grupos";
+}
+
+<style>
+    :root {
+        --primary-green: #22c55e;
+        --secondary-green: #16a34a;
+        --dark-green: #15803d;
+        --light-green: #dcfce7;
+        --accent-green: #bbf7d0;
+        --text-dark: #1f2937;
+        --text-light: #6b7280;
+        --border-color: #d1d5db;
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        --historical-blue: #3b82f6;
+        --historical-dark-blue: #1e40af;
+    }
+
+    body {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        min-height: 100vh;
+    }
+
+    .hero-section {
+        background: linear-gradient(135deg, var(--historical-blue) 0%, var(--historical-dark-blue) 100%);
+        color: white;
+        padding: 3rem 0;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+
+    .hero-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .hero-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .hero-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        font-weight: 300;
+    }
+
+    .filter-section {
+        background: white;
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .btn-primary-blue {
+        background: linear-gradient(135deg, var(--historical-blue) 0%, var(--historical-dark-blue) 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow);
+    }
+
+        .btn-primary-blue:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            color: white;
+        }
+
+    .btn-action {
+        background: var(--historical-blue);
+        border: 1px solid var(--historical-blue);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        white-space: nowrap;
+    }
+
+        .btn-action:hover {
+            background: var(--historical-dark-blue);
+            border-color: var(--historical-dark-blue);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+    .table-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .table {
+        margin-bottom: 0;
+        font-size: 0.9rem;
+    }
+
+        .table thead th {
+            background: var(--historical-dark-blue);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.8rem;
+            padding: 1rem 0.75rem;
+            border: none;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .table tbody tr {
+            transition: all 0.3s ease;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+            .table tbody tr:hover {
+                background: #eff6ff;
+                transform: scale(1.01);
+                box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+            }
+
+        .table tbody td {
+            padding: 1rem 0.75rem;
+            vertical-align: middle;
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+
+    .col-carrera {
+        max-width: 220px;
+        white-space: normal;
+        word-wrap: break-word;
+        overflow-wrap: anywhere;
+    }
+
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-active {
+        background: var(--accent-green);
+        color: var(--dark-green);
+    }
+
+    .status-inactive {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    .card-stats {
+        background: white;
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border-left: 4px solid var(--historical-blue);
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--historical-blue);
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        color: var(--text-light);
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .breadcrumb {
+        background: transparent;
+        padding: 0;
+        margin-bottom: 1rem;
+    }
+
+    .breadcrumb-item {
+        color: var(--text-light);
+        font-weight: 500;
+    }
+
+        .breadcrumb-item.active {
+            color: var(--historical-blue);
+        }
+
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: "›";
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
+    .icon {
+        width: 1.25rem;
+        height: 1.25rem;
+        fill: currentColor;
+    }
+
+    .badge-historical {
+        background: rgba(255,255,255,0.2);
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+    }
+
+    @@media (max-width: 768px) {
+        .hero-title {
+            font-size: 2rem;
+        }
+
+        .table-container {
+            margin: 0 -1rem;
+            border-radius: 0;
+        }
+
+        .table {
+            font-size: 0.8rem;
+        }
+
+            .table thead th,
+            .table tbody td {
+                padding: 0.75rem 0.5rem;
+            }
+    }
+</style>
+
+<div class="container-fluid px-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="#" class="text-decoration-none">Inicio</a></li>
+            <li class="breadcrumb-item"><a asp-page="./Index" class="text-decoration-none">Grupos</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Consultas Históricas</li>
+        </ol>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content text-center">
+            <h1 class="hero-title">
+                <i class="bi bi-clock-history me-2"></i>Consultas Históricas de Grupos
+            </h1>
+            <p class="hero-subtitle">Consulta grupos, materias y alumnos de ciclos anteriores</p>
+            @if (Model.CicloSeleccionado != null)
+            {
+                <div class="badge-historical mt-3">
+                    <i class="bi bi-calendar3 me-1"></i> Ciclo @Model.CicloSeleccionado.NCiclo - @Model.CicloSeleccionado.anio
+                    @if (Model.CicloSeleccionado.Activo)
+                    {
+                        <span class="badge bg-success ms-2">Activo</span>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filter-section">
+        <form method="get" class="row align-items-end g-3">
+            <div class="col-md-3">
+                <label for="CicloId" class="form-label fw-bold">Seleccionar Ciclo</label>
+                <select asp-for="CicloId" asp-items="@(new SelectList(Model.Ciclos.Select(c => new { Id = c.Id, Descripcion = $"Ciclo {c.NCiclo} - {c.anio}" + (c.Activo ? " (Activo)" : "") }), "Id", "Descripcion"))" class="form-select">
+                    <option value="">Seleccione un ciclo</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="CarreraId" class="form-label fw-bold">Filtrar por Carrera</label>
+                <select asp-for="CarreraId" asp-items="@(new SelectList(Model.Carreras, "CarreraId", "NombreCarrera"))" class="form-select">
+                    <option value="">Todas las carreras</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="BuscarAlumno" class="form-label fw-bold">Buscar Alumno</label>
+                <input asp-for="BuscarAlumno" type="text" class="form-control" placeholder="Ingrese carnet o parte del email" />
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn-primary-blue w-100">
+                    <i class="bi bi-search me-2"></i>Consultar
+                </button>
+            </div>
+        </form>
+        @if (Model.AlumnoEncontrado != null)
+        {
+            <div class="alert alert-info mt-3 mb-0">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <i class="bi bi-person-check me-2"></i>
+                        <strong>Alumno encontrado:</strong> @Model.AlumnoEncontrado.Apellidos @Model.AlumnoEncontrado.Nombres
+                        @if (!string.IsNullOrEmpty(Model.AlumnoEncontrado.Carnet))
+                        {
+                            <span class="badge bg-primary ms-2">Carnet: @Model.AlumnoEncontrado.Carnet</span>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.AlumnoEncontrado.Email))
+                        {
+                            <span class="badge bg-secondary ms-2">Email: @Model.AlumnoEncontrado.Email</span>
+                        }
+                    </div>
+                    @if (Model.CicloId.HasValue)
+                    {
+                        <a href="/reportes/notas/reporteNotasParcialesHistorico?alumnoId=@Model.AlumnoEncontrado.AlumnoId&cicloId=@Model.CicloId" 
+                           target="_blank"
+                           class="btn btn-success btn-sm">
+                            <i class="bi bi-file-earmark-pdf me-1"></i>
+                            Generar Reporte Histórico PDF
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+        else if (!string.IsNullOrWhiteSpace(Model.BuscarAlumno))
+        {
+            <div class="alert alert-warning mt-3 mb-0">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <strong>No se encontró ningún alumno</strong> con el término de búsqueda: "@Model.BuscarAlumno"
+            </div>
+        }
+    </div>
+
+    @if (Model.CicloSeleccionado != null)
+    {
+        <!-- Statistics Card -->
+        <div class="card-stats">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number">@Model.Grupo.Count()</div>
+                    <div class="stat-label">Total Grupos</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">@Model.Grupo.Count(g => g.Activo)</div>
+                    <div class="stat-label">Grupos Activos</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">@Model.Grupo.Sum(g => g.Limite)</div>
+                    <div class="stat-label">Capacidad Total</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table Section -->
+        @if (Model.Grupo != null && Model.Grupo.Any())
+        {
+            <div class="table-container">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>@Html.DisplayNameFor(model => model.Grupo[0].Nombre)</th>
+                                <th>@Html.DisplayNameFor(model => model.Grupo[0].Limite)</th>
+                                <th>@Html.DisplayNameFor(model => model.Grupo[0].Activo)</th>
+                                <th>@Html.DisplayNameFor(model => model.Grupo[0].Carrera)</th>
+                                <th>@Html.DisplayNameFor(model => model.Grupo[0].Ciclo)</th>
+                                <th>@Html.DisplayNameFor(model => model.Grupo[0].Docente)</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Grupo)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@Html.DisplayFor(modelItem => item.Nombre)</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">@Html.DisplayFor(modelItem => item.Limite) estudiantes</span>
+                                    </td>
+                                    <td>
+                                        @if (item.Activo)
+                                        {
+                                            <span class="status-badge status-active">Activo</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="status-badge status-inactive">Inactivo</span>
+                                        }
+                                    </td>
+                                    <td class="col-carrera">
+                                        <div class="text-wrap">
+                                            @Html.DisplayFor(modelItem => item.Carrera.NombreCarrera)
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">
+                                            @Html.DisplayFor(modelItem => item.Ciclo.NCiclo)-@Html.DisplayFor(modelItem => item.Ciclo.anio)
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-placeholder me-2" style="width: 32px; height: 32px; background: var(--accent-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--dark-green); font-weight: 600; font-size: 0.8rem;">
+                                                @(item.Docente.Nombres.FirstOrDefault())@(item.Docente.Apellidos.FirstOrDefault())
+                                            </div>
+                                            <div>
+                                                <strong>@Html.DisplayFor(modelItem => item.Docente.Nombres)</strong>
+                                                <strong>@Html.DisplayFor(modelItem => item.Docente.Apellidos)</strong>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="d-flex justify-content-center align-items-center gap-2 flex-wrap">
+                                            <a asp-page="./Details" 
+                                               asp-route-id="@item.GrupoId" 
+                                               asp-route-cicloId="@Model.CicloId" 
+                                               asp-route-buscarAlumno="@Model.BuscarAlumno" 
+                                               class="btn-action">
+                                                <svg class="icon" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 4px;">
+                                                    <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
+                                                </svg>
+                                                Ver Notas Históricas
+                                            </a>
+                                            @if (item.MateriasGrupos != null && item.MateriasGrupos.Any())
+                                            {
+                                                @foreach (var materiaGrupo in item.MateriasGrupos.Take(1))
+                                                {
+                                                    <a asp-page="./Details" 
+                                                       asp-page-handler="ExportarMateria"
+                                                       asp-route-grupoId="@item.GrupoId" 
+                                                       asp-route-materiasGrupoId="@materiaGrupo.MateriasGrupoId"
+                                                       asp-route-cicloId="@Model.CicloId" 
+                                                       asp-route-buscarAlumno="@Model.BuscarAlumno" 
+                                                       class="btn btn-outline-success btn-sm">
+                                                        <i class="bi bi-file-earmark-excel me-1"></i>
+                                                        Exportar Excel
+                                                    </a>
+                                                    <a asp-page="./Details" 
+                                                       asp-page-handler="ExportarMateriaPdf"
+                                                       asp-route-grupoId="@item.GrupoId" 
+                                                       asp-route-materiasGrupoId="@materiaGrupo.MateriasGrupoId"
+                                                       asp-route-cicloId="@Model.CicloId" 
+                                                       asp-route-buscarAlumno="@Model.BuscarAlumno" 
+                                                       class="btn btn-outline-danger btn-sm">
+                                                        <i class="bi bi-file-earmark-pdf me-1"></i>
+                                                        Exportar PDF
+                                                    </a>
+                                                }
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="card-stats">
+                <div class="text-center py-4">
+                    <i class="bi bi-inbox" style="font-size: 3rem; color: var(--text-light);"></i>
+                    <h5 class="text-muted mt-3">No se encontraron grupos</h5>
+                    <p class="text-muted mb-0">No hay grupos registrados para el ciclo seleccionado.</p>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="card-stats">
+            <div class="text-center py-4">
+                <i class="bi bi-calendar-x" style="font-size: 3rem; color: var(--text-light);"></i>
+                <h5 class="text-muted mt-3">Seleccione un ciclo</h5>
+                <p class="text-muted mb-0">Por favor, seleccione un ciclo para consultar los grupos históricos.</p>
+            </div>
+        </div>
+    }
+
+    <!-- Botón Volver -->
+    <div class="d-flex justify-content-start mt-3">
+        <a asp-page="./Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Volver a Grupos Actuales
+        </a>
+    </div>
+</div>
+
