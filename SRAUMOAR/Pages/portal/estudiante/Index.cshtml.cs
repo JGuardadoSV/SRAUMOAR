@@ -86,11 +86,12 @@ namespace SRAUMOAR.Pages.portal.estudiante
                 if (ActividadAcademica != null && ActividadAcademica.Any())
                 {
                     var promedioCalculado = CalcularPromedioMateria(materia.Notas, ActividadAcademica);
+                    var notaFinal = CalcularNotaFinal(materia, promedioCalculado);
                     
                     // Actualizar si el promedio calculado es diferente al almacenado
-                    if (materia.NotaPromedio != promedioCalculado)
+                    if (materia.NotaPromedio != notaFinal)
                     {
-                        materia.NotaPromedio = promedioCalculado;
+                        materia.NotaPromedio = notaFinal;
                         _context.MateriasInscritas.Update(materia);
                         hayCambios = true;
                     }
@@ -302,6 +303,30 @@ namespace SRAUMOAR.Pages.portal.estudiante
             if (totalPorcentaje <= 0) return 0;
 
             return Math.Round(sumaPonderada / totalPorcentaje, 2);
+        }
+
+        /// <summary>
+        /// Calcula la nota final aplicando las reglas de reposición
+        /// </summary>
+        private static decimal CalcularNotaFinal(MateriasInscritas materiaInscrita, decimal promedioCalculado)
+        {
+            // Aplicar regla de reposición
+            if (materiaInscrita.NotaRecuperacion.HasValue)
+            {
+                if (materiaInscrita.NotaRecuperacion.Value >= 7)
+                {
+                    // Si aprobó recuperación (>=7), la nota final es 7
+                    return 7;
+                }
+                else
+                {
+                    // Si tiene nota de recuperación pero reprobó (<7), usar esa nota
+                    return materiaInscrita.NotaRecuperacion.Value;
+                }
+            }
+
+            // Si no tiene nota de recuperación, usar el promedio calculado
+            return promedioCalculado;
         }
 
         private async Task<byte[]> OptimizarImagenAsync(IFormFile imagen)
