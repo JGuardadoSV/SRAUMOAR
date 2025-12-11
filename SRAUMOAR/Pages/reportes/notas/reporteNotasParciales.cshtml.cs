@@ -29,61 +29,6 @@ namespace SRAUMOAR.Pages.reportes.notas
             _context = context;
         }
 
-        /// <summary>
-        /// Calcula el promedio ponderado de notas usando los porcentajes configurados en las actividades académicas
-        /// </summary>
-        private static decimal CalcularPromedioMateriaComun(ICollection<Notas> notas, IList<ActividadAcademica> actividadesAcademicas)
-        {
-            if (actividadesAcademicas == null || !actividadesAcademicas.Any())
-                return 0;
-
-            decimal sumaPonderada = 0;
-            decimal totalPorcentaje = 0;
-
-            foreach (var actividad in actividadesAcademicas)
-            {
-                if (actividad == null) continue;
-
-                int porcentaje = actividad.Porcentaje;
-                totalPorcentaje += porcentaje;
-
-                var notaRegistrada = notas?.FirstOrDefault(n => n.ActividadAcademicaId == actividad.ActividadAcademicaId);
-                decimal valorNota = notaRegistrada?.Nota ?? 0;
-                sumaPonderada += valorNota * porcentaje;
-            }
-
-            if (totalPorcentaje <= 0) return 0;
-
-            return Math.Round(sumaPonderada / totalPorcentaje, 2);
-        }
-
-        /// <summary>
-        /// Calcula la nota final aplicando las reglas de reposición
-        /// </summary>
-        private static decimal CalcularNotaFinal(MateriasInscritas materiaInscrita, ICollection<Notas> notasMateria, IList<ActividadAcademica> actividadesAcademicas)
-        {
-            // Calcular promedio base
-            decimal promedio = CalcularPromedioMateriaComun(notasMateria, actividadesAcademicas);
-
-            // Aplicar regla de reposición
-            if (materiaInscrita.NotaRecuperacion.HasValue)
-            {
-                if (materiaInscrita.NotaRecuperacion.Value >= 7)
-                {
-                    // Si aprobó recuperación (>=7), la nota final es 7
-                    return 7;
-                }
-                else
-                {
-                    // Si tiene nota de recuperación pero reprobó (<7), usar esa nota
-                    return materiaInscrita.NotaRecuperacion.Value;
-                }
-            }
-
-            // Si no tiene nota de recuperación, usar el promedio calculado
-            return promedio;
-        }
-
         private void InitializeFonts()
         {
             _fontNormal = PdfFontFactory.CreateFont(StandardFonts.TIMES_ROMAN);
@@ -115,15 +60,6 @@ namespace SRAUMOAR.Pages.reportes.notas
                 .Include(mi => mi.Notas)!.ThenInclude(n => n!.ActividadAcademica)
                 .Where(mi => mi.AlumnoId == alumnoId && mi.MateriasGrupo!.Grupo!.CicloId == cicloActual.Id)
                 .ToList();
-
-            // Obtener actividades académicas del ciclo para calcular promedios correctamente
-            var actividadesAcademicas = _context.ActividadesAcademicas
-                .Where(a => a.CicloId == cicloActual.Id)
-                .OrderBy(a => a.FechaInicio)
-                .ToList();
-
-            // Título del reporte - siempre parcial
-            string tituloReporte = $"Informe de notas parciales ciclo {cicloActual.NCiclo} - {cicloActual.anio}";
 
             // Determinar estado de solvencia
             var hoy = DateTime.Now.Date;
@@ -159,7 +95,7 @@ namespace SRAUMOAR.Pages.reportes.notas
                 }
                 var textCell = new Cell().SetBorder(Border.NO_BORDER);
                 textCell.Add(new Paragraph("UNIVERSIDAD MONSEÑOR OSCAR ARNULFO ROMERO").SetFont(_fontBold).SetFontSize(14).SetTextAlignment(TextAlignment.CENTER));
-                textCell.Add(new Paragraph(tituloReporte).SetFont(_fontBold).SetFontSize(12).SetTextAlignment(TextAlignment.CENTER));
+                textCell.Add(new Paragraph($"Informe de notas parciales ciclo {cicloActual.NCiclo} - {cicloActual.anio}").SetFont(_fontBold).SetFontSize(12).SetTextAlignment(TextAlignment.CENTER));
                 headerTable.AddCell(textCell);
                 doc.Add(headerTable);
                 // Línea separadora sutil
@@ -204,7 +140,7 @@ namespace SRAUMOAR.Pages.reportes.notas
                 EstiloEncabezado(tabla, "Nota final");
 
                 int rowIndex = 0;
-                foreach (var mi in materiasInscritas.OrderBy(x => x.MateriasGrupo!.Materia!.CodigoMateria))
+                foreach (var mi in materiasInscritas.OrderBy(x => x.MateriasGrupo!.Materia!.NombreMateria))
                 {
                     var materia = mi.MateriasGrupo!.Materia!;
                     var notas = (mi.Notas ?? new List<Notas>())
@@ -236,8 +172,12 @@ namespace SRAUMOAR.Pages.reportes.notas
                     tabla.AddCell(CeldaNota(labs[2], isAlt));
                     tabla.AddCell(CeldaNota(pars[2], isAlt));
 
-                    // Calcular nota final usando porcentajes configurados y regla de reposición
-                    decimal notaFinal = CalcularNotaFinal(mi, notas, actividadesAcademicas);
+                    // Promedio final: (promedio LAB * 0.30) + (promedio PAR * 0.70)
+                    decimal labSum = (labs[0] ?? 0) + (labs[1] ?? 0) + (labs[2] ?? 0);
+                    decimal parSum = (pars[0] ?? 0) + (pars[1] ?? 0) + (pars[2] ?? 0);
+                    decimal labAvg = labSum / 3m;
+                    decimal parAvg = parSum / 3m;
+                    decimal notaFinal = Math.Round(labAvg * 0.30m + parAvg * 0.70m, 2);
                     tabla.AddCell(CeldaNota(notaFinal, isAlt));
 
                     rowIndex++;

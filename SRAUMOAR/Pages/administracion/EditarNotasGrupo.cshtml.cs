@@ -84,18 +84,13 @@ namespace SRAUMOAR.Pages.administracion
             public IList<Notas> Notas { get; set; } = new List<Notas>();
             public List<MateriasInscritas> MateriasInscritas { get; set; } = new List<MateriasInscritas>();
 
-            /// <summary>
-            /// Calcula el promedio para una materia específica usando las notas de las materias inscritas
-            /// </summary>
             public decimal CalcularPromedioMateria(int materiasGrupoId, IList<ActividadAcademica> actividadesAcademicas)
             {
-                // Obtener la materia inscrita correspondiente
-                var materiaInscrita = MateriasInscritas.FirstOrDefault(mi => mi.MateriasGrupoId == materiasGrupoId);
-                if (materiaInscrita == null)
-                    return 0;
-
-                // Obtener las notas directamente de la materia inscrita
-                var notasMateria = materiaInscrita.Notas ?? new List<Notas>();
+                // Obtener las notas registradas para esta materia
+                var notasMateria = Notas
+                    .Where(n => n.MateriasInscritas != null && 
+                               n.MateriasInscritas.MateriasGrupoId == materiasGrupoId)
+                    .ToList();
 
                 return CalcularPromedioMateriaComun(notasMateria, actividadesAcademicas);
             }
