@@ -35,6 +35,28 @@ namespace SRAUMOAR.Pages.reportes.notas
             _fontBold = PdfFontFactory.CreateFont(StandardFonts.TIMES_BOLD);
         }
 
+        // Método para calcular el promedio final considerando la nota de reposición
+        private static decimal CalcularPromedioFinalConReposicion(decimal promedioBase, decimal? notaRecuperacion)
+        {
+            // Si hay nota de reposición, aplicar la lógica
+            if (notaRecuperacion.HasValue)
+            {
+                if (notaRecuperacion.Value >= 7)
+                {
+                    // Si sacó 7 o más en reposición, el promedio siempre es 7
+                    return 7;
+                }
+                else
+                {
+                    // Si la nota de reposición es menor a 7, se usa el valor tal cual
+                    return Math.Round(notaRecuperacion.Value, 2);
+                }
+            }
+
+            // Si no hay nota de reposición, usar el promedio base
+            return promedioBase;
+        }
+
         public IActionResult OnGet(int alumnoId)
         {
             InitializeFonts();
@@ -140,7 +162,7 @@ namespace SRAUMOAR.Pages.reportes.notas
                 EstiloEncabezado(tabla, "Nota final");
 
                 int rowIndex = 0;
-                foreach (var mi in materiasInscritas.OrderBy(x => x.MateriasGrupo!.Materia!.NombreMateria))
+                foreach (var mi in materiasInscritas.OrderBy(x => x.MateriasGrupo!.Materia!.CodigoMateria))
                 {
                     var materia = mi.MateriasGrupo!.Materia!;
                     var notas = (mi.Notas ?? new List<Notas>())
@@ -177,7 +199,10 @@ namespace SRAUMOAR.Pages.reportes.notas
                     decimal parSum = (pars[0] ?? 0) + (pars[1] ?? 0) + (pars[2] ?? 0);
                     decimal labAvg = labSum / 3m;
                     decimal parAvg = parSum / 3m;
-                    decimal notaFinal = Math.Round(labAvg * 0.30m + parAvg * 0.70m, 2);
+                    decimal promedioBase = Math.Round(labAvg * 0.30m + parAvg * 0.70m, 2);
+                    
+                    // Aplicar lógica de reposición
+                    decimal notaFinal = CalcularPromedioFinalConReposicion(promedioBase, mi.NotaRecuperacion);
                     tabla.AddCell(CeldaNota(notaFinal, isAlt));
 
                     rowIndex++;

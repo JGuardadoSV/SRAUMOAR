@@ -42,7 +42,7 @@ namespace SRAUMOAR.Pages.administracion
         [BindProperty]
         public Dictionary<int, Dictionary<int, Dictionary<int, NotaEditar>>> NotasEditar { get; set; } = new();
 
-        // Método estático compartido para calcular el promedio
+        // Método estático compartido para calcular el promedio base (sin considerar reposición)
         private static decimal CalcularPromedioMateriaComun(ICollection<Notas> notas, IList<ActividadAcademica> actividadesAcademicas)
         {
             if (actividadesAcademicas == null || !actividadesAcademicas.Any())
@@ -75,6 +75,28 @@ namespace SRAUMOAR.Pages.administracion
             return Math.Round(sumaPonderada / totalPorcentaje, 2);
         }
 
+        // Método para calcular el promedio final considerando la nota de reposición
+        private static decimal CalcularPromedioFinalConReposicion(decimal promedioBase, decimal? notaRecuperacion)
+        {
+            // Si hay nota de reposición, aplicar la lógica
+            if (notaRecuperacion.HasValue)
+            {
+                if (notaRecuperacion.Value >= 7)
+                {
+                    // Si sacó 7 o más en reposición, el promedio siempre es 7
+                    return 7;
+                }
+                else
+                {
+                    // Si la nota de reposición es menor a 7, se usa el valor tal cual
+                    return Math.Round(notaRecuperacion.Value, 2);
+                }
+            }
+
+            // Si no hay nota de reposición, usar el promedio base
+            return promedioBase;
+        }
+
         public class EstudianteConNotas
         {
             public int AlumnoId { get; set; }
@@ -92,7 +114,15 @@ namespace SRAUMOAR.Pages.administracion
                                n.MateriasInscritas.MateriasGrupoId == materiasGrupoId)
                     .ToList();
 
-                return CalcularPromedioMateriaComun(notasMateria, actividadesAcademicas);
+                // Obtener la materia inscrita para acceder a NotaRecuperacion
+                var materiaInscrita = MateriasInscritas
+                    .FirstOrDefault(mi => mi.MateriasGrupoId == materiasGrupoId);
+
+                // Calcular promedio base
+                decimal promedioBase = CalcularPromedioMateriaComun(notasMateria, actividadesAcademicas);
+
+                // Aplicar lógica de reposición
+                return CalcularPromedioFinalConReposicion(promedioBase, materiaInscrita?.NotaRecuperacion);
             }
         }
 
@@ -334,12 +364,15 @@ namespace SRAUMOAR.Pages.administracion
                         .Where(a => a.CicloId == materiaInscrita.MateriasGrupo.Grupo.CicloId)
                         .ToListAsync();
 
-                    // Calcular el promedio usando el mismo método compartido
-                    materiaInscrita.NotaPromedio = CalcularPromedioMateriaComun(materiaInscrita.Notas, actividadesAcademicas);
+                    // Calcular el promedio base usando el mismo método compartido
+                    decimal promedioBase = CalcularPromedioMateriaComun(materiaInscrita.Notas, actividadesAcademicas);
+                    
+                    // Aplicar lógica de reposición al calcular el promedio final
+                    materiaInscrita.NotaPromedio = CalcularPromedioFinalConReposicion(promedioBase, materiaInscrita.NotaRecuperacion);
                     
                     _context.MateriasInscritas.Update(materiaInscrita);
                     await _context.SaveChangesAsync();
-                    Console.WriteLine($"✅ Promedio actualizado: {materiaInscrita.NotaPromedio}");
+                    Console.WriteLine($"✅ Promedio actualizado: {materiaInscrita.NotaPromedio} (Base: {promedioBase}, Reposición: {materiaInscrita.NotaRecuperacion?.ToString() ?? "N/A"})");
                 }
 
                 string mensaje = "";
@@ -360,7 +393,16 @@ namespace SRAUMOAR.Pages.administracion
                     mensaje = "No se procesaron notas";
                 }
 
-                return new JsonResult(new { success = true, message = mensaje });
+                // Preparar respuesta con información actualizada
+                var respuesta = new
+                {
+                    success = true,
+                    message = mensaje,
+                    notaPromedio = materiaInscrita?.NotaPromedio ?? 0,
+                    notaRecuperacion = materiaInscrita?.NotaRecuperacion
+                };
+
+                return new JsonResult(respuesta);
             }
             catch (Exception ex)
             {

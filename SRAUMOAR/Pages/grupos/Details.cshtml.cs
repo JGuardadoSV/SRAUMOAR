@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -26,6 +26,28 @@ namespace SRAUMOAR.Pages.grupos
         public IList<MateriaDelGrupo> MateriasDelGrupo { get; set; } = new List<MateriaDelGrupo>();
         public IList<ActividadAcademica> ActividadesAcademicas { get; set; } = new List<ActividadAcademica>();
         public IList<EstudianteConNotas> EstudiantesConNotas { get; set; } = new List<EstudianteConNotas>();
+
+        // Método para calcular el promedio final considerando la nota de reposición
+        public static decimal CalcularPromedioFinalConReposicion(decimal promedioBase, decimal? notaRecuperacion)
+        {
+            // Si hay nota de reposición, aplicar la lógica
+            if (notaRecuperacion.HasValue)
+            {
+                if (notaRecuperacion.Value >= 7)
+                {
+                    // Si sacó 7 o más en reposición, el promedio siempre es 7
+                    return 7;
+                }
+                else
+                {
+                    // Si la nota de reposición es menor a 7, se usa el valor tal cual
+                    return Math.Round(notaRecuperacion.Value, 2);
+                }
+            }
+
+            // Si no hay nota de reposición, usar el promedio base
+            return promedioBase;
+        }
 
         public class EstudianteConNotas
         {

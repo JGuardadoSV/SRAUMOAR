@@ -141,7 +141,7 @@
                                         
                                         var notasMateria = estudiante.Notas.Where(n => n.MateriasInscritas.MateriasGrupoId == materia.MateriasGrupoId).ToList();
                                         
-                                        <tr>
+                                        <tr data-nota-reposicion="@(materiaInscrita.NotaRecuperacion?.ToString("F2") ?? "")">
                                             <td class="col-estudiante">
                                                 <div class="d-flex align-items-center">
                                                     <div class="ms-2">
@@ -281,7 +281,16 @@
                 if (response.ok) {
                     const result = await response.json();
                     if (result.success) {
-                        // Actualizar promedio
+                        // Actualizar la nota de reposición en el atributo data de la fila
+                        // Buscar la fila que contiene el promedio de este estudiante y materia
+                        const promedioElement = document.getElementById(`promedio-${alumnoId}-${materiasGrupoId}`);
+                        const fila = promedioElement?.closest('tr');
+                        if (fila && result.notaRecuperacion !== undefined) {
+                            const notaRecuperacion = result.notaRecuperacion !== null ? parseFloat(result.notaRecuperacion).toFixed(2) : '';
+                            fila.setAttribute('data-nota-reposicion', notaRecuperacion);
+                        }
+                        
+                        // Actualizar promedio (esto ahora considerará la nota de reposición)
                         actualizarPromedio(alumnoId, materiasGrupoId, notas);
                         
                         // Mostrar mensaje de éxito
@@ -313,10 +322,15 @@
             }
         }
         
-        // Función para actualizar el promedio visualmente
+        // Función para actualizar el promedio visualmente considerando la nota de reposición
         function actualizarPromedio(alumnoId, materiasGrupoId, notasGuardadas) {
             const promedioElement = document.getElementById(`promedio-${alumnoId}-${materiasGrupoId}`);
             if (!promedioElement) return;
+            
+            // Obtener la nota de reposición del atributo data de la fila
+            const fila = promedioElement.closest('tr');
+            const notaReposicionStr = fila?.getAttribute('data-nota-reposicion') || '';
+            const notaReposicion = notaReposicionStr !== '' ? parseFloat(notaReposicionStr) : null;
             
             // Obtener todas las actividades académicas con sus porcentajes
             const actividades = @Html.Raw(Json.Serialize(Model.ActividadesAcademicas.Select(a => new { a.ActividadAcademicaId, a.Porcentaje })));
@@ -355,9 +369,22 @@
                 sumaPonderada += valorNota * porcentaje;
             });
             
-            // Calcular promedio
-            const promedio = totalPorcentaje > 0 ? (sumaPonderada / totalPorcentaje).toFixed(2) : '0.00';
-            promedioElement.innerHTML = promedio;
+            // Calcular promedio base
+            const promedioBase = totalPorcentaje > 0 ? (sumaPonderada / totalPorcentaje) : 0;
+            
+            // Aplicar lógica de reposición
+            let promedioFinal = promedioBase;
+            if (notaReposicion !== null && !isNaN(notaReposicion)) {
+                if (notaReposicion >= 7) {
+                    // Si sacó 7 o más en reposición, el promedio siempre es 7
+                    promedioFinal = 7;
+                } else {
+                    // Si la nota de reposición es menor a 7, se usa el valor tal cual
+                    promedioFinal = notaReposicion;
+                }
+            }
+            
+            promedioElement.innerHTML = promedioFinal.toFixed(2);
         }
         
         // Función para mostrar mensajes
