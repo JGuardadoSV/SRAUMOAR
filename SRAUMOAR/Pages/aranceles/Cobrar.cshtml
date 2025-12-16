@@ -564,23 +564,23 @@
                             {
                                 <tr class="table-row">
                                     <td class="text-center">
-                                        @if (!Model.AlumnoHaPagado(item.ArancelId, @alumno.AlumnoId))
+                                        <input type="checkbox" name="selectedAranceles" value="@item.ArancelId" class="checkbox-professional" />
+
+                                        @if (Model.AlumnoHaPagado(item.ArancelId, @alumno.AlumnoId))
                                         {
-                                            <input type="checkbox" name="selectedAranceles" value="@item.ArancelId" class="checkbox-professional" />
-                                        }
-                                        else
-                                        {
-                                            <a asp-page="/aranceles/Facturas" asp-route-arancelId="@item.ArancelId" asp-route-alumnoId="@alumno?.AlumnoId" class="btn btn-recibo">
-                                                <i class="bi bi-receipt me-1"></i>Ver Recibo
-                                            </a>
-                                            <form method="post" asp-page-handler="EliminarPago" style="display:inline;">
-                                                <input type="hidden" name="arancelId" value="@item.ArancelId" />
-                                                <input type="hidden" name="alumnoId" value="@alumno?.AlumnoId" />
-                                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Está seguro de eliminar este pago?');">
-                                                    <i class="bi bi-trash"></i> Eliminar
-                                                </button>
-                                            </form>
-                                            <span style="color:red; font-size:0.9em;">[Depuración] AlumnoId: @alumno?.AlumnoId | ArancelId: @item.ArancelId</span>
+                                            <div class="mt-2">
+                                                <a asp-page="/aranceles/Facturas" asp-route-arancelId="@item.ArancelId" asp-route-alumnoId="@alumno?.AlumnoId" class="btn btn-recibo mb-1">
+                                                    <i class="bi bi-receipt me-1"></i>Ver Recibo
+                                                </a>
+                                                <form method="post" asp-page-handler="EliminarPago" style="display:inline;">
+                                                    <input type="hidden" name="arancelId" value="@item.ArancelId" />
+                                                    <input type="hidden" name="alumnoId" value="@alumno?.AlumnoId" />
+                                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Está seguro de eliminar este pago?');">
+                                                        <i class="bi bi-trash"></i> Eliminar
+                                                    </button>
+                                                </form>
+                                                <span style="color:red; font-size:0.9em; display:block;">[Depuración] AlumnoId: @alumno?.AlumnoId | ArancelId: @item.ArancelId</span>
+                                            </div>
                                         }
                                     </td>
                                     <td class="fw-semibold">@Html.DisplayFor(modelItem => item.Nombre)</td>
@@ -662,12 +662,13 @@
             </div>
 
             @{
-                // Contar si hay algún arancel pendiente en ambas listas
-                bool hayPendientes = Model.ArancelesObligatorios.Any(a => !Model.AlumnoHaPagado(a.ArancelId, alumno.AlumnoId)) ||
-                                    Model.ArancelesNoObligatorios.Any(a => !Model.AlumnoHaPagado(a.ArancelId, alumno.AlumnoId));
+                // Pendientes solo para aranceles obligatorios
+                bool hayPendientesObligatorios = Model.ArancelesObligatorios.Any(a => !Model.AlumnoHaPagado(a.ArancelId, alumno.AlumnoId));
+                // Aranceles disponibles (obligatorios o no obligatorios)
+                bool hayArancelesDisponibles = Model.ArancelesObligatorios.Any() || Model.ArancelesNoObligatorios.Any();
             }
 
-            @if (hayPendientes)
+            @if (hayArancelesDisponibles)
             {
                 <div class="action-container">
                     <button type="submit" class="btn btn-cobrar-principal">
@@ -677,17 +678,26 @@
                     <div class="mt-3">
                         <small class="text-muted">
                             <i class="bi bi-info-circle me-1"></i>
-                            Selecciona los aranceles que deseas cobrar y haz clic en el botón superior
+                            Selecciona los aranceles que deseas cobrar (obligatorios y no obligatorios) y haz clic en el botón superior
                         </small>
                     </div>
                 </div>
+
+                @if (!hayPendientesObligatorios)
+                {
+                    <div class="no-aranceles mt-3">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <h4 class="fw-bold mt-2">Aranceles obligatorios pagados</h4>
+                        <p class="mb-0">Este alumno no tiene aranceles obligatorios pendientes de pago.</p>
+                    </div>
+                }
             }
             else
             {
                 <div class="no-aranceles">
-                    <i class="bi bi-check-circle-fill"></i>
-                    <h4 class="fw-bold mt-2">Todos los Aranceles Pagados</h4>
-                    <p class="mb-0">Este alumno no tiene aranceles pendientes de pago.</p>
+                    <i class="bi bi-info-circle-fill"></i>
+                    <h4 class="fw-bold mt-2">Sin aranceles configurados</h4>
+                    <p class="mb-0">No hay aranceles disponibles para este alumno en el ciclo actual.</p>
                 </div>
             }
         </form>
