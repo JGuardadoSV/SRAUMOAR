@@ -90,7 +90,10 @@ namespace SRAUMOAR.Pages.portal.estudiante
 
                     if (historialPorCarrera != null)
                     {
-                        HistorialCiclos = historialPorCarrera.CiclosHistorial?.ToList() ?? new List<HistorialCiclo>();
+                        // Ordenar los ciclos por su texto de ciclo (ej. 01-2025) descendente
+                        HistorialCiclos = historialPorCarrera.CiclosHistorial?
+                            .OrderByDescending(hc => hc.CicloTexto)
+                            .ToList() ?? new List<HistorialCiclo>();
                         
                         // Calcular totales solo para esta carrera (considerando materias libres)
                         TotalMaterias = HistorialCiclos.Sum(hc => hc.MateriasHistorial?.Count ?? 0);
