@@ -223,6 +223,15 @@ namespace SRAUMOAR.Pages.aranceles
                     }
                 }
 
+                // Verificar si el alumno está inscrito en algún grupo de especialización del ciclo actual
+                var alumnoEnGrupoEspecializacion = await _context.MateriasInscritas
+                    .Include(mi => mi.MateriasGrupo)
+                        .ThenInclude(mg => mg.Grupo)
+                    .Where(mi => mi.AlumnoId == id && 
+                                 mi.MateriasGrupo.Grupo.CicloId == cicloactual.Id &&
+                                 mi.MateriasGrupo.Grupo.EsEspecializacion)
+                    .AnyAsync();
+
                 // Obtener los IDs de los aranceles que ya pagó el alumno
                 var arancelesPagados = await _context.CobrosArancel
                     .Where(c => c.AlumnoId == id)
@@ -235,8 +244,20 @@ namespace SRAUMOAR.Pages.aranceles
                     .Include(a => a.Ciclo).ToListAsync();
 
                 // Separar aranceles obligatorios y no obligatorios
-                ArancelesObligatorios = Arancel.Where(a => a.Obligatorio).ToList();
-                ArancelesNoObligatorios = Arancel.Where(a => !a.Obligatorio).ToList();
+                if (alumnoEnGrupoEspecializacion)
+                {
+                    // Si el estudiante está en un grupo de especialización:
+                    // - Solo mostrar aranceles obligatorios que sean de especialización
+                    // - Mostrar todos los aranceles no obligatorios
+                    ArancelesObligatorios = Arancel.Where(a => a.Obligatorio && a.EsEspecializacion).ToList();
+                    ArancelesNoObligatorios = Arancel.Where(a => !a.Obligatorio).ToList();
+                }
+                else
+                {
+                    // Comportamiento normal: mostrar todos los obligatorios y no obligatorios
+                    ArancelesObligatorios = Arancel.Where(a => a.Obligatorio).ToList();
+                    ArancelesNoObligatorios = Arancel.Where(a => !a.Obligatorio).ToList();
+                }
             }
             catch (Exception ex)
             {

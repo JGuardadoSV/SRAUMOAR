@@ -54,7 +54,7 @@ namespace SRAUMOAR.Pages.reportes.notas
 
             if (totalPorcentaje <= 0) return 0;
 
-            return Math.Round(sumaPonderada / totalPorcentaje, 2);
+            return Math.Round(sumaPonderada / totalPorcentaje, 1, MidpointRounding.AwayFromZero);
         }
 
         /// <summary>
@@ -75,8 +75,8 @@ namespace SRAUMOAR.Pages.reportes.notas
                 }
                 else
                 {
-                    // Si tiene nota de recuperación pero reprobó (<7), usar esa nota
-                    return materiaInscrita.NotaRecuperacion.Value;
+                    // Si tiene nota de recuperación pero reprobó (<7), usar esa nota redondeada a 1 decimal
+                    return Math.Round(materiaInscrita.NotaRecuperacion.Value, 1, MidpointRounding.AwayFromZero);
                 }
             }
 
@@ -340,7 +340,7 @@ namespace SRAUMOAR.Pages.reportes.notas
         }
         private Cell CeldaNota(decimal? valor, bool alt = false)
         {
-            var texto = valor.HasValue ? valor.Value.ToString("0.00") : "0.00";
+            var texto = valor.HasValue ? valor.Value.ToString("0.0") : "0.0";
             var cell = new Cell().Add(new Paragraph(texto).SetTextAlignment(TextAlignment.CENTER).SetFont(_fontNormal)).SetBorder(new SolidBorder(1)).SetPadding(5);
             if (alt) cell.SetBackgroundColor(new DeviceRgb(248, 248, 248));
             return cell;
@@ -356,7 +356,7 @@ namespace SRAUMOAR.Pages.reportes.notas
         }
         private Cell CeldaNotaSinBorde(decimal? valor)
         {
-            var texto = valor.HasValue ? valor.Value.ToString("0.00") : "-";
+            var texto = valor.HasValue ? valor.Value.ToString("0.0") : "-";
             return new Cell()
                 .Add(new Paragraph(texto).SetTextAlignment(TextAlignment.CENTER).SetFont(_fontNormal).SetFontSize(10))
                 .SetBorder(Border.NO_BORDER)

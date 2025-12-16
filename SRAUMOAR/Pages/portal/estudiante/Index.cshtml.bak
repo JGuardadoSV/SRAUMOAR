@@ -4,21 +4,9 @@
 }
 <div class="container py-4">
 
-    @{
-        // Determinar qué aranceles verificar según si está en grupo de especialización
-        var arancelesAVerificar = Model.Arancel.AsEnumerable();
-        if (Model.EstaEnGrupoEspecializacion)
-        {
-            // Si está en grupo de especialización, solo verificar aranceles obligatorios de especialización y no obligatorios
-            arancelesAVerificar = Model.Arancel.Where(a => !a.Obligatorio || a.EsEspecializacion);
-        }
-        
-        var tieneArancelesVencidos = arancelesAVerificar.Any(a => !Model.DetallesCobroArancel
-            .Any(dc => dc.ArancelId == a.ArancelId && dc.CobroArancel.AlumnoId == Model.Alumno.AlumnoId)
-            && (a.FechaFin < DateTime.Now));
-    }
-    
-    @if (!Model.EsBecado && tieneArancelesVencidos)
+    @if (!Model.EsBecado && Model.Arancel.Any(a => !Model.DetallesCobroArancel
+    .Any(dc => dc.ArancelId == a.ArancelId && dc.CobroArancel.AlumnoId == Model.Alumno.AlumnoId)
+    && (a.FechaFin < DateTime.Now)))
     {
         <div class="aranceles-alert-compact mb-3">
             <div class="alert-header-compact">
@@ -33,7 +21,7 @@
             
             <div class="aranceles-list">
                 @{
-                    var arancelesVencidos = arancelesAVerificar
+                    var arancelesVencidos = Model.Arancel
                     .Where(a => !Model.DetallesCobroArancel
                     .Any(dc => dc.ArancelId == a.ArancelId && dc.CobroArancel.AlumnoId == Model.Alumno.AlumnoId)
                     && (a.FechaFin < DateTime.Now))
@@ -285,7 +273,7 @@
                                                 else
                                                 {
                                                     <span class="badge bg-primary rounded-pill px-3 py-2">
-                                                        @(materia.NotaPromedio.ToString("N1") ?? "N/A")
+                                                        @(materia.NotaPromedio.ToString("N2") ?? "N/A")
                                                     </span>
                                                 }
                                             </td>
@@ -317,14 +305,12 @@
                                                         }).ToList();
 
                                                     var notasJson = System.Text.Json.JsonSerializer.Serialize(notasData);
-                                                    var notaReposicion = materia.NotaRecuperacion?.ToString("N1") ?? "";
 
                                                     <button type="button"
                                                             class="btn btn-outline-primary btn-sm ver-notas-btn"
                                                             data-materia-nombre="@materia.MateriasGrupo.Materia.NombreMateria"
                                                             data-grupo-nombre="@materia.MateriasGrupo.Grupo.Nombre"
-                                                            data-promedio="@materia.NotaPromedio.ToString("N1")"
-                                                            data-nota-reposicion="@notaReposicion"
+                                                            data-promedio="@materia.NotaPromedio.ToString("N2")"
                                                             data-notas='@Html.Raw(notasJson)'
                                                             data-bs-toggle="modal"
                                                             data-bs-target="#modalNotasDinamico">
@@ -669,7 +655,6 @@
                 const materiaNombre = button.getAttribute('data-materia-nombre');
                 const grupoNombre = button.getAttribute('data-grupo-nombre');
                 const promedio = button.getAttribute('data-promedio');
-                const notaReposicion = button.getAttribute('data-nota-reposicion');
                 const notasJson = button.getAttribute('data-notas');
 
                 // Actualizar el contenido del modal
@@ -710,21 +695,6 @@
                                 </tr>
                             `;
                         });
-
-                        // Agregar fila de reposición si existe
-                        if (notaReposicion && notaReposicion.trim() !== '') {
-                            const notaReposicionNum = parseFloat(notaReposicion);
-                            const notaFinalReposicion = notaReposicionNum >= 7 ? 7 : notaReposicionNum;
-                            tableHtml += `
-                                <tr class="table-warning">
-                                    <td><strong>Reposición</strong></td>
-                                    <td><strong>Recuperación</strong></td>
-                                    <td class="text-center">-</td>
-                                    <td class="text-center"><strong>${notaReposicionNum.toFixed(1)}</strong></td>
-                                    <td class="text-center">-</td>
-                                </tr>
-                            `;
-                        }
 
                         tableHtml += `
                                     </tbody>

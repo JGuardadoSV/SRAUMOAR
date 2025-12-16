@@ -81,7 +81,15 @@
                                     </div>
                                 </div>
 
-                                <div class="col-md-6">
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label asp-for="AsuntoCorreo">Asunto del Correo</label>
+                                        <input asp-for="AsuntoCorreo" class="form-control" placeholder="Asunto del correo de notificación" />
+                                        <small class="form-text text-muted">Personaliza el asunto de los correos de notificación</small>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
                                     <div class="form-group">
                                         <label>&nbsp;</label>
                                         <div>
@@ -106,9 +114,10 @@
                                         <div class="card-tools">
                                             @if (Model.AlumnosInsolventes != null && Model.AlumnosInsolventes.Any())
                                             {
-                                                <form method="post" asp-page-handler="NotificarTodos" class="d-inline">
+                                                <form method="post" asp-page-handler="NotificarTodos" class="d-inline form-notificar-todos">
                                                     <input type="hidden" name="SelectedCarreraId" value="@(Model.SelectedCarreraId?.ToString() ?? string.Empty)" />
                                                     <input type="hidden" name="IncluirAlumnosConBeca" value="@(Model.IncluirAlumnosConBeca)" />
+                                                    <input type="hidden" name="AsuntoCorreo" value="@Model.AsuntoCorreo" />
                                                     <button type="submit" class="btn btn-warning btn-sm me-2">
                                                         <i class="fas fa-envelope"></i> Notificar deuda a todos
                                                     </button>
@@ -253,14 +262,14 @@
                                             <table class="table table-hover text-nowrap">
                                                 <thead>
                                                     <tr>
-                                                        <th>No.</th>
+                                                        <th style="width: 5%;">No.</th>
                                                         <th>Nombre Completo</th>
-                                                        <th>Carrera</th>
-                                                        <th>Carnet</th>
-                                                        <th class="text-right">Pendiente</th>
-                                                        <th class="text-right">Mora</th>
-                                                        <th class="text-right">Total</th>
-                                                        <th>Acciones</th>
+                                                        <th style="width: 15%;">Carrera</th>
+                                                        <th style="width: 10%;">Carnet</th>
+                                                        <th class="text-right" style="width: 12%;">Pendiente</th>
+                                                        <th class="text-right" style="width: 12%;">Mora</th>
+                                                        <th class="text-right" style="width: 12%;">Total</th>
+                                                        <th style="width: 8%;">Acciones</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -281,16 +290,17 @@
                                                                     </small>
                                                                 }
                                                             </td>
-                                                            <td>@alumno.Carrera</td>
+                                                            <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="@alumno.Carrera">@alumno.Carrera</td>
                                                             <td>@(alumno.Carnet ?? alumno.Email?.Split('@')[0] ?? "")</td>
                                                             <td class="text-right">$@alumno.TotalPendiente.ToString("F2")</td>
                                                             <td class="text-right">$@alumno.TotalMora.ToString("F2")</td>
                                                             <td class="text-right font-weight-bold">$@alumno.TotalGeneral.ToString("F2")</td>
                                                             <td>
-                                                                <form method="post" asp-page-handler="NotificarAlumno" class="d-inline">
+                                                                <form method="post" asp-page-handler="NotificarAlumno" class="d-inline form-notificar-alumno">
                                                                     <input type="hidden" name="alumnoId" value="@alumno.AlumnoId" />
                                                                     <input type="hidden" name="SelectedCarreraId" value="@(Model.SelectedCarreraId?.ToString() ?? string.Empty)" />
                                                                     <input type="hidden" name="IncluirAlumnosConBeca" value="@(Model.IncluirAlumnosConBeca)" />
+                                                                    <input type="hidden" name="AsuntoCorreo" value="@Model.AsuntoCorreo" />
                                                                     <button type="submit" class="btn btn-outline-warning btn-sm" title="Notificar deuda por correo">
                                                                         <i class="bi bi-envelope"></i>
                                                                     </button>
@@ -350,5 +360,42 @@
                 }
             });
         });
+
+        // Indicador de procesamiento al notificar por correo
+        document.addEventListener('DOMContentLoaded', function () {
+            // Notificar alumno individual
+            const formsAlumno = document.querySelectorAll('.form-notificar-alumno');
+            formsAlumno.forEach(function (form) {
+                form.addEventListener('submit', function () {
+                    const btn = form.querySelector('button[type="submit"]');
+                    if (!btn) return;
+                    btn.disabled = true;
+                    btn.dataset.originalHtml = btn.innerHTML;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                });
+            });
+
+            // Notificar a todos
+            const formsTodos = document.querySelectorAll('.form-notificar-todos');
+            formsTodos.forEach(function (form) {
+                form.addEventListener('submit', function () {
+                    const btn = form.querySelector('button[type="submit"]');
+                    if (!btn) return;
+                    btn.disabled = true;
+                    btn.dataset.originalHtml = btn.innerHTML;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+                });
+            });
+        });
     </script>
 }
+
+<style>
+    .table-responsive table th:nth-child(3),
+    .table-responsive table td:nth-child(3) {
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+</style>

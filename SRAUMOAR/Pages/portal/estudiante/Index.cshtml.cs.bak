@@ -37,7 +37,6 @@ namespace SRAUMOAR.Pages.portal.estudiante
         public Ciclo Ciclo { get; set; } = default!;
         public bool EsBecado { get; set; } = false;
         public bool TieneArancelesRetrasados { get; set; } = false;
-        public bool EstaEnGrupoEspecializacion { get; set; } = false;
         [BindProperty]
         public IList<MateriasInscritas> MateriasInscritas { get; set; } = default!;
         public IList<Arancel> Arancel { get; set; } = default!;
@@ -57,14 +56,6 @@ namespace SRAUMOAR.Pages.portal.estudiante
                 .AnyAsync(b => b.AlumnoId == Alumno.AlumnoId && 
                               b.CicloId == Ciclo.Id && 
                               b.Estado == true);
-
-            // Verificar si el alumno está inscrito en algún grupo de especialización del ciclo actual
-            EstaEnGrupoEspecializacion = await _context.MateriasInscritas
-                .Include(mi => mi.MateriasGrupo)
-                    .ThenInclude(mg => mg.Grupo)
-                .AnyAsync(mi => mi.AlumnoId == Alumno.AlumnoId &&
-                                mi.MateriasGrupo.Grupo.CicloId == Ciclo.Id &&
-                                mi.MateriasGrupo.Grupo.EsEspecializacion);
 
             //seleccionar todas las materias inscritas por el alumno
             MateriasInscritas = await _context.MateriasInscritas
@@ -95,12 +86,11 @@ namespace SRAUMOAR.Pages.portal.estudiante
                 if (ActividadAcademica != null && ActividadAcademica.Any())
                 {
                     var promedioCalculado = CalcularPromedioMateria(materia.Notas, ActividadAcademica);
-                    var notaFinal = CalcularNotaFinal(materia, promedioCalculado);
                     
                     // Actualizar si el promedio calculado es diferente al almacenado
-                    if (materia.NotaPromedio != notaFinal)
+                    if (materia.NotaPromedio != promedioCalculado)
                     {
-                        materia.NotaPromedio = notaFinal;
+                        materia.NotaPromedio = promedioCalculado;
                         _context.MateriasInscritas.Update(materia);
                         hayCambios = true;
                     }
@@ -125,20 +115,7 @@ namespace SRAUMOAR.Pages.portal.estudiante
             // Verificar si tiene aranceles retrasados (solo si no es becado)
             if (!EsBecado)
             {
-                // Determinar qué aranceles verificar según si está en grupo de especialización
-                var arancelesAVerificar = Arancel.AsEnumerable();
-                if (EstaEnGrupoEspecializacion)
-                {
-                    // Si está en grupo de especialización, solo verificar aranceles obligatorios de especialización
-                    arancelesAVerificar = Arancel.Where(a => !a.Obligatorio || a.EsEspecializacion);
-                }
-                else
-                {
-                    // Si no está en grupo de especialización, verificar todos los aranceles obligatorios
-                    arancelesAVerificar = Arancel;
-                }
-
-                TieneArancelesRetrasados = arancelesAVerificar.Any(a => !DetallesCobroArancel
+                TieneArancelesRetrasados = Arancel.Any(a => !DetallesCobroArancel
                     .Any(dc => dc.ArancelId == a.ArancelId && dc.CobroArancel.AlumnoId == Alumno.AlumnoId)
                     && (a.FechaFin < DateTime.Now));
             }
@@ -324,31 +301,7 @@ namespace SRAUMOAR.Pages.portal.estudiante
             // Si no hay porcentajes, retornar 0
             if (totalPorcentaje <= 0) return 0;
 
-            return Math.Round(sumaPonderada / totalPorcentaje, 1, MidpointRounding.AwayFromZero);
-        }
-
-        /// <summary>
-        /// Calcula la nota final aplicando las reglas de reposición
-        /// </summary>
-        private static decimal CalcularNotaFinal(MateriasInscritas materiaInscrita, decimal promedioCalculado)
-        {
-            // Aplicar regla de reposición
-            if (materiaInscrita.NotaRecuperacion.HasValue)
-            {
-                if (materiaInscrita.NotaRecuperacion.Value >= 7)
-                {
-                    // Si aprobó recuperación (>=7), la nota final es 7
-                    return 7;
-                }
-                else
-                {
-                    // Si tiene nota de recuperación pero reprobó (<7), usar esa nota redondeada a 1 decimal
-                    return Math.Round(materiaInscrita.NotaRecuperacion.Value, 1, MidpointRounding.AwayFromZero);
-                }
-            }
-
-            // Si no tiene nota de recuperación, usar el promedio calculado (ya redondeado a 1 decimal)
-            return promedioCalculado;
+            return Math.Round(sumaPonderada / totalPorcentaje, 2);
         }
 
         private async Task<byte[]> OptimizarImagenAsync(IFormFile imagen)

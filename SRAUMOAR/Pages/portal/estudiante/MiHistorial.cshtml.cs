@@ -90,7 +90,6 @@ namespace SRAUMOAR.Pages.portal.estudiante
 
                     if (historialPorCarrera != null)
                     {
-                        // Ordenar los ciclos por su texto de ciclo (ej. 01-2025) descendente
                         HistorialCiclos = historialPorCarrera.CiclosHistorial?
                             .OrderByDescending(hc => hc.CicloTexto)
                             .ToList() ?? new List<HistorialCiclo>();

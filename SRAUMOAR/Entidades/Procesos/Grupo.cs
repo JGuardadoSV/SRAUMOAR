@@ -14,6 +14,9 @@ namespace SRAUMOAR.Entidades.Procesos
         [Display(Name = "Código")]
         public string? Nombre { get; set; }
         public bool Activo { get; set; }
+        
+        [Display(Name = "Es de Especialización")]
+        public bool EsEspecializacion { get; set; }
 
         [Required(ErrorMessage = "La carrera es requerida")]
         [Display(Name = "Carrera")]

@@ -183,6 +183,18 @@ namespace SRAUMOAR.Servicios
                           .ToHashSet()
                 );
 
+            // Verificar qué alumnos están en grupos de especialización
+            var alumnosEnGrupoEspecializacionList = await _context.MateriasInscritas
+                .Include(mi => mi.MateriasGrupo)
+                    .ThenInclude(mg => mg.Grupo)
+                .Where(mi => inscripciones.Select(i => i.AlumnoId).Contains(mi.AlumnoId) &&
+                             mi.MateriasGrupo.Grupo.CicloId == cicloId &&
+                             mi.MateriasGrupo.Grupo.EsEspecializacion)
+                .Select(mi => mi.AlumnoId)
+                .Distinct()
+                .ToListAsync();
+            var alumnosEnGrupoEspecializacion = alumnosEnGrupoEspecializacionList.ToHashSet();
+
             foreach (var inscripcion in inscripciones)
             {
                 var alumno = inscripcion.Alumno;
@@ -200,7 +212,15 @@ namespace SRAUMOAR.Servicios
                 // Obtener aranceles pagados por este alumno
                 var arancelesPagados = pagosPorAlumno.GetValueOrDefault(alumno.AlumnoId, new HashSet<int>());
 
-                foreach (var arancel in arancelesObligatorios)
+                // Determinar qué aranceles obligatorios verificar según si está en grupo de especialización
+                var arancelesAVerificar = arancelesObligatorios.AsEnumerable();
+                if (alumnosEnGrupoEspecializacion.Contains(alumno.AlumnoId))
+                {
+                    // Si está en grupo de especialización, solo verificar aranceles obligatorios de especialización
+                    arancelesAVerificar = arancelesObligatorios.Where(a => a.EsEspecializacion);
+                }
+
+                foreach (var arancel in arancelesAVerificar)
                 {
                     // Verificar si el alumno ya pagó este arancel
                     if (!arancelesPagados.Contains(arancel.ArancelId))

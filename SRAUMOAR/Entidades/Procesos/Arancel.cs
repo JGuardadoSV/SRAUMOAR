@@ -35,6 +35,10 @@ namespace SRAUMOAR.Entidades.Procesos
         [DefaultValue(false)]
         public bool Obligatorio { get; set; }
 
+        [Display(Name = "Es Especialización")]
+        [DefaultValue(false)]
+        public bool EsEspecializacion { get; set; }
+
         // Campo para valor de mora
         [Display(Name = "Valor de Mora")]
         [Column(TypeName = "decimal(18,2)")]

@@ -210,8 +210,18 @@
                                                                 }
                                                             </td>
                                                             <td>
+                                                                <button type="button" class="btn btn-primary btn-sm me-1" 
+                                                                        onclick="abrirModalEditar(@materia.HistorialMateriaId, 
+                                                                        '@(materia.Materia != null ? materia.Materia.NombreMateria : materia.MateriaNombreLibre ?? "")',
+                                                                        @materia.HistorialCicloId,
+                                                                        @materia.Nota1, @materia.Nota2, @materia.Nota3, @materia.Nota4, @materia.Nota5, @materia.Nota6,
+                                                                        @materia.Promedio, @(materia.Aprobada ? 1 : 0), @(materia.Equivalencia ? 1 : 0), @(materia.ExamenSuficiencia ? 1 : 0))"
+                                                                        title="Editar notas">
+                                                                    <i class="bi bi-pencil"></i>
+                                                                </button>
                                                                 <button type="button" class="btn btn-danger btn-sm" 
-                                                                        onclick="confirmarEliminarMateria(@materia.HistorialMateriaId, '@(materia.Materia != null ? materia.Materia.NombreMateria : materia.MateriaNombreLibre ?? "")')">
+                                                                        onclick="confirmarEliminarMateria(@materia.HistorialMateriaId, '@(materia.Materia != null ? materia.Materia.NombreMateria : materia.MateriaNombreLibre ?? "")')"
+                                                                        title="Eliminar materia">
                                                                     <i class="bi bi-trash"></i>
                                                                 </button>
                                                             </td>
@@ -244,6 +254,149 @@
                     }
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Editar Notas -->
+<div class="modal fade" id="modalEditarNotas" tabindex="-1" aria-labelledby="modalEditarNotasLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalEditarNotasLabel">
+                    <i class="bi bi-pencil me-2"></i>
+                    Editar Notas
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formEditarNotas">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <input type="hidden" id="historialMateriaId" name="historialMateriaId" />
+                    <input type="hidden" id="historialCicloIdActual" name="historialCicloIdActual" />
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Materia:</strong> <span id="nombreMateriaEditar"></span>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="nuevoCicloId" class="form-label">
+                                <i class="bi bi-calendar3 me-2"></i>
+                                Mover a Ciclo
+                            </label>
+                            <select class="form-select" id="nuevoCicloId" name="nuevoCicloId">
+                                <option value="">-- Mantener en el ciclo actual --</option>
+                                @foreach (var ciclo in Model.TodosLosCiclos)
+                                {
+                                    <option value="@ciclo.HistorialCicloId">
+                                        Ciclo @ciclo.CicloTexto 
+                                        @if (ciclo.Pensum != null)
+                                        {
+                                            <text>| Pensúm @ciclo.Pensum.Anio</text>
+                                        }
+                                        else if (!string.IsNullOrEmpty(ciclo.PensumNombreLibre))
+                                        {
+                                            <text>| @ciclo.PensumNombreLibre</text>
+                                        }
+                                    </option>
+                                }
+                                <option value="nuevo">+ Crear nuevo ciclo</option>
+                            </select>
+                            <small class="form-text text-muted">Puedes mover esta materia a otro ciclo o crear uno nuevo</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3" id="divNuevoCiclo" style="display: none;">
+                        <div class="col-md-6">
+                            <label for="nuevoCicloTexto" class="form-label">Texto del Ciclo (ej: 1/2024)</label>
+                            <input type="text" class="form-control" id="nuevoCicloTexto" name="nuevoCicloTexto" placeholder="1/2024" maxlength="10">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="nuevoPensumNombre" class="form-label">Nombre del Pensúm (opcional)</label>
+                            <input type="text" class="form-control" id="nuevoPensumNombre" name="nuevoPensumNombre" placeholder="Pensúm 2020" maxlength="150">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="nota1" class="form-label">Nota 1</label>
+                            <input type="number" class="form-control" id="nota1" name="nota1" step="0.01" min="0" max="10" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="nota2" class="form-label">Nota 2</label>
+                            <input type="number" class="form-control" id="nota2" name="nota2" step="0.01" min="0" max="10" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="nota3" class="form-label">Nota 3</label>
+                            <input type="number" class="form-control" id="nota3" name="nota3" step="0.01" min="0" max="10" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="nota4" class="form-label">Nota 4</label>
+                            <input type="number" class="form-control" id="nota4" name="nota4" step="0.01" min="0" max="10" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="nota5" class="form-label">Nota 5</label>
+                            <input type="number" class="form-control" id="nota5" name="nota5" step="0.01" min="0" max="10" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="nota6" class="form-label">Nota 6</label>
+                            <input type="number" class="form-control" id="nota6" name="nota6" step="0.01" min="0" max="10" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="promedio" class="form-label">Promedio</label>
+                            <input type="number" class="form-control" id="promedio" name="promedio" step="0.01" min="0" max="10" required>
+                            <small class="form-text text-muted">Se puede calcular automáticamente o ingresar manualmente</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="form-check mt-4">
+                                <input class="form-check-input" type="checkbox" id="calcularPromedio" checked>
+                                <label class="form-check-label" for="calcularPromedio">
+                                    Calcular promedio automáticamente
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="aprobada" name="aprobada">
+                                <label class="form-check-label" for="aprobada">
+                                    Aprobada
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="equivalencia" name="equivalencia">
+                                <label class="form-check-label" for="equivalencia">
+                                    Equivalencia
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="examenSuficiencia" name="examenSuficiencia">
+                                <label class="form-check-label" for="examenSuficiencia">
+                                    Examen de Suficiencia
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="btnGuardarNotas">
+                        <i class="bi bi-save me-1"></i>
+                        Guardar Cambios
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -375,5 +528,157 @@
                 jQuery('.alert').fadeOut();
             }, 5000);
         }
+
+        // Función para abrir el modal de edición
+        function abrirModalEditar(historialMateriaId, nombreMateria, historialCicloIdActual, nota1, nota2, nota3, nota4, nota5, nota6, promedio, aprobada, equivalencia, examenSuficiencia) {
+            // Escapar el nombre de la materia para evitar problemas con comillas
+            var nombreEscapado = nombreMateria.replace(/'/g, "\\'");
+            
+            jQuery('#historialMateriaId').val(historialMateriaId);
+            jQuery('#historialCicloIdActual').val(historialCicloIdActual);
+            jQuery('#nombreMateriaEditar').text(nombreEscapado);
+            jQuery('#nota1').val(nota1);
+            jQuery('#nota2').val(nota2);
+            jQuery('#nota3').val(nota3);
+            jQuery('#nota4').val(nota4);
+            jQuery('#nota5').val(nota5);
+            jQuery('#nota6').val(nota6);
+            jQuery('#promedio').val(promedio);
+            // Convertir 1/0 a boolean para los checkboxes
+            jQuery('#aprobada').prop('checked', aprobada === 1 || aprobada === true);
+            jQuery('#equivalencia').prop('checked', equivalencia === 1 || equivalencia === true);
+            jQuery('#examenSuficiencia').prop('checked', examenSuficiencia === 1 || examenSuficiencia === true);
+            
+            // Resetear el selector de ciclo
+            jQuery('#nuevoCicloId').val('');
+            jQuery('#divNuevoCiclo').hide();
+            jQuery('#nuevoCicloTexto').val('');
+            jQuery('#nuevoPensumNombre').val('');
+            
+            // Configurar el promedio como readonly si está marcado calcular automáticamente
+            if (jQuery('#calcularPromedio').is(':checked')) {
+                jQuery('#promedio').prop('readonly', true);
+            } else {
+                jQuery('#promedio').prop('readonly', false);
+            }
+            
+            jQuery('#modalEditarNotas').modal('show');
+        }
+
+        // Calcular promedio automáticamente
+        jQuery(document).ready(function() {
+            jQuery('#calcularPromedio').on('change', function() {
+                if (jQuery(this).is(':checked')) {
+                    jQuery('#promedio').prop('readonly', true);
+                    calcularPromedio();
+                } else {
+                    jQuery('#promedio').prop('readonly', false);
+                }
+            });
+
+            // Calcular promedio cuando cambian las notas
+            jQuery('#nota1, #nota2, #nota3, #nota4, #nota5, #nota6').on('input', function() {
+                if (jQuery('#calcularPromedio').is(':checked')) {
+                    calcularPromedio();
+                }
+            });
+
+            // Mostrar/ocultar campos para nuevo ciclo
+            jQuery('#nuevoCicloId').on('change', function() {
+                if (jQuery(this).val() === 'nuevo') {
+                    jQuery('#divNuevoCiclo').show();
+                    jQuery('#nuevoCicloTexto').prop('required', true);
+                } else {
+                    jQuery('#divNuevoCiclo').hide();
+                    jQuery('#nuevoCicloTexto').prop('required', false);
+                }
+            });
+
+            function calcularPromedio() {
+                var notas = [
+                    parseFloat(jQuery('#nota1').val()) || 0,
+                    parseFloat(jQuery('#nota2').val()) || 0,
+                    parseFloat(jQuery('#nota3').val()) || 0,
+                    parseFloat(jQuery('#nota4').val()) || 0,
+                    parseFloat(jQuery('#nota5').val()) || 0,
+                    parseFloat(jQuery('#nota6').val()) || 0
+                ];
+                
+                // Filtrar solo las notas mayores a 0
+                var notasValidas = notas.filter(n => n > 0);
+                
+                if (notasValidas.length > 0) {
+                    var suma = notasValidas.reduce((a, b) => a + b, 0);
+                    var promedio = suma / notasValidas.length;
+                    jQuery('#promedio').val(promedio.toFixed(2));
+                } else {
+                    jQuery('#promedio').val(0);
+                }
+            }
+
+            // Manejar el envío del formulario
+            jQuery('#formEditarNotas').on('submit', function(e) {
+                e.preventDefault();
+                
+                var nuevoCicloId = jQuery('#nuevoCicloId').val();
+                var formData = {
+                    historialMateriaId: jQuery('#historialMateriaId').val(),
+                    historialCicloIdActual: jQuery('#historialCicloIdActual').val(),
+                    nota1: parseFloat(jQuery('#nota1').val()) || 0,
+                    nota2: parseFloat(jQuery('#nota2').val()) || 0,
+                    nota3: parseFloat(jQuery('#nota3').val()) || 0,
+                    nota4: parseFloat(jQuery('#nota4').val()) || 0,
+                    nota5: parseFloat(jQuery('#nota5').val()) || 0,
+                    nota6: parseFloat(jQuery('#nota6').val()) || 0,
+                    promedio: parseFloat(jQuery('#promedio').val()) || 0,
+                    aprobada: jQuery('#aprobada').is(':checked'),
+                    equivalencia: jQuery('#equivalencia').is(':checked'),
+                    examenSuficiencia: jQuery('#examenSuficiencia').is(':checked')
+                };
+
+                // Si se seleccionó un nuevo ciclo o crear uno nuevo
+                if (nuevoCicloId === 'nuevo') {
+                    var nuevoCicloTexto = jQuery('#nuevoCicloTexto').val();
+                    if (!nuevoCicloTexto || nuevoCicloTexto.trim() === '') {
+                        mostrarMensaje('Debe ingresar el texto del ciclo (ej: 1/2024)', 'error');
+                        jQuery('#btnGuardarNotas').prop('disabled', false).html('<i class="bi bi-save me-1"></i>Guardar Cambios');
+                        return;
+                    }
+                    formData.nuevoCicloTexto = nuevoCicloTexto.trim();
+                    formData.nuevoPensumNombre = jQuery('#nuevoPensumNombre').val() || '';
+                } else if (nuevoCicloId && nuevoCicloId !== '') {
+                    formData.nuevoCicloId = nuevoCicloId;
+                }
+
+                // Deshabilitar botón y mostrar loading
+                jQuery('#btnGuardarNotas').prop('disabled', true).html('<i class="bi bi-hourglass-split me-1"></i>Guardando...');
+                
+                // Obtener el token anti-forgery
+                var token = jQuery('input[name="__RequestVerificationToken"]').val();
+                formData.__RequestVerificationToken = token;
+
+                jQuery.ajax({
+                    url: '/historial/Ver?handler=ActualizarNotas',
+                    type: 'POST',
+                    data: formData,
+                    success: function(response) {
+                        if (response.success) {
+                            jQuery('#modalEditarNotas').modal('hide');
+                            mostrarMensaje('Notas actualizadas exitosamente', 'success');
+                            setTimeout(function() {
+                                location.reload();
+                            }, 1500);
+                        } else {
+                            mostrarMensaje('Error al actualizar las notas: ' + (response.message || 'Error desconocido'), 'error');
+                            jQuery('#btnGuardarNotas').prop('disabled', false).html('<i class="bi bi-save me-1"></i>Guardar Cambios');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        mostrarMensaje('Error al actualizar las notas: ' + error, 'error');
+                        jQuery('#btnGuardarNotas').prop('disabled', false).html('<i class="bi bi-save me-1"></i>Guardar Cambios');
+                    }
+                });
+            });
+        });
     </script>
 }

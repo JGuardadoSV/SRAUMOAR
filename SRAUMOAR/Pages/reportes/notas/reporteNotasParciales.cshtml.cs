@@ -48,8 +48,8 @@ namespace SRAUMOAR.Pages.reportes.notas
                 }
                 else
                 {
-                    // Si la nota de reposición es menor a 7, se usa el valor tal cual
-                    return Math.Round(notaRecuperacion.Value, 2);
+                    // Si la nota de reposición es menor a 7, se usa el valor tal cual redondeado a 1 decimal
+                    return Math.Round(notaRecuperacion.Value, 1, MidpointRounding.AwayFromZero);
                 }
             }
 
@@ -199,7 +199,7 @@ namespace SRAUMOAR.Pages.reportes.notas
                     decimal parSum = (pars[0] ?? 0) + (pars[1] ?? 0) + (pars[2] ?? 0);
                     decimal labAvg = labSum / 3m;
                     decimal parAvg = parSum / 3m;
-                    decimal promedioBase = Math.Round(labAvg * 0.30m + parAvg * 0.70m, 2);
+                    decimal promedioBase = Math.Round(labAvg * 0.30m + parAvg * 0.70m, 1, MidpointRounding.AwayFromZero);
                     
                     // Aplicar lógica de reposición
                     decimal notaFinal = CalcularPromedioFinalConReposicion(promedioBase, mi.NotaRecuperacion);
@@ -259,7 +259,7 @@ namespace SRAUMOAR.Pages.reportes.notas
         }
         private Cell CeldaNota(decimal? valor, bool alt = false)
         {
-            var texto = valor.HasValue ? valor.Value.ToString("0.00") : "0.00";
+            var texto = valor.HasValue ? valor.Value.ToString("0.0") : "0.0";
             var cell = new Cell().Add(new Paragraph(texto).SetTextAlignment(TextAlignment.CENTER).SetFont(_fontNormal)).SetBorder(new SolidBorder(1)).SetPadding(5);
             if (alt) cell.SetBackgroundColor(new DeviceRgb(248, 248, 248));
             return cell;
