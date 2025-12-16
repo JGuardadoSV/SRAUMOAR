@@ -24,11 +24,13 @@ namespace SRAUMOAR.Pages.reportes.insolventes
     {
         private readonly Contexto _context;
         private readonly ReporteInsolventesService _reporteService;
+        private readonly IEmailService _emailService;
 
-        public IndexModel(Contexto context, ReporteInsolventesService reporteService)
+        public IndexModel(Contexto context, ReporteInsolventesService reporteService, IEmailService emailService)
         {
             _context = context;
             _reporteService = reporteService;
+            _emailService = emailService;
         }
 
         [BindProperty(SupportsGet = true)]
@@ -752,6 +754,208 @@ namespace SRAUMOAR.Pages.reportes.insolventes
             }
 
             return alumnosInsolventes;
+        }
+
+        public async Task<IActionResult> OnPostNotificarAlumnoAsync(int alumnoId)
+        {
+            try
+            {
+                await CargarCarrerasAsync();
+                await CargarAlumnosInsolventesAsync();
+
+                var alumno = AlumnosInsolventes.FirstOrDefault(a => a.AlumnoId == alumnoId);
+                if (alumno == null)
+                {
+                    TempData["Error"] = "No se encontró la información del alumno seleccionado para notificar la deuda.";
+                    return RedirectToPage(new { SelectedCarreraId, IncluirAlumnosConBeca });
+                }
+
+                if (string.IsNullOrWhiteSpace(alumno.Email) || !alumno.Email.Contains("@"))
+                {
+                    TempData["Warning"] = $"El alumno {alumno.Apellidos}, {alumno.Nombres} no tiene un correo electrónico válido configurado.";
+                    return RedirectToPage(new { SelectedCarreraId, IncluirAlumnosConBeca });
+                }
+
+                var asunto = "Notificación de deuda de aranceles - Universidad Monseñor Oscar Arnulfo Romero";
+                var cuerpo = GenerarPlantillaDeuda(alumno);
+                var nombreCompleto = $"{alumno.Nombres} {alumno.Apellidos}".Trim();
+
+                var enviado = await _emailService.EnviarEmailAsync(alumno.Email, asunto, cuerpo, nombreCompleto);
+
+                if (enviado)
+                {
+                    TempData["Success"] = $"Se ha enviado correctamente la notificación de deuda al alumno {alumno.Apellidos}, {alumno.Nombres}.";
+                }
+                else
+                {
+                    TempData["Error"] = $"Ocurrió un error al enviar la notificación de deuda al alumno {alumno.Apellidos}, {alumno.Nombres}.";
+                }
+
+                return RedirectToPage(new { SelectedCarreraId, IncluirAlumnosConBeca });
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Error al notificar deuda del alumno: {ex.Message}";
+                Console.WriteLine($"Error en OnPostNotificarAlumnoAsync: {ex}");
+                return RedirectToPage(new { SelectedCarreraId, IncluirAlumnosConBeca });
+            }
+        }
+
+        public async Task<IActionResult> OnPostNotificarTodosAsync()
+        {
+            try
+            {
+                await CargarCarrerasAsync();
+                await CargarAlumnosInsolventesAsync();
+
+                if (AlumnosInsolventes == null || !AlumnosInsolventes.Any())
+                {
+                    TempData["Warning"] = "No hay alumnos insolventes en el listado actual para notificar.";
+                    return RedirectToPage(new { SelectedCarreraId, IncluirAlumnosConBeca });
+                }
+
+                var alumnosUnicos = AlumnosInsolventes
+                    .GroupBy(a => a.AlumnoId)
+                    .Select(g => g.First())
+                    .Where(a => !string.IsNullOrWhiteSpace(a.Email) && a.Email.Contains("@"))
+                    .ToList();
+
+                if (!alumnosUnicos.Any())
+                {
+                    TempData["Warning"] = "Ninguno de los alumnos insolventes del listado actual tiene un correo electrónico válido configurado.";
+                    return RedirectToPage(new { SelectedCarreraId, IncluirAlumnosConBeca });
+                }
+
+                int enviados = 0;
+                int fallidos = 0;
+
+                foreach (var alumno in alumnosUnicos)
+                {
+                    try
+                    {
+                        var asunto = "Notificación de deuda de aranceles - Sistema SRAUMOAR";
+                        var cuerpo = GenerarPlantillaDeuda(alumno);
+                        var nombreCompleto = $"{alumno.Nombres} {alumno.Apellidos}".Trim();
+
+                        var enviado = await _emailService.EnviarEmailAsync(alumno.Email, asunto, cuerpo, nombreCompleto);
+                        if (enviado)
+                        {
+                            enviados++;
+                        }
+                        else
+                        {
+                            fallidos++;
+                        }
+                    }
+                    catch (Exception exEnvio)
+                    {
+                        Console.WriteLine($"Error enviando notificación de deuda a {alumno.Email}: {exEnvio}");
+                        fallidos++;
+                    }
+                }
+
+                if (enviados > 0 && fallidos == 0)
+                {
+                    TempData["Success"] = $"Se enviaron correctamente {enviados} notificaciones de deuda.";
+                }
+                else if (enviados > 0 && fallidos > 0)
+                {
+                    TempData["Warning"] = $"Se enviaron correctamente {enviados} notificaciones de deuda, pero ocurrieron {fallidos} errores de envío.";
+                }
+                else
+                {
+                    TempData["Error"] = "No se pudo enviar ninguna notificación de deuda.";
+                }
+
+                return RedirectToPage(new { SelectedCarreraId, IncluirAlumnosConBeca });
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Error al notificar deudas: {ex.Message}";
+                Console.WriteLine($"Error en OnPostNotificarTodosAsync: {ex}");
+                return RedirectToPage(new { SelectedCarreraId, IncluirAlumnosConBeca });
+            }
+        }
+
+        private string GenerarPlantillaDeuda(AlumnoInsolvente alumno)
+        {
+            var nombreCompleto = $"{alumno.Nombres} {alumno.Apellidos}".Trim();
+
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("<html>");
+            sb.AppendLine("<head>");
+            sb.AppendLine("<style>");
+            sb.AppendLine("body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }");
+            sb.AppendLine(".container { max-width: 700px; margin: 0 auto; padding: 20px; }");
+            sb.AppendLine(".header { background-color: #1bad0e; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }");
+            sb.AppendLine(".content { background-color: #f8f9fa; padding: 20px; border: 1px solid #dee2e6; }");
+            sb.AppendLine(".table { width: 100%; border-collapse: collapse; margin-top: 15px; }");
+            sb.AppendLine(".table th, .table td { border: 1px solid #dee2e6; padding: 8px; font-size: 13px; }");
+            sb.AppendLine(".table th { background-color: #e9ecef; }");
+            sb.AppendLine(".totales { margin-top: 15px; padding: 10px; background-color: #e9ecef; border-radius: 5px; }");
+            sb.AppendLine(".footer { text-align: center; margin-top: 20px; color: #6c757d; font-size: 12px; }");
+            sb.AppendLine("</style>");
+            sb.AppendLine("</head>");
+            sb.AppendLine("<body>");
+            sb.AppendLine("<div class='container'>");
+            sb.AppendLine("<div class='header'>");
+            sb.AppendLine("<h2>Sistema de Registro Académico UMOAR</h2>");
+            sb.AppendLine("<p>Notificación de Deuda de Aranceles</p>");
+            sb.AppendLine("</div>");
+            sb.AppendLine("<div class='content'>");
+            sb.AppendLine($"<p>Estimado/a <strong>{System.Net.WebUtility.HtmlEncode(nombreCompleto)}</strong>,</p>");
+            sb.AppendLine("<p>Se ha generado el siguiente detalle de aranceles pendientes correspondientes al ciclo actual:</p>");
+
+            sb.AppendLine("<table class='table'>");
+            sb.AppendLine("<thead>");
+            sb.AppendLine("<tr>");
+            sb.AppendLine("<th>Arancel</th>");
+            sb.AppendLine("<th>Fecha vencimiento</th>");
+            sb.AppendLine("<th style='text-align:right;'>Monto</th>");
+            sb.AppendLine("<th style='text-align:right;'>Mora</th>");
+            sb.AppendLine("<th style='text-align:right;'>Total</th>");
+            sb.AppendLine("</tr>");
+            sb.AppendLine("</thead>");
+            sb.AppendLine("<tbody>");
+
+            foreach (var arancel in alumno.ArancelesPendientes.OrderBy(a => a.FechaVencimiento))
+            {
+                var fecha = arancel.FechaVencimiento.HasValue
+                    ? arancel.FechaVencimiento.Value.ToString("dd/MM/yyyy")
+                    : "";
+
+                sb.AppendLine("<tr>");
+                sb.AppendLine($"<td>{System.Net.WebUtility.HtmlEncode(arancel.NombreArancel)}</td>");
+                sb.AppendLine($"<td>{fecha}</td>");
+                sb.AppendLine($"<td style='text-align:right;'>${arancel.CostoOriginal:F2}</td>");
+                sb.AppendLine($"<td style='text-align:right;'>${arancel.Mora:F2}</td>");
+                sb.AppendLine($"<td style='text-align:right;'><strong>${arancel.TotalConMora:F2}</strong></td>");
+                sb.AppendLine("</tr>");
+            }
+
+            sb.AppendLine("</tbody>");
+            sb.AppendLine("</table>");
+
+            sb.AppendLine("<div class='totales'>");
+            sb.AppendLine("<h4>Resumen de deuda</h4>");
+            sb.AppendLine($"<p><strong>Total pendiente:</strong> ${alumno.TotalPendiente:F2}</p>");
+            sb.AppendLine($"<p><strong>Total mora:</strong> ${alumno.TotalMora:F2}</p>");
+            sb.AppendLine($"<p><strong>Total general:</strong> ${alumno.TotalGeneral:F2}</p>");
+            sb.AppendLine("</div>");
+
+            sb.AppendLine("<p>Le solicitamos gestionar el pago correspondiente a la brevedad posible. ");
+            sb.AppendLine("En caso de haber realizado recientemente el pago de alguno de estos aranceles, puede omitir este aviso.</p>");
+
+            sb.AppendLine("<p>Atentamente,<br/><strong>Universidad Monseñor Óscar Arnulfo Romero</strong></p>");
+            sb.AppendLine("</div>");
+            sb.AppendLine("<div class='footer'>");
+            sb.AppendLine("<p>Este es un mensaje automático, por favor no responda a este correo.</p>");
+            sb.AppendLine("</div>");
+            sb.AppendLine("</div>");
+            sb.AppendLine("</body>");
+            sb.AppendLine("</html>");
+
+            return sb.ToString();
         }
 
         private List<CarreraInsolvente> AgruparPorCarreraYGrupo(List<AlumnoInsolvente> alumnosInsolventes, List<Grupo> grupos)

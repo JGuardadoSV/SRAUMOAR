@@ -30,6 +30,34 @@
                         <h3 class="card-title">Generar Reporte de Alumnos Insolventes</h3>
                     </div>
                     <div class="card-body">
+                        @if (TempData["Success"] != null)
+                        {
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                <i class="icon fas fa-check"></i> @TempData["Success"]
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        }
+                        @if (TempData["Warning"] != null)
+                        {
+                            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                                <i class="icon fas fa-exclamation-triangle"></i> @TempData["Warning"]
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        }
+                        @if (TempData["Error"] != null)
+                        {
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <i class="icon fas fa-ban"></i> @TempData["Error"]
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        }
+
                         <form method="get">
                             <div class="row">
                                 <div class="col-md-3">
@@ -76,6 +104,16 @@
                                     <div class="card-header">
                                         <h3 class="card-title">Exportar Reporte</h3>
                                         <div class="card-tools">
+                                            @if (Model.AlumnosInsolventes != null && Model.AlumnosInsolventes.Any())
+                                            {
+                                                <form method="post" asp-page-handler="NotificarTodos" class="d-inline">
+                                                    <input type="hidden" name="SelectedCarreraId" value="@(Model.SelectedCarreraId?.ToString() ?? string.Empty)" />
+                                                    <input type="hidden" name="IncluirAlumnosConBeca" value="@(Model.IncluirAlumnosConBeca)" />
+                                                    <button type="submit" class="btn btn-warning btn-sm me-2">
+                                                        <i class="fas fa-envelope"></i> Notificar deuda a todos
+                                                    </button>
+                                                </form>
+                                            }
                                             <a href="@Url.Page("", "GenerarPDF", new { carreraId = Model.SelectedCarreraId, incluirAlumnosConBeca = Model.IncluirAlumnosConBeca })" 
                                                class="btn btn-danger btn-sm me-2">
                                                 <i class="fas fa-file-pdf"></i> PDF
@@ -222,6 +260,7 @@
                                                         <th class="text-right">Pendiente</th>
                                                         <th class="text-right">Mora</th>
                                                         <th class="text-right">Total</th>
+                                                        <th>Acciones</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -237,7 +276,7 @@
                                                                 @if (alumno.EsRepeticion && !string.IsNullOrEmpty(alumno.GruposAdicionales))
                                                                 {
                                                                     <br /><small class="text-muted">
-                                                                        <i class="fas fa-exclamation-triangle"></i> 
+                                                                        <i class="bi bi-exclamation-triangle"></i> 
                                                                         Repetición - También en: @alumno.GruposAdicionales
                                                                     </small>
                                                                 }
@@ -247,6 +286,16 @@
                                                             <td class="text-right">$@alumno.TotalPendiente.ToString("F2")</td>
                                                             <td class="text-right">$@alumno.TotalMora.ToString("F2")</td>
                                                             <td class="text-right font-weight-bold">$@alumno.TotalGeneral.ToString("F2")</td>
+                                                            <td>
+                                                                <form method="post" asp-page-handler="NotificarAlumno" class="d-inline">
+                                                                    <input type="hidden" name="alumnoId" value="@alumno.AlumnoId" />
+                                                                    <input type="hidden" name="SelectedCarreraId" value="@(Model.SelectedCarreraId?.ToString() ?? string.Empty)" />
+                                                                    <input type="hidden" name="IncluirAlumnosConBeca" value="@(Model.IncluirAlumnosConBeca)" />
+                                                                    <button type="submit" class="btn btn-outline-warning btn-sm" title="Notificar deuda por correo">
+                                                                        <i class="bi bi-envelope"></i>
+                                                                    </button>
+                                                                </form>
+                                                            </td>
                                                         </tr>
                                                         contador++;
                                                     }
