@@ -26,7 +26,7 @@ namespace SRAUMOAR.Pages.aranceles
         private readonly SRAUMOAR.Modelos.Contexto _context;
         private readonly EmisorConfig _emisor;
         private readonly ICorrelativoService _correlativoService;
-        private int ambiente = 1;
+        private int ambiente = 0;
         public FacturarModel(SRAUMOAR.Modelos.Contexto context, IOptions<EmisorConfig> emisorOptions, ICorrelativoService correlativoService)
         {
             _context = context;
@@ -465,8 +465,8 @@ namespace SRAUMOAR.Pages.aranceles
                     Thread.Sleep(8000); // Esperar 8 segundos solo si va a reintentar
             }
 
-            if (ambiente == 1)
-            {
+           // if (ambiente == 1)
+          //  {
                 //guardar factura
 
                 Factura factura = new Factura();
@@ -484,7 +484,7 @@ namespace SRAUMOAR.Pages.aranceles
                 factura.TotalPagar = totalPagar;
                 _context.Facturas.Add(factura);
                 await _context.SaveChangesAsync();
-            }
+        //    }
             //****************************************************
             //FIN CREACION DEL DTE
             //****************************************************

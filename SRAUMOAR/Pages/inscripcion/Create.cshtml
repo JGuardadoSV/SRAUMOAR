@@ -5,62 +5,308 @@
     ViewData["Title"] = "Inscripción de alumnos";
 }
 
-<div class="container">
-    <h1 class="my-4 text-center">Inscripción de alumnos</h1>
+<style>
+    .inscripcion-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, #18632c 0%, #22743a 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 12px 12px 0 0;
+        margin-bottom: 0;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .page-header h1 {
+        margin: 0;
+        font-size: 1.75rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .page-header h1 i {
+        font-size: 2rem;
+    }
+
+    .form-card {
+        background: white;
+        border-radius: 0 0 12px 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .alert-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .alert-enhanced {
+        border: none;
+        border-radius: 10px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: start;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .alert-enhanced i {
+        font-size: 1.5rem;
+        flex-shrink: 0;
+        margin-top: 0.125rem;
+    }
+
+    .alert-danger.alert-enhanced {
+        background: linear-gradient(135deg, #fee 0%, #fdd 100%);
+        border-left: 4px solid #dc3545;
+        color: #721c24;
+    }
+
+    .alert-success.alert-enhanced {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        border-left: 4px solid #28a745;
+        color: #155724;
+    }
+
+    .form-group-enhanced {
+        margin-bottom: 1.75rem;
+    }
+
+    .form-label-enhanced {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.95rem;
+    }
+
+    .form-label-enhanced i {
+        color: #18632c;
+        font-size: 1.1rem;
+    }
+
+    .form-select-enhanced,
+    .form-control-enhanced {
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-select-enhanced:focus,
+    .form-control-enhanced:focus {
+        border-color: #18632c;
+        box-shadow: 0 0 0 0.2rem rgba(24, 99, 44, 0.15);
+        outline: none;
+    }
+
+    .btn-enhanced {
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.95rem;
+    }
+
+    .btn-primary-enhanced {
+        background: linear-gradient(135deg, #18632c 0%, #22743a 100%);
+        border: none;
+        color: white;
+        box-shadow: 0 4px 6px rgba(24, 99, 44, 0.3);
+    }
+
+    .btn-primary-enhanced:hover {
+        background: linear-gradient(135deg, #22743a 0%, #18632c 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(24, 99, 44, 0.4);
+        color: white;
+    }
+
+    .btn-secondary-enhanced {
+        background: #6c757d;
+        border: none;
+        color: white;
+    }
+
+    .btn-secondary-enhanced:hover {
+        background: #5a6268;
+        transform: translateY(-2px);
+        color: white;
+    }
+
+    .btn-danger-enhanced {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        border: none;
+        color: white;
+    }
+
+    .btn-danger-enhanced:hover {
+        background: linear-gradient(135deg, #c82333 0%, #dc3545 100%);
+        transform: translateY(-2px);
+        color: white;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: space-between;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 2px solid #f0f0f0;
+    }
+
+    .required-field {
+        color: #dc3545;
+        font-weight: bold;
+    }
+
+    .info-box {
+        background: #f8f9fa;
+        border-left: 4px solid #18632c;
+        padding: 1rem 1.25rem;
+        border-radius: 6px;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+        color: #495057;
+    }
+
+    .info-box i {
+        color: #18632c;
+        margin-right: 0.5rem;
+    }
+
+    @@media (max-width: 768px) {
+        .inscripcion-container {
+            padding: 1rem 0.5rem;
+        }
+
+        .form-card,
+        .alert-card {
+            padding: 1.5rem;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .btn-enhanced {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+
+<div class="inscripcion-container">
+    <div class="page-header">
+        <h1>
+            <i class="bi bi-person-plus-fill"></i>
+            Inscripción de Alumnos
+        </h1>
+    </div>
+
     @if (!Model.EstaInscrito)
     {
         @if (!Model.YaPago)
         {
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <strong>Atención:</strong> El alumno no ha cancelado el arancel correspondiente para realizar este proceso.
+            <div class="alert-card">
+                <div class="alert alert-danger alert-enhanced" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <div style="flex: 1;">
+                        <strong>Atención:</strong> El alumno no ha cancelado el arancel correspondiente para realizar este proceso.
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                <div class="text-center">
+                    <a asp-page="/aranceles/Cobrar" asp-route-id="@Model.idalumno" class="btn btn-danger-enhanced btn-enhanced">
+                        <i class="bi bi-credit-card"></i>
+                        Ir a Cobros
+                    </a>
+                </div>
+            </div>
+        }
+
+        @if (Model.YaPago)
+        {
+            <div class="form-card">
+                <div class="info-box">
+                    <i class="bi bi-info-circle-fill"></i>
+                    <strong>Información:</strong> Complete los siguientes datos para realizar la inscripción del alumno.
+                </div>
+
+                <form method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger alert-enhanced" role="alert">
+                        <i class="bi bi-exclamation-circle-fill"></i>
+                        <div>Por favor, corrija los errores antes de continuar.</div>
+                    </div>
+
+                    <div class="form-group-enhanced">
+                        <label asp-for="Inscripcion.AlumnoId" class="form-label-enhanced">
+                            <i class="bi bi-person-badge"></i>
+                            <span class="required-field">*</span> Alumno
+                        </label>
+                        <select asp-for="Inscripcion.AlumnoId" class="form-select form-select-enhanced" asp-items="ViewBag.AlumnoId">
+                            <option value="">Selecciona un alumno</option>
+                        </select>
+                        <span asp-validation-for="Inscripcion.AlumnoId" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group-enhanced">
+                        <label asp-for="Inscripcion.CicloId" class="form-label-enhanced">
+                            <i class="bi bi-calendar-check"></i>
+                            <span class="required-field">*</span> Ciclo Académico
+                        </label>
+                        <select asp-for="Inscripcion.CicloId" class="form-select form-select-enhanced" asp-items="ViewBag.CicloId">
+                            <option value="">Selecciona un ciclo</option>
+                        </select>
+                        <span asp-validation-for="Inscripcion.CicloId" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-actions">
+                        <a asp-page="Index" class="btn btn-secondary-enhanced btn-enhanced">
+                            <i class="bi bi-arrow-left"></i>
+                            Volver
+                        </a>
+                        <button type="submit" class="btn btn-primary-enhanced btn-enhanced">
+                            <i class="bi bi-check-circle"></i>
+                            Inscribir Alumno
+                        </button>
+                    </div>
+                </form>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="alert-card">
+            <div class="alert alert-danger alert-enhanced" role="alert">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <div style="flex: 1;">
+                    <strong>Atención:</strong> El alumno ya se encuentra inscrito en el ciclo académico actual.
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
-
-            <a asp-page="/aranceles/Cobrar" asp-route-id="@Model.idalumno" class="btn btn-primary">Ir a cobros</a>
-        }
-        <hr />
-
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                @if (Model.YaPago)
-                {
-                    <form method="post">
-                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
-
-                        <div class="mb-3">
-                            <label asp-for="Inscripcion.AlumnoId" class="form-label">
-                                <span class="text-danger">*</span> Alumno
-                            </label>
-                            <select asp-for="Inscripcion.AlumnoId" class="form-select" asp-items="ViewBag.AlumnoId">
-                                <option value="">Selecciona un alumno</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label asp-for="Inscripcion.CicloId" class="form-label">
-                                <span class="text-danger">*</span> Ciclo
-                            </label>
-                            <select asp-for="Inscripcion.CicloId" class="form-select" asp-items="ViewBag.CicloId">
-                                <option value="">Selecciona un ciclo</option>
-                            </select>
-                        </div>
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-between">
-
-                            <input type="submit" value="Inscribir" class="btn btn-primary me-md-2" />
-
-                            <a asp-page="Index" class="btn btn-secondary">Volver</a>
-                        </div>
-                    </form>
-                }
+            <div class="text-center">
+                <a asp-page="/inscripcion/MateriasInscritas" asp-route-id="@Model.idalumno" class="btn btn-primary-enhanced btn-enhanced">
+                    <i class="bi bi-list-check"></i>
+                    Ver Inscripciones
+                </a>
             </div>
-    </div>
-    }else{
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <strong>Atención:</strong> El alumno ya se encuentra inscrito.
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            
-            <a asp-page="/inscripcion/MateriasInscritas" asp-route-id="@Model.idalumno" class="btn btn-primary">Ir a inscripciones</a>
-            
         </div>
     }
 </div>

@@ -377,12 +377,16 @@
                 <div class="stat-label">Total Activos</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number">@Model.Arancel.Count(a => a.Obligatorio)</div>
+                <div class="stat-number">@Model.Arancel.Count(a => a.Obligatorio && !a.EsEspecializacion)</div>
                 <div class="stat-label">Obligatorios</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number">@Model.Arancel.Count(a => !a.Obligatorio)</div>
+                <div class="stat-number">@Model.Arancel.Count(a => !a.Obligatorio && !a.EsEspecializacion)</div>
                 <div class="stat-label">No Obligatorios</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">@Model.Arancel.Count(a => a.EsEspecializacion)</div>
+                <div class="stat-label">Especialización</div>
             </div>
         </div>
 
@@ -400,18 +404,22 @@
             <div class="tabs-nav">
                 <button class="tab-button active" data-tab="obligatorios">
                     Aranceles Obligatorios
-                    <span class="badge">@Model.Arancel.Count(a => a.Obligatorio)</span>
+                    <span class="badge">@Model.Arancel.Count(a => a.Obligatorio && !a.EsEspecializacion)</span>
                 </button>
                 <button class="tab-button" data-tab="no-obligatorios">
                     Aranceles No Obligatorios
-                    <span class="badge">@Model.Arancel.Count(a => !a.Obligatorio)</span>
+                    <span class="badge">@Model.Arancel.Count(a => !a.Obligatorio && !a.EsEspecializacion)</span>
+                </button>
+                <button class="tab-button" data-tab="especializacion">
+                    Aranceles de Especialización
+                    <span class="badge">@Model.Arancel.Count(a => a.EsEspecializacion)</span>
                 </button>
             </div>
 
             <!-- Contenido de pestaña: Aranceles Obligatorios -->
             <div class="tab-content active" id="obligatorios">
                 <div class="table-container">
-                    @if (Model.Arancel.Any(a => a.Obligatorio))
+                    @if (Model.Arancel.Any(a => a.Obligatorio && !a.EsEspecializacion))
                     {
                         <table class="table" id="arancelesObligatoriosTable">
                             <thead>
@@ -427,7 +435,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var item in Model.Arancel.Where(a => a.Obligatorio))
+                                @foreach (var item in Model.Arancel.Where(a => a.Obligatorio && !a.EsEspecializacion))
                                 {
                                     <tr>
                                         <td>
@@ -492,7 +500,7 @@
             <!-- Contenido de pestaña: Aranceles No Obligatorios -->
             <div class="tab-content" id="no-obligatorios">
                 <div class="table-container">
-                    @if (Model.Arancel.Any(a => !a.Obligatorio))
+                    @if (Model.Arancel.Any(a => !a.Obligatorio && !a.EsEspecializacion))
                     {
                         <table class="table" id="arancelesNoObligatoriosTable">
                             <thead>
@@ -508,7 +516,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var item in Model.Arancel.Where(a => !a.Obligatorio))
+                                @foreach (var item in Model.Arancel.Where(a => !a.Obligatorio && !a.EsEspecializacion))
                                 {
                                     <tr>
                                         <td>
@@ -564,6 +572,98 @@
                             <div class="empty-icon">📄</div>
                             <h3>No hay aranceles no obligatorios registrados</h3>
                             <p>Comienza registrando tu primer arancel no obligatorio para este ciclo.</p>
+                            <a asp-page="Create" class="btn btn-primary">➕ Registrar Primer Arancel</a>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Contenido de pestaña: Aranceles de Especialización -->
+            <div class="tab-content" id="especializacion">
+                <div class="table-container">
+                    @if (Model.Arancel.Any(a => a.EsEspecializacion))
+                    {
+                        <table class="table" id="arancelesEspecializacionTable">
+                            <thead>
+                                <tr>
+                                    <th>@Html.DisplayNameFor(model => model.Arancel[0].Nombre)</th>
+                                    <th>@Html.DisplayNameFor(model => model.Arancel[0].Costo)</th>
+                                    <th>@Html.DisplayNameFor(model => model.Arancel[0].Obligatorio)</th>
+                                    <th>@Html.DisplayNameFor(model => model.Arancel[0].Activo)</th>
+                                    <th>@Html.DisplayNameFor(model => model.Arancel[0].Exento)</th>
+                                    <th>@Html.DisplayNameFor(model => model.Arancel[0].FechaInicio)</th>
+                                    <th>@Html.DisplayNameFor(model => model.Arancel[0].FechaFin)</th>
+                                    <th>@Html.DisplayNameFor(model => model.Arancel[0].Ciclo)</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.Arancel.Where(a => a.EsEspecializacion))
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong>@Html.DisplayFor(modelItem => item.Nombre)</strong>
+                                        </td>
+                                        <td class="cost-cell">
+                                            $@Html.DisplayFor(modelItem => item.Costo)
+                                        </td>
+                                        <td>
+                                            @if (item.Obligatorio)
+                                            {
+                                                <span class="status-badge status-active">Obligatorio</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="status-badge status-inactive">No Obligatorio</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (item.Activo)
+                                            {
+                                                <span class="status-badge status-active">Activo</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="status-badge status-inactive">Inactivo</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (item.Exento)
+                                            {
+                                                <span class="status-badge status-active">Exento</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="status-badge status-inactive">Gravado</span>
+                                            }
+                                        </td>
+                                        <td class="date-cell">
+                                            @(item.FechaInicio?.ToString("dd/MM/yyyy") ?? "No definida")
+                                        </td>
+                                        <td class="date-cell">
+                                            @(item.FechaFin?.ToString("dd/MM/yyyy") ?? "No definida")
+                                        </td>
+                                        <td>
+                                            <div class="cycle-cell">
+                                                @(item.Ciclo?.NCiclo.ToString() ?? "Sin ciclo") / @(item.Ciclo?.anio.ToString() ?? "N/A")
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <a asp-page="./Edit" asp-route-id="@item.ArancelId" class="btn btn-primary btn-sm">
+                                                ✏️ Editar
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <div class="empty-state">
+                            <div class="empty-icon">📄</div>
+                            <h3>No hay aranceles de especialización registrados</h3>
+                            <p>Comienza registrando tu primer arancel de especialización para este ciclo.</p>
                             <a asp-page="Create" class="btn btn-primary">➕ Registrar Primer Arancel</a>
                         </div>
                     }

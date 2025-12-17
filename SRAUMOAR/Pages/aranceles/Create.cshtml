@@ -376,49 +376,57 @@
         });
     });
 
-    // Control de campos obligatorios basado en el checkbox "Obligatorio"
+    // Control de campos obligatorios basado en el checkbox "Obligatorio" o "Especialización"
     document.addEventListener('DOMContentLoaded', function() {
         const obligatorioCheckbox = document.getElementById('Arancel_Obligatorio');
+        const especializacionCheckbox = document.getElementById('Arancel_EsEspecializacion');
         const fechasContainer = document.getElementById('fechasContainer');
         const cicloContainer = document.getElementById('cicloContainer');
         const fechaInicio = document.getElementById('fechaInicio');
         const fechaFin = document.getElementById('fechaFin');
         const cicloSelect = document.getElementById('cicloSelect');
+        const valorMora = document.getElementById('ValorMora');
 
         function toggleCamposObligatorios() {
             const esObligatorio = obligatorioCheckbox.checked;
+            const esEspecializacion = especializacionCheckbox.checked;
+            const debeMostrarCampos = esObligatorio || esEspecializacion;
             
-            if (esObligatorio) {
-                // Si es obligatorio, mostrar campos y hacerlos requeridos
+            if (debeMostrarCampos) {
+                // Si es obligatorio o especialización, mostrar campos y hacerlos requeridos
                 fechasContainer.style.display = 'grid';
                 cicloContainer.style.display = 'block';
                 fechaInicio.required = true;
                 fechaFin.required = true;
                 cicloSelect.required = true;
+                valorMora.required = true;
                 
                 // Restaurar estilos normales
                 fechasContainer.style.opacity = '1';
                 cicloContainer.style.opacity = '1';
             } else {
-                // Si no es obligatorio, ocultar campos y hacerlos opcionales
+                // Si no es obligatorio ni especialización, ocultar campos y hacerlos opcionales
                 fechasContainer.style.display = 'none';
                 cicloContainer.style.display = 'none';
                 fechaInicio.required = false;
                 fechaFin.required = false;
                 cicloSelect.required = false;
+                valorMora.required = false;
                 
                 // Limpiar valores
                 fechaInicio.value = '';
                 fechaFin.value = '';
                 cicloSelect.value = '';
+                valorMora.value = '';
             }
         }
 
         // Ejecutar al cargar la página
         toggleCamposObligatorios();
 
-        // Ejecutar cuando cambie el checkbox
+        // Ejecutar cuando cambie cualquiera de los checkboxes
         obligatorioCheckbox.addEventListener('change', toggleCamposObligatorios);
+        especializacionCheckbox.addEventListener('change', toggleCamposObligatorios);
     });
 </script>
 

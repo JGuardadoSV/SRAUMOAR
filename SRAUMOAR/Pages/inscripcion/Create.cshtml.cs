@@ -32,12 +32,24 @@ namespace SRAUMOAR.Pages.inscripcion
             EstaInscrito =  _context.Inscripciones
               .Any(i => i.AlumnoId == idalumno && i.CicloId == cicloactual);
 
-
-
-            
-            YaPago = _context.CobrosArancel
+            // Verificar si el alumno pagó "Matricula" (comportamiento normal)
+            bool pagoMatricula = _context.CobrosArancel
                 .Include(x => x.DetallesCobroArancel)
-                .Any(x => x.CicloId == cicloactual && x.DetallesCobroArancel.FirstOrDefault().Arancel.Nombre == "Matricula" && x.AlumnoId == idalumno);
+                    .ThenInclude(d => d.Arancel)
+                .Any(x => x.CicloId == cicloactual && 
+                         x.AlumnoId == idalumno &&
+                         x.DetallesCobroArancel.Any(d => d.Arancel.Nombre == "Matricula" && !d.Arancel.EsEspecializacion));
+
+            // Verificar si el alumno pagó "Matricula" de especialización
+            bool pagoMatriculaEspecializacion = _context.CobrosArancel
+                .Include(x => x.DetallesCobroArancel)
+                    .ThenInclude(d => d.Arancel)
+                .Any(x => x.CicloId == cicloactual && 
+                         x.AlumnoId == idalumno &&
+                         x.DetallesCobroArancel.Any(d => d.Arancel.Nombre == "Matricula" && d.Arancel.EsEspecializacion));
+
+            // El alumno puede inscribirse si pagó Matricula normal O Matricula de especialización
+            YaPago = pagoMatricula || pagoMatriculaEspecializacion;
 
             if (alumno.PermiteInscripcionSinPago || becado != null)
             {

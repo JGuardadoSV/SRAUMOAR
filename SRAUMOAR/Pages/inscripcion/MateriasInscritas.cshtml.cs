@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using SRAUMOAR.Entidades.Alumnos;
 using SRAUMOAR.Entidades.Procesos;
+using SRAUMOAR.Entidades.Becas;
 using SRAUMOAR.Modelos;
 using DinkToPdf;
 using DinkToPdf.Contracts;
@@ -32,11 +33,15 @@ namespace SRAUMOAR.Pages.inscripcion
 
         public IList<MateriasInscritas> MateriasInscritas { get; set; } = default!;
         public Alumno Alumno { get; set; }
+        public bool EstaInscrito { get; set; }
+        public bool YaPago { get; set; }
+        public bool PuedeInscribirMaterias { get; set; }
 
         public IActionResult OnGet(int id)
         {
             var cicloactual = _context.Ciclos.Where(x => x.Activo == true).FirstOrDefault()?.Id ?? 0;
             Alumno = _context.Alumno.Where(x => x.AlumnoId == id).FirstOrDefault() ?? new Alumno();
+            var becado = _context.Becados.Where(x => x.AlumnoId == id).FirstOrDefault();
 
             MateriasInscritas = _context.MateriasInscritas
                 .Include(mi => mi.MateriasGrupo)
@@ -45,9 +50,43 @@ namespace SRAUMOAR.Pages.inscripcion
                     .ThenInclude(mg => mg.Docente)
                 .Include(mi => mi.MateriasGrupo)
                     .ThenInclude(mg => mg.Grupo)
+                .Include(mi => mi.Alumno)
                 .Where(mi => mi.MateriasGrupo.Grupo.CicloId == cicloactual &&
-                             mi.Alumno.AlumnoId == Alumno.AlumnoId)
+                             mi.AlumnoId == Alumno.AlumnoId)
                 .ToList();
+
+            // Verificar si el alumno está inscrito en el ciclo
+            EstaInscrito = _context.Inscripciones
+                .Any(i => i.AlumnoId == Alumno.AlumnoId && 
+                         i.CicloId == cicloactual && 
+                         i.Activa == true);
+
+            // Verificar si el alumno pagó "Matricula" (comportamiento normal)
+            bool pagoMatricula = _context.CobrosArancel
+                .Include(x => x.DetallesCobroArancel)
+                    .ThenInclude(d => d.Arancel)
+                .Any(x => x.CicloId == cicloactual && 
+                         x.AlumnoId == Alumno.AlumnoId &&
+                         x.DetallesCobroArancel.Any(d => d.Arancel.Nombre == "Matricula" && !d.Arancel.EsEspecializacion));
+
+            // Verificar si el alumno pagó "Matricula" de especialización
+            bool pagoMatriculaEspecializacion = _context.CobrosArancel
+                .Include(x => x.DetallesCobroArancel)
+                    .ThenInclude(d => d.Arancel)
+                .Any(x => x.CicloId == cicloactual && 
+                         x.AlumnoId == Alumno.AlumnoId &&
+                         x.DetallesCobroArancel.Any(d => d.Arancel.Nombre == "Matricula" && d.Arancel.EsEspecializacion));
+
+            // El alumno puede inscribirse si pagó Matricula normal O Matricula de especialización
+            YaPago = pagoMatricula || pagoMatriculaEspecializacion;
+
+            if (Alumno.PermiteInscripcionSinPago || becado != null)
+            {
+                YaPago = true;
+            }
+
+            // Puede inscribir materias solo si está inscrito Y ha pagado
+            PuedeInscribirMaterias = EstaInscrito && YaPago;
 
             return Page();
         }

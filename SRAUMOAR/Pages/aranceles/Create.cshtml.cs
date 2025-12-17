@@ -39,10 +39,10 @@ namespace SRAUMOAR.Pages.aranceles
         // To protect from overposting attacks, see https://aka.ms/RazorPagesCRUD
         public async Task<IActionResult> OnPostAsync()
         {
-            // Validación condicional: si no es obligatorio, los campos de ciclo y fechas son opcionales
-            if (!Arancel.Obligatorio)
+            // Validación condicional: si no es obligatorio NI especialización, los campos de ciclo y fechas son opcionales
+            if (!Arancel.Obligatorio && !Arancel.EsEspecializacion)
             {
-                // Remover errores de validación para campos opcionales cuando no es obligatorio
+                // Remover errores de validación para campos opcionales cuando no es obligatorio ni especialización
                 ModelState.Remove("Arancel.CicloId");
                 ModelState.Remove("Arancel.FechaInicio");
                 ModelState.Remove("Arancel.FechaFin");
@@ -51,6 +51,7 @@ namespace SRAUMOAR.Pages.aranceles
                 Arancel.CicloId = null;
                 Arancel.FechaInicio = null;
                 Arancel.FechaFin = null;
+                Arancel.ValorMora = 0;
             }
 
             if (!ModelState.IsValid)

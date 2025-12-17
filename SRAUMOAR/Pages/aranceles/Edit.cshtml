@@ -246,34 +246,43 @@
                 </div>
                 <div class="form-group">
                     <div class="form-check">
-                        <input class="form-check-input" asp-for="Arancel.Obligatorio" type="checkbox" />
+                        <input class="form-check-input" asp-for="Arancel.Obligatorio" type="checkbox" id="Arancel_Obligatorio" />
                         <label class="form-check-label">
                             @Html.DisplayNameFor(model => model.Arancel.Obligatorio)
                         </label>
                     </div>
                 </div>
 
-                <div class="form-row">
+                <div class="form-group">
+                    <div class="form-check">
+                        <input class="form-check-input" asp-for="Arancel.EsEspecializacion" type="checkbox" id="Arancel_EsEspecializacion" />
+                        <label class="form-check-label">
+                            @Html.DisplayNameFor(model => model.Arancel.EsEspecializacion)
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-row" id="fechasContainer">
                     <div class="form-group">
                         <label asp-for="Arancel.FechaInicio" class="control-label">Fecha de Inicio</label>
-                        <input asp-for="Arancel.FechaInicio" class="form-control" type="date" />
+                        <input asp-for="Arancel.FechaInicio" class="form-control" type="date" id="fechaInicio" />
                         <span asp-validation-for="Arancel.FechaInicio" class="text-danger"></span>
                     </div>
 
                     <div class="form-group">
                         <label asp-for="Arancel.FechaFin" class="control-label">Fecha de Fin</label>
-                        <input asp-for="Arancel.FechaFin" class="form-control" type="date" />
+                        <input asp-for="Arancel.FechaFin" class="form-control" type="date" id="fechaFin" />
                         <span asp-validation-for="Arancel.FechaFin" class="text-danger"></span>
                     </div>
+                    <div class="form-group">
+                        <label asp-for="Arancel.ValorMora" class="control-label">Costo Mora</label>
+                        <input asp-for="Arancel.ValorMora" class="form-control" id="ValorMora" placeholder="0.00" />
+                        <span asp-validation-for="Arancel.ValorMora" class="text-danger"></span>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label asp-for="Arancel.ValorMora" class="control-label">Costo Mora</label>
-                    <input asp-for="Arancel.ValorMora" class="form-control" id="ValorMora" placeholder="0.00" />
-                    <span asp-validation-for="Arancel.ValorMora" class="text-danger"></span>
-                </div>
-                <div class="form-group">
+                <div class="form-group" id="cicloContainer">
                     <label asp-for="Arancel.CicloId" class="control-label">Ciclo</label>
-                    <select asp-for="Arancel.CicloId" class="form-control" asp-items="ViewBag.CicloId">
+                    <select asp-for="Arancel.CicloId" class="form-control" asp-items="ViewBag.CicloId" id="cicloSelect">
                         <option value="">-- Seleccione un ciclo --</option>
                     </select>
                     <span asp-validation-for="Arancel.CicloId" class="text-danger"></span>
@@ -308,6 +317,55 @@
             card.style.opacity = '1';
             card.style.transform = 'translateY(0)';
         }, 100);
+
+        // Control de campos obligatorios basado en el checkbox "Obligatorio" o "Especialización"
+        const obligatorioCheckbox = document.getElementById('Arancel_Obligatorio');
+        const especializacionCheckbox = document.getElementById('Arancel_EsEspecializacion');
+        const fechasContainer = document.getElementById('fechasContainer');
+        const cicloContainer = document.getElementById('cicloContainer');
+        const fechaInicio = document.getElementById('fechaInicio');
+        const fechaFin = document.getElementById('fechaFin');
+        const cicloSelect = document.getElementById('cicloSelect');
+        const valorMora = document.getElementById('ValorMora');
+
+        function toggleCamposObligatorios() {
+            const esObligatorio = obligatorioCheckbox ? obligatorioCheckbox.checked : false;
+            const esEspecializacion = especializacionCheckbox ? especializacionCheckbox.checked : false;
+            const debeMostrarCampos = esObligatorio || esEspecializacion;
+            
+            if (debeMostrarCampos) {
+                // Si es obligatorio o especialización, mostrar campos y hacerlos requeridos
+                if (fechasContainer) fechasContainer.style.display = 'grid';
+                if (cicloContainer) cicloContainer.style.display = 'block';
+                if (fechaInicio) fechaInicio.required = true;
+                if (fechaFin) fechaFin.required = true;
+                if (cicloSelect) cicloSelect.required = true;
+                if (valorMora) valorMora.required = true;
+                
+                // Restaurar estilos normales
+                if (fechasContainer) fechasContainer.style.opacity = '1';
+                if (cicloContainer) cicloContainer.style.opacity = '1';
+            } else {
+                // Si no es obligatorio ni especialización, ocultar campos y hacerlos opcionales
+                if (fechasContainer) fechasContainer.style.display = 'none';
+                if (cicloContainer) cicloContainer.style.display = 'none';
+                if (fechaInicio) fechaInicio.required = false;
+                if (fechaFin) fechaFin.required = false;
+                if (cicloSelect) cicloSelect.required = false;
+                if (valorMora) valorMora.required = false;
+            }
+        }
+
+        // Ejecutar al cargar la página
+        toggleCamposObligatorios();
+
+        // Ejecutar cuando cambie cualquiera de los checkboxes
+        if (obligatorioCheckbox) {
+            obligatorioCheckbox.addEventListener('change', toggleCamposObligatorios);
+        }
+        if (especializacionCheckbox) {
+            especializacionCheckbox.addEventListener('change', toggleCamposObligatorios);
+        }
     });
 </script>
 

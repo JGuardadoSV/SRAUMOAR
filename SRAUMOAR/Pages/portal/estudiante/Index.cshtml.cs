@@ -11,6 +11,8 @@ using SRAUMOAR.Entidades.Alumnos;
 using SRAUMOAR.Entidades.Becas;
 using SRAUMOAR.Entidades.Colecturia;
 using SRAUMOAR.Entidades.Procesos;
+using SRAUMOAR.Entidades.Historial;
+using SRAUMOAR.Entidades.Materias;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Text;
@@ -38,6 +40,11 @@ namespace SRAUMOAR.Pages.portal.estudiante
         public bool EsBecado { get; set; } = false;
         public bool TieneArancelesRetrasados { get; set; } = false;
         public bool EstaEnGrupoEspecializacion { get; set; } = false;
+        public int MateriasAprobadas { get; set; } = 0;
+        public int TotalMaterias { get; set; } = 0;
+        public decimal PromedioGlobal { get; set; } = 0;
+        public decimal CUM { get; set; } = 0;
+        public decimal PorcentajeAvance { get; set; } = 0;
         [BindProperty]
         public IList<MateriasInscritas> MateriasInscritas { get; set; } = default!;
         public IList<Arancel> Arancel { get; set; } = default!;
@@ -144,10 +151,94 @@ namespace SRAUMOAR.Pages.portal.estudiante
             }
 
 
-            // var alumnos = _context.Alumno.Include(c => c.Carrera).Where(c => c.UsuarioId == idusuario).First();
+            // Calcular estadísticas del historial académico
+            var historialAcademico = await _context.HistorialAcademico
+                .Include(h => h.CiclosHistorial)
+                    .ThenInclude(hc => hc.MateriasHistorial)
+                        .ThenInclude(hm => hm.Materia)
+                .Where(h => h.AlumnoId == Alumno.AlumnoId)
+                .ToListAsync();
 
+            if (historialAcademico != null && historialAcademico.Any())
+            {
+                var todosLosCiclos = historialAcademico
+                    .SelectMany(h => h.CiclosHistorial ?? new List<HistorialCiclo>())
+                    .ToList();
 
-            // var x = 10;
+                if (todosLosCiclos.Any())
+                {
+                    var todasLasMaterias = todosLosCiclos
+                        .SelectMany(hc => hc.MateriasHistorial ?? new List<HistorialMateria>())
+                        .ToList();
+
+                    TotalMaterias = todasLasMaterias.Count;
+                    MateriasAprobadas = todasLasMaterias.Count(m => m.Aprobada);
+                    
+                    if (TotalMaterias > 0)
+                    {
+                        PromedioGlobal = Math.Round(todasLasMaterias.Average(m => m.Promedio), 1);
+                    }
+
+                    // Calcular CUM: suma de (promedio * UV) / suma de UV
+                    decimal totalUV = todasLasMaterias.Sum(hm => 
+                        hm.Materia != null ? hm.Materia.uv : (hm.MateriaUnidadesValorativasLibre ?? 0));
+                    
+                    decimal sumaPromedioPorUV = todasLasMaterias.Sum(hm => 
+                    {
+                        decimal uv = hm.Materia != null ? hm.Materia.uv : (hm.MateriaUnidadesValorativasLibre ?? 0);
+                        return hm.Promedio * uv;
+                    });
+                    
+                    if (totalUV > 0)
+                    {
+                        CUM = Math.Round(sumaPromedioPorUV / totalUV, 1);
+                    }
+                }
+            }
+
+            // Calcular porcentaje de avance basado en el pensum activo de la carrera
+            if (Alumno.CarreraId.HasValue)
+            {
+                // Obtener el pensum activo de la carrera del alumno
+                var pensumActivo = await _context.Pensums
+                    .Include(p => p.Materias)
+                    .Where(p => p.CarreraId == Alumno.CarreraId.Value && p.Activo == true)
+                    .FirstOrDefaultAsync();
+
+                if (pensumActivo != null && pensumActivo.Materias != null)
+                {
+                    // Total de materias en el pensum
+                    int totalMateriasPensum = pensumActivo.Materias.Count;
+
+                    if (totalMateriasPensum > 0)
+                    {
+                        // Obtener las materias aprobadas del alumno que pertenecen a este pensum
+                        var historialAcademicoPensum = await _context.HistorialAcademico
+                            .Include(h => h.CiclosHistorial)
+                                .ThenInclude(hc => hc.MateriasHistorial)
+                                    .ThenInclude(hm => hm.Materia)
+                            .Where(h => h.AlumnoId == Alumno.AlumnoId && h.CarreraId == Alumno.CarreraId.Value)
+                            .FirstOrDefaultAsync();
+
+                        int materiasAprobadasPensum = 0;
+                        if (historialAcademicoPensum != null && historialAcademicoPensum.CiclosHistorial != null)
+                        {
+                            materiasAprobadasPensum = historialAcademicoPensum.CiclosHistorial
+                                .SelectMany(hc => hc.MateriasHistorial ?? new List<HistorialMateria>())
+                                .Where(hm => hm.Aprobada && 
+                                            hm.Materia != null && 
+                                            hm.Materia.PensumId == pensumActivo.PensumId)
+                                .Select(hm => hm.MateriaId)
+                                .Distinct()
+                                .Count();
+                        }
+
+                        // Calcular porcentaje de avance
+                        PorcentajeAvance = Math.Round((decimal)materiasAprobadasPensum / totalMateriasPensum * 100, 1);
+                    }
+                }
+            }
+
             return Page();
 
         }
