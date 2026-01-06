@@ -29,6 +29,7 @@ namespace SRAUMOAR.Pages.aranceles
         public IList<Arancel> Arancel { get; set; } = default!;
         public IList<Arancel> ArancelesObligatorios { get; set; } = default!;
         public IList<Arancel> ArancelesNoObligatorios { get; set; } = default!;
+        public IList<Arancel> ArancelesEspecializacion { get; set; } = default!;
         public Dictionary<int, decimal> PreciosPersonalizados { get; set; } = new Dictionary<int, decimal>();
         public Dictionary<int, decimal> PorcentajesDescuento { get; set; } = new Dictionary<int, decimal>();
         public bool AlumnoTieneBecaParcial { get; set; } = false;
@@ -243,20 +244,27 @@ namespace SRAUMOAR.Pages.aranceles
                     .Where(x => (x.Ciclo != null && x.Ciclo.Id == cicloactual.Id) || (!x.Obligatorio && x.Ciclo == null))
                     .Include(a => a.Ciclo).ToListAsync();
 
-                // Separar aranceles obligatorios y no obligatorios
+                // Separar aranceles en tres categorías:
+                // 1. Aranceles obligatorios normales (no de especialización)
+                // 2. Aranceles de especialización (obligatorios o no obligatorios)
+                // 3. Otros aranceles no obligatorios (no de especialización)
+                
                 if (alumnoEnGrupoEspecializacion)
                 {
                     // Si el estudiante está en un grupo de especialización:
                     // - Solo mostrar aranceles obligatorios que sean de especialización
                     // - Mostrar todos los aranceles no obligatorios
                     ArancelesObligatorios = Arancel.Where(a => a.Obligatorio && a.EsEspecializacion).ToList();
-                    ArancelesNoObligatorios = Arancel.Where(a => !a.Obligatorio).ToList();
+                    ArancelesNoObligatorios = Arancel.Where(a => !a.Obligatorio && !a.EsEspecializacion).ToList();
+                    ArancelesEspecializacion = Arancel.Where(a => a.EsEspecializacion).ToList();
                 }
                 else
                 {
-                    // Comportamiento normal: mostrar todos los obligatorios y no obligatorios
-                    ArancelesObligatorios = Arancel.Where(a => a.Obligatorio).ToList();
-                    ArancelesNoObligatorios = Arancel.Where(a => !a.Obligatorio).ToList();
+                    // Comportamiento normal: separar por tipo
+                    ArancelesObligatorios = Arancel.Where(a => a.Obligatorio && !a.EsEspecializacion).ToList();
+                    ArancelesNoObligatorios = Arancel.Where(a => !a.Obligatorio && !a.EsEspecializacion).ToList();
+                    // Mostrar aranceles de especialización siempre disponibles para selección manual
+                    ArancelesEspecializacion = Arancel.Where(a => a.EsEspecializacion).ToList();
                 }
             }
             catch (Exception ex)
@@ -276,6 +284,7 @@ namespace SRAUMOAR.Pages.aranceles
                 Arancel = new List<Arancel>();
                 ArancelesObligatorios = new List<Arancel>();
                 ArancelesNoObligatorios = new List<Arancel>();
+                ArancelesEspecializacion = new List<Arancel>();
                 PreciosPersonalizados = new Dictionary<int, decimal>();
                 PorcentajesDescuento = new Dictionary<int, decimal>();
                 AlumnoTieneBecaParcial = false;

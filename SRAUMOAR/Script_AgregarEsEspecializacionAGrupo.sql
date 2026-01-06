@@ -7,3 +7,4 @@ ADD EsEspecializacion bit NOT NULL DEFAULT 0;
 -- Verificar que la columna se creó correctamente
 -- SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'grupos' AND COLUMN_NAME = 'EsEspecializacion';
 
+

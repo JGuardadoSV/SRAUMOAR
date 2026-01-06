@@ -25,6 +25,7 @@ namespace SRAUMOAR.Pages.portal.estudiante
         public List<HistorialCiclo> HistorialCiclos { get; set; } = new List<HistorialCiclo>();
         public int TotalMaterias { get; set; }
         public decimal TotalUV { get; set; }
+        public decimal CUM { get; set; }
         public List<Carrera> CarrerasDisponibles { get; set; } = new List<Carrera>();
         public int? CarreraSeleccionadaId { get; set; }
 
@@ -98,6 +99,23 @@ namespace SRAUMOAR.Pages.portal.estudiante
                         TotalMaterias = HistorialCiclos.Sum(hc => hc.MateriasHistorial?.Count ?? 0);
                         TotalUV = HistorialCiclos.Sum(hc => hc.MateriasHistorial?.Sum(hm => 
                             hm.Materia != null ? hm.Materia.uv : (hm.MateriaUnidadesValorativasLibre ?? 0)) ?? 0);
+                        
+                        // Calcular CUM: suma de (promedio * UV) / suma de UV
+                        decimal sumaPromedioPorUV = HistorialCiclos.Sum(hc => 
+                            hc.MateriasHistorial?.Sum(hm => 
+                            {
+                                decimal uv = hm.Materia != null ? hm.Materia.uv : (hm.MateriaUnidadesValorativasLibre ?? 0);
+                                return hm.Promedio * uv;
+                            }) ?? 0);
+                        
+                        if (TotalUV > 0)
+                        {
+                            CUM = Math.Round(sumaPromedioPorUV / TotalUV, 1);
+                        }
+                        else
+                        {
+                            CUM = 0;
+                        }
                     }
                 }
             }

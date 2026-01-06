@@ -36,13 +36,17 @@
                 </div>
                 <div class="col-md-6 text-md-end">
                     <div class="row">
-                        <div class="col-6">
+                        <div class="col-4">
                             <h6 class="mb-1 text-white-50">Total Materias</h6>
                             <span class="badge bg-light text-dark fs-6 shadow-sm">@Model.TotalMaterias</span>
                         </div>
-                        <div class="col-6">
+                        <div class="col-4">
                             <h6 class="mb-1 text-white-50">Total UV</h6>
                             <span class="badge bg-light text-dark fs-6 shadow-sm">@Model.TotalUV</span>
+                        </div>
+                        <div class="col-4">
+                            <h6 class="mb-1 text-white-50">CUM</h6>
+                            <span class="badge bg-light text-dark fs-6 shadow-sm">@Model.CUM.ToString("0.0")</span>
                         </div>
                     </div>
                 </div>
@@ -99,22 +103,28 @@
         <div class="card mb-4 border-0 shadow-sm">
             <div class="card-body">
                 <div class="row text-center">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="p-3">
                             <h3 class="text-primary mb-1">@Model.HistorialCiclos.Count</h3>
                             <p class="text-muted mb-0">Ciclos Cursados</p>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="p-3">
                             <h3 class="text-success mb-1">@Model.HistorialCiclos.Sum(c => c.MateriasHistorial?.Count(m => m.Aprobada) ?? 0)</h3>
                             <p class="text-muted mb-0">Materias Aprobadas</p>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="p-3">
                             <h3 class="text-info mb-1">@Model.HistorialCiclos.Sum(c => c.MateriasHistorial?.Sum(m => m.Materia != null ? m.Materia.uv : (m.MateriaUnidadesValorativasLibre ?? 0)) ?? 0)</h3>
                             <p class="text-muted mb-0">Unidades Valorativas</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3">
+                            <h3 class="text-warning mb-1">@Model.CUM.ToString("0.0")</h3>
+                            <p class="text-muted mb-0">CUM</p>
                         </div>
                     </div>
                 </div>

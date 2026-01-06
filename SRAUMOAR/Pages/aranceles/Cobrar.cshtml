@@ -423,7 +423,7 @@
             <input type="hidden" name="alumnoId" value="@alumno?.AlumnoId" />
 
             <!-- Radio Buttons para elegir el tipo de arancel -->
-            <div style="display: flex; gap: 2rem; align-items: center; margin-bottom: 1.5rem;">
+            <div style="display: flex; gap: 2rem; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap;">
                 <label style="font-weight: 600;">
                     <input type="radio" name="tipoArancel" value="obligatorios" checked onclick="mostrarTabla('obligatorios')" style="margin-right: 0.5rem;" />
                     Aranceles del ciclo
@@ -431,6 +431,10 @@
                 <label style="font-weight: 600;">
                     <input type="radio" name="tipoArancel" value="no-obligatorios" onclick="mostrarTabla('no-obligatorios')" style="margin-right: 0.5rem;" />
                     Otros aranceles (no obligatorios)
+                </label>
+                <label style="font-weight: 600;">
+                    <input type="radio" name="tipoArancel" value="especializacion" onclick="mostrarTabla('especializacion')" style="margin-right: 0.5rem;" />
+                    Aranceles de especialización
                 </label>
             </div>
 
@@ -661,11 +665,120 @@
                 </div>
             </div>
 
+            <!-- TABLA ESPECIALIZACIÓN -->
+            <div class="tabla-aranceles" id="tabla-especializacion" style="display:none;">
+                <div class="table-responsive">
+                    <table class="table table-professional">
+                        <thead class="table-header">
+                            <tr>
+                                <th><i class="bi bi-check-square me-2"></i>Seleccionar</th>
+                                <th><i class="bi bi-tag me-2"></i>@Html.DisplayNameFor(model => model.Arancel[0].Nombre)</th>
+                                <th><i class="bi bi-currency-dollar me-2"></i>@Html.DisplayNameFor(model => model.Arancel[0].Costo)</th>
+                                <th><i class="bi bi-toggle-on me-2"></i>@Html.DisplayNameFor(model => model.Arancel[0].Activo)</th>
+                                <th><i class="bi bi-calendar-event me-2"></i>@Html.DisplayNameFor(model => model.Arancel[0].FechaInicio)</th>
+                                <th><i class="bi bi-calendar-x me-2"></i>@Html.DisplayNameFor(model => model.Arancel[0].FechaFin)</th>
+                                <th><i class="bi bi-mortarboard me-2"></i>@Html.DisplayNameFor(model => model.Arancel[0].Ciclo)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.ArancelesEspecializacion)
+                            {
+                                <tr class="table-row">
+                                    <td class="text-center">
+                                        @if (!Model.AlumnoHaPagado(item.ArancelId, @alumno.AlumnoId))
+                                        {
+                                            <input type="checkbox" name="selectedAranceles" value="@item.ArancelId" class="checkbox-professional" />
+                                        }
+                                        else
+                                        {
+                                            <a asp-page="/aranceles/Facturas" asp-route-arancelId="@item.ArancelId" asp-route-alumnoId="@alumno?.AlumnoId" class="btn btn-recibo">
+                                                <i class="bi bi-receipt me-1"></i>Ver Recibo
+                                            </a>
+                                        }
+                                    </td>
+                                    <td class="fw-semibold">@Html.DisplayFor(modelItem => item.Nombre)</td>
+                                    <td>
+                                        @{
+                                            var precioConDescuento = Model.ObtenerPrecioConDescuento(item, alumno.AlumnoId);
+                                            var precioConDescuentoYMora = Model.ObtenerPrecioConDescuentoYMora(item, alumno.AlumnoId);
+                                            var porcentajeDescuento = Model.ObtenerPorcentajeDescuento(item.ArancelId);
+                                        }
+                                        
+                                        @if (!Model.AlumnoHaPagado(item.ArancelId, @alumno.AlumnoId) && item.EstaVencido && !(alumno?.ExentoMora ?? false))
+                                        {
+                                            <span class="costo-amount" style="color: #c0392b;">
+                                                $@precioConDescuentoYMora
+                                                <span class="badge bg-danger ms-2">Incluye mora</span>
+                                            </span>
+                                            <br />
+                                            <small class="text-danger">Vencido</small>
+                                        }
+                                        else
+                                        {
+                                            <span class="costo-amount">$@precioConDescuento</span>
+                                        }
+                                        
+                                        @if (Model.AlumnoTieneBecaParcial)
+                                        {
+                                            @if (Model.TienePrecioPersonalizado(item.ArancelId))
+                                            {
+                                                <div class="discount-info">
+                                                    <small class="text-success fw-bold">
+                                                        <i class="bi bi-percent"></i> @porcentajeDescuento% descuento aplicado
+                                                    </small>
+                                                    @if (item.Costo != precioConDescuento)
+                                                    {
+                                                        <br />
+                                                        <small class="original-price">
+                                                            Precio original: $@item.Costo
+                                                        </small>
+                                                    }
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="discount-info" style="background: #fff3cd; border-color: #ffeaa7;">
+                                                    <small class="text-warning fw-bold">
+                                                        <i class="bi bi-exclamation-triangle"></i> Sin precio personalizado
+                                                    </small>
+                                                </div>
+                                            }
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.Activo)
+                                        {
+                                            <span class="status-activo">
+                                                <i class="bi bi-check-circle me-1"></i>Activo
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="status-inactivo">
+                                                <i class="bi bi-x-circle me-1"></i>Inactivo
+                                            </span>
+                                        }
+                                    </td>
+                                    <td>@Html.DisplayFor(modelItem => item.FechaInicio)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.FechaFin)</td>
+                                    <td>
+                                        <span class="ciclo-info">
+                                            <i class="bi bi-calendar3 me-1"></i>
+                                            @Html.DisplayFor(modelItem => item.Ciclo.NCiclo) / @Html.DisplayFor(modelItem => item.Ciclo.anio)
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             @{
                 // Pendientes solo para aranceles obligatorios
                 bool hayPendientesObligatorios = Model.ArancelesObligatorios.Any(a => !Model.AlumnoHaPagado(a.ArancelId, alumno.AlumnoId));
-                // Aranceles disponibles (obligatorios o no obligatorios)
-                bool hayArancelesDisponibles = Model.ArancelesObligatorios.Any() || Model.ArancelesNoObligatorios.Any();
+                // Aranceles disponibles (obligatorios, no obligatorios o de especialización)
+                bool hayArancelesDisponibles = Model.ArancelesObligatorios.Any() || Model.ArancelesNoObligatorios.Any() || Model.ArancelesEspecializacion.Any();
             }
 
             @if (hayArancelesDisponibles)
@@ -707,6 +820,7 @@
         function mostrarTabla(tab) {
             document.getElementById('tabla-obligatorios').style.display = (tab === 'obligatorios') ? '' : 'none';
             document.getElementById('tabla-no-obligatorios').style.display = (tab === 'no-obligatorios') ? '' : 'none';
+            document.getElementById('tabla-especializacion').style.display = (tab === 'especializacion') ? '' : 'none';
         }
         // Inicializar mostrando la tabla de obligatorios
         mostrarTabla('obligatorios');

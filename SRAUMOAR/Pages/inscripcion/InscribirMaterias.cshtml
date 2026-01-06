@@ -78,6 +78,24 @@
             <h2>Alumno: @Model.Alumno.Nombres @Model.Alumno.Apellidos</h2>
             <h6>Carrera : @Model.Alumno.Carrera.NombreCarrera</h6>
             <hr />
+            @if (!Model.EstaInscrito)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <strong>Atención:</strong> El alumno no está inscrito en el ciclo actual. Debe inscribirse primero.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                <a asp-page="/inscripcion/Create" asp-route-id="@Model.Alumno.AlumnoId" class="btn btn-primary">Ir a inscripción</a>
+            }
+            else if (!Model.YaPago)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <strong>Atención:</strong> El alumno no ha cancelado el arancel correspondiente para realizar este proceso.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                <a asp-page="/aranceles/Cobrar" asp-route-id="@Model.Alumno.AlumnoId" class="btn btn-primary">Ir a cobros</a>
+            }
+            @if (Model.EstaInscrito && Model.YaPago)
+            {
             <form method="get">
                 <div class="form-group">
                     <span class="text-danger">*</span>
@@ -96,14 +114,30 @@
                 <div class="form-group">
                     <span class="text-danger">*</span>
                     <label asp-for="MateriasSeleccionadas" class="control-label">Grupo de Materias</label>
-                    <select asp-for="MateriasSeleccionadas" class="form-select" multiple size="5" asp-items="ViewBag.MateriasGrupoId">
-                    </select>
+                    @if (Model.YaPago)
+                    {
+                        <select asp-for="MateriasSeleccionadas" class="form-select" multiple size="5" asp-items="ViewBag.MateriasGrupoId">
+                        </select>
+                    }
+                    else
+                    {
+                        <select asp-for="MateriasSeleccionadas" class="form-select" multiple size="5" asp-items="ViewBag.MateriasGrupoId" disabled>
+                        </select>
+                    }
                     <small class="form-text text-muted">Mantén presionado Ctrl (o Cmd en Mac) para seleccionar múltiples materias</small>
                 </div>
                 <div class="form-group text-center">
-                    <input type="submit" value="Inscribir Materia" class="btn btn-primary" />
+                    @if (Model.YaPago)
+                    {
+                        <input type="submit" value="Inscribir Materia" class="btn btn-primary" />
+                    }
+                    else
+                    {
+                        <input type="submit" value="Inscribir Materia" class="btn btn-primary" disabled />
+                    }
                 </div>
             </form>
+            }
             <div class="text-center mt-3">
                 
                 <a asp-page="/inscripcion/MateriasInscritas" asp-route-id="@Model.Alumno.AlumnoId" class="text-decoration-none" style="color: var(--primary-green);">Volver a inscripciones</a>

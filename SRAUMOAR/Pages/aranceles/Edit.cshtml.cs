@@ -52,12 +52,53 @@ namespace SRAUMOAR.Pages.aranceles
         // For more details, see https://aka.ms/RazorPagesCRUD.
         public async Task<IActionResult> OnPostAsync()
         {
+            // Validación condicional: si no es obligatorio NI especialización, los campos de ciclo y fechas son opcionales
+            if (!Arancel.Obligatorio && !Arancel.EsEspecializacion)
+            {
+                // Remover errores de validación para campos opcionales cuando no es obligatorio ni especialización
+                ModelState.Remove("Arancel.CicloId");
+                ModelState.Remove("Arancel.FechaInicio");
+                ModelState.Remove("Arancel.FechaFin");
+                ModelState.Remove("Arancel.ValorMora");
+                // Establecer valores null para campos opcionales
+                Arancel.CicloId = null;
+                Arancel.FechaInicio = null;
+                Arancel.FechaFin = null;
+                Arancel.ValorMora = 0;
+            }
+
             if (!ModelState.IsValid)
             {
+                ViewData["CicloId"] = new SelectList(
+                    _context.Ciclos
+                        .Where(x => x.Activo == true)
+                        .Select(x => new { x.Id, NombreCiclo = x.NCiclo + " - " + x.anio }),
+                    "Id",
+                    "NombreCiclo"
+                );
                 return Page();
             }
 
-            _context.Attach(Arancel).State = EntityState.Modified;
+            // Obtener el arancel existente de la base de datos
+            var arancelExistente = await _context.Aranceles.FindAsync(Arancel.ArancelId);
+            if (arancelExistente == null)
+            {
+                return NotFound();
+            }
+
+            // Actualizar solo las propiedades que se pueden editar
+            arancelExistente.Nombre = Arancel.Nombre;
+            arancelExistente.Costo = Arancel.Costo;
+            arancelExistente.Exento = Arancel.Exento;
+            arancelExistente.Activo = Arancel.Activo;
+            arancelExistente.Obligatorio = Arancel.Obligatorio;
+            arancelExistente.EsEspecializacion = Arancel.EsEspecializacion;
+            arancelExistente.FechaInicio = Arancel.FechaInicio;
+            arancelExistente.FechaFin = Arancel.FechaFin;
+            arancelExistente.ValorMora = Arancel.ValorMora;
+            arancelExistente.CicloId = Arancel.CicloId;
+
+            _context.Attach(arancelExistente).State = EntityState.Modified;
 
             try
             {

@@ -182,10 +182,10 @@
                 </div>
                 <div class="card-body">
                     <div class="text-center mb-4">
-                        <div class="progress-circle">
+                        <div class="progress-circle" style="background: conic-gradient(#28a745 @Model.PorcentajeAvance.ToString("0.0")% 0%, #e9ecef 0%);">
                             <div class="progress-circle-inner">
                                 <div class="progress-percentage">
-                                    0%
+                                    @Model.PorcentajeAvance.ToString("0.0")%
                                 </div>
                                 <div class="progress-label">
                                     Avance en la Carrera
@@ -194,19 +194,24 @@
                         </div>
                     </div>
                     <div class="progress-stats">
-                        <p class="text-center text-danger">Sección en proceso de actualización</p>
                         <div class="row text-center">
-                            <div class="col-4">
-                                <h5 class="mb-1">0</h5>
-                                <small class="text-muted">Materias Aprobadas</small>
+                            <div class="col-6 mb-3">
+                                <div class="p-2 border rounded">
+                                    <h6 class="mb-0 text-primary">@Model.MateriasAprobadas / @Model.TotalMaterias</h6>
+                                    <small class="text-muted">Materias Aprobadas / Total</small>
+                                </div>
                             </div>
-                            <div class="col-4">
-                                <h5 class="mb-1">0</h5>
-                                <small class="text-muted">Total Materias</small>
+                            <div class="col-3 mb-3">
+                                <div class="p-2 border rounded">
+                                    <h6 class="mb-0 text-success">@Model.PromedioGlobal.ToString("0.0")</h6>
+                                    <small class="text-muted">Promedio Global</small>
+                                </div>
                             </div>
-                            <div class="col-4">
-                                <h5 class="mb-1">0</h5>
-                                <small class="text-muted">Promedio Global</small>
+                            <div class="col-3 mb-3">
+                                <div class="p-2 border rounded">
+                                    <h6 class="mb-0 text-info">@Model.CUM.ToString("0.0")</h6>
+                                    <small class="text-muted">CUM</small>
+                                </div>
                             </div>
                         </div>
                     </div>
