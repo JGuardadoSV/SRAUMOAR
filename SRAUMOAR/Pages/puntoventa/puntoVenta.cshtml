@@ -610,6 +610,11 @@
                     // Mostrar campos adicionales para Crédito Fiscal
                     camposCreditoFiscal.show();
                     recalcularTotales(true); // Con IVA
+                } else if (tipoDoc === '15') {
+                    // Para Donación: mostrar campos de actividad económica pero sin IVA
+                    ivaRow.hide();
+                    camposCreditoFiscal.show();
+                    recalcularTotales(false); // Sin IVA
                 } else {
                     // Ocultar IVA para todos los demás tipos de documento
                     ivaRow.hide();

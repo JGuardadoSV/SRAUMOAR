@@ -1,0 +1,61 @@
+@page
+@model SRAUMOAR.Pages.facturacion.correlativos.CreateModel
+
+@{
+    ViewData["Title"] = "Crear Correlativo";
+}
+
+<h1>Crear Nuevo Correlativo</h1>
+
+<hr />
+
+<div class="row">
+    <div class="col-md-6">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            
+            <div class="form-group mb-3">
+                <label asp-for="DteCorrelativo.TipoDocumento" class="form-label">
+                    <i class="bi bi-file-earmark-text me-2"></i>Tipo de Documento
+                </label>
+                <select asp-for="DteCorrelativo.TipoDocumento" 
+                        asp-items="Model.TiposDocumento" 
+                        class="form-select">
+                    <option value="">Seleccione un tipo de documento</option>
+                </select>
+                <span asp-validation-for="DteCorrelativo.TipoDocumento" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="DteCorrelativo.Ambiente" class="form-label">
+                    <i class="bi bi-gear me-2"></i>Ambiente
+                </label>
+                <select asp-for="DteCorrelativo.Ambiente" 
+                        asp-items="Model.Ambientes" 
+                        class="form-select">
+                    <option value="">Seleccione un ambiente</option>
+                </select>
+                <span asp-validation-for="DteCorrelativo.Ambiente" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="DteCorrelativo.Correlativo" class="form-label">
+                    <i class="bi bi-123 me-2"></i>Valor Inicial del Correlativo
+                </label>
+                <input asp-for="DteCorrelativo.Correlativo" class="form-control" type="number" min="1" />
+                <span asp-validation-for="DteCorrelativo.Correlativo" class="text-danger"></span>
+                <small class="form-text text-muted">El valor debe ser mayor a 0. Este será el número inicial del correlativo.</small>
+            </div>
+
+            <div class="form-group">
+                <input type="submit" value="Crear Correlativo" class="btn btn-primary" />
+                <a asp-page="Index" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+

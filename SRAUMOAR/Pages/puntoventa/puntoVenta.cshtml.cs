@@ -1126,10 +1126,10 @@ namespace SRAUMOAR.Pages.puntoventa
                     {
                         tipoDocumento = DeterminarTipoDocumento(Factura.Receptor.Nit), // "13" para DUI, etc.
                         numDocumento = Factura.Receptor.Nit,
-                        nrc = (string)null,
+                        nrc = string.IsNullOrWhiteSpace(Factura.Receptor.Nrc) ? (string)null : Factura.Receptor.Nrc,
                         nombre = Factura.Receptor.Nombre,
-                        codActividad = (string)null,
-                        descActividad = (string)null,
+                        codActividad = Factura.Receptor.CodActividad,
+                        descActividad = Factura.Receptor.DescActividad,
                         direccion = new
                         {
                             departamento = Factura.Receptor.CodigoDepartamento,

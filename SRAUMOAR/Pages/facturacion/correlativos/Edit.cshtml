@@ -1,0 +1,72 @@
+@page
+@model SRAUMOAR.Pages.facturacion.correlativos.EditModel
+
+@{
+    ViewData["Title"] = "Editar Correlativo";
+}
+
+<h1>Editar Correlativo</h1>
+
+<hr />
+
+<div class="row">
+    <div class="col-md-6">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="DteCorrelativo.Id" />
+            
+            <div class="form-group mb-3">
+                <label class="form-label">
+                    <i class="bi bi-file-earmark-text me-2"></i>Tipo de Documento
+                </label>
+                <div class="form-control-plaintext">
+                    <span class="badge bg-info">@Model.DteCorrelativo.TipoDocumento</span>
+                    <span class="ms-2">@Model.ObtenerDescripcionTipoDocumento(Model.DteCorrelativo.TipoDocumento)</span>
+                </div>
+                <input type="hidden" asp-for="DteCorrelativo.TipoDocumento" />
+            </div>
+
+            <div class="form-group mb-3">
+                <label class="form-label">
+                    <i class="bi bi-gear me-2"></i>Ambiente
+                </label>
+                <div class="form-control-plaintext">
+                    @if (Model.DteCorrelativo.Ambiente == "00")
+                    {
+                        <span class="badge bg-warning text-dark">@Model.ObtenerDescripcionAmbiente(Model.DteCorrelativo.Ambiente)</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success">@Model.ObtenerDescripcionAmbiente(Model.DteCorrelativo.Ambiente)</span>
+                    }
+                </div>
+                <input type="hidden" asp-for="DteCorrelativo.Ambiente" />
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="DteCorrelativo.Correlativo" class="form-label">
+                    <i class="bi bi-123 me-2"></i>Valor del Correlativo
+                </label>
+                <input asp-for="DteCorrelativo.Correlativo" class="form-control" type="number" min="1" />
+                <span asp-validation-for="DteCorrelativo.Correlativo" class="text-danger"></span>
+                <small class="form-text text-muted">El valor debe ser mayor a 0.</small>
+            </div>
+
+            <div class="alert alert-info" role="alert">
+                <i class="bi bi-info-circle"></i> 
+                <strong>Nota:</strong> El tipo de documento y el ambiente no se pueden modificar. 
+                Solo puede editarse el valor del correlativo.
+            </div>
+
+            <div class="form-group">
+                <input type="submit" value="Guardar Cambios" class="btn btn-primary" />
+                <a asp-page="Index" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+
