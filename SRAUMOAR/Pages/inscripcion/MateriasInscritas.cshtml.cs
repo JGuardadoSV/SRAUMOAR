@@ -33,13 +33,19 @@ namespace SRAUMOAR.Pages.inscripcion
 
         public IList<MateriasInscritas> MateriasInscritas { get; set; } = default!;
         public Alumno Alumno { get; set; }
+        public Ciclo CicloActual { get; set; }
         public bool EstaInscrito { get; set; }
         public bool YaPago { get; set; }
         public bool PuedeInscribirMaterias { get; set; }
 
         public IActionResult OnGet(int id)
         {
-            var cicloactual = _context.Ciclos.Where(x => x.Activo == true).FirstOrDefault()?.Id ?? 0;
+            CicloActual = _context.Ciclos.Where(x => x.Activo == true).FirstOrDefault();
+            if (CicloActual == null)
+            {
+                return BadRequest("No hay un ciclo activo");
+            }
+            var cicloactual = CicloActual.Id;
             Alumno = _context.Alumno.Where(x => x.AlumnoId == id).FirstOrDefault() ?? new Alumno();
             var becado = _context.Becados.Where(x => x.AlumnoId == id).FirstOrDefault();
 
@@ -110,7 +116,12 @@ namespace SRAUMOAR.Pages.inscripcion
         // Método para desinscribir completamente al alumno del ciclo
         public IActionResult OnPostDesinscribir(int id)
         {
-            var cicloactual = _context.Ciclos.Where(x => x.Activo == true).FirstOrDefault()?.Id ?? 0;
+            var cicloactualObj = _context.Ciclos.Where(x => x.Activo == true).FirstOrDefault();
+            if (cicloactualObj == null)
+            {
+                return BadRequest("No hay un ciclo activo");
+            }
+            var cicloactual = cicloactualObj.Id;
             
             // Buscar la inscripción del alumno en el ciclo actual
             var inscripcion = _context.Inscripciones

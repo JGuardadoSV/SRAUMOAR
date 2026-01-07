@@ -46,7 +46,11 @@ namespace SRAUMOAR.Pages.reportes.inscripcion
             {
                 InitializeFonts();
 
-                var cicloactual = _context.Ciclos.Where(x => x.Activo == true).FirstOrDefault()?.Id ?? 0;
+                var cicloactual = _context.Ciclos.Where(x => x.Activo == true).FirstOrDefault();
+                if (cicloactual == null)
+                {
+                    return BadRequest("No hay un ciclo activo");
+                }
                 Alumno = _context.Alumno.Include(a => a.Carrera).ThenInclude(c => c.Facultad).Where(x => x.AlumnoId == id).FirstOrDefault() ?? new Alumno();
 
                 MateriasInscritas = _context.MateriasInscritas
@@ -57,7 +61,7 @@ namespace SRAUMOAR.Pages.reportes.inscripcion
                     .Include(mi => mi.MateriasGrupo)
                         .ThenInclude(mg => mg.Grupo)
                         .ThenInclude(ps => ps.Pensum)
-                    .Where(mi => mi.MateriasGrupo.Grupo.CicloId == cicloactual &&
+                    .Where(mi => mi.MateriasGrupo.Grupo.CicloId == cicloactual.Id &&
                                  mi.Alumno.AlumnoId == Alumno.AlumnoId)
                     .ToList();
 
@@ -80,7 +84,7 @@ namespace SRAUMOAR.Pages.reportes.inscripcion
                 var textCell = new Cell().SetBorder(Border.NO_BORDER);
                 textCell.Add(new Paragraph("UNIVERSIDAD MONSEÑOR OSCAR ARNULFO ROMERO").SetFont(_fontBold).SetFontSize(14).SetTextAlignment(TextAlignment.CENTER));
                 textCell.Add(new Paragraph("ADMINISTRACION DE REGISTRO ACADEMICO").SetFont(_fontBold).SetFontSize(12).SetTextAlignment(TextAlignment.CENTER));
-                textCell.Add(new Paragraph("INSCRIPCION DE MATERIAS CICLO 02-2025").SetFont(_fontBold).SetFontSize(11).SetTextAlignment(TextAlignment.CENTER));
+                textCell.Add(new Paragraph($"INSCRIPCION DE MATERIAS CICLO {cicloactual.NCiclo:D2}-{cicloactual.anio}").SetFont(_fontBold).SetFontSize(11).SetTextAlignment(TextAlignment.CENTER));
                 headerTable.AddCell(textCell);
 
                 document.Add(headerTable);
@@ -101,13 +105,13 @@ namespace SRAUMOAR.Pages.reportes.inscripcion
                 columnaIzq.Add(new Paragraph("Nombre: " + Alumno.Nombres + " " + Alumno.Apellidos).SetFont(_fontNormal).SetFontSize(11));
                 columnaIzq.Add(new Paragraph("Facultad: " + Alumno.Carrera.Facultad.NombreFacultad).SetFont(_fontNormal).SetFontSize(11));
                 columnaIzq.Add(new Paragraph("Carrera: " + Alumno.Carrera.NombreCarrera).SetFont(_fontNormal).SetFontSize(11));
-                columnaIzq.Add(new Paragraph("Plan: " + MateriasInscritas.First().MateriasGrupo.Grupo.Pensum.NombrePensum).SetFont(_fontNormal).SetFontSize(11));
+                //columnaIzq.Add(new Paragraph("Plan: " + MateriasInscritas.First().MateriasGrupo.Grupo.Pensum.NombrePensum).SetFont(_fontNormal).SetFontSize(11));
                 columnaIzq.SetBorder(Border.NO_BORDER);
 
                 // Columna derecha
                 var columnaDer = new Cell();
                 columnaDer.Add(new Paragraph("Dirección: "+Alumno.DireccionDeResidencia).SetFont(_fontNormal).SetFontSize(11));
-                columnaDer.Add(new Paragraph("Ciclo a cursar: 02-25").SetFont(_fontNormal).SetFontSize(11));
+                columnaDer.Add(new Paragraph($"Ciclo a cursar: {cicloactual.NCiclo:D2}-{cicloactual.anio}").SetFont(_fontNormal).SetFontSize(11));
                 columnaDer.Add(new Paragraph("Teléfono fijo: " + (Alumno.TelefonoPrimario ?? "-")).SetFont(_fontNormal).SetFontSize(11));
                 columnaDer.Add(new Paragraph("Teléfono móvil: " + (Alumno.TelefonoSecundario ?? "-")).SetFont(_fontNormal).SetFontSize(11));
                 columnaDer.SetBorder(Border.NO_BORDER);

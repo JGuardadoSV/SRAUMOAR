@@ -32,10 +32,15 @@ namespace SRAUMOAR.Pages.inscripcion
 
         public IList<MateriasInscritas> MateriasInscritas { get; set; } = default!;
         public Alumno Alumno { get; set; }
+        public Ciclo CicloActual { get; set; }
 
         public IActionResult OnGet(int id)
         {
-            var cicloactual = _context.Ciclos.Where(x => x.Activo == true).FirstOrDefault()?.Id ?? 0;
+            CicloActual = _context.Ciclos.Where(x => x.Activo == true).FirstOrDefault();
+            if (CicloActual == null)
+            {
+                return BadRequest("No hay un ciclo activo");
+            }
             Alumno = _context.Alumno.Where(x => x.AlumnoId == id).FirstOrDefault() ?? new Alumno();
 
             MateriasInscritas = _context.MateriasInscritas
@@ -45,14 +50,14 @@ namespace SRAUMOAR.Pages.inscripcion
                     .ThenInclude(mg => mg.Docente)
                 .Include(mi => mi.MateriasGrupo)
                     .ThenInclude(mg => mg.Grupo)
-                .Where(mi => mi.MateriasGrupo.Grupo.CicloId == cicloactual &&
+                .Where(mi => mi.MateriasGrupo.Grupo.CicloId == CicloActual.Id &&
                              mi.Alumno.AlumnoId == Alumno.AlumnoId)
                 .ToList();
 
             return Page();
         }
 
-        // NUEVO método para generar PDF
+        // NUEVO mï¿½todo para generar PDF
 
     }
 }
