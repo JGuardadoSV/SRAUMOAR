@@ -30,7 +30,7 @@ namespace SRAUMOAR.Pages.aranceles
         {
             Ciclo cicloactual = await _context.Ciclos.Where(x => x.Activo).FirstAsync();
             var todosLosAranceles = await _context.Aranceles
-                .Where(x => (x.Ciclo != null && x.Ciclo.Id == cicloactual.Id) || (!x.Obligatorio && x.Ciclo == null))
+                .Where(x => x.Activo && ((x.CicloId != null && x.CicloId == cicloactual.Id) || (!x.Obligatorio && x.CicloId == null)))
                 .Include(a => a.Ciclo).ToListAsync();
 
             // Separar aranceles por tipo

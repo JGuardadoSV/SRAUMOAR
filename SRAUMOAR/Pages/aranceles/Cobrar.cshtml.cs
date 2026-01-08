@@ -123,7 +123,7 @@ namespace SRAUMOAR.Pages.aranceles
 
                 // Verificar que hay aranceles disponibles
                 var arancelesDisponibles = await _context.Aranceles
-                    .Where(x => (x.Ciclo != null && x.Ciclo.Id == cicloActivo.Id) || (!x.Obligatorio && x.Ciclo == null))
+                    .Where(x => x.Activo && ((x.CicloId != null && x.CicloId == cicloActivo.Id) || (!x.Obligatorio && x.CicloId == null)))
                     .CountAsync();
 
                 if (arancelesDisponibles == 0)
@@ -241,7 +241,7 @@ namespace SRAUMOAR.Pages.aranceles
                     .ToListAsync();
 
                 Arancel = await _context.Aranceles
-                    .Where(x => (x.Ciclo != null && x.Ciclo.Id == cicloactual.Id) || (!x.Obligatorio && x.Ciclo == null))
+                    .Where(x => x.Activo && ((x.CicloId != null && x.CicloId == cicloactual.Id) || (!x.Obligatorio && x.CicloId == null)))
                     .Include(a => a.Ciclo).ToListAsync();
 
                 // Separar aranceles en tres categorías:

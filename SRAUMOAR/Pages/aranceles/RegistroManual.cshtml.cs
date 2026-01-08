@@ -210,9 +210,12 @@ namespace SRAUMOAR.Pages.aranceles
 
             var tieneBecaParcial = becaAlumno != null;
 
-            // Obtener aranceles disponibles (solo obligatorios)
+            // Obtener ciclo activo
+            var cicloActivo = await _context.Ciclos.Where(x => x.Activo).FirstOrDefaultAsync();
+            
+            // Obtener aranceles disponibles (solo obligatorios del ciclo activo)
             var aranceles = await _context.Aranceles
-                .Where(a => a.Activo && a.Obligatorio)
+                .Where(a => a.Activo && a.Obligatorio && a.CicloId != null && cicloActivo != null && a.CicloId == cicloActivo.Id)
                 .Include(a => a.Ciclo)
                 .OrderBy(a => a.Nombre)
                 .ToListAsync();
@@ -284,9 +287,12 @@ namespace SRAUMOAR.Pages.aranceles
 
             Alumnos = new SelectList(alumnosSelectList, "AlumnoId", "Text");
 
-            // Cargar aranceles activos
+            // Obtener ciclo activo
+            var cicloActivo = await _context.Ciclos.Where(x => x.Activo).FirstOrDefaultAsync();
+            
+            // Cargar aranceles activos del ciclo actual
             Aranceles = new SelectList(await _context.Aranceles
-                .Where(a => a.Activo)
+                .Where(a => a.Activo && ((a.CicloId != null && cicloActivo != null && a.CicloId == cicloActivo.Id) || (!a.Obligatorio && a.CicloId == null)))
                 .OrderBy(a => a.Nombre)
                 .ToListAsync(), "ArancelId", "Nombre");
 
@@ -297,9 +303,9 @@ namespace SRAUMOAR.Pages.aranceles
                 .ThenByDescending(c => c.NCiclo)
                 .ToListAsync(), "Id", "NCiclo");
 
-            // Cargar aranceles disponibles
+            // Cargar aranceles disponibles del ciclo activo
             ArancelesDisponibles = await _context.Aranceles
-                .Where(a => a.Activo)
+                .Where(a => a.Activo && ((a.CicloId != null && cicloActivo != null && a.CicloId == cicloActivo.Id) || (!a.Obligatorio && a.CicloId == null)))
                 .Include(a => a.Ciclo)
                 .OrderBy(a => a.Nombre)
                 .ToListAsync();
