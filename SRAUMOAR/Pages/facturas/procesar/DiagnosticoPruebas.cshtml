@@ -1,0 +1,412 @@
+@page "/procesar/DiagnosticoPruebas"
+@model SRAUMOAR.Pages.facturas.procesar.DiagnosticoPruebasModel
+@{
+    ViewData["Title"] = "Diagnóstico de Facturas de Pruebas";
+}
+
+<style>
+    :root {
+        --primary-color: #168026;
+        --primary-dark: #0f5c1b;
+        --warning-color: #ffc107;
+        --danger-color: #dc3545;
+        --text-dark: #2c3e50;
+        --border-color: #e0e0e0;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--warning-color), #e0a800);
+        color: #212529;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 300;
+        margin: 0;
+        text-align: center;
+    }
+
+    .page-subtitle {
+        text-align: center;
+        opacity: 0.8;
+        margin-top: 0.5rem;
+        font-size: 1.1rem;
+    }
+
+    .action-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding: 1rem;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .btn-back {
+        background: var(--warning-color);
+        border: none;
+        color: #212529;
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-back:hover {
+        background: #e0a800;
+        color: #212529;
+        text-decoration: none;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+    }
+
+    .table-container {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+        border: 1px solid var(--border-color);
+    }
+
+    .table-custom {
+        margin: 0;
+        font-size: 0.9rem;
+    }
+
+    .table-custom thead {
+        background: var(--warning-color);
+        color: #212529;
+    }
+
+    .table-custom thead th {
+        border: none;
+        padding: 1rem 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+    }
+
+    .table-custom tbody tr {
+        transition: all 0.2s ease;
+        border-bottom: 1px solid #f8f9fa;
+    }
+
+    .table-custom tbody tr:hover {
+        background-color: rgba(255, 193, 7, 0.1);
+    }
+
+    .table-custom tbody td {
+        padding: 1rem 0.75rem;
+        vertical-align: middle;
+        border: none;
+    }
+
+    .status-badge {
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-pruebas {
+        background: rgba(255, 193, 7, 0.2);
+        color: #856404;
+        border: 1px solid rgba(255, 193, 7, 0.3);
+    }
+
+    .status-anulada {
+        background: rgba(220, 53, 69, 0.1);
+        color: #721c24;
+        border: 1px solid rgba(220, 53, 69, 0.2);
+    }
+
+    .status-procesada {
+        background: rgba(40, 167, 69, 0.1);
+        color: #155724;
+        border: 1px solid rgba(40, 167, 69, 0.2);
+    }
+
+    .btn-anular {
+        background: var(--danger-color);
+        color: white;
+        padding: 0.4rem 0.8rem;
+        border-radius: 4px;
+        text-decoration: none;
+        font-size: 0.8rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+        margin-right: 0.5rem;
+    }
+
+    .btn-anular:hover {
+        background: #c82333;
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-procesar {
+        background: var(--primary-color);
+        color: white;
+        padding: 0.4rem 0.8rem;
+        border-radius: 4px;
+        text-decoration: none;
+        font-size: 0.8rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+    }
+
+    .btn-procesar:hover {
+        background: var(--primary-dark);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-disabled {
+        background: #6c757d;
+        color: white;
+        padding: 0.4rem 0.8rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    .currency {
+        font-weight: 600;
+        color: var(--primary-color);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: #6c757d;
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+
+    .alert-custom {
+        border-radius: 8px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1.5rem;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .alert-success-custom {
+        background: rgba(40, 167, 69, 0.1);
+        color: #155724;
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .alert-danger-custom {
+        background: rgba(220, 53, 69, 0.1);
+        color: #721c24;
+        border-left: 4px solid var(--danger-color);
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="page-header">
+        <div class="container">
+            <h1 class="page-title">
+                <i class="fas fa-exclamation-triangle me-3"></i>
+                Diagnóstico de Facturas de Pruebas
+            </h1>
+            <p class="page-subtitle">Facturas emitidas en ambiente de pruebas que deben ser procesadas a producción</p>
+        </div>
+    </div>
+
+    <div class="action-bar">
+        <a href="/facturas" class="btn-back">
+            <i class="fas fa-arrow-left"></i>
+            Volver a Facturas
+        </a>
+
+        <div class="d-flex align-items-center gap-2">
+            <a asp-page-handler="GenerarExcel" class="btn btn-success" style="padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-file-excel"></i>
+                Exportar a Excel
+            </a>
+            <span class="badge bg-warning text-dark me-2">
+                <i class="fas fa-file-invoice"></i>
+                @Model.FacturasPruebas.Count facturas en pruebas
+            </span>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success-custom alert-custom">
+            <i class="fas fa-check-circle me-2"></i>
+            @TempData["Success"]
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger-custom alert-custom">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            @TempData["Error"]
+        </div>
+    }
+
+    <div class="table-container">
+        <div class="table-responsive">
+            @if (Model.FacturasPruebas != null && Model.FacturasPruebas.Any())
+            {
+                <table class="table table-custom">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                            <th>Tipo DTE</th>
+                            <th>Número Control</th>
+                            <th>Código Generación</th>
+                            <th>Receptor</th>
+                            <th>Total</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.FacturasPruebas)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>#@item.FacturaId</strong>
+                                </td>
+                                <td>
+                                    <strong>@item.Fecha.ToString("dd/MM/yyyy HH:mm")</strong>
+                                </td>
+                                <td>
+                                    @if (item.Anulada)
+                                    {
+                                        <span class="status-badge status-anulada">
+                                            <i class="fas fa-ban me-1"></i>
+                                            Anulada
+                                        </span>
+                                    }
+                                    else if (item.TieneSello)
+                                    {
+                                        <span class="status-badge status-procesada">
+                                            <i class="fas fa-check me-1"></i>
+                                            Con Sello
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge status-pruebas">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            Pruebas
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    @{
+                                        var tipoDTEText = item.TipoDTE switch
+                                        {
+                                            1 => "CF",
+                                            3 => "CCF",
+                                            5 => "NC",
+                                            14 => "SE",
+                                            15 => "DON",
+                                            _ => item.TipoDTE.ToString()
+                                        };
+                                        var tipoDTEClass = item.TipoDTE switch
+                                        {
+                                            1 => "bg-primary",
+                                            3 => "bg-success",
+                                            5 => "bg-warning",
+                                            14 => "bg-info",
+                                            15 => "bg-secondary",
+                                            _ => "bg-secondary"
+                                        };
+                                    }
+                                    <span class="badge @tipoDTEClass" title="@item.TipoDTE">@tipoDTEText</span>
+                                </td>
+                                <td>
+                                    <code style="font-size: 0.85rem;">@item.NumeroControl</code>
+                                </td>
+                                <td>
+                                    <code style="font-size: 0.75rem;">@item.CodigoGeneracion</code>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>@item.ReceptorNombre</strong><br>
+                                        <small class="text-muted">@item.ReceptorCorreo</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <strong class="currency" style="font-size: 1.1em;">$@item.TotalPagar.ToString("N2")</strong>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        @if (!item.Anulada && item.TieneSello)
+                                        {
+                                            <form method="post" asp-page-handler="Anular" asp-route-id="@item.FacturaId" style="display: inline;">
+                                                <button type="submit" class="btn-anular" onclick="return confirm('¿Está seguro de anular esta factura de pruebas?');">
+                                                    <i class="fas fa-ban me-1"></i>
+                                                    Anular
+                                                </button>
+                                            </form>
+                                        }
+                                        <form method="post" asp-page-handler="Procesar" asp-route-id="@item.FacturaId" style="display: inline;">
+                                            <button type="submit" class="btn-procesar" onclick="return confirm('¿Está seguro de procesar esta factura a producción? Se generará un nuevo código de generación y número de control.');">
+                                                <i class="fas fa-arrow-right me-1"></i>
+                                                Procesar a Producción
+                                            </button>
+                                        </form>
+                                        @if (item.Anulada)
+                                        {
+                                            <span class="badge bg-danger text-white ms-1" style="padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.8rem;">
+                                                <i class="fas fa-ban me-1"></i>
+                                                Anulada
+                                            </span>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-check-circle text-success"></i>
+                    </div>
+                    <h3>¡Excelente!</h3>
+                    <p>No se encontraron facturas emitidas en ambiente de pruebas</p>
+                    <a href="/facturas" class="btn-back mt-3">
+                        <i class="fas fa-arrow-left"></i>
+                        Volver a Facturas
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Font Awesome para los iconos -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">

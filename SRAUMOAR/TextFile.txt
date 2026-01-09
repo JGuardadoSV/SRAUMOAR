@@ -46,3 +46,6 @@ docker ps
     {
         _emisor = emisorOptions.Value;
     }
+
+
+    ventas en pruebas cuando deben de ser en produccion https://localhost:7105/procesar/DiagnosticoPruebas
