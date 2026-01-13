@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model SRAUMOAR.Pages.inscripcion.MateriasInscritasModel
 
 @{
@@ -102,6 +102,34 @@
 <div class="container">
     <h1>Resumen de Materias Inscritas</h1>
     <h2>Alumno: @Model.Alumno.Nombres @Model.Alumno.Apellidos</h2>
+    
+    <!-- Selector de Ciclo -->
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-3">
+                            <label for="cicloSelect" class="form-label fw-semibold mb-2">
+                                <i class="bi bi-calendar-check me-2" style="color: var(--primary-green);"></i>
+                                Ciclo Académico
+                            </label>
+                        </div>
+                        <div class="col-md-9">
+                            <select id="cicloSelect" class="form-select" asp-items="ViewBag.CicloId" onchange="cambiarCiclo()">
+                                <option value="">Selecciona un ciclo</option>
+                            </select>
+                            <small class="form-text text-muted">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Puede seleccionar cualquier ciclo registrado. Por defecto se muestra el ciclo actual.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Botón simplificado para PDF -->
     
     
@@ -109,7 +137,8 @@
     <p>
         @if (Model.PuedeInscribirMaterias)
         {
-            <a class="btn-create" asp-page="InscribirMaterias" asp-route-id="@Model.Alumno.AlumnoId">Inscribir materia</a>
+            var cicloSeleccionado = ViewBag.CicloId?.SelectedValue?.ToString() ?? "";
+            <a class="btn-create" asp-page="InscribirMaterias" asp-route-id="@Model.Alumno.AlumnoId" asp-route-cicloelegido="@(string.IsNullOrEmpty(cicloSeleccionado) ? "" : cicloSeleccionado)">Inscribir materia</a>
         }
         else if (!Model.EstaInscrito)
         {
@@ -132,7 +161,8 @@
             <button class="btn btn-primary" onclick="abrirPdfEnPopup('/reportes/inscripcion/reporteInscripcion?id=@Model.Alumno.AlumnoId')">
                 Imprimir hoja de inscripción
             </button>
-            <form method="post" asp-page-handler="Desinscribir" asp-route-id="@Model.Alumno.AlumnoId" style="display:inline;" onsubmit="return confirm('¿Está seguro de desinscribir completamente al alumno del ciclo actual? Esto eliminará todas las materias inscritas.');">
+            <form method="post" asp-page-handler="Desinscribir" asp-route-id="@Model.Alumno.AlumnoId" id="formDesinscribir" style="display:inline;" onsubmit="return confirm('¿Está seguro de desinscribir completamente al alumno del ciclo seleccionado? Esto eliminará todas las materias inscritas.');">
+                <input type="hidden" name="cicloelegido" id="cicloElegidoDesinscribir" value="@(ViewBag.CicloId?.SelectedValue ?? "")" />
                 <button type="submit" class="btn btn-danger">Desinscribir del ciclo</button>
             </form>
         }
@@ -187,4 +217,33 @@
         const top = (window.innerHeight - alto) / 2;
         window.open(url, 'VistaPreviaPDF', `width=${ancho},height=${alto},left=${left},top=${top},resizable=yes,scrollbars=yes`);
     }
+
+    function cambiarCiclo() {
+        var cicloSelect = document.getElementById('cicloSelect');
+        var cicloId = cicloSelect.value;
+        var alumnoId = @Model.Alumno.AlumnoId;
+        
+        if (cicloId && cicloId !== '') {
+            // Actualizar el campo oculto del formulario de desinscripción
+            var cicloElegidoInput = document.getElementById('cicloElegidoDesinscribir');
+            if (cicloElegidoInput) {
+                cicloElegidoInput.value = cicloId;
+            }
+            
+            // Recargar la página con el nuevo ciclo seleccionado
+            var url = '/inscripcion/MateriasInscritas?id=' + alumnoId + '&cicloelegido=' + cicloId;
+            window.location.href = url;
+        }
+    }
+    
+    // Actualizar el campo oculto cuando cambia el ciclo seleccionado
+    document.addEventListener('DOMContentLoaded', function() {
+        var cicloSelect = document.getElementById('cicloSelect');
+        if (cicloSelect) {
+            var cicloElegidoInput = document.getElementById('cicloElegidoDesinscribir');
+            if (cicloElegidoInput && cicloSelect.value) {
+                cicloElegidoInput.value = cicloSelect.value;
+            }
+        }
+    });
 </script>

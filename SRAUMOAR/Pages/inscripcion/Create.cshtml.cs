@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -28,23 +28,38 @@ namespace SRAUMOAR.Pages.inscripcion
            idalumno = id;
             Alumno alumno = _context.Alumno.Where(x => x.AlumnoId == id).FirstOrDefault() ?? new Alumno(); // Obtener el alumno
             var cicloactual = _context.Ciclos.Where(x => x.Activo == true).FirstOrDefault()?.Id ?? 0;
+            
+            // Determinar qué ciclo usar: el elegido si se proporciona y existe, sino el actual
+            int cicloSeleccionado = cicloactual;
+            if (cicloelegido > 0)
+            {
+                // Verificar que el ciclo elegido existe en la base de datos
+                var cicloExiste = _context.Ciclos.Any(c => c.Id == cicloelegido);
+                if (cicloExiste)
+                {
+                    cicloSeleccionado = cicloelegido;
+                }
+            }
+            
             var becado= _context.Becados.Where(x => x.AlumnoId == id).FirstOrDefault();
+            
+            // Verificar si el alumno ya está inscrito en el ciclo seleccionado
             EstaInscrito =  _context.Inscripciones
-              .Any(i => i.AlumnoId == idalumno && i.CicloId == cicloactual);
+              .Any(i => i.AlumnoId == idalumno && i.CicloId == cicloSeleccionado);
 
-            // Verificar si el alumno pagó "Matricula" (comportamiento normal)
+            // Verificar si el alumno pagó "Matricula" (comportamiento normal) en el ciclo seleccionado
             bool pagoMatricula = _context.CobrosArancel
                 .Include(x => x.DetallesCobroArancel)
                     .ThenInclude(d => d.Arancel)
-                .Any(x => x.CicloId == cicloactual && 
+                .Any(x => x.CicloId == cicloSeleccionado && 
                          x.AlumnoId == idalumno &&
                          x.DetallesCobroArancel.Any(d => d.Arancel.Nombre == "Matricula" && !d.Arancel.EsEspecializacion));
 
-            // Verificar si el alumno pagó "Matricula" de especialización
+            // Verificar si el alumno pagó "Matricula" de especialización en el ciclo seleccionado
             bool pagoMatriculaEspecializacion = _context.CobrosArancel
                 .Include(x => x.DetallesCobroArancel)
                     .ThenInclude(d => d.Arancel)
-                .Any(x => x.CicloId == cicloactual && 
+                .Any(x => x.CicloId == cicloSeleccionado && 
                          x.AlumnoId == idalumno &&
                          x.DetallesCobroArancel.Any(d => d.Arancel.Nombre == "Matricula" && d.Arancel.EsEspecializacion));
 
@@ -64,14 +79,18 @@ namespace SRAUMOAR.Pages.inscripcion
                     AlumnoId = a.AlumnoId, 
                     Nombres = a.Nombres + " " + a.Apellidos})
                 , "AlumnoId", "Nombres");
+            
+            // Mostrar todos los ciclos registrados, ordenados por año y número de ciclo descendente
+            // Preseleccionar el ciclo actual o el elegido
             ViewData["CicloId"] = new SelectList(
                 _context.Ciclos
-                .Where(x => x.Activo == true)
+                .OrderByDescending(c => c.anio)
+                .ThenByDescending(c => c.NCiclo)
                 .Select(c => new {
                     Id = c.Id,
                     Nombre = c.NCiclo+" - "+c.anio
                 })
-                , "Id", "Nombre");
+                , "Id", "Nombre", cicloSeleccionado);
             //ViewData["GrupoId"] = new SelectList(
             //  _context.Grupo
             //  .Where(x => x.CarreraId == carreraid)
@@ -92,6 +111,24 @@ namespace SRAUMOAR.Pages.inscripcion
         {
             if (!ModelState.IsValid)
             {
+                // Recargar los ViewData necesarios para mostrar la página con errores
+                ViewData["AlumnoId"] = new SelectList(
+                    _context.Alumno.Where(x => x.AlumnoId == Inscripcion.AlumnoId)
+                    .Select(a => new {
+                        AlumnoId = a.AlumnoId, 
+                        Nombres = a.Nombres + " " + a.Apellidos})
+                    , "AlumnoId", "Nombres", Inscripcion.AlumnoId);
+                
+                ViewData["CicloId"] = new SelectList(
+                    _context.Ciclos
+                    .OrderByDescending(c => c.anio)
+                    .ThenByDescending(c => c.NCiclo)
+                    .Select(c => new {
+                        Id = c.Id,
+                        Nombre = c.NCiclo+" - "+c.anio
+                    })
+                    , "Id", "Nombre", Inscripcion.CicloId);
+                
                 return Page();
             }
 

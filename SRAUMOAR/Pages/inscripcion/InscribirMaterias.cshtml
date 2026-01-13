@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model SRAUMOAR.Pages.inscripcion.InscribirMateriasModel
 
         @{
@@ -106,11 +106,19 @@
                     <button type="submit" class="btn btn-secondary">Filtrar materias</button>
                 </div>
                 <input type="hidden" name="id" value="@Model.Alumno.AlumnoId" />
+                @{
+                    var cicloSeleccionadoGet = ViewData["CicloSeleccionado"]?.ToString() ?? "";
+                }
+                @if (!string.IsNullOrEmpty(cicloSeleccionadoGet))
+                {
+                    <input type="hidden" name="cicloelegido" value="@cicloSeleccionadoGet" />
+                }
             </form>
             <form method="post">
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                 <input type="hidden" asp-for="MateriasInscritas.AlumnoId" value="@Model.Alumno.AlumnoId" />
                 <input type="hidden" asp-for="GrupoSeleccionado" value="@Model.GrupoSeleccionado" />
+                <input type="hidden" name="cicloelegido" value="@(ViewData["CicloSeleccionado"]?.ToString() ?? "")" />
                 <div class="form-group">
                     <span class="text-danger">*</span>
                     <label asp-for="MateriasSeleccionadas" class="control-label">Grupo de Materias</label>
@@ -140,7 +148,10 @@
             }
             <div class="text-center mt-3">
                 
-                <a asp-page="/inscripcion/MateriasInscritas" asp-route-id="@Model.Alumno.AlumnoId" class="text-decoration-none" style="color: var(--primary-green);">Volver a inscripciones</a>
+                @{
+                    var cicloSeleccionado = ViewData["CicloSeleccionado"]?.ToString() ?? "";
+                }
+                <a asp-page="/inscripcion/MateriasInscritas" asp-route-id="@Model.Alumno.AlumnoId" asp-route-cicloelegido="@(string.IsNullOrEmpty(cicloSeleccionado) ? "" : cicloSeleccionado)" class="text-decoration-none" style="color: var(--primary-green);">Volver a inscripciones</a>
             </div>
         </div>
     </div>

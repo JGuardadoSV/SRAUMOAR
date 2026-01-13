@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SRAUMOAR.Entidades.Alumnos;
 using SRAUMOAR.Entidades.Procesos;
@@ -38,14 +39,47 @@ namespace SRAUMOAR.Pages.inscripcion
         public bool YaPago { get; set; }
         public bool PuedeInscribirMaterias { get; set; }
 
-        public IActionResult OnGet(int id)
+        public IActionResult OnGet(int id, int cicloelegido = 0)
         {
-            CicloActual = _context.Ciclos.Where(x => x.Activo == true).FirstOrDefault();
-            if (CicloActual == null)
+            // Obtener ciclo actual
+            var cicloActualObj = _context.Ciclos.Where(x => x.Activo == true).FirstOrDefault();
+            if (cicloActualObj == null)
             {
                 return BadRequest("No hay un ciclo activo");
             }
-            var cicloactual = CicloActual.Id;
+
+            // Determinar qué ciclo usar: el elegido si se proporciona y existe, sino el actual
+            int cicloSeleccionado = cicloActualObj.Id;
+            if (cicloelegido > 0)
+            {
+                // Verificar que el ciclo elegido existe en la base de datos
+                var cicloExiste = _context.Ciclos.Any(c => c.Id == cicloelegido);
+                if (cicloExiste)
+                {
+                    cicloSeleccionado = cicloelegido;
+                    CicloActual = _context.Ciclos.FirstOrDefault(c => c.Id == cicloelegido);
+                }
+                else
+                {
+                    CicloActual = cicloActualObj;
+                }
+            }
+            else
+            {
+                CicloActual = cicloActualObj;
+            }
+
+            // Cargar SelectList de ciclos para la vista
+            ViewData["CicloId"] = new SelectList(
+                _context.Ciclos
+                .OrderByDescending(c => c.anio)
+                .ThenByDescending(c => c.NCiclo)
+                .Select(c => new {
+                    Id = c.Id,
+                    Nombre = c.NCiclo+" - "+c.anio
+                })
+                , "Id", "Nombre", cicloSeleccionado);
+
             Alumno = _context.Alumno.Where(x => x.AlumnoId == id).FirstOrDefault() ?? new Alumno();
             var becado = _context.Becados.Where(x => x.AlumnoId == id).FirstOrDefault();
 
@@ -57,29 +91,29 @@ namespace SRAUMOAR.Pages.inscripcion
                 .Include(mi => mi.MateriasGrupo)
                     .ThenInclude(mg => mg.Grupo)
                 .Include(mi => mi.Alumno)
-                .Where(mi => mi.MateriasGrupo.Grupo.CicloId == cicloactual &&
+                .Where(mi => mi.MateriasGrupo.Grupo.CicloId == cicloSeleccionado &&
                              mi.AlumnoId == Alumno.AlumnoId)
                 .ToList();
 
-            // Verificar si el alumno está inscrito en el ciclo
+            // Verificar si el alumno está inscrito en el ciclo seleccionado
             EstaInscrito = _context.Inscripciones
                 .Any(i => i.AlumnoId == Alumno.AlumnoId && 
-                         i.CicloId == cicloactual && 
+                         i.CicloId == cicloSeleccionado && 
                          i.Activa == true);
 
-            // Verificar si el alumno pagó "Matricula" (comportamiento normal)
+            // Verificar si el alumno pagó "Matricula" (comportamiento normal) en el ciclo seleccionado
             bool pagoMatricula = _context.CobrosArancel
                 .Include(x => x.DetallesCobroArancel)
                     .ThenInclude(d => d.Arancel)
-                .Any(x => x.CicloId == cicloactual && 
+                .Any(x => x.CicloId == cicloSeleccionado && 
                          x.AlumnoId == Alumno.AlumnoId &&
                          x.DetallesCobroArancel.Any(d => d.Arancel.Nombre == "Matricula" && !d.Arancel.EsEspecializacion));
 
-            // Verificar si el alumno pagó "Matricula" de especialización
+            // Verificar si el alumno pagó "Matricula" de especialización en el ciclo seleccionado
             bool pagoMatriculaEspecializacion = _context.CobrosArancel
                 .Include(x => x.DetallesCobroArancel)
                     .ThenInclude(d => d.Arancel)
-                .Any(x => x.CicloId == cicloactual && 
+                .Any(x => x.CicloId == cicloSeleccionado && 
                          x.AlumnoId == Alumno.AlumnoId &&
                          x.DetallesCobroArancel.Any(d => d.Arancel.Nombre == "Matricula" && d.Arancel.EsEspecializacion));
 
@@ -114,27 +148,37 @@ namespace SRAUMOAR.Pages.inscripcion
         }
 
         // Método para desinscribir completamente al alumno del ciclo
-        public IActionResult OnPostDesinscribir(int id)
+        public IActionResult OnPostDesinscribir(int id, int cicloelegido = 0)
         {
-            var cicloactualObj = _context.Ciclos.Where(x => x.Activo == true).FirstOrDefault();
-            if (cicloactualObj == null)
+            // Determinar qué ciclo usar: el elegido si se proporciona y existe, sino el actual
+            var cicloActualObj = _context.Ciclos.Where(x => x.Activo == true).FirstOrDefault();
+            if (cicloActualObj == null)
             {
                 return BadRequest("No hay un ciclo activo");
             }
-            var cicloactual = cicloactualObj.Id;
+
+            int cicloSeleccionado = cicloActualObj.Id;
+            if (cicloelegido > 0)
+            {
+                var cicloExiste = _context.Ciclos.Any(c => c.Id == cicloelegido);
+                if (cicloExiste)
+                {
+                    cicloSeleccionado = cicloelegido;
+                }
+            }
             
-            // Buscar la inscripción del alumno en el ciclo actual
+            // Buscar la inscripción del alumno en el ciclo seleccionado
             var inscripcion = _context.Inscripciones
-                .FirstOrDefault(i => i.AlumnoId == id && i.CicloId == cicloactual);
+                .FirstOrDefault(i => i.AlumnoId == id && i.CicloId == cicloSeleccionado);
 
             if (inscripcion != null)
             {
-                // Eliminar todas las materias inscritas del alumno en el ciclo actual
+                // Eliminar todas las materias inscritas del alumno en el ciclo seleccionado
                 var materiasInscritas = _context.MateriasInscritas
                     .Include(mi => mi.MateriasGrupo)
                         .ThenInclude(mg => mg.Grupo)
                     .Where(mi => mi.AlumnoId == id && 
-                                mi.MateriasGrupo.Grupo.CicloId == cicloactual)
+                                mi.MateriasGrupo.Grupo.CicloId == cicloSeleccionado)
                     .ToList();
 
                 if (materiasInscritas.Any())
@@ -146,8 +190,8 @@ namespace SRAUMOAR.Pages.inscripcion
                 _context.Inscripciones.Remove(inscripcion);
                 _context.SaveChanges();
 
-                // Redirigir a la página de inscripción
-                return RedirectToPage("./Create", new { id = id });
+                // Redirigir a la página de inscripción con el ciclo seleccionado
+                return RedirectToPage("./Create", new { id = id, cicloelegido = cicloSeleccionado });
             }
 
             // Si no se encuentra la inscripción, redirigir a la página de inscripción

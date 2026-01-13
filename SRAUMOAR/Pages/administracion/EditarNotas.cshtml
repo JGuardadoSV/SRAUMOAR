@@ -91,6 +91,33 @@
         </div>
     </div>
 
+    <!-- Selector de Ciclo -->
+    <div class="row justify-content-center mb-4">
+        <div class="col-lg-10">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <label for="cicloSelect" class="form-label fw-semibold mb-2">
+                                <i class="bi bi-calendar-check text-primary me-2"></i>
+                                Ciclo Académico
+                            </label>
+                        </div>
+                        <div class="col-md-8">
+                            <select id="cicloSelect" class="form-select form-select-lg" asp-items="ViewBag.CicloId" onchange="cambiarCiclo()">
+                                <option value="">Selecciona un ciclo</option>
+                            </select>
+                            <small class="form-text text-muted">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Puede seleccionar cualquier ciclo registrado. Por defecto se muestra el ciclo actual.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @if (Model.GruposConMaterias.Any())
     {
         <div class="row g-4 justify-content-center">
@@ -170,10 +197,25 @@
                     <div class="card-body text-center py-5">
                         <i class="bi bi-inbox display-1 text-muted mb-3"></i>
                         <h4 class="text-muted">No hay grupos disponibles</h4>
-                        <p class="text-muted">No se encontraron grupos con materias asignadas para el ciclo actual.</p>
+                        <p class="text-muted">No se encontraron grupos con materias asignadas para el ciclo seleccionado.</p>
                     </div>
                 </div>
             </div>
         </div>
     }
 </div>
+
+@section Scripts {
+    <script>
+        function cambiarCiclo() {
+            var cicloSelect = document.getElementById('cicloSelect');
+            var cicloId = cicloSelect.value;
+            
+            if (cicloId && cicloId !== '') {
+                // Recargar la página con el nuevo ciclo seleccionado
+                var url = '/administracion/EditarNotas?cicloelegido=' + cicloId;
+                window.location.href = url;
+            }
+        }
+    </script>
+}

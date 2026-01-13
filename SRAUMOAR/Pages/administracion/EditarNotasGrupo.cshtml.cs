@@ -143,6 +143,37 @@ namespace SRAUMOAR.Pages.administracion
             public decimal Nota { get; set; }
         }
 
+        public async Task<IActionResult> OnPostGuardarRecuperacionAsync(int materiaInscritaId, decimal notaRecuperacion, int grupoId)
+        {
+            var materiaInscrita = await _context.MateriasInscritas
+                .FirstOrDefaultAsync(m => m.MateriasInscritasId == materiaInscritaId);
+
+            if (materiaInscrita == null)
+            {
+                return NotFound("No se encontró la materia inscrita.");
+            }
+
+            // Validar que la nota esté en rango válido
+            if (notaRecuperacion < 0 || notaRecuperacion > 10)
+            {
+                TempData["Error"] = "La nota de recuperación debe estar entre 0 y 10.";
+                return RedirectToPage(new { grupoId = grupoId });
+            }
+
+            // Guardar la nota de recuperación
+            materiaInscrita.NotaRecuperacion = notaRecuperacion;
+            materiaInscrita.FechaRecuperacion = DateTime.Now;
+
+            // Si hay nota de recuperación, esa es la nota final para determinar si aprobó
+            materiaInscrita.Aprobada = notaRecuperacion >= 7;
+
+            _context.MateriasInscritas.Update(materiaInscrita);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Nota de recuperación guardada correctamente.";
+            return RedirectToPage(new { grupoId = grupoId });
+        }
+
         public async Task<IActionResult> OnGetAsync(int grupoId)
         {
             GrupoId = grupoId;

@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model SRAUMOAR.Pages.inscripcion.CreateModel
 
 @{
@@ -220,97 +220,103 @@
         </h1>
     </div>
 
-    @if (!Model.EstaInscrito)
-    {
-        @if (!Model.YaPago)
-        {
-            <div class="alert-card">
-                <div class="alert alert-danger alert-enhanced" role="alert">
-                    <i class="bi bi-exclamation-triangle-fill"></i>
-                    <div style="flex: 1;">
-                        <strong>Atención:</strong> El alumno no ha cancelado el arancel correspondiente para realizar este proceso.
-                    </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-                <div class="text-center">
-                    <a asp-page="/aranceles/Cobrar" asp-route-id="@Model.idalumno" class="btn btn-danger-enhanced btn-enhanced">
-                        <i class="bi bi-credit-card"></i>
-                        Ir a Cobros
-                    </a>
-                </div>
-            </div>
-        }
-
-        @if (Model.YaPago)
-        {
-            <div class="form-card">
-                <div class="info-box">
-                    <i class="bi bi-info-circle-fill"></i>
-                    <strong>Información:</strong> Complete los siguientes datos para realizar la inscripción del alumno.
-                </div>
-
-                <form method="post">
-                    <div asp-validation-summary="ModelOnly" class="alert alert-danger alert-enhanced" role="alert">
-                        <i class="bi bi-exclamation-circle-fill"></i>
-                        <div>Por favor, corrija los errores antes de continuar.</div>
-                    </div>
-
-                    <div class="form-group-enhanced">
-                        <label asp-for="Inscripcion.AlumnoId" class="form-label-enhanced">
-                            <i class="bi bi-person-badge"></i>
-                            <span class="required-field">*</span> Alumno
-                        </label>
-                        <select asp-for="Inscripcion.AlumnoId" class="form-select form-select-enhanced" asp-items="ViewBag.AlumnoId">
-                            <option value="">Selecciona un alumno</option>
-                        </select>
-                        <span asp-validation-for="Inscripcion.AlumnoId" class="text-danger"></span>
-                    </div>
-
-                    <div class="form-group-enhanced">
-                        <label asp-for="Inscripcion.CicloId" class="form-label-enhanced">
-                            <i class="bi bi-calendar-check"></i>
-                            <span class="required-field">*</span> Ciclo Académico
-                        </label>
-                        <select asp-for="Inscripcion.CicloId" class="form-select form-select-enhanced" asp-items="ViewBag.CicloId">
-                            <option value="">Selecciona un ciclo</option>
-                        </select>
-                        <span asp-validation-for="Inscripcion.CicloId" class="text-danger"></span>
-                    </div>
-
-                    <div class="form-actions">
-                        <a asp-page="Index" class="btn btn-secondary-enhanced btn-enhanced">
-                            <i class="bi bi-arrow-left"></i>
-                            Volver
-                        </a>
-                        <button type="submit" class="btn btn-primary-enhanced btn-enhanced">
-                            <i class="bi bi-check-circle"></i>
-                            Inscribir Alumno
-                        </button>
-                    </div>
-                </form>
-            </div>
-        }
-    }
-    else
+    @if (!Model.YaPago)
     {
         <div class="alert-card">
             <div class="alert alert-danger alert-enhanced" role="alert">
                 <i class="bi bi-exclamation-triangle-fill"></i>
                 <div style="flex: 1;">
-                    <strong>Atención:</strong> El alumno ya se encuentra inscrito en el ciclo académico actual.
+                    <strong>Atención:</strong> El alumno no ha cancelado el arancel correspondiente para realizar este proceso.
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
             <div class="text-center">
-                <a asp-page="/inscripcion/MateriasInscritas" asp-route-id="@Model.idalumno" class="btn btn-primary-enhanced btn-enhanced">
-                    <i class="bi bi-list-check"></i>
-                    Ver Inscripciones
+                <a asp-page="/aranceles/Cobrar" asp-route-id="@Model.idalumno" class="btn btn-danger-enhanced btn-enhanced">
+                    <i class="bi bi-credit-card"></i>
+                    Ir a Cobros
                 </a>
             </div>
+        </div>
+    }
+
+    @if (Model.YaPago)
+    {
+        <div class="form-card">
+            @if (Model.EstaInscrito)
+            {
+                <div class="alert alert-warning alert-enhanced" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <div style="flex: 1;">
+                        <strong>Atención:</strong> El alumno ya se encuentra inscrito en el ciclo seleccionado. Puede cambiar el ciclo usando el selector de abajo.
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            else
+            {
+                <div class="info-box">
+                    <i class="bi bi-info-circle-fill"></i>
+                    <strong>Información:</strong> Complete los siguientes datos para realizar la inscripción del alumno.
+                </div>
+            }
+
+            <form method="post">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger alert-enhanced" role="alert">
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                    <div>Por favor, corrija los errores antes de continuar.</div>
+                </div>
+
+                <div class="form-group-enhanced">
+                    <label asp-for="Inscripcion.AlumnoId" class="form-label-enhanced">
+                        <i class="bi bi-person-badge"></i>
+                        <span class="required-field">*</span> Alumno
+                    </label>
+                    <select asp-for="Inscripcion.AlumnoId" class="form-select form-select-enhanced" asp-items="ViewBag.AlumnoId">
+                        <option value="">Selecciona un alumno</option>
+                    </select>
+                    <span asp-validation-for="Inscripcion.AlumnoId" class="text-danger"></span>
+                </div>
+
+                <div class="form-group-enhanced">
+                    <label asp-for="Inscripcion.CicloId" class="form-label-enhanced">
+                        <i class="bi bi-calendar-check"></i>
+                        <span class="required-field">*</span> Ciclo Académico
+                    </label>
+                    <select asp-for="Inscripcion.CicloId" id="cicloSelect" class="form-select form-select-enhanced" asp-items="ViewBag.CicloId" onchange="cambiarCiclo()">
+                        <option value="">Selecciona un ciclo</option>
+                    </select>
+                    <span asp-validation-for="Inscripcion.CicloId" class="text-danger"></span>
+                    <small class="form-text text-muted">Puede seleccionar cualquier ciclo registrado. Por defecto se muestra el ciclo actual.</small>
+                </div>
+
+                <div class="form-actions">
+                    <a asp-page="Index" class="btn btn-secondary-enhanced btn-enhanced">
+                        <i class="bi bi-arrow-left"></i>
+                        Volver
+                    </a>
+                    <button type="submit" class="btn btn-primary-enhanced btn-enhanced">
+                        <i class="bi bi-check-circle"></i>
+                        @(Model.EstaInscrito ? "El alumno ya está inscrito en este ciclo" : "Inscribir Alumno")
+                    </button>
+                </div>
+            </form>
         </div>
     }
 </div>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        function cambiarCiclo() {
+            var cicloSelect = document.getElementById('cicloSelect');
+            var cicloId = cicloSelect.value;
+            var alumnoId = @Model.idalumno;
+            
+            if (cicloId && cicloId !== '') {
+                // Recargar la página con el nuevo ciclo seleccionado
+                var url = '/inscripcion/Create?id=' + alumnoId + '&cicloelegido=' + cicloId;
+                window.location.href = url;
+            }
+        }
+    </script>
 }

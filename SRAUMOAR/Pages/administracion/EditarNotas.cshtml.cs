@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SRAUMOAR.Entidades.Procesos;
 using SRAUMOAR.Modelos;
@@ -29,13 +30,37 @@ namespace SRAUMOAR.Pages.administracion
             public string NombreDocente { get; set; } = string.Empty;
         }
 
-        public async Task OnGetAsync()
+        public async Task OnGetAsync(int cicloelegido = 0)
         {
+            // Obtener ciclo actual
             var cicloActual = await _context.Ciclos
                 .Where(x => x.Activo == true)
                 .FirstOrDefaultAsync();
 
-            if (cicloActual == null)
+            // Determinar qué ciclo usar: el elegido si se proporciona y existe, sino el actual
+            int cicloSeleccionado = cicloActual?.Id ?? 0;
+            if (cicloelegido > 0)
+            {
+                // Verificar que el ciclo elegido existe en la base de datos
+                var cicloExiste = await _context.Ciclos.AnyAsync(c => c.Id == cicloelegido);
+                if (cicloExiste)
+                {
+                    cicloSeleccionado = cicloelegido;
+                }
+            }
+
+            // Cargar SelectList de ciclos para la vista
+            ViewData["CicloId"] = new SelectList(
+                _context.Ciclos
+                .OrderByDescending(c => c.anio)
+                .ThenByDescending(c => c.NCiclo)
+                .Select(c => new {
+                    Id = c.Id,
+                    Nombre = c.NCiclo+" - "+c.anio
+                })
+                , "Id", "Nombre", cicloSeleccionado);
+
+            if (cicloSeleccionado == 0)
             {
                 GruposConMaterias = new List<GrupoConMaterias>();
                 return;
@@ -47,7 +72,7 @@ namespace SRAUMOAR.Pages.administracion
                 .Include(mg => mg.Grupo)
                     .ThenInclude(g => g.Docente)
                 .Include(mg => mg.Materia)
-                .Where(mg => mg.Grupo.CicloId == cicloActual.Id)
+                .Where(mg => mg.Grupo.CicloId == cicloSeleccionado)
                 .GroupBy(mg => new { 
                     mg.Grupo.GrupoId, 
                     mg.Grupo.Nombre, 

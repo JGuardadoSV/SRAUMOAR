@@ -86,6 +86,23 @@
         </div>
     </div>
 
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-circle me-2"></i>
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
     @if (Model.EstudiantesConNotas.Any())
     {
         @Html.AntiForgeryToken()
@@ -130,6 +147,7 @@
                                             </th>
                                         }
                                         <th class="text-center" style="width: 10%">Promedio</th>
+                                        <th class="text-center" style="width: 8%">Recup.</th>
                                         <th class="text-center" style="width: 10%">Acciones</th>
                                     </tr>
                                 </thead>
@@ -177,6 +195,25 @@
                                             </td>
                                             
                                             <td class="text-center">
+                                                @if (materiaInscrita.NotaRecuperacion.HasValue)
+                                                {
+                                                    <span class="badge bg-warning text-dark me-1">@materiaInscrita.NotaRecuperacion.Value.ToString("N2")</span>
+                                                }
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-outline-warning p-1" 
+                                                        style="font-size: 0.75rem; line-height: 1;"
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#modalRecuperacion"
+                                                        data-id="@materiaInscrita.MateriasInscritasId"
+                                                        data-nombre="@estudiante.NombreCompleto"
+                                                        data-nota="@(materiaInscrita.NotaRecuperacion?.ToString("N2") ?? "")"
+                                                        data-grupo-id="@Model.GrupoId"
+                                                        title="Editar nota de recuperación">
+                                                    <i class="bi bi-pencil-square"></i>
+                                                </button>
+                                            </td>
+                                            
+                                            <td class="text-center">
                                                 <button type="button" 
                                                         class="btn btn-success btn-sm" 
                                                         onclick="guardarNotas(@estudiante.AlumnoId, @materia.MateriasGrupoId, @materiaInscrita.MateriasInscritasId)">
@@ -215,8 +252,70 @@
     }
 </div>
 
+<!-- Modal para ingresar nota de recuperación -->
+<div class="modal fade" id="modalRecuperacion" tabindex="-1" aria-labelledby="modalRecuperacionLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title" id="modalRecuperacionLabel">
+                    <i class="bi bi-pencil-square me-2"></i>Nota de Recuperación
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formRecuperacion" method="post" asp-page-handler="GuardarRecuperacion">
+                <div class="modal-body">
+                    <input type="hidden" id="materiaInscritaId" name="materiaInscritaId" />
+                    <input type="hidden" id="grupoId" name="grupoId" value="@Model.GrupoId" />
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Estudiante:</label>
+                        <p id="nombreEstudiante" class="form-control-plaintext"></p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notaRecuperacion" class="form-label fw-bold">Nota de Recuperación:</label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="notaRecuperacion" 
+                               name="notaRecuperacion" 
+                               min="0" 
+                               max="10" 
+                               step="0.01" 
+                               required
+                               placeholder="Ingrese la nota (0-10)">
+                        <div class="form-text">La nota debe estar entre 0 y 10</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-save me-1"></i>Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
+        // Manejar modal de recuperación
+        document.addEventListener('DOMContentLoaded', function() {
+            var modalRecuperacion = document.getElementById('modalRecuperacion');
+            if (modalRecuperacion) {
+                modalRecuperacion.addEventListener('show.bs.modal', function (event) {
+                    var button = event.relatedTarget;
+                    var id = button.getAttribute('data-id');
+                    var nombre = button.getAttribute('data-nombre');
+                    var nota = button.getAttribute('data-nota');
+                    
+                    document.getElementById('materiaInscritaId').value = id;
+                    document.getElementById('nombreEstudiante').textContent = nombre;
+                    document.getElementById('notaRecuperacion').value = nota;
+                });
+            }
+        });
+
         // Función para guardar notas de un estudiante específico
         async function guardarNotas(alumnoId, materiasGrupoId, materiasInscritasId) {
             // Obtener el botón que fue clickeado
