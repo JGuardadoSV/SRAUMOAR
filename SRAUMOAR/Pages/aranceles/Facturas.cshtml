@@ -1,4 +1,4 @@
-﻿@page
+@page
 @inject IJsonHelper Json
 @model SRAUMOAR.Pages.aranceles.FacturasModel
 
@@ -722,19 +722,19 @@
             <!-- jQuery ya está incluido en _Layout.cshtml -->
     <script>
         function showDetails(id) {
-            $.ajax({
+            jQuery.ajax({
                 url: '@Url.Page("DetallesCobro")',
                 type: 'GET',
                 data: { id: id },
                 success: function (data) {
                     console.log('Datos recibidos:', data);
-                    $('#detalleFecha').text(data.fecha);
-                    $('#detalleCiclo').text(data.ciclo);
-                    $('#detalleAlumno').text(data.alumno);
-                    $('#detalleCosto').text(data.costoTotal);
-                    $('#detalleEfectivoRecibido').text(data.efectivoRecibido);
-                    $('#detalleCambio').text(data.cambio);
-                    $('#detalleNota').text(data.nota);
+                    jQuery('#detalleFecha').text(data.fecha);
+                    jQuery('#detalleCiclo').text(data.ciclo);
+                    jQuery('#detalleAlumno').text(data.alumno);
+                    jQuery('#detalleCosto').text(data.costoTotal);
+                    jQuery('#detalleEfectivoRecibido').text(data.efectivoRecibido);
+                    jQuery('#detalleCambio').text(data.cambio);
+                    jQuery('#detalleNota').text(data.nota);
 
                     // Construir tabla de detalles de aranceles
                     let arancelesTable = '<table class="aranceles-table table table-sm">';
@@ -749,9 +749,9 @@
                     arancelesTable += '</tbody></table>';
 
                     // Insertar tabla en el contenedor correspondiente
-                    $('#detalleArancel').html(arancelesTable);
+                    jQuery('#detalleArancel').html(arancelesTable);
 
-                    $('#detailsModal').modal('show');
+                    jQuery('#detailsModal').modal('show');
                 },
                 error: function(xhr, status, error) {
                     console.error('Error al cargar los detalles:', error);

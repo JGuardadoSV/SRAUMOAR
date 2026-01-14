@@ -1,4 +1,4 @@
-﻿@page
+@page
 @using SRAUMOAR.Entidades.Procesos
 @model SRAUMOAR.Pages.grupos.EditModel
 
@@ -324,9 +324,9 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <script>
-        $(document).ready(function() {
+        jQuery(document).ready(function() {
             // Inicializar Select2 en los selects con buscador fuera del modal
-            $('.select-buscable').not('#editMateriaId, #editDocenteId').select2({
+            jQuery('.select-buscable').not('#editMateriaId, #editDocenteId').select2({
                 width: '100%',
                 placeholder: 'Seleccione una opción',
                 allowClear: true,
@@ -337,11 +337,11 @@
                 }
             });
             // Inicializar Select2 en los selects dentro del modal con dropdownParent
-            $('#editMateriaId, #editDocenteId').select2({
+            jQuery('#editMateriaId, #editDocenteId').select2({
                 width: '100%',
                 placeholder: 'Seleccione una opción',
                 allowClear: true,
-                dropdownParent: $('#editMateriaModal'),
+                dropdownParent: jQuery('#editMateriaModal'),
                 language: {
                     noResults: function() {
                         return "No hay resultados";
@@ -349,32 +349,32 @@
                 }
             });
             // Botón editar
-            $('.edit-btn').on('click', function() {
-                $('#editMateriasGrupoId').val($(this).data('id'));
-                $('#editMateriaId').val($(this).data('materia')).trigger('change');
-                $('#editAula').val($(this).data('aula'));
-                $('#editDia').val($(this).data('dia'));
-                let horaInicio = $(this).data('horainicio');
-                let horaFin = $(this).data('horafin');
+            jQuery('.edit-btn').on('click', function() {
+                jQuery('#editMateriasGrupoId').val(jQuery(this).data('id'));
+                jQuery('#editMateriaId').val(jQuery(this).data('materia')).trigger('change');
+                jQuery('#editAula').val(jQuery(this).data('aula'));
+                jQuery('#editDia').val(jQuery(this).data('dia'));
+                let horaInicio = jQuery(this).data('horainicio');
+                let horaFin = jQuery(this).data('horafin');
                 if(horaInicio && horaInicio.length > 5) horaInicio = horaInicio.substring(0,5);
                 if(horaFin && horaFin.length > 5) horaFin = horaFin.substring(0,5);
-                $('#editHoraInicio').val(horaInicio);
-                $('#editHoraFin').val(horaFin);
-                $('#editDocenteId').val($(this).data('docente')).trigger('change');
+                jQuery('#editHoraInicio').val(horaInicio);
+                jQuery('#editHoraFin').val(horaFin);
+                jQuery('#editDocenteId').val(jQuery(this).data('docente')).trigger('change');
                 var modal = new bootstrap.Modal(document.getElementById('editMateriaModal'));
                 modal.show();
             });
 
             // Enviar formulario de edición
-            $('#editMateriaForm').on('submit', function(e) {
+            jQuery('#editMateriaForm').on('submit', function(e) {
                 e.preventDefault();
-                var formData = $(this).serialize();
-                $.ajax({
+                var formData = jQuery(this).serialize();
+                jQuery.ajax({
                     url: '?handler=EditarMateriaGrupo',
                     type: 'POST',
                     data: formData,
                     headers: {
-                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                        'RequestVerificationToken': jQuery('input[name="__RequestVerificationToken"]').val()
                     },
                     contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
                     success: function(result) {
@@ -392,11 +392,11 @@
             });
 
             // Manejar cambio de checkbox de solvencia
-            $('.solvente-checkbox').on('change', function() {
-                var materiasGrupoId = $(this).data('materias-grupo-id');
-                var esSolvente = $(this).is(':checked');
+            jQuery('.solvente-checkbox').on('change', function() {
+                var materiasGrupoId = jQuery(this).data('materias-grupo-id');
+                var esSolvente = jQuery(this).is(':checked');
                 
-                $.ajax({
+                jQuery.ajax({
                     url: '?handler=MarcarSolvente',
                     type: 'POST',
                     data: {
@@ -404,19 +404,19 @@
                         solvente: esSolvente
                     },
                     headers: {
-                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                        'RequestVerificationToken': jQuery('input[name="__RequestVerificationToken"]').val()
                     },
                     success: function(result) {
                         if (!result.success) {
                             alert(result.message || 'Error al actualizar el estado de solvencia');
                             // Revertir el checkbox
-                            $('.solvente-checkbox[data-materias-grupo-id="' + materiasGrupoId + '"]').prop('checked', !esSolvente);
+                            jQuery('.solvente-checkbox[data-materias-grupo-id="' + materiasGrupoId + '"]').prop('checked', !esSolvente);
                         }
                     },
                     error: function(xhr) {
                         alert('Error técnico: ' + xhr.responseText);
                         // Revertir el checkbox
-                        $('.solvente-checkbox[data-materias-grupo-id="' + materiasGrupoId + '"]').prop('checked', !esSolvente);
+                        jQuery('.solvente-checkbox[data-materias-grupo-id="' + materiasGrupoId + '"]').prop('checked', !esSolvente);
                     }
                 });
             });

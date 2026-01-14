@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model SRAUMOAR.Pages.alumno.CreateModel
 
 @{
@@ -1344,8 +1344,8 @@
         });
 
         // Inicializar Select2
-        $(document).ready(function() {
-            $('.select2').select2({
+        jQuery(document).ready(function() {
+            jQuery('.select2').select2({
                 placeholder: "Buscar municipio...",
                 allowClear: true,
                 language: {
@@ -1366,12 +1366,12 @@
                 }
             }).on('select2:open', function() {
                 setTimeout(function() {
-                    $('.select2-search__field').focus();
+                    jQuery('.select2-search__field').focus();
                 }, 10);
             });
 
             // Mejorar accesibilidad
-            $('.select2-selection').attr('aria-label', 'Seleccionar municipio');
+            jQuery('.select2-selection').attr('aria-label', 'Seleccionar municipio');
         });
 
         function formatMunicipio(municipio) {
@@ -1379,7 +1379,7 @@
                 return municipio.text;
             }
 
-            return $('<div class="select2-result-municipio">' +
+            return jQuery('<div class="select2-result-municipio">' +
                      '<div class="select2-result-municipio__title">' +
                      '<i class="bi bi-geo-alt-fill me-2"></i>' + municipio.text +
                      '</div>' +
