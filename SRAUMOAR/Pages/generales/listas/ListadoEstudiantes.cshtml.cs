@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -38,7 +38,15 @@ namespace SRAUMOAR.Pages.generales.listas
         public async Task OnGetAsync(int id, bool lista = false)
         {
             this.lista = lista;
-            var cicloactual = _context.Ciclos.Where(x => x.Activo == true).First();
+            var cicloactual = await _context.Ciclos.Where(x => x.Activo == true).FirstOrDefaultAsync();
+            if (cicloactual == null)
+            {
+                ActividadAcademicas = new List<ActividadAcademica>();
+                MateriasInscritas = new List<MateriasInscritas>();
+                Grupo = new Grupo();
+                return;
+            }
+            
             idgrupo = id;
             ActividadAcademicas = await _context.ActividadesAcademicas
                 .Where(a => a.CicloId == cicloactual.Id)
@@ -54,21 +62,32 @@ namespace SRAUMOAR.Pages.generales.listas
      "Id",
      "Descripcion"
  );
-            Grupo = await _context.MateriasGrupo
+            // Validar que el MateriasGrupo pertenezca al ciclo actual
+            var materiaGrupo = await _context.MateriasGrupo
                  .Include(g => g.Grupo)
                      .ThenInclude(g => g.Carrera)
                  .Include(g => g.Grupo)
                      .ThenInclude(g => g.Docente)
-                 .Where(mg => mg.MateriasGrupoId == id)
-                 .Select(mg => mg.Grupo)
-                 .FirstOrDefaultAsync() ?? new Grupo();// Proporciona un valor por defecto
+                 .Where(mg => mg.MateriasGrupoId == id && mg.Grupo.CicloId == cicloactual.Id)
+                 .FirstOrDefaultAsync();
+                 
+            if (materiaGrupo == null)
+            {
+                Grupo = new Grupo();
+                MateriasInscritas = new List<MateriasInscritas>();
+                return;
+            }
+            
+            Grupo = materiaGrupo.Grupo ?? new Grupo();
 
             MateriasInscritas = await _context.MateriasInscritas
                 .Include(m => m.Alumno)
                 .Include(m => m.MateriasGrupo)
+                    .ThenInclude(mg => mg.Grupo)
                 .Include(m => m.Notas)
                 .ThenInclude(m => m.ActividadAcademica)
-                .Where(m => m.MateriasGrupoId == id)
+                .Where(m => m.MateriasGrupoId == id && 
+                            m.MateriasGrupo.Grupo.CicloId == cicloactual.Id)
                 .ToListAsync();
 
 

@@ -110,26 +110,41 @@ namespace SRAUMOAR.Pages.generales.listas
         {
             try
             {
-                // Obtener datos
-                var cicloactual = _context.Ciclos.Where(x => x.Activo == true).First();
-                var nombreMateria = ObtenerNombreMateriaAsync(id).Result;
-                var grupo = _context.MateriasGrupo
-                    .Include(g => g.Grupo)
-                        .ThenInclude(g => g.Carrera)
-                    .Include(g => g.Docente)
-                    .Where(mg => mg.MateriasGrupoId == id)
-                    .Select(mg => mg.Grupo)
-                    .FirstOrDefault() ?? new Grupo();
+                // Obtener ciclo actual primero
+                var cicloactual = _context.Ciclos.Where(x => x.Activo == true).FirstOrDefault();
+                if (cicloactual == null)
+                {
+                    return BadRequest("No hay un ciclo activo configurado.");
+                }
 
+                // Validar que el MateriasGrupo pertenezca al ciclo actual
+                var materiaGrupo = _context.MateriasGrupo
+                    .Include(mg => mg.Grupo)
+                    .Include(mg => mg.Docente)
+                    .Include(mg => mg.Materia)
+                    .FirstOrDefault(mg => mg.MateriasGrupoId == id && mg.Grupo.CicloId == cicloactual.Id);
+
+                if (materiaGrupo == null)
+                {
+                    return NotFound("La materia especificada no pertenece al ciclo actual o no existe.");
+                }
+
+                // Obtener nombre de la materia
+                var nombreMateria = materiaGrupo.Materia?.NombreMateria ?? "No especificada";
+
+                // Obtener grupo con sus relaciones
+                var grupo = _context.Grupo
+                    .Include(g => g.Carrera)
+                    .FirstOrDefault(g => g.GrupoId == materiaGrupo.GrupoId) ?? new Grupo();
+
+                // Obtener materias inscritas solo del ciclo actual
                 var materiasInscritas = _context.MateriasInscritas
                     .Include(m => m.Alumno)
                     .Include(m => m.MateriasGrupo)
-                    .Where(m => m.MateriasGrupoId == id)
+                        .ThenInclude(mg => mg.Grupo)
+                    .Where(m => m.MateriasGrupoId == id && 
+                                m.MateriasGrupo.Grupo.CicloId == cicloactual.Id)
                     .ToList();
-
-                var materiaGrupo = _context.MateriasGrupo
-                    .Include(mg => mg.Docente)
-                    .FirstOrDefault(mg => mg.MateriasGrupoId == id);
 
                 // Verificar estado de pagos de parciales
                 VerificarEstadoPagosParciales(cicloactual.Id, materiasInscritas);
@@ -206,7 +221,7 @@ namespace SRAUMOAR.Pages.generales.listas
                     .SetFontSize(11).SetFont(normalFont));
                 columnaIzq.Add(new Paragraph($"Grupo: {grupo?.Nombre ?? "No especificado"}")
                     .SetFontSize(11).SetFont(normalFont));
-                columnaIzq.Add(new Paragraph($"Fecha:    /     / 2025")
+                columnaIzq.Add(new Paragraph($"Fecha:    /     / {DateTime.Now.Year}")
                     .SetFontSize(11).SetFont(normalFont));
 
                 string horaTexto = "No especificada";

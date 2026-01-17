@@ -103,12 +103,15 @@ namespace SRAUMOAR.Pages.grupos
                 .OrderBy(a => a.FechaInicio)
                 .ToListAsync();
 
-            // Estudiantes con notas por grupo
+            // Estudiantes con notas por grupo - Validar que pertenezcan al ciclo del grupo
             var materiasInscritas = await _context.MateriasInscritas
                 .Include(mi => mi.Alumno)
                 .Include(mi => mi.MateriasGrupo)
-                .Include(mi => mi.Notas) .ThenInclude(n => n.ActividadAcademica)
-                .Where(mi => mi.MateriasGrupo!.GrupoId == Grupo.GrupoId)
+                    .ThenInclude(mg => mg.Grupo)
+                .Include(mi => mi.Notas) 
+                .ThenInclude(n => n.ActividadAcademica)
+                .Where(mi => mi.MateriasGrupo!.GrupoId == Grupo.GrupoId &&
+                             mi.MateriasGrupo.Grupo.CicloId == Grupo.CicloId)
                 .ToListAsync();
 
             // Lista simple de alumnos inscritos (para otros usos)

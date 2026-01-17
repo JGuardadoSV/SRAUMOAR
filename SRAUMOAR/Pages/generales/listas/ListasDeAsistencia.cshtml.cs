@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -23,10 +23,21 @@ namespace SRAUMOAR.Pages.generales.listas
 
         public async Task OnGetAsync()
         {
+            // Obtener ciclo actual
+            var cicloActual = await _context.Ciclos.Where(x => x.Activo == true).FirstOrDefaultAsync();
+            if (cicloActual == null)
+            {
+                Grupo = new List<Grupo>();
+                return;
+            }
+            
+            // Filtrar grupos solo del ciclo actual
             Grupo = await _context.Grupo
                 .Include(g => g.Carrera)
                 .Include(g => g.Ciclo)
-                .Include(g => g.Docente).ToListAsync();
+                .Include(g => g.Docente)
+                .Where(g => g.CicloId == cicloActual.Id)
+                .ToListAsync();
         }
     }
 }

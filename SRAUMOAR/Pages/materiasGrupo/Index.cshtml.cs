@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
@@ -31,9 +31,19 @@ namespace SRAUMOAR.Pages.materiasGrupo
             int rol = _context.Usuarios.Where(x => x.IdUsuario == idusuario).First().NivelAccesoId;
             int iddocente= _context.Docentes.Where(x => x.UsuarioId == idusuario).First().DocenteId;
             
-            MateriasGrupo = await _context.MateriasGrupo.Where(x=>x.DocenteId==iddocente)
+            // Obtener ciclo actual
+            var cicloActual = await _context.Ciclos.Where(x => x.Activo == true).FirstOrDefaultAsync();
+            if (cicloActual == null)
+            {
+                MateriasGrupo = new List<MateriasGrupo>();
+                return;
+            }
+            
+            MateriasGrupo = await _context.MateriasGrupo
+                .Where(x => x.DocenteId == iddocente && x.Grupo.CicloId == cicloActual.Id)
                 .Include(m => m.Grupo)
-                .Include(m => m.Materia).ToListAsync();
+                .Include(m => m.Materia)
+                .ToListAsync();
         }
     }
 }
