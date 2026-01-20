@@ -121,13 +121,35 @@ namespace SRAUMOAR.Pages.portal.estudiante
             }
 
             // Consulta modificada para manejar m�ltiples pagos
-            Arancel = await _context.Aranceles.Where(x => x.Ciclo.Id == Ciclo.Id)
+            var todosLosAranceles = await _context.Aranceles.Where(x => x.Ciclo.Id == Ciclo.Id)
                  .Include(a => a.Ciclo).ToListAsync();
 
             DetallesCobroArancel = await _context.DetallesCobrosArancel
                 .Include(x => x.CobroArancel)
                 .Include(x => x.Arancel)
                 .Where(x => x.CobroArancel.CicloId == Ciclo.Id && x.CobroArancel.AlumnoId == Alumno.AlumnoId).ToListAsync();
+
+            // Filtrar aranceles según si el estudiante está en grupo de pre-especialización
+            if (EstaEnGrupoEspecializacion)
+            {
+                // Si está en grupo de especialización:
+                // - Mostrar aranceles obligatorios que sean de especialización
+                // - Mostrar todos los aranceles no obligatorios (que no sean de especialización)
+                Arancel = todosLosAranceles.Where(a => 
+                    (a.Obligatorio && a.EsEspecializacion) || 
+                    (!a.Obligatorio && !a.EsEspecializacion)
+                ).ToList();
+            }
+            else
+            {
+                // Si NO está en grupo de especialización:
+                // - Mostrar solo aranceles obligatorios normales (no de especialización)
+                // - Mostrar todos los aranceles no obligatorios (que no sean de especialización)
+                Arancel = todosLosAranceles.Where(a => 
+                    (a.Obligatorio && !a.EsEspecializacion) || 
+                    (!a.Obligatorio && !a.EsEspecializacion)
+                ).ToList();
+            }
 
             // Verificar si tiene aranceles retrasados (solo si no es becado)
             if (!EsBecado)

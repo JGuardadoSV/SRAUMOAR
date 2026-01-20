@@ -743,6 +743,11 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                     // Si está en grupo de especialización, solo verificar aranceles obligatorios de especialización
                     arancelesAVerificar = arancelesObligatorios.Where(a => a.EsEspecializacion);
                 }
+                else
+                {
+                    // Si NO está en grupo de especialización, solo verificar aranceles obligatorios normales (no de especialización)
+                    arancelesAVerificar = arancelesObligatorios.Where(a => !a.EsEspecializacion);
+                }
 
                 foreach (var arancel in arancelesAVerificar)
                 {
