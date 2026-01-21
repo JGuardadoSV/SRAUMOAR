@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model SRAUMOAR.Pages.becados.IndexModel
 
 @{
@@ -518,28 +518,28 @@
             <div class="col-md-3 mb-3">
                 <div class="stat-card total">
                     <div class="stat-icon">📊</div>
-                    <div class="stat-number">@Model.Becados.Count</div>
+                    <div class="stat-number">@Model.TotalBecas</div>
                     <div class="stat-label">Total de Becas</div>
                 </div>
             </div>
             <div class="col-md-3 mb-3">
                 <div class="stat-card complete">
                     <div class="stat-icon">🏆</div>
-                    <div class="stat-number">@Model.Becados.Count(x => x.TipoBeca == 1)</div>
+                    <div class="stat-number">@Model.TotalBecasCompletas</div>
                     <div class="stat-label">Becas Completas</div>
                 </div>
             </div>
             <div class="col-md-3 mb-3">
                 <div class="stat-card partial">
                     <div class="stat-icon">🎯</div>
-                    <div class="stat-number">@Model.Becados.Count(x => x.TipoBeca == 2)</div>
+                    <div class="stat-number">@Model.TotalBecasParciales</div>
                     <div class="stat-label">Becas Parciales</div>
                 </div>
             </div>
             <div class="col-md-3 mb-3">
                 <div class="stat-card active">
                     <div class="stat-icon">✅</div>
-                    <div class="stat-number">@Model.Becados.Count(x => x.Estado)</div>
+                    <div class="stat-number">@Model.TotalBecasActivas</div>
                     <div class="stat-label">Becas Activas</div>
                 </div>
             </div>
@@ -772,10 +772,6 @@
                                         <a asp-page="./Edit" asp-route-id="@item.BecadosId"
                                            class="btn-action btn-edit" title="Editar">
                                             ✏️
-                                        </a>
-                                        <a asp-page="./Details" asp-route-id="@item.BecadosId"
-                                           class="btn-action btn-details" title="Detalles">
-                                            ℹ️
                                         </a>
                                         <a asp-page="./Delete" asp-route-id="@item.BecadosId"
                                            class="btn-action btn-delete" title="Eliminar">

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -32,6 +32,12 @@ namespace SRAUMOAR.Pages.becados
         public int PageSize { get; set; } = 15; // Puedes ajustar el tamaño de página aquí
         public int TotalPages { get; set; }
         public int TotalRecords { get; set; }
+        
+        // Propiedades para estadísticas totales (sin paginación)
+        public int TotalBecas { get; set; }
+        public int TotalBecasCompletas { get; set; }
+        public int TotalBecasParciales { get; set; }
+        public int TotalBecasActivas { get; set; }
         
         // Propiedades para los filtros
         [BindProperty(SupportsGet = true)]
@@ -105,8 +111,14 @@ namespace SRAUMOAR.Pages.becados
                 }
             }
 
+            // Calcular estadísticas totales (sin paginación)
+            TotalBecas = await query.CountAsync();
+            TotalBecasCompletas = await query.CountAsync(b => b.TipoBeca == 1);
+            TotalBecasParciales = await query.CountAsync(b => b.TipoBeca == 2);
+            TotalBecasActivas = await query.CountAsync(b => b.Estado == true);
+
             // Total de registros para paginación
-            TotalRecords = await query.CountAsync();
+            TotalRecords = TotalBecas;
             TotalPages = (int)Math.Ceiling(TotalRecords / (double)PageSize);
             if (PageNumber < 1) PageNumber = 1;
             if (PageNumber > TotalPages && TotalPages > 0) PageNumber = TotalPages;
@@ -169,12 +181,12 @@ namespace SRAUMOAR.Pages.becados
                 var worksheet = package.Workbook.Worksheets.Add("Becados");
 
                 // Título y subtítulo
-                worksheet.Cells[1, 1, 1, 8].Merge = true;
+                worksheet.Cells[1, 1, 1, 9].Merge = true;
                 worksheet.Cells[1, 1].Value = "UNIVERSIDAD MONSEÑOR OSCAR ARNULFO ROMERO";
                 worksheet.Cells[1, 1].Style.Font.Bold = true;
                 worksheet.Cells[1, 1].Style.Font.Size = 16;
                 worksheet.Cells[1, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                worksheet.Cells[2, 1, 2, 8].Merge = true;
+                worksheet.Cells[2, 1, 2, 9].Merge = true;
                 worksheet.Cells[2, 1].Value = "Reporte de Becados";
                 worksheet.Cells[2, 1].Style.Font.Bold = true;
                 worksheet.Cells[2, 1].Style.Font.Size = 13;
@@ -182,7 +194,7 @@ namespace SRAUMOAR.Pages.becados
 
                 // Encabezados
                 var headers = new[] {
-                    "#", "Alumno", "Carrera", "Tipo de Beca", "Entidad", "Ciclo", "Fecha Registro", "Estado"
+                    "#", "Alumno", "Carnet", "Carrera", "Tipo de Beca", "Entidad", "Ciclo", "Fecha Registro", "Estado"
                 };
                 for (int i = 0; i < headers.Length; i++)
                 {
@@ -200,12 +212,30 @@ namespace SRAUMOAR.Pages.becados
                     var excelRow = row + 4;
                     worksheet.Cells[excelRow, 1].Value = row + 1;
                     worksheet.Cells[excelRow, 2].Value = $"{b.Alumno.Nombres} {b.Alumno.Apellidos}";
-                    worksheet.Cells[excelRow, 3].Value = b.Alumno.Carrera?.NombreCarrera;
-                    worksheet.Cells[excelRow, 4].Value = b.TipoBeca == 1 ? "Completa" : "Parcial";
-                    worksheet.Cells[excelRow, 5].Value = b.EntidadBeca?.Nombre;
-                    worksheet.Cells[excelRow, 6].Value = $"Ciclo {b.Ciclo?.NCiclo}/{b.Ciclo?.anio}";
-                    worksheet.Cells[excelRow, 7].Value = b.FechaRegistro.ToString("dd/MM/yyyy");
-                    worksheet.Cells[excelRow, 8].Value = b.Estado ? "Activo" : "Inactivo";
+                    
+                    // Obtener carnet: si tiene valor, usarlo; si no, extraerlo del correo
+                    string carnet = string.Empty;
+                    if (!string.IsNullOrWhiteSpace(b.Alumno.Carnet))
+                    {
+                        carnet = b.Alumno.Carnet;
+                    }
+                    else if (!string.IsNullOrWhiteSpace(b.Alumno.Email) && b.Alumno.Email.Contains("@umoar.edu.sv"))
+                    {
+                        // Extraer lo que está antes del @ del correo
+                        var emailParts = b.Alumno.Email.Split('@');
+                        if (emailParts.Length > 0)
+                        {
+                            carnet = emailParts[0];
+                        }
+                    }
+                    worksheet.Cells[excelRow, 3].Value = carnet;
+                    
+                    worksheet.Cells[excelRow, 4].Value = b.Alumno.Carrera?.NombreCarrera;
+                    worksheet.Cells[excelRow, 5].Value = b.TipoBeca == 1 ? "Completa" : "Parcial";
+                    worksheet.Cells[excelRow, 6].Value = b.EntidadBeca?.Nombre;
+                    worksheet.Cells[excelRow, 7].Value = $"Ciclo {b.Ciclo?.NCiclo}/{b.Ciclo?.anio}";
+                    worksheet.Cells[excelRow, 8].Value = b.FechaRegistro.ToString("dd/MM/yyyy");
+                    worksheet.Cells[excelRow, 9].Value = b.Estado ? "Activo" : "Inactivo";
                     for (int col = 1; col <= headers.Length; col++)
                     {
                         worksheet.Cells[excelRow, col].Style.Border.BorderAround(ExcelBorderStyle.Thin);
