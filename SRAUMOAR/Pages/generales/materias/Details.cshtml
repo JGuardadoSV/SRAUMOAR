@@ -1,128 +1,75 @@
-﻿@page
+@page
 @model SRAUMOAR.Pages.generales.materias.DetailsModel
 
 @{
-    ViewData["Title"] = "Detalles";
+    ViewData["Title"] = "Detalle de Materia";
 }
 
-<!DOCTYPE html>
-<html lang="es">
-<body>
-    <header class="bg-primary text-white text-center py-4">
-        <h1>Detalles de la Carrera</h1>
-    </header>
-    <div class="container mt-5">
-        <div class="card shadow-lg">
-            <div class="card-header bg-dark text-white text-center">
-                <h4 class="fs-4 fw-semibold text-white formal-text">Carreras</h4>
-            </div>
-            <div class="card-body">
-                <dl class="row mb-0">
-                    <dt class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-mortarboard me-2">
-                        @Html.DisplayNameFor(model => model.Materia.NombreMateria)
-                    </dt>
-                    <dd class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-info-circle">
-                        @Html.DisplayFor(model => model.Materia.NombreMateria)
-                    </dd>
-                </dl>
-            </div>
-            <div class="card-body">
-                <dl class="row mb-0">
-                    <dt class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-book me-2">
-                        @Html.DisplayNameFor(model => model.Materia.CodigoMateria)
-                    </dt>
-                    <dd class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-info-circle">
-                        @Html.DisplayFor(model => model.Materia.CodigoMateria)
-                </dl>
-            </div>
-            <div class="card-body">
-                <dl class="row mb-0">
-                    <dt class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-journal-text me-2">
-                        @Html.DisplayNameFor(model => model.Materia.Pensum)
-                    </dt>
-                    <dd class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-info-circle">
-                        @Html.DisplayFor(model => model.Materia.Pensum.CodigoPensum)
-                    </dd>
-                </dl>
-            </div>
-            <div class="card-body">
-                <dl class="row mb-0">
-                    <dt class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-arrow-repeat me-2">
-                        @Html.DisplayNameFor(model => model.Materia.Ciclo)
-                    </dt>
-                    <dd class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-info-circle">
-                        @Html.DisplayFor(model => model.Materia.Ciclo)
-                    </dd>
-                </dl>
-            </div>
-            <div class="card-body">
-                <dl class="row mb-0">
-                    <dt class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-star me-2">
-                        @Html.DisplayNameFor(model => model.Materia.uv)
-                    </dt>
-                    <dd class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-info-circle">
-                        @Html.DisplayFor(model => model.Materia.uv)
-                    </dd>
-                </dl>
-            </div>
-            <div class="card-body">
-                <dl class="row mb-0">
-                    <dt class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-check2-square me-2">
-                        @Html.DisplayNameFor(model => model.Materia.RequisitoBachillerato)
-                    </dt>
-                    <dd class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-info-circle">
-                        @(Model.Materia.RequisitoBachillerato ? "Sí" : "No")
-                    </dd>
-                </dl>
-            </div>
-
-            <!-- Sección de Prerrequisitos -->
-            @if (Model.Prerrequisitos.Any())
-            {
-                <div class="card-body border-top">
-                    <h5 class="text-success mb-3">
-                        <i class="bi bi-link-45deg me-2"></i> Prerrequisitos
-                    </h5>
-                    <div class="row">
-                        @foreach (var prerrequisito in Model.Prerrequisitos)
-                        {
-                            <div class="col-md-6 mb-2">
-                                <div class="card border-success">
-                                    <div class="card-body py-2">
-                                        <div class="d-flex align-items-center">
-                                            <i class="bi bi-arrow-right-circle text-success me-2"></i>
-                                            <div>
-                                                <strong>@prerrequisito.PrerrequisoMateria?.CodigoMateria</strong>
-                                                <br>
-                                                <small class="text-muted">@prerrequisito.PrerrequisoMateria?.NombreMateria</small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                </div>
-            }
-            else
-            {
-                <div class="card-body border-top">
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle me-2"></i>
-                        Esta materia no tiene prerrequisitos establecidos.
-                    </div>
-                </div>
-            }
-            <div class="card-footer text-end">
-                <a asp-page="./Edit" asp-route-id="@Model.Materia.MateriaId" class="btn btn-primary">
-                    <i class="bi bi-pencil-square"></i> Editar
-                </a>
-                <a asp-page="./Index" class="btn btn-secondary ms-2">
-                    <i class="bi bi-arrow-left"></i> Volver a la lista
-                </a>
-            </div>
+<div class="gm-shell">
+    <div class="gm-hero">
+        <div>
+            <p class="gm-eyebrow">Consulta</p>
+            <h1 class="gm-title">@Model.Materia.CodigoMateria</h1>
+            <p class="gm-subtitle">@Model.Materia.NombreMateria</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-page="./Edit" asp-route-id="@Model.Materia.MateriaId" class="btn btn-light btn-sm">
+                <i class="bi bi-pencil-square me-1"></i> Editar
+            </a>
+            <a asp-page="./Materias" asp-route-id="@Model.Materia.PensumId" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-arrow-left me-1"></i> Volver
+            </a>
         </div>
     </div>
-</body>
-</html>
 
+    <div class="gm-panel">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="gm-kv"><span>Nombre</span><strong>@Model.Materia.NombreMateria</strong></div>
+            </div>
+            <div class="col-md-6">
+                <div class="gm-kv"><span>C�digo</span><strong>@Model.Materia.CodigoMateria</strong></div>
+            </div>
+            <div class="col-md-3">
+                <div class="gm-kv"><span>Ciclo</span><strong>@Model.Materia.Ciclo</strong></div>
+            </div>
+            <div class="col-md-3">
+                <div class="gm-kv"><span>Correlativo</span><strong>@Model.Materia.Correlativo</strong></div>
+            </div>
+            <div class="col-md-3">
+                <div class="gm-kv"><span>UV</span><strong>@Model.Materia.uv</strong></div>
+            </div>
+            <div class="col-md-3">
+                <div class="gm-kv"><span>Requisito Bachillerato</span><strong>@(Model.Materia.RequisitoBachillerato ? "Si" : "No")</strong></div>
+            </div>
+            <div class="col-12">
+                <div class="gm-kv"><span>Pensum</span><strong>@Model.Materia.Pensum?.CodigoPensum</strong></div>
+            </div>
+        </div>
+
+        <hr />
+
+        <h5 class="mb-3"><i class="bi bi-link-45deg me-1"></i> Prerrequisitos</h5>
+        @if (Model.Prerrequisitos.Any())
+        {
+            <div class="row g-2">
+                @foreach (var prerrequisito in Model.Prerrequisitos)
+                {
+                    <div class="col-md-6">
+                        <div class="gm-materia-item">
+                            <div class="fw-semibold">@prerrequisito.PrerrequisoMateria?.CodigoMateria</div>
+                            <small class="text-muted">@prerrequisito.PrerrequisoMateria?.NombreMateria</small>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="gm-empty py-3 mb-0">
+                <i class="bi bi-info-circle"></i>
+                <p>Esta materia no tiene prerrequisitos.</p>
+            </div>
+        }
+    </div>
+</div>

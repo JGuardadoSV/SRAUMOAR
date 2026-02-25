@@ -20,3 +20,164 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+/* Generales/Materias redesign */
+.gm-shell {
+  padding: 1rem;
+}
+
+.gm-hero {
+  background: linear-gradient(130deg, #0f5132 0%, #198754 40%, #17a2b8 100%);
+  color: #fff;
+  border-radius: 16px;
+  padding: 1.1rem 1.25rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.gm-hero-danger {
+  background: linear-gradient(130deg, #842029 0%, #bb2d3b 50%, #dc3545 100%);
+}
+
+.gm-eyebrow {
+  margin: 0;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  opacity: 0.85;
+}
+
+.gm-title {
+  margin: 0.15rem 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.gm-subtitle {
+  margin: 0;
+  opacity: 0.92;
+}
+
+.gm-hero-metrics {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.gm-metric {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  min-width: 96px;
+  text-align: center;
+  padding: 0.4rem 0.7rem;
+}
+
+.gm-metric-value {
+  display: block;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.gm-metric-label {
+  display: block;
+  font-size: 0.78rem;
+}
+
+.gm-panel,
+.gm-form-card {
+  background: #fff;
+  border: 1px solid #e8ecef;
+  border-radius: 14px;
+  box-shadow: 0 10px 22px rgba(7, 26, 39, 0.06);
+  padding: 1rem;
+}
+
+.gm-subpanel {
+  border: 1px solid #e8ecef;
+  border-radius: 12px;
+  padding: 0.9rem;
+  background: #fafdfb;
+}
+
+.gm-table thead th {
+  background: #f1f5f4;
+  color: #1f2b37;
+  font-weight: 600;
+  border-bottom: 1px solid #dde6e3;
+}
+
+.gm-table tbody tr:hover {
+  background: #f9fcfb;
+}
+
+.gm-chip {
+  display: inline-block;
+  background: #ecf7f2;
+  border: 1px solid #cde8db;
+  color: #125f43;
+  font-size: 0.78rem;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+}
+
+.gm-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0.3rem;
+  color: #6c757d;
+  padding: 1.25rem;
+}
+
+.gm-empty i {
+  font-size: 1.2rem;
+}
+
+.gm-cycle-card {
+  border: 1px solid #e8ecef;
+  border-radius: 12px;
+  padding: 0.8rem;
+  background: #fff;
+}
+
+.gm-materia-item {
+  border: 1px solid #e6f0ec;
+  background: #f8fcfa;
+  border-radius: 10px;
+  padding: 0.65rem;
+}
+
+.gm-kv {
+  border: 1px solid #e8ecef;
+  border-radius: 10px;
+  background: #f9fbfc;
+  padding: 0.7rem 0.8rem;
+}
+
+.gm-kv span {
+  display: block;
+  font-size: 0.77rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.25rem;
+}
+
+.gm-kv strong {
+  color: #1f2b37;
+}
+
+@media (max-width: 768px) {
+  .gm-shell {
+    padding: 0.75rem;
+  }
+
+  .gm-title {
+    font-size: 1.2rem;
+  }
+}
