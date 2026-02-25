@@ -65,18 +65,23 @@
         .professional-table {
             background: white;
             border-radius: 15px;
-            overflow: hidden;
+            overflow: visible;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
             border: none;
         }
 
         .table-responsive {
             overflow-x: auto;
-            overflow-y: hidden;
+            overflow-y: visible;
         }
 
-        .actions-floating-menu {
-            z-index: 3000;
+        .actions-dropdown {
+            position: relative;
+            z-index: 10;
+        }
+
+        .actions-dropdown .dropdown-menu {
+            z-index: 5000;
         }
 
         .table-header {
@@ -95,20 +100,23 @@
 
         .table-row {
             border-bottom: 1px solid #f8f9fa;
-            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
         }
 
             .table-row:hover {
                 background: linear-gradient(135deg, #f8f9ff 0%, #e3f2fd 100%);
-                transform: scale(1.01);
-                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
             }
 
-            .table-row td {
-                padding: 15px;
-                vertical-align: middle;
-                border: none;
-            }
+        .table-row td {
+            padding: 15px;
+            vertical-align: middle;
+            border: none;
+        }
+
+        .table-row.dropdown-open-row {
+            z-index: 6000;
+        }
 
         .btn-professional {
             padding: 8px 16px;
@@ -117,7 +125,6 @@
             font-size: 0.85rem;
             font-weight: 600;
             border: none;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
             text-decoration: none;
@@ -142,7 +149,6 @@
             }
 
             .btn-professional:hover {
-                transform: translateY(-2px);
                 text-decoration: none;
             }
 
@@ -248,6 +254,12 @@
             transition: all 0.3s ease;
         }
 
+        .pagination-professional {
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            row-gap: 6px;
+        }
+
             .pagination-professional .page-link:hover {
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                 border-color: #667eea;
@@ -315,6 +327,10 @@
         }
 
         @@media (max-width: 768px) {
+            .pagination-professional {
+                justify-content: center;
+            }
+
             .actions-container
 
         {
@@ -430,7 +446,7 @@
                                             <button class="btn btn-professional btn-detalles dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                                 <i class="bi bi-gear me-1"></i>Acciones
                                             </button>
-                                            <ul class="dropdown-menu dropdown-menu-end shadow-sm actions-floating-menu">
+                                            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
                                                 @if (User.IsInRole("Administracion") || User.IsInRole("Administrador"))
                                                 {
                                                     <li>
@@ -479,29 +495,71 @@
 
                 @if (Model.Alumno.Any())
                 {
+                    var startItem = ((Model.PageNumber - 1) * Model.PageSize) + 1;
+                    var endItem = Math.Min(Model.PageNumber * Model.PageSize, Model.TotalItems);
+                    const int maxVisiblePages = 7;
+                    int startPage = Math.Max(1, Model.PageNumber - (maxVisiblePages / 2));
+                    int endPage = Math.Min(Model.TotalPages, startPage + maxVisiblePages - 1);
+                    if (endPage - startPage + 1 < maxVisiblePages)
+                    {
+                        startPage = Math.Max(1, endPage - maxVisiblePages + 1);
+                    }
+
                     <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
                         <div class="stats-text">
                             <i class="bi bi-info-circle me-2"></i>
-                            Mostrando @(((Model.PageNumber - 1) * Model.PageSize) + 1) a
-                            @(Math.Min(Model.PageNumber * Model.PageSize, Model.TotalPages * Model.PageSize))
-                            de @(Model.TotalPages * Model.PageSize) resultados
+                            Mostrando @startItem a @endItem de @Model.TotalItems resultados
                         </div>
                         <nav aria-label="Navegación de páginas">
                             <ul class="pagination pagination-professional mb-0">
+                                <li class="page-item @(Model.PageNumber == 1 ? "disabled" : "")">
+                                    <a class="page-link" asp-page="./Busqueda" asp-route-buscar="@Model.busqueda" asp-route-PageNumber="1">
+                                        <i class="bi bi-chevron-double-left"></i>
+                                    </a>
+                                </li>
                                 <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
                                     <a class="page-link" asp-page="./Busqueda" asp-route-buscar="@Model.busqueda" asp-route-PageNumber="@(Model.PageNumber - 1)">
                                         <i class="bi bi-chevron-left"></i> Anterior
                                     </a>
                                 </li>
-                                @for (int i = 1; i <= Model.TotalPages; i++)
+
+                                @if (startPage > 1)
+                                {
+                                    <li class="page-item">
+                                        <a class="page-link" asp-page="./Busqueda" asp-route-buscar="@Model.busqueda" asp-route-PageNumber="1">1</a>
+                                    </li>
+                                    @if (startPage > 2)
+                                    {
+                                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                                    }
+                                }
+
+                                @for (int i = startPage; i <= endPage; i++)
                                 {
                                     <li class="page-item @(i == Model.PageNumber ? "active" : "")">
                                         <a class="page-link" asp-page="./Busqueda" asp-route-buscar="@Model.busqueda" asp-route-PageNumber="@i">@i</a>
                                     </li>
                                 }
+
+                                @if (endPage < Model.TotalPages)
+                                {
+                                    @if (endPage < Model.TotalPages - 1)
+                                    {
+                                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                                    }
+                                    <li class="page-item">
+                                        <a class="page-link" asp-page="./Busqueda" asp-route-buscar="@Model.busqueda" asp-route-PageNumber="@Model.TotalPages">@Model.TotalPages</a>
+                                    </li>
+                                }
+
                                 <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
                                     <a class="page-link" asp-page="./Busqueda" asp-route-buscar="@Model.busqueda" asp-route-PageNumber="@(Model.PageNumber + 1)">
                                         Siguiente <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item @(Model.PageNumber == Model.TotalPages ? "disabled" : "")">
+                                    <a class="page-link" asp-page="./Busqueda" asp-route-buscar="@Model.busqueda" asp-route-PageNumber="@Model.TotalPages">
+                                        <i class="bi bi-chevron-double-right"></i>
                                     </a>
                                 </li>
                             </ul>
@@ -519,52 +577,14 @@
         </div>
     </div>
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            let dropdownCounter = 0;
+        document.addEventListener('shown.bs.dropdown', function (e) {
+            const row = e.target.closest('.table-row');
+            if (row) row.classList.add('dropdown-open-row');
+        });
 
-            document.addEventListener('shown.bs.dropdown', function (event) {
-                const dropdown = event.target.closest('.actions-dropdown');
-                if (!dropdown) return;
-
-                const menu = dropdown.querySelector('.actions-floating-menu');
-                const toggle = dropdown.querySelector('[data-bs-toggle="dropdown"]');
-                if (!menu || !toggle) return;
-
-                if (!dropdown.dataset.dropdownId) {
-                    dropdownCounter += 1;
-                    dropdown.dataset.dropdownId = 'actions-dd-' + dropdownCounter;
-                }
-                menu.dataset.ownerDropdownId = dropdown.dataset.dropdownId;
-
-                if (!menu.dataset.originalParent) {
-                    menu.dataset.originalParent = '1';
-                    document.body.appendChild(menu);
-                }
-
-                const rect = toggle.getBoundingClientRect();
-                menu.style.position = 'fixed';
-                menu.style.top = (rect.bottom + 4) + 'px';
-                menu.style.left = (rect.right - menu.offsetWidth) + 'px';
-                menu.style.transform = 'none';
-            });
-
-            document.addEventListener('hide.bs.dropdown', function (event) {
-                const dropdown = event.target.closest('.actions-dropdown');
-                if (!dropdown) return;
-
-                const ownerId = dropdown.dataset.dropdownId;
-                const menu = ownerId
-                    ? document.body.querySelector('.actions-floating-menu[data-owner-dropdown-id="' + ownerId + '"]')
-                    : null;
-                if (!menu) return;
-
-                dropdown.appendChild(menu);
-                menu.style.position = '';
-                menu.style.top = '';
-                menu.style.left = '';
-                menu.style.transform = '';
-                menu.removeAttribute('data-owner-dropdown-id');
-            });
+        document.addEventListener('hidden.bs.dropdown', function (e) {
+            const row = e.target.closest('.table-row');
+            if (row) row.classList.remove('dropdown-open-row');
         });
     </script>
 </body>

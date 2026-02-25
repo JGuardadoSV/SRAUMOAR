@@ -30,13 +30,15 @@ namespace SRAUMOAR.Pages.alumno
         public int PageSize { get; set; } = 10;
         
         public int TotalPages { get; set; }
+        public int TotalItems { get; set; }
         
         public bool HasPreviousPage => PageNumber > 1;
         public bool HasNextPage => PageNumber < TotalPages;
 
         public async Task OnGetAsync()
         {
-            this.busqueda = Request.Query["buscar"];
+            this.busqueda = Request.Query["buscar"].ToString();
+            PageNumber = Math.Max(1, PageNumber);
             
             var query = _context.Alumno
                 .Include(a => a.Usuario)
@@ -44,8 +46,13 @@ namespace SRAUMOAR.Pages.alumno
                            a.Apellidos.Contains(busqueda) || 
                            a.TelefonoPrimario.Contains(busqueda));
 
-            var totalItems = await query.CountAsync();
-            TotalPages = (int)Math.Ceiling(totalItems / (double)PageSize);
+            TotalItems = await query.CountAsync();
+            TotalPages = (int)Math.Ceiling(TotalItems / (double)PageSize);
+
+            if (TotalPages > 0 && PageNumber > TotalPages)
+            {
+                PageNumber = TotalPages;
+            }
 
             Alumno = await query
                 .Skip((PageNumber - 1) * PageSize)
