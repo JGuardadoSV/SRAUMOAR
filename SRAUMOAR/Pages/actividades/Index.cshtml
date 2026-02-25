@@ -1,90 +1,290 @@
-﻿@page
+@page
 @model SRAUMOAR.Pages.actividades.IndexModel
+@using System.Linq
 
 @{
-    ViewData["Title"] = "Actividades académicas";
+    ViewData["Title"] = "Actividades academicas";
+    var actividades = Model.ActividadAcademica ?? new List<SRAUMOAR.Entidades.Procesos.ActividadAcademica>();
+    var totalActividades = actividades.Count;
+    var habilitadas = actividades.Count(a => a.ActivarIngresoNotas);
+    var bloqueadas = totalActividades - habilitadas;
 }
 
-<h1>Actividades académicas</h1>
+<div class="act-shell">
+    <section class="act-hero">
+        <div>
+            <p class="act-eyebrow mb-1">Gestion administrativa</p>
+            <h1 class="act-title mb-1">Actividades academicas</h1>
+            <p class="act-subtitle mb-0">Controla periodos, aranceles y disponibilidad del ingreso de notas.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-page="Create" class="btn btn-light act-btn-primary">
+                <i class="bi bi-calendar-plus me-2"></i> Nueva actividad
+            </a>
+        </div>
+    </section>
 
-<p class="my-4">
-    <a asp-page="Create" class="btn btn-success btn-lg shadow">
-        <i class="bi bi-calendar-plus me-2"></i>Registrar nueva actividad
-    </a>
-</p>
+    <section class="row g-3 mb-3">
+        <div class="col-12 col-md-4">
+            <article class="act-stat-card">
+                <span class="act-stat-label">Total</span>
+                <strong class="act-stat-value">@totalActividades</strong>
+                <small class="text-muted">Registros del ciclo activo</small>
+            </article>
+        </div>
+        <div class="col-12 col-md-4">
+            <article class="act-stat-card">
+                <span class="act-stat-label">Ingreso de notas habilitado</span>
+                <strong class="act-stat-value text-success">@habilitadas</strong>
+                <small class="text-muted">Actividades disponibles para docentes</small>
+            </article>
+        </div>
+        <div class="col-12 col-md-4">
+            <article class="act-stat-card">
+                <span class="act-stat-label">Ingreso de notas bloqueado</span>
+                <strong class="act-stat-value text-danger">@bloqueadas</strong>
+                <small class="text-muted">Actividades cerradas temporalmente</small>
+            </article>
+        </div>
+    </section>
 
-<table class="table">
-    <thead>
-        <tr class="table-dark">
-            <th>
-                @Html.DisplayNameFor(model => model.ActividadAcademica[0].Ciclo)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ActividadAcademica[0].Nombre)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ActividadAcademica[0].TipoActividad)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ActividadAcademica[0].FechaInicio)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ActividadAcademica[0].FechaFin)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ActividadAcademica[0].Arancel)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ActividadAcademica[0].Porcentaje)
-            </th>
-            <th>
-                Ingreso de notas
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model.ActividadAcademica) {
-        <tr>
-            <td>
-                    @Html.DisplayFor(modelItem => item.Ciclo.NCiclo)/@Html.DisplayFor(modelItem => item.Ciclo.anio)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Nombre)
-            </td>
-                <td>
-                    @item.GetNombreTipo()
-                </td>
+    <section class="act-panel">
+        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
+            <h2 class="h5 mb-0">Listado de actividades</h2>
+            <div class="act-search">
+                <i class="bi bi-search"></i>
+                <input id="actividadSearch" type="search" class="form-control" placeholder="Buscar por nombre, tipo o arancel..." />
+            </div>
+        </div>
 
-            <td>
-                @Html.DisplayFor(modelItem => item.FechaInicio)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FechaFin)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Arancel.Nombre)
-            </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Porcentaje)%
-                </td>
-                <td>
-                    @{
-                        var ingresoNotas = item.ActivarIngresoNotas ? "Habilitado" : "Bloqueado";
-                        var badgeClass = item.ActivarIngresoNotas ? "badge bg-success" : "badge bg-danger";
-                        var icon = item.ActivarIngresoNotas ? "bi bi-unlock-fill text-success" : "bi bi-lock-fill text-danger";
-                    }
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="@icon"></i>
-                        <span class="@badgeClass">@ingresoNotas</span>
-                    </div>
-                </td>
-            <td>
-                <a asp-page="./Edit" asp-route-id="@item.ActividadAcademicaId" class="btn btn-primary">Editar <i class="bi bi-pencil-fill"></i> </a> @* |
-                <a asp-page="./Details" asp-route-id="@item.ActividadAcademicaId">Details</a> |
-                <a asp-page="./Delete" asp-route-id="@item.ActividadAcademicaId">Delete</a> *@
-            </td>
-        </tr>
+        @if (actividades.Any())
+        {
+            <div class="table-responsive">
+                <table class="table align-middle act-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Ciclo</th>
+                            <th>Nombre</th>
+                            <th>Tipo</th>
+                            <th>Inicio</th>
+                            <th>Fin</th>
+                            <th>Arancel</th>
+                            <th>Porcentaje</th>
+                            <th>Ingreso de notas</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="actividadTableBody">
+                        @foreach (var item in actividades)
+                        {
+                            var estadoIngreso = item.ActivarIngresoNotas ? "Habilitado" : "Bloqueado";
+                            var estadoBadgeClass = item.ActivarIngresoNotas ? "bg-success-subtle text-success-emphasis border border-success-subtle" : "bg-danger-subtle text-danger-emphasis border border-danger-subtle";
+                            <tr>
+                                <td>
+                                    <span class="act-chip">@item.Ciclo.NCiclo/@item.Ciclo.anio</span>
+                                </td>
+                                <td class="fw-semibold">@item.Nombre</td>
+                                <td>@item.GetNombreTipo()</td>
+                                <td>@item.FechaInicio.ToString("dd/MM/yyyy")</td>
+                                <td>@item.FechaFin.ToString("dd/MM/yyyy")</td>
+                                <td>@item.Arancel.Nombre</td>
+                                <td>
+                                    <span class="act-percent">@item.Porcentaje%</span>
+                                </td>
+                                <td>
+                                    <span class="badge rounded-pill @estadoBadgeClass">@estadoIngreso</span>
+                                </td>
+                                <td class="text-end">
+                                    <a asp-page="./Edit" asp-route-id="@item.ActividadAcademicaId" class="btn btn-sm btn-primary">
+                                        <i class="bi bi-pencil-square me-1"></i>Editar
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="act-empty-state">
+                <i class="bi bi-calendar2-week"></i>
+                <h3 class="h5 mb-1">No hay actividades registradas</h3>
+                <p class="mb-3 text-muted">Crea la primera actividad academica para comenzar la gestion del ciclo.</p>
+                <a asp-page="Create" class="btn btn-success">
+                    <i class="bi bi-calendar-plus me-2"></i>Registrar actividad
+                </a>
+            </div>
+        }
+    </section>
+</div>
+
+@section Styles {
+    <style>
+        .act-shell {
+            padding: 1rem;
+        }
+
+        .act-hero {
+            background: linear-gradient(125deg, #102a43 0%, #1f4f8f 48%, #2a7f9d 100%);
+            color: #fff;
+            border-radius: 16px;
+            padding: 1.15rem 1.25rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .act-eyebrow {
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-size: 0.74rem;
+            opacity: 0.9;
+        }
+
+        .act-title {
+            font-size: 1.45rem;
+            font-weight: 700;
+        }
+
+        .act-subtitle {
+            opacity: 0.92;
+        }
+
+        .act-btn-primary {
+            font-weight: 600;
+            border: none;
+        }
+
+        .act-stat-card {
+            background: #fff;
+            border: 1px solid #dfe7ef;
+            border-radius: 14px;
+            box-shadow: 0 8px 18px rgba(17, 46, 78, 0.06);
+            padding: 0.95rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            min-height: 118px;
+        }
+
+        .act-stat-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #5e6d7e;
+        }
+
+        .act-stat-value {
+            font-size: 1.55rem;
+            line-height: 1.1;
+        }
+
+        .act-panel {
+            background: #fff;
+            border: 1px solid #dfe7ef;
+            border-radius: 14px;
+            box-shadow: 0 10px 24px rgba(17, 46, 78, 0.07);
+            padding: 1rem;
+        }
+
+        .act-search {
+            position: relative;
+            width: min(100%, 380px);
+        }
+
+            .act-search i {
+                position: absolute;
+                top: 50%;
+                left: 12px;
+                transform: translateY(-50%);
+                color: #5e6d7e;
+                pointer-events: none;
+            }
+
+            .act-search input {
+                padding-left: 2.1rem;
+                border-radius: 10px;
+                border-color: #cfd9e3;
+            }
+
+        .act-table thead th {
+            background: #f4f7fb;
+            border-bottom-color: #dbe4ed;
+            color: #243447;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .act-table tbody tr:hover {
+            background: #f8fbff;
+        }
+
+        .act-chip {
+            display: inline-block;
+            background: #e8f1fb;
+            color: #174a7a;
+            border: 1px solid #c7dcf3;
+            border-radius: 999px;
+            padding: 0.2rem 0.55rem;
+            font-weight: 600;
+            font-size: 0.78rem;
+        }
+
+        .act-percent {
+            display: inline-block;
+            min-width: 58px;
+            text-align: center;
+            background: #edf5ef;
+            color: #186137;
+            border: 1px solid #cbe4d2;
+            border-radius: 8px;
+            padding: 0.15rem 0.45rem;
+            font-weight: 600;
+        }
+
+        .act-empty-state {
+            border: 1px dashed #c7d6e4;
+            border-radius: 12px;
+            padding: 2rem 1rem;
+            text-align: center;
+            color: #37506a;
+        }
+
+            .act-empty-state i {
+                font-size: 2rem;
+                margin-bottom: 0.6rem;
+            }
+
+        @@media (max-width: 768px) {
+            .act-shell {
+                padding: 0.75rem;
+            }
+
+            .act-title {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
 }
-    </tbody>
-</table>
+
+@section Scripts {
+    <script>
+        (() => {
+            const search = document.getElementById("actividadSearch");
+            const rows = document.querySelectorAll("#actividadTableBody tr");
+            if (!search || rows.length === 0) return;
+
+            search.addEventListener("input", () => {
+                const term = search.value.trim().toLowerCase();
+                rows.forEach(row => {
+                    const text = row.innerText.toLowerCase();
+                    row.style.display = text.includes(term) ? "" : "none";
+                });
+            });
+        })();
+    </script>
+}

@@ -351,8 +351,15 @@
                             <span class="d-none d-md-inline">
                                 @if (User.Identity.IsAuthenticated)
                                 {
-                                    var nombreCompletoTop = User.FindFirst("NombreCompleto")?.Value;
-                                    @nombreCompletoTop
+                                    if (User.IsInRole("Administrador"))
+                                    {
+                                        <text>Administrador</text>
+                                    }
+                                    else
+                                    {
+                                        var nombreCompletoTop = User.FindFirst("NombreCompleto")?.Value;
+                                        @nombreCompletoTop
+                                    }
                                 }
                                 else
                                 {
@@ -382,6 +389,12 @@
                                 <p>
                                     @if (User.Identity.IsAuthenticated)
                                     {
+                                        if (User.IsInRole("Administrador"))
+                                        {
+                                            <text>Administrador</text>
+                                        }
+                                        else
+                                        {
                                         var nombreCompleto = User.FindFirst("NombreCompleto")?.Value ?? string.Empty;
 
                                         var rol = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
@@ -405,6 +418,7 @@
                                         else if (!string.IsNullOrWhiteSpace(rolDescripcion))
                                         {
                                             <text> - @rolDescripcion</text>
+                                        }
                                         }
                                     }
                                     else
