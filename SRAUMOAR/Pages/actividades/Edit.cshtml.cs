@@ -38,15 +38,41 @@ namespace SRAUMOAR.Pages.actividades
                 return NotFound();
             }
             ActividadAcademica = actividadacademica;
-            ViewData["ArancelId"] = new SelectList(_context.Aranceles, "ArancelId", "Nombre");
+
+            var cicloId = actividadacademica.CicloId;
+            var arancelSeleccionadoId = actividadacademica.ArancelId;
+
+            var aranceles = _context.Aranceles
+                .AsNoTracking()
+                .Where(a =>
+                    // incluir el seleccionado aunque este inactivo/otro ciclo para no romper el edit
+                    (a.ArancelId == arancelSeleccionadoId || a.Activo) &&
+                    // Solo aranceles del ciclo de la actividad (y el seleccionado)
+                    (a.ArancelId == arancelSeleccionadoId || a.CicloId == cicloId) &&
+                    // Solo obligatorios o de especializacion (y el seleccionado)
+                    (a.ArancelId == arancelSeleccionadoId || a.Obligatorio || a.EsEspecializacion))
+                .OrderBy(a => a.EsEspecializacion)
+                .ThenBy(a => a.Nombre)
+                .Select(a => new
+                {
+                    a.ArancelId,
+                    Descripcion = $"{a.Nombre} {(a.EsEspecializacion ? "(Especializacion)" : "(General)")}" 
+                })
+                .ToList();
+
+            ViewData["ArancelId"] = new SelectList(aranceles, "ArancelId", "Descripcion", arancelSeleccionadoId);
             ViewData["CicloId"] = new SelectList(
-        _context.Ciclos.Where(c => c.Activo == true).Select(c => new {
-            c.Id,
-            Descripcion = $"Ciclo {c.NCiclo} - {c.anio}"
-        }),
-        "Id",
-        "Descripcion"
-    );
+                _context.Ciclos
+                    .Where(c => c.Activo == true || c.Id == cicloId)
+                    .Select(c => new
+                    {
+                        c.Id,
+                        Descripcion = $"Ciclo {c.NCiclo} - {c.anio}"
+                    }),
+                "Id",
+                "Descripcion",
+                cicloId
+            );
             return Page();
         }
 

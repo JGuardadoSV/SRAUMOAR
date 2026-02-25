@@ -35,24 +35,32 @@ namespace SRAUMOAR.Servicios
             _fontTitle = PdfFontFactory.CreateFont(StandardFonts.TIMES_BOLD);
         }
 
-        public async Task<byte[]> GenerarReporteCompletoAsync(bool incluirAlumnosConBeca = false)
+        public async Task<byte[]> GenerarReporteCompletoAsync(bool incluirAlumnosConBeca = false, int? cicloId = null)
         {
-            return await GenerarReporteAsync(null, null, false, incluirAlumnosConBeca);
+            return await GenerarReporteAsync(null, null, false, incluirAlumnosConBeca, cicloId);
         }
 
-        public async Task<byte[]> GenerarReporteFiltradoAsync(int? carreraId, decimal? montoMinimo, bool incluirAlumnosConBeca = false)
+        public async Task<byte[]> GenerarReporteFiltradoAsync(int? carreraId, decimal? montoMinimo, bool incluirAlumnosConBeca = false, int? cicloId = null)
         {
-            return await GenerarReporteAsync(carreraId, montoMinimo, true, incluirAlumnosConBeca);
+            return await GenerarReporteAsync(carreraId, montoMinimo, true, incluirAlumnosConBeca, cicloId);
         }
 
-        private async Task<byte[]> GenerarReporteAsync(int? carreraId, decimal? montoMinimo, bool esFiltrado, bool incluirAlumnosConBeca)
+        private async Task<byte[]> GenerarReporteAsync(int? carreraId, decimal? montoMinimo, bool esFiltrado, bool incluirAlumnosConBeca, int? cicloId)
         {
             try
             {
-                var cicloActual = await _context.Ciclos.Where(x => x.Activo == true).FirstOrDefaultAsync();
+                Ciclo? cicloActual;
+                if (cicloId.HasValue && cicloId.Value > 0)
+                {
+                    cicloActual = await _context.Ciclos.AsNoTracking().FirstOrDefaultAsync(x => x.Id == cicloId.Value);
+                }
+                else
+                {
+                    cicloActual = await _context.Ciclos.AsNoTracking().Where(x => x.Activo == true).FirstOrDefaultAsync();
+                }
                 if (cicloActual == null)
                 {
-                    throw new InvalidOperationException("No hay un ciclo activo");
+                    throw new InvalidOperationException(cicloId.HasValue ? "No se encontró el ciclo seleccionado" : "No hay un ciclo activo");
                 }
 
                 // Obtener aranceles obligatorios del ciclo actual que YA VENCIERON

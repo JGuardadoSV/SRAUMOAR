@@ -71,6 +71,15 @@
 
                                 <div class="col-md-3">
                                     <div class="form-group">
+                                        <label asp-for="SelectedCicloId">Ciclo</label>
+                                        <select asp-for="SelectedCicloId" asp-items="@(ViewData["Ciclos"] as SelectList)" class="form-control">
+                                            <option value="">Ciclo activo</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-2">
+                                    <div class="form-group">
                                         <label asp-for="IncluirAlumnosConBeca">Incluir Alumnos con Beca</label>
                                         <div class="form-check">
                                             <input asp-for="IncluirAlumnosConBeca" class="form-check-input" type="checkbox" />
@@ -89,7 +98,7 @@
                                     </div>
                                 </div>
 
-                                <div class="col-md-3">
+                                <div class="col-md-1">
                                     <div class="form-group">
                                         <label>&nbsp;</label>
                                         <div>
@@ -115,6 +124,7 @@
                                             @if (Model.AlumnosInsolventes != null && Model.AlumnosInsolventes.Any())
                                             {
                                                 <form method="post" asp-page-handler="NotificarTodos" class="d-inline form-notificar-todos">
+                                                    <input type="hidden" name="SelectedCicloId" value="@(Model.SelectedCicloId?.ToString() ?? string.Empty)" />
                                                     <input type="hidden" name="SelectedCarreraId" value="@(Model.SelectedCarreraId?.ToString() ?? string.Empty)" />
                                                     <input type="hidden" name="IncluirAlumnosConBeca" value="@(Model.IncluirAlumnosConBeca)" />
                                                     <input type="hidden" name="AsuntoCorreo" value="@Model.AsuntoCorreo" />
@@ -123,11 +133,11 @@
                                                     </button>
                                                 </form>
                                             }
-                                            <a href="@Url.Page("", "GenerarPDF", new { carreraId = Model.SelectedCarreraId, incluirAlumnosConBeca = Model.IncluirAlumnosConBeca })" 
+                                            <a href="@Url.Page("", "GenerarPDF", new { carreraId = Model.SelectedCarreraId, incluirAlumnosConBeca = Model.IncluirAlumnosConBeca, cicloId = Model.SelectedCicloId })" 
                                                class="btn btn-danger btn-sm me-2">
                                                 <i class="fas fa-file-pdf"></i> PDF
                                             </a>
-                                            <a href="@Url.Page("", "GenerarExcel", new { carreraId = Model.SelectedCarreraId, incluirAlumnosConBeca = Model.IncluirAlumnosConBeca })" 
+                                            <a href="@Url.Page("", "GenerarExcel", new { carreraId = Model.SelectedCarreraId, incluirAlumnosConBeca = Model.IncluirAlumnosConBeca, cicloId = Model.SelectedCicloId })" 
                                                class="btn btn-success btn-sm">
                                                 <i class="fas fa-file-excel"></i> Excel
                                             </a>
@@ -282,6 +292,10 @@
                                                             <td>@contador</td>
                                                             <td>
                                                                 @alumno.Apellidos, @alumno.Nombres
+                                                                @if (alumno.EsEspecializacion)
+                                                                {
+                                                                    <span class="badge badge-info ml-1">Especialización</span>
+                                                                }
                                                                 @if (alumno.EsRepeticion && !string.IsNullOrEmpty(alumno.GruposAdicionales))
                                                                 {
                                                                     <br /><small class="text-muted">
@@ -298,6 +312,7 @@
                                                             <td>
                                                                 <form method="post" asp-page-handler="NotificarAlumno" class="d-inline form-notificar-alumno">
                                                                     <input type="hidden" name="alumnoId" value="@alumno.AlumnoId" />
+                                                                    <input type="hidden" name="SelectedCicloId" value="@(Model.SelectedCicloId?.ToString() ?? string.Empty)" />
                                                                     <input type="hidden" name="SelectedCarreraId" value="@(Model.SelectedCarreraId?.ToString() ?? string.Empty)" />
                                                                     <input type="hidden" name="IncluirAlumnosConBeca" value="@(Model.IncluirAlumnosConBeca)" />
                                                                     <input type="hidden" name="AsuntoCorreo" value="@Model.AsuntoCorreo" />
@@ -354,10 +369,8 @@
     <script>
         jQuery(document).ready(function () {
             // Auto-submit form when filters change
-            jQuery('#SelectedCarreraId, #MontoMinimo').change(function () {
-                if (jQuery('#SelectedCarreraId').val() !== '' || jQuery('#MontoMinimo').val() !== '') {
-                    jQuery('form').submit();
-                }
+            jQuery('#SelectedCarreraId, #SelectedCicloId').change(function () {
+                jQuery('form[method="get"]').submit();
             });
         });
 

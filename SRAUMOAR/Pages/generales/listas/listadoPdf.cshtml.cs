@@ -42,18 +42,25 @@ namespace SRAUMOAR.Pages.generales.listas
                 .FirstOrDefaultAsync();
         }
 
-        private void VerificarEstadoPagosParciales(int cicloId, IList<MateriasInscritas> materiasInscritas)
+        private void VerificarEstadoPagosParciales(int cicloId, IList<MateriasInscritas> materiasInscritas, bool esEspecializacionGrupo)
         {
             try
             {
                 // Verificar si hay un parcial activo en el rango de fechas actual
                 var fechaActual = DateTime.Today;
 
+                // IMPORTANTE: Puede existir un parcial general y uno de especializacion en el mismo rango de fechas.
+                // Elegimos el que corresponda segun el tipo de grupo, usando la marca del arancel.
                 var parcialActivo = _context.ActividadesAcademicas
+                    .AsNoTracking()
+                    .Include(a => a.Arancel)
                     .Where(a => a.TipoActividad == 2 && // Parcial
                                 a.CicloId == cicloId &&
                                 a.FechaInicio <= fechaActual &&
-                                a.FechaFin >= fechaActual)
+                                a.FechaFin >= fechaActual &&
+                                a.Arancel != null &&
+                                a.Arancel.EsEspecializacion == esEspecializacionGrupo)
+                    .OrderBy(a => a.ActividadAcademicaId)
                     .FirstOrDefault();
 
                 // Solo si hay parcial activo, verificar estados
@@ -147,7 +154,7 @@ namespace SRAUMOAR.Pages.generales.listas
                     .ToList();
 
                 // Verificar estado de pagos de parciales
-                VerificarEstadoPagosParciales(cicloactual.Id, materiasInscritas);
+                VerificarEstadoPagosParciales(cicloactual.Id, materiasInscritas, grupo.EsEspecializacion);
 
                 using var memoryStream = new MemoryStream();
 

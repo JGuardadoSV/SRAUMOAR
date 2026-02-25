@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using SRAUMOAR.Entidades.Procesos;
 using SRAUMOAR.Modelos;
 
@@ -23,15 +24,38 @@ namespace SRAUMOAR.Pages.actividades
 
         public IActionResult OnGet()
         {
-        ViewData["ArancelId"] = new SelectList(_context.Aranceles, "ArancelId", "Nombre");
+            var cicloActivo = _context.Ciclos.FirstOrDefault(c => c.Activo == true);
+
+            var arancelesQuery = _context.Aranceles.AsNoTracking();
+            if (cicloActivo != null)
+            {
+                // Solo aranceles del ciclo activo, y que sean los que aplican a cobros academicos.
+                // (Se excluyen constancias y otros aranceles no obligatorios del ciclo.)
+                arancelesQuery = arancelesQuery.Where(a => a.CicloId == cicloActivo.Id);
+            }
+
+            var aranceles = arancelesQuery
+                .Where(a => a.Activo && (a.Obligatorio || a.EsEspecializacion))
+                .OrderBy(a => a.EsEspecializacion)
+                .ThenBy(a => a.Nombre)
+                .Select(a => new
+                {
+                    a.ArancelId,
+                    Descripcion = $"{a.Nombre} {(a.EsEspecializacion ? "(Especializacion)" : "(General)")}" 
+                })
+                .ToList();
+
+            ViewData["ArancelId"] = new SelectList(aranceles, "ArancelId", "Descripcion");
             ViewData["CicloId"] = new SelectList(
-        _context.Ciclos.Where(c => c.Activo==true).Select(c => new {
-            c.Id,
-            Descripcion = $"Ciclo {c.NCiclo} - {c.anio}"
-        }),
-        "Id",
-        "Descripcion"
-    );
+                _context.Ciclos.Where(c => c.Activo == true)
+                    .Select(c => new
+                    {
+                        c.Id,
+                        Descripcion = $"Ciclo {c.NCiclo} - {c.anio}"
+                    }),
+                "Id",
+                "Descripcion"
+            );
             return Page();
         }
 

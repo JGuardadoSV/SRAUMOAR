@@ -34,6 +34,9 @@ namespace SRAUMOAR.Pages.reportes.insolventes
         }
 
         [BindProperty(SupportsGet = true)]
+        public int? SelectedCicloId { get; set; }
+
+        [BindProperty(SupportsGet = true)]
         public int? SelectedCarreraId { get; set; }
 
         [BindProperty(SupportsGet = true)]
@@ -68,8 +71,10 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                     AsuntoCorreo = "Notificación de deuda de aranceles - Universidad Monseñor Oscar Arnulfo Romero";
                 }
                 
+                await CargarCiclosAsync();
+                var cicloId = await ResolverCicloIdAsync();
                 await CargarCarrerasAsync();
-                await CargarAlumnosInsolventesAsync();
+                await CargarAlumnosInsolventesAsync(cicloId);
                 return Page();
             }
             catch (Exception ex)
@@ -81,17 +86,56 @@ namespace SRAUMOAR.Pages.reportes.insolventes
             }
         }
 
-        public async Task<IActionResult> OnGetGenerarPDFAsync(int? carreraId, bool? incluirAlumnosConBeca)
+        private async Task<int> ResolverCicloIdAsync()
+        {
+            if (SelectedCicloId.HasValue && SelectedCicloId.Value > 0)
+            {
+                return SelectedCicloId.Value;
+            }
+
+            var cicloActivoId = await _context.Ciclos
+                .AsNoTracking()
+                .Where(c => c.Activo)
+                .Select(c => (int?)c.Id)
+                .FirstOrDefaultAsync();
+
+            if (cicloActivoId.HasValue)
+            {
+                SelectedCicloId = cicloActivoId.Value;
+                return cicloActivoId.Value;
+            }
+
+            var cicloMasRecienteId = await _context.Ciclos
+                .AsNoTracking()
+                .OrderByDescending(c => c.Id)
+                .Select(c => (int?)c.Id)
+                .FirstOrDefaultAsync();
+
+            if (!cicloMasRecienteId.HasValue)
+            {
+                throw new InvalidOperationException("No hay ciclos registrados");
+            }
+
+            SelectedCicloId = cicloMasRecienteId.Value;
+            return cicloMasRecienteId.Value;
+        }
+
+        public async Task<IActionResult> OnGetGenerarPDFAsync(int? carreraId, bool? incluirAlumnosConBeca, int? cicloId)
         {
             try
             {
-                // Obtener ciclo actual
-                var cicloActual = await _context.Ciclos.Where(x => x.Activo == true).FirstOrDefaultAsync();
+                // Resolver ciclo
+                SelectedCicloId = cicloId ?? SelectedCicloId;
+                var cicloSeleccionadoId = await ResolverCicloIdAsync();
+                var cicloActual = await _context.Ciclos.AsNoTracking().FirstOrDefaultAsync(x => x.Id == cicloSeleccionadoId);
                 if (cicloActual == null)
                 {
-                    TempData["Error"] = "No hay un ciclo activo";
-                    return RedirectToPage();
+                    TempData["Error"] = "No se encontró el ciclo seleccionado";
+                    return RedirectToPage(new { SelectedCicloId, SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
                 }
+
+                // Filtrar por alumnos con beca según la opción seleccionada
+                var incluirBecados = incluirAlumnosConBeca ?? IncluirAlumnosConBeca;
 
                 // Obtener aranceles obligatorios que YA VENCIERON
                 var arancelesObligatorios = await _context.Aranceles
@@ -101,7 +145,7 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                 if (!arancelesObligatorios.Any())
                 {
                     TempData["Error"] = "No hay aranceles obligatorios vencidos para el ciclo actual";
-                    return RedirectToPage();
+                    return RedirectToPage(new { SelectedCicloId = cicloActual.Id, SelectedCarreraId = carreraId, IncluirAlumnosConBeca = incluirBecados, AsuntoCorreo });
                 }
 
                 // Obtener alumnos inscritos, filtrando por beca según la opción
@@ -111,8 +155,6 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                     .Include(i => i.Ciclo)
                     .Where(i => i.CicloId == cicloActual.Id && i.Activa);
 
-                // Filtrar por alumnos con beca según la opción seleccionada
-                var incluirBecados = incluirAlumnosConBeca ?? IncluirAlumnosConBeca;
                 if (!incluirBecados)
                 {
                     // Excluir alumnos que tienen beca en el ciclo actual
@@ -146,18 +188,18 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                 if (!alumnosInsolventes.Any())
                 {
                     TempData["Error"] = "No hay alumnos insolventes para generar el reporte PDF";
-                    return RedirectToPage();
+                    return RedirectToPage(new { SelectedCicloId = cicloActual.Id, SelectedCarreraId = carreraId, IncluirAlumnosConBeca = incluirBecados, AsuntoCorreo });
                 }
 
                 // Generar PDF usando el servicio
                 byte[] pdfBytes;
                 if (carreraId.HasValue)
                 {
-                    pdfBytes = await _reporteService.GenerarReporteFiltradoAsync(carreraId, null, incluirBecados);
+                    pdfBytes = await _reporteService.GenerarReporteFiltradoAsync(carreraId, null, incluirBecados, cicloActual.Id);
                 }
                 else
                 {
-                    pdfBytes = await _reporteService.GenerarReporteCompletoAsync(incluirBecados);
+                    pdfBytes = await _reporteService.GenerarReporteCompletoAsync(incluirBecados, cicloActual.Id);
                 }
 
                 var fileName = $"ReporteInsolventes_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
@@ -169,32 +211,36 @@ namespace SRAUMOAR.Pages.reportes.insolventes
             catch (Exception ex)
             {
                 TempData["Error"] = $"Error al generar reporte PDF: {ex.Message}";
-                return RedirectToPage();
+                return RedirectToPage(new { SelectedCicloId, SelectedCarreraId = carreraId, IncluirAlumnosConBeca, AsuntoCorreo });
             }
         }
 
-        public async Task<IActionResult> OnGetGenerarExcelAsync(int? carreraId, bool? incluirAlumnosConBeca)
+        public async Task<IActionResult> OnGetGenerarExcelAsync(int? carreraId, bool? incluirAlumnosConBeca, int? cicloId)
         {
             ExcelPackage.License.SetNonCommercialOrganization("SRAUMOAR");
             try
             {
                 // Obtener datos de alumnos insolventes
-                var cicloActual = await _context.Ciclos.Where(x => x.Activo == true).FirstOrDefaultAsync();
+                SelectedCicloId = cicloId ?? SelectedCicloId;
+                var cicloSeleccionadoId = await ResolverCicloIdAsync();
+                var cicloActual = await _context.Ciclos.AsNoTracking().FirstOrDefaultAsync(x => x.Id == cicloSeleccionadoId);
                 if (cicloActual == null)
                 {
-                    TempData["Error"] = "No hay un ciclo activo";
-                    return RedirectToPage();
+                    TempData["Error"] = "No se encontró el ciclo seleccionado";
+                    return RedirectToPage(new { SelectedCicloId, SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
                 }
+
+                var incluirBecados = incluirAlumnosConBeca ?? IncluirAlumnosConBeca;
 
                                  // Obtener aranceles obligatorios que YA VENCIERON
                  var arancelesObligatorios = await _context.Aranceles
                      .Where(a => a.CicloId == cicloActual.Id && a.Obligatorio && a.Activo && a.FechaFin.HasValue && a.FechaFin.Value.Date < DateTime.Now.Date)
                      .ToListAsync();
 
-                                 if (!arancelesObligatorios.Any())
+                 if (!arancelesObligatorios.Any())
                  {
                      TempData["Error"] = "No hay aranceles obligatorios vencidos para el ciclo actual";
-                     return RedirectToPage();
+                     return RedirectToPage(new { SelectedCicloId = cicloActual.Id, SelectedCarreraId = carreraId, IncluirAlumnosConBeca = incluirBecados, AsuntoCorreo });
                  }
 
                                  // Obtener alumnos inscritos, filtrando por beca según la opción
@@ -204,8 +250,6 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                      .Include(i => i.Ciclo)
                      .Where(i => i.CicloId == cicloActual.Id && i.Activa);
 
-                 // Filtrar por alumnos con beca según la opción seleccionada
-                 var incluirBecados = incluirAlumnosConBeca ?? IncluirAlumnosConBeca;
                  if (!incluirBecados)
                  {
                      // Excluir alumnos que tienen beca en el ciclo actual
@@ -239,7 +283,7 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                 if (!alumnosInsolventes.Any())
                 {
                     TempData["Error"] = "No hay alumnos insolventes para generar el reporte Excel";
-                    return RedirectToPage();
+                    return RedirectToPage(new { SelectedCicloId = cicloActual.Id, SelectedCarreraId = carreraId, IncluirAlumnosConBeca = incluirBecados, AsuntoCorreo });
                 }
 
                 // Aplicar la misma lógica de agrupación que en el servicio PDF para detectar repeticiones
@@ -532,7 +576,7 @@ namespace SRAUMOAR.Pages.reportes.insolventes
             catch (Exception ex)
             {
                 TempData["Error"] = $"Error al generar reporte Excel: {ex.Message}";
-                return RedirectToPage();
+                return RedirectToPage(new { SelectedCicloId, SelectedCarreraId = carreraId, IncluirAlumnosConBeca = (incluirAlumnosConBeca ?? IncluirAlumnosConBeca), AsuntoCorreo });
             }
         }
 
@@ -546,38 +590,47 @@ namespace SRAUMOAR.Pages.reportes.insolventes
             ViewData["Carreras"] = new SelectList(carreras, "CarreraId", "NombreCarrera");
         }
 
-        private async Task CargarAlumnosInsolventesAsync()
+        private async Task CargarCiclosAsync()
+        {
+            var ciclos = await _context.Ciclos
+                .AsNoTracking()
+                .OrderByDescending(c => c.Id)
+                .ToListAsync();
+
+            ViewData["Ciclos"] = new SelectList(ciclos, "Id", "NCiclo");
+        }
+
+        private async Task CargarAlumnosInsolventesAsync(int cicloId)
         {
             Console.WriteLine("Iniciando carga de alumnos insolventes...");
-            
-            var cicloActual = await _context.Ciclos.Where(x => x.Activo == true).FirstOrDefaultAsync();
+
+            var cicloActual = await _context.Ciclos
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == cicloId);
             if (cicloActual == null)
             {
-                TempData["Error"] = "No hay un ciclo activo";
-                Console.WriteLine("No se encontró ciclo activo");
+                TempData["Error"] = "No se encontró el ciclo seleccionado";
+                Console.WriteLine("No se encontró ciclo seleccionado");
                 return;
             }
             
             Console.WriteLine($"Ciclo activo encontrado: {cicloActual.NCiclo}");
 
-                         // Obtener aranceles obligatorios del ciclo actual que YA VENCIERON (sin tracking)
-             var arancelesObligatorios = await _context.Aranceles
+             // Obtener aranceles obligatorios del ciclo actual que YA VENCIERON (sin tracking)
+             // Nota: este resultado se usa tanto para el procesamiento como para el resumen.
+             var arancelesVencidos = await _context.Aranceles
                  .AsNoTracking()
                  .Where(a => a.CicloId == cicloActual.Id && a.Obligatorio && a.Activo && a.FechaFin.HasValue && a.FechaFin.Value.Date < DateTime.Now.Date)
+                 .OrderBy(a => a.FechaFin)
                  .ToListAsync();
 
-                         Console.WriteLine($"Aranceles obligatorios vencidos encontrados: {arancelesObligatorios.Count}");
-            foreach (var arancel in arancelesObligatorios)
-            {
-                                 Console.WriteLine($"- {arancel.Nombre}: Vencido el {arancel.FechaFin:dd/MM/yyyy}");
-            }
+             var arancelesObligatorios = arancelesVencidos;
 
-                             // Obtener aranceles vencidos para el resumen (sin tracking)
-                 var arancelesVencidos = await _context.Aranceles
-                     .AsNoTracking()
-                     .Where(a => a.CicloId == cicloActual.Id && a.Obligatorio && a.Activo && a.FechaFin.HasValue && a.FechaFin.Value.Date < DateTime.Now.Date)
-                     .OrderBy(a => a.FechaFin)
-                     .ToListAsync();
+             Console.WriteLine($"Aranceles obligatorios vencidos encontrados: {arancelesObligatorios.Count}");
+             foreach (var arancel in arancelesObligatorios)
+             {
+                 Console.WriteLine($"- {arancel.Nombre}: Vencido el {arancel.FechaFin:dd/MM/yyyy}");
+             }
 
                  Console.WriteLine($"\n=== RESUMEN DE ARANCELES VENCIDOS ===");
                  Console.WriteLine($"Total aranceles vencidos: {arancelesVencidos.Count}");
@@ -602,21 +655,11 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                  TotalCostoVencido = ArancelesVencidos.Sum(a => a.Costo);
                  TotalMoraVencido = ArancelesVencidos.Sum(a => a.ValorMora);
 
-                 // Crear lista de aranceles vencidos para Excel
-                 var arancelesVencidosExcel = arancelesVencidos.Select(a => new ArancelVencidoResumen
-                 {
-                     Nombre = a.Nombre,
-                     FechaVencimiento = a.FechaFin.Value,
-                     DiasVencido = (DateTime.Now.Date - a.FechaFin.Value.Date).Days,
-                     Costo = a.Costo,
-                     ValorMora = a.ValorMora
-                 }).ToList();
-
-                         if (!arancelesObligatorios.Any())
-             {
-                 TempData["Warning"] = "No hay aranceles obligatorios vencidos para el ciclo actual";
-                 return;
-             }
+                          if (!arancelesObligatorios.Any())
+              {
+                  TempData["Warning"] = "No hay aranceles obligatorios vencidos para el ciclo actual";
+                  return;
+              }
 
                          // Obtener alumnos inscritos en el ciclo actual, excluyendo los que tienen beca
              var query = _context.Inscripciones
@@ -643,23 +686,49 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                 query = query.Where(i => i.Alumno.CarreraId == SelectedCarreraId.Value);
             }
 
-            var inscripciones = await query.ToListAsync();
+             var inscripciones = await query.ToListAsync();
 
-            // Procesar alumnos insolventes
-            var alumnosInsolventes = await ProcesarAlumnosInsolventesAsync(inscripciones, arancelesObligatorios, cicloActual.Id);
+             // Procesar alumnos insolventes
+             var alumnosInsolventes = await ProcesarAlumnosInsolventesAsync(inscripciones, arancelesObligatorios, cicloActual.Id);
 
-            // Obtener grupos para detectar repeticiones (sin tracking para evitar ciclos)
-            var grupos = await _context.Grupo
-                .AsNoTracking()
-                .Include(g => g.Carrera)
-                .Include(g => g.MateriasGrupos)
-                    .ThenInclude(mg => mg.MateriasInscritas)
-                        .ThenInclude(mi => mi.Alumno)
-                .Where(g => g.CicloId == cicloActual.Id && g.Activo)
-                .ToListAsync();
+             // Detectar repeticiones sin cargar todo el grafo de Grupos/Materias.
+             // Traemos solo (Carrera, Grupo, AlumnoId) para los alumnos insolventes del listado actual.
+             var alumnosInsolventesIds = alumnosInsolventes
+                 .Select(a => a.AlumnoId)
+                 .Distinct()
+                 .ToList();
 
-            // Aplicar la misma lógica de agrupación que en el servicio PDF para detectar repeticiones
-            var carrerasConGrupos = AgruparPorCarreraYGrupo(alumnosInsolventes, grupos);
+             var gruposLite = new List<GrupoLite>();
+             if (alumnosInsolventesIds.Count > 0)
+             {
+                 var gruposData = await _context.MateriasInscritas
+                     .AsNoTracking()
+                     .Where(mi => alumnosInsolventesIds.Contains(mi.AlumnoId) &&
+                                  mi.MateriasGrupo != null &&
+                                  mi.MateriasGrupo.Grupo.CicloId == cicloActual.Id &&
+                                  mi.MateriasGrupo.Grupo.Activo)
+                     .Select(mi => new
+                     {
+                         mi.AlumnoId,
+                         GrupoNombre = mi.MateriasGrupo.Grupo.Nombre,
+                         CarreraNombre = mi.MateriasGrupo.Grupo.Carrera != null ? mi.MateriasGrupo.Grupo.Carrera.NombreCarrera : null
+                     })
+                     .Distinct()
+                     .ToListAsync();
+
+                 gruposLite = gruposData
+                     .GroupBy(x => new { x.CarreraNombre, x.GrupoNombre })
+                     .Select(g => new GrupoLite
+                     {
+                         CarreraNombre = string.IsNullOrWhiteSpace(g.Key.CarreraNombre) ? "Sin Carrera" : g.Key.CarreraNombre,
+                         NombreGrupo = string.IsNullOrWhiteSpace(g.Key.GrupoNombre) ? "Sin Grupo" : g.Key.GrupoNombre,
+                         AlumnoIds = g.Select(x => x.AlumnoId).ToHashSet()
+                     })
+                     .ToList();
+             }
+
+             // Aplicar la lógica de agrupación para detectar repeticiones
+             var carrerasConGrupos = AgruparPorCarreraYGrupo(alumnosInsolventes, gruposLite);
             
             // Crear lista final de alumnos con información de repeticiones
             var alumnosFinales = new List<AlumnoInsolvente>();
@@ -687,10 +756,15 @@ namespace SRAUMOAR.Pages.reportes.insolventes
             var alumnosInsolventes = new List<AlumnoInsolvente>();
             var alumnosUnicos = new Dictionary<int, AlumnoInsolvente>();
 
+            var alumnoIds = inscripciones
+                .Select(i => i.AlumnoId)
+                .Distinct()
+                .ToList();
+
             // Obtener solo los IDs de aranceles pagados por alumno (sin tracking para mejor rendimiento)
             var pagosData = await _context.CobrosArancel
                 .AsNoTracking()
-                .Where(ca => ca.CicloId == cicloId && ca.AlumnoId.HasValue)
+                .Where(ca => ca.CicloId == cicloId && ca.AlumnoId.HasValue && alumnoIds.Contains(ca.AlumnoId.Value))
                 .SelectMany(ca => ca.DetallesCobroArancel.Select(dca => new 
                 { 
                     AlumnoId = ca.AlumnoId.Value, 
@@ -711,7 +785,7 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                 .AsNoTracking()
                 .Include(mi => mi.MateriasGrupo)
                     .ThenInclude(mg => mg.Grupo)
-                .Where(mi => inscripciones.Select(i => i.AlumnoId).Contains(mi.AlumnoId) &&
+                .Where(mi => alumnoIds.Contains(mi.AlumnoId) &&
                              mi.MateriasGrupo.Grupo.CicloId == cicloId &&
                              mi.MateriasGrupo.Grupo.EsEspecializacion)
                 .Select(mi => mi.AlumnoId)
@@ -784,6 +858,7 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                         Carrera = alumno.Carrera?.NombreCarrera,
                         Carnet = alumno.Carnet,
                         Email = alumno.Email,
+                        EsEspecializacion = alumnosEnGrupoEspecializacion.Contains(alumno.AlumnoId),
                         ArancelesPendientes = arancelesPendientes,
                         TotalPendiente = arancelesPendientes.Sum(ap => ap.CostoOriginal),
                         TotalMora = arancelesPendientes.Sum(ap => ap.Mora),
@@ -803,11 +878,12 @@ namespace SRAUMOAR.Pages.reportes.insolventes
             try
             {
                 // Cargar solo lo necesario sin procesar toda la agrupación para evitar ciclos
-                var cicloActual = await _context.Ciclos.Where(x => x.Activo == true).FirstOrDefaultAsync();
+                var cicloSeleccionadoId = await ResolverCicloIdAsync();
+                var cicloActual = await _context.Ciclos.AsNoTracking().FirstOrDefaultAsync(x => x.Id == cicloSeleccionadoId);
                 if (cicloActual == null)
                 {
-                    TempData["Error"] = "No hay un ciclo activo";
-                    return RedirectToPage(new { SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
+                    TempData["Error"] = "No se encontró el ciclo seleccionado";
+                    return RedirectToPage(new { SelectedCicloId, SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
                 }
 
                 // Obtener aranceles obligatorios vencidos
@@ -819,7 +895,7 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                 if (!arancelesObligatorios.Any())
                 {
                     TempData["Error"] = "No hay aranceles obligatorios vencidos para el ciclo actual";
-                    return RedirectToPage(new { SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
+                    return RedirectToPage(new { SelectedCicloId, SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
                 }
 
                 // Obtener inscripciones del alumno específico
@@ -848,7 +924,7 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                 if (!inscripciones.Any())
                 {
                     TempData["Error"] = "No se encontró la inscripción del alumno seleccionado.";
-                    return RedirectToPage(new { SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
+                    return RedirectToPage(new { SelectedCicloId, SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
                 }
 
                 // Procesar solo este alumno
@@ -858,13 +934,13 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                 if (alumno == null)
                 {
                     TempData["Error"] = "No se encontró la información del alumno seleccionado para notificar la deuda.";
-                    return RedirectToPage(new { SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
+                    return RedirectToPage(new { SelectedCicloId, SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
                 }
 
                 if (string.IsNullOrWhiteSpace(alumno.Email) || !alumno.Email.Contains("@"))
                 {
                     TempData["Warning"] = $"El alumno {alumno.Apellidos}, {alumno.Nombres} no tiene un correo electrónico válido configurado.";
-                    return RedirectToPage(new { SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
+                    return RedirectToPage(new { SelectedCicloId, SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
                 }
 
                 var asunto = string.IsNullOrWhiteSpace(AsuntoCorreo) 
@@ -884,13 +960,13 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                     TempData["Error"] = $"Ocurrió un error al enviar la notificación de deuda al alumno {alumno.Apellidos}, {alumno.Nombres}.";
                 }
 
-                return RedirectToPage(new { SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
+                return RedirectToPage(new { SelectedCicloId, SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
             }
             catch (Exception ex)
             {
                 TempData["Error"] = $"Error al notificar deuda del alumno: {ex.Message}";
                 Console.WriteLine($"Error en OnPostNotificarAlumnoAsync: {ex}");
-                return RedirectToPage(new { SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
+                return RedirectToPage(new { SelectedCicloId, SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
             }
         }
 
@@ -899,11 +975,12 @@ namespace SRAUMOAR.Pages.reportes.insolventes
             try
             {
                 // Cargar solo lo necesario sin procesar toda la agrupación para evitar ciclos
-                var cicloActual = await _context.Ciclos.Where(x => x.Activo == true).FirstOrDefaultAsync();
+                var cicloSeleccionadoId = await ResolverCicloIdAsync();
+                var cicloActual = await _context.Ciclos.AsNoTracking().FirstOrDefaultAsync(x => x.Id == cicloSeleccionadoId);
                 if (cicloActual == null)
                 {
-                    TempData["Error"] = "No hay un ciclo activo";
-                    return RedirectToPage(new { SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
+                    TempData["Error"] = "No se encontró el ciclo seleccionado";
+                    return RedirectToPage(new { SelectedCicloId, SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
                 }
 
                 // Obtener aranceles obligatorios vencidos
@@ -915,7 +992,7 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                 if (!arancelesObligatorios.Any())
                 {
                     TempData["Error"] = "No hay aranceles obligatorios vencidos para el ciclo actual";
-                    return RedirectToPage(new { SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
+                    return RedirectToPage(new { SelectedCicloId, SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
                 }
 
                 // Obtener inscripciones
@@ -946,7 +1023,7 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                 if (alumnosInsolventes == null || !alumnosInsolventes.Any())
                 {
                     TempData["Warning"] = "No hay alumnos insolventes en el listado actual para notificar.";
-                    return RedirectToPage(new { SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
+                    return RedirectToPage(new { SelectedCicloId, SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
                 }
 
                 var alumnosUnicos = alumnosInsolventes
@@ -958,7 +1035,7 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                 if (!alumnosUnicos.Any())
                 {
                     TempData["Warning"] = "Ninguno de los alumnos insolventes del listado actual tiene un correo electrónico válido configurado.";
-                    return RedirectToPage(new { SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
+                    return RedirectToPage(new { SelectedCicloId, SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
                 }
 
                 int enviados = 0;
@@ -1004,13 +1081,13 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                     TempData["Error"] = "No se pudo enviar ninguna notificación de deuda.";
                 }
 
-                return RedirectToPage(new { SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
+                return RedirectToPage(new { SelectedCicloId, SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
             }
             catch (Exception ex)
             {
                 TempData["Error"] = $"Error al notificar deudas: {ex.Message}";
                 Console.WriteLine($"Error en OnPostNotificarTodosAsync: {ex}");
-                return RedirectToPage(new { SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
+                return RedirectToPage(new { SelectedCicloId, SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
             }
         }
 
@@ -1096,7 +1173,7 @@ namespace SRAUMOAR.Pages.reportes.insolventes
         }
 
         private List<CarreraInsolvente> AgruparPorCarreraYGrupo(List<AlumnoInsolvente> alumnosInsolventes, List<Grupo> grupos)
-        {
+         {
             var reporteAgrupado = new List<CarreraInsolvente>();
 
             // Crear un diccionario para rastrear alumnos únicos y sus grupos
@@ -1166,6 +1243,7 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                                     Carrera = alumno.Carrera,
                                     Carnet = alumno.Carnet,
                                     Email = alumno.Email,
+                                    EsEspecializacion = alumno.EsEspecializacion,
                                     ArancelesPendientes = alumno.ArancelesPendientes,
                                     TotalPendiente = alumno.TotalPendiente,
                                     TotalMora = alumno.TotalMora,
@@ -1177,15 +1255,15 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                                         : ""
                                 };
                                 
-                                alumnosUnicosGrupo.Add(alumnoConRepeticion);
+                                 alumnosUnicosGrupo.Add(alumnoConRepeticion);
                             }
                         }
 
                         if (alumnosUnicosGrupo.Any())
-                        {
-                            var grupoInsolvente = new GrupoInsolvente
-                            {
-                                NombreGrupo = grupo.Nombre,
+                         {
+                             var grupoInsolvente = new GrupoInsolvente
+                             {
+                                 NombreGrupo = grupo.Nombre,
                                 AlumnosInsolventes = alumnosUnicosGrupo,
                                 TotalPendiente = alumnosUnicosGrupo.Sum(a => a.TotalPendiente),
                                 TotalMora = alumnosUnicosGrupo.Sum(a => a.TotalMora),
@@ -1205,9 +1283,124 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                     reporteAgrupado.Add(carrera);
                 }
             }
-            return reporteAgrupado;
-        }
-    }
+             return reporteAgrupado;
+         }
+
+         private sealed class GrupoLite
+         {
+             public string CarreraNombre { get; set; } = "";
+             public string NombreGrupo { get; set; } = "";
+             public HashSet<int> AlumnoIds { get; set; } = new();
+         }
+
+        private List<CarreraInsolvente> AgruparPorCarreraYGrupo(List<AlumnoInsolvente> alumnosInsolventes, List<GrupoLite> grupos)
+         {
+             var reporteAgrupado = new List<CarreraInsolvente>();
+
+             // Crear un diccionario para rastrear alumnos únicos y sus grupos
+             var alumnosUnicos = new Dictionary<int, AlumnoInsolvente>();
+             var gruposPorAlumno = new Dictionary<int, List<string>>();
+
+             // Agrupar por carrera
+             var carrerasConAlumnos = alumnosInsolventes
+                 .GroupBy(a => a.Carrera)
+                 .OrderBy(g => g.Key)
+                 .ToList();
+
+             foreach (var carreraGrupo in carrerasConAlumnos)
+             {
+                 var carreraKey = carreraGrupo.Key ?? "Sin Carrera";
+                 var carrera = new CarreraInsolvente
+                 {
+                     NombreCarrera = carreraKey,
+                     Grupos = new List<GrupoInsolvente>()
+                 };
+
+                 // Obtener grupos de esta carrera
+                 var gruposCarrera = grupos
+                     .Where(g => g.CarreraNombre == carreraKey)
+                     .ToList();
+
+                 foreach (var grupo in gruposCarrera.OrderBy(g => g.NombreGrupo))
+                 {
+                     var alumnosInsolventesGrupo = alumnosInsolventes
+                         .Where(a => grupo.AlumnoIds.Contains(a.AlumnoId))
+                         .ToList();
+
+                     if (alumnosInsolventesGrupo.Any())
+                     {
+                         // Procesar alumnos únicos para este grupo
+                         var alumnosUnicosGrupo = new List<AlumnoInsolvente>();
+
+                         foreach (var alumno in alumnosInsolventesGrupo)
+                         {
+                             if (!alumnosUnicos.ContainsKey(alumno.AlumnoId))
+                             {
+                                 // Es la primera vez que vemos este alumno
+                                 alumnosUnicos[alumno.AlumnoId] = alumno;
+                                 gruposPorAlumno[alumno.AlumnoId] = new List<string> { grupo.NombreGrupo };
+                                 alumnosUnicosGrupo.Add(alumno);
+                             }
+                             else
+                             {
+                                 // El alumno ya existe, agregar este grupo a su lista
+                                 if (!gruposPorAlumno[alumno.AlumnoId].Contains(grupo.NombreGrupo))
+                                 {
+                                     gruposPorAlumno[alumno.AlumnoId].Add(grupo.NombreGrupo);
+                                 }
+
+                                 // Agregar una copia del alumno con información de repetición
+                                var alumnoConRepeticion = new AlumnoInsolvente
+                                {
+                                    AlumnoId = alumno.AlumnoId,
+                                    Nombres = alumno.Nombres,
+                                    Apellidos = alumno.Apellidos,
+                                    Carrera = alumno.Carrera,
+                                    Carnet = alumno.Carnet,
+                                    Email = alumno.Email,
+                                    EsEspecializacion = alumno.EsEspecializacion,
+                                    ArancelesPendientes = alumno.ArancelesPendientes,
+                                    TotalPendiente = alumno.TotalPendiente,
+                                    TotalMora = alumno.TotalMora,
+                                    TotalGeneral = alumno.TotalGeneral,
+                                    // Agregar información de repetición
+                                     EsRepeticion = true,
+                                     GruposAdicionales = gruposPorAlumno[alumno.AlumnoId].Count > 1
+                                         ? string.Join(", ", gruposPorAlumno[alumno.AlumnoId].Where(g => g != grupo.NombreGrupo))
+                                         : ""
+                                 };
+
+                                 alumnosUnicosGrupo.Add(alumnoConRepeticion);
+                             }
+                         }
+
+                         if (alumnosUnicosGrupo.Any())
+                         {
+                             var grupoInsolvente = new GrupoInsolvente
+                             {
+                                 NombreGrupo = grupo.NombreGrupo,
+                                 AlumnosInsolventes = alumnosUnicosGrupo,
+                                 TotalPendiente = alumnosUnicosGrupo.Sum(a => a.TotalPendiente),
+                                 TotalMora = alumnosUnicosGrupo.Sum(a => a.TotalMora),
+                                 TotalGeneral = alumnosUnicosGrupo.Sum(a => a.TotalGeneral)
+                             };
+
+                             carrera.Grupos.Add(grupoInsolvente);
+                         }
+                     }
+                 }
+
+                 if (carrera.Grupos.Any())
+                 {
+                     carrera.TotalPendiente = carrera.Grupos.Sum(g => g.TotalPendiente);
+                     carrera.TotalMora = carrera.Grupos.Sum(g => g.TotalMora);
+                     carrera.TotalGeneral = carrera.Grupos.Sum(g => g.TotalGeneral);
+                     reporteAgrupado.Add(carrera);
+                 }
+             }
+             return reporteAgrupado;
+         }
+     }
 
     // Clase para el resumen de aranceles vencidos
     public class ArancelVencidoResumen
@@ -1228,6 +1421,7 @@ namespace SRAUMOAR.Pages.reportes.insolventes
         public string? Carrera { get; set; }
         public string? Carnet { get; set; }
         public string? Email { get; set; }
+        public bool EsEspecializacion { get; set; }
         public List<ArancelPendiente> ArancelesPendientes { get; set; } = new();
         public decimal TotalPendiente { get; set; }
         public decimal TotalMora { get; set; }
