@@ -4,332 +4,92 @@
     ViewData["Title"] = "Carreras";
 }
 
-<style>
-    /* Estilos generales */
-    body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background-color: #f8f9fa;
-        line-height: 1.6;
-    }
-
-    /* Header mejorado */
-    header.bg-primary {
-        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
-        box-shadow: 0 2px 10px rgba(0, 123, 255, 0.3);
-        border-bottom: 3px solid #0056b3;
-    }
-
-    header h1 {
-        font-weight: 600;
-        letter-spacing: 0.5px;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        margin: 0;
-        font-size: 2.2rem;
-    }
-
-    /* Botón personalizado mejorado */
-    .btn-custom {
-        border-radius: 8px;
-        padding: 12px 24px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-        border: none;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        overflow: hidden;
-    }
-
-        .btn-custom:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
-            background-color: #0056b3 !important;
-        }
-
-        .btn-custom:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
-        }
-
-    .btn-icon {
-        margin-right: 8px;
-        font-size: 1.1em;
-    }
-
-    /* Card mejorada */
-    .card {
-        border: none;
-        border-radius: 12px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
-        background: #ffffff;
-    }
-
-        .card:hover {
-            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
-            transform: translateY(-2px);
-        }
-
-    .card-body {
-        padding: 2rem;
-    }
-
-    /* Tabla mejorada */
-    .table {
-        border-radius: 8px;
-        overflow: visible;
-        margin-bottom: 0;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    }
-
-        .table thead th {
-            background: linear-gradient(135deg, #343a40 0%, #495057 100%) !important;
-            color: #ffffff;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border: none;
-            padding: 1rem 0.75rem;
-            font-size: 0.875rem;
-        }
-
-        .table tbody tr {
-            transition: all 0.2s ease;
-            border-bottom: 1px solid #e9ecef;
-            position: relative;
-        }
-
-            .table tbody tr:hover {
-                background-color: #f8f9fa;
-                transform: scale(1.005);
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-                z-index: 2;
-            }
-
-        .table tbody td {
-            padding: 1rem 0.75rem;
-            vertical-align: middle;
-            border-top: none;
-            font-size: 0.95rem;
-        }
-
-    /* Dropdown mejorado */
-    .btn-group {
-        position: relative;
-        z-index: 1;
-    }
-
-        .btn-group .btn {
-            border-radius: 6px;
-            font-weight: 500;
-            padding: 8px 16px;
-            font-size: 0.875rem;
-            transition: all 0.2s ease;
-        }
-
-    .dropdown-toggle {
-        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-        border: none;
-        box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
-    }
-
-        .dropdown-toggle:hover {
-            background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
-            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
-        }
-
-    .dropdown-menu {
-        border: none;
-        border-radius: 8px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-        padding: 0.5rem 0;
-        min-width: 200px;
-        z-index: 1050;
-        position: absolute;
-    }
-
-    .dropdown-item {
-        padding: 12px 20px;
-        transition: all 0.2s ease;
-        font-weight: 500;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-        .dropdown-item:hover {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            color: #007bff;
-            transform: translateX(4px);
-        }
-
-        .dropdown-item i {
-            opacity: 0.7;
-            transition: opacity 0.2s ease;
-        }
-
-        .dropdown-item:hover i {
-            opacity: 1;
-        }
-
-    /* Contenedor principal */
-    .container-fluid {
-        max-width: 1400px;
-        margin: 0 auto;
-        padding-left: 2rem;
-        padding-right: 2rem;
-    }
-
-    /* Dropdown siempre visible - Fix z-index */
-    .dropdown-menu.show {
-        z-index: 1050 !important;
-        position: absolute !important;
-    }
-
-    .btn-group.show {
-        z-index: 1050;
-    }
-
-    .table tbody tr:has(.btn-group.show) {
-        z-index: 1049;
-        position: relative;
-    }
-
-    /* Responsividad mejorada */
-    @@media (max-width: 768px) {
-        .container-fluid {
-            padding-left: 1rem;
-            padding-right: 1rem;
-        }
-
-        header h1 {
-            font-size: 1.8rem;
-        }
-
-        .btn-custom {
-            padding: 10px 20px;
-            font-size: 0.9rem;
-        }
-
-        .card-body {
-            padding: 1.5rem;
-        }
-
-        .table thead th,
-        .table tbody td {
-            padding: 0.75rem 0.5rem;
-            font-size: 0.85rem;
-        }
-
-        .dropdown-menu {
-            min-width: 180px;
-        }
-
-        .dropdown-item {
-            padding: 10px 16px;
-            font-size: 0.875rem;
-        }
-    }
-
-    @@media (max-width: 576px) {
-        .table-responsive {
-            font-size: 0.8rem;
-        }
-
-        .btn-custom {
-            width: 100%;
-            margin-bottom: 1rem;
-        }
-
-        header h1 {
-            font-size: 1.6rem;
-        }
-    }
-
-    /* Animaciones suaves */
-    @@keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .card {
-        animation: fadeInUp 0.6s ease;
-    }
-
-    /* Estados activos para mejor UX */
-    .table tbody tr:active {
-        background-color: #e3f2fd;
-    }
-
-    .btn:focus {
-        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
-        outline: none;
-    }
-
-    /* Mejoras de accesibilidad */
-    .dropdown-item:focus {
-        background-color: #e9ecef;
-        color: #007bff;
-        outline: 2px solid #007bff;
-        outline-offset: -2px;
-    }
-</style>
-
-<header class="bg-primary text-white text-center py-3 mb-4">
-    <h1>Listado de Carreras</h1>
-</header>
-
-<div class="container-fluid mt-4">
-    <a asp-page="./Create" class="btn btn-primary btn-custom">
-        <i class="bi bi-plus-circle btn-icon"></i>
-        Nuevo
-    </a>
+<div class="row mb-4 align-items-center">
+    <div class="col-8">
+        <h2 class="mt-2 text-primary"><i class="bi bi-journal-bookmark"></i> Gestión de Carreras</h2>
+    </div>
+    <div class="col-4 text-end">
+        <a asp-page="Create" class="btn btn-primary rounded-pill shadow-sm">
+            <i class="bi bi-plus-lg"></i> Nueva Carrera
+        </a>
+    </div>
 </div>
 
-<div class="container-fluid mt-4">
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <table class="table table-striped table-hover">
-                <thead class="table-dark">
+<div class="card border-0 shadow-sm rounded-4">
+    <div class="card-body p-4">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
                     <tr>
-                        <th>@Html.DisplayNameFor(model => model.Carrera[0].NombreCarrera)</th>
+                        <th class="rounded-start">@Html.DisplayNameFor(model => model.Carrera[0].NombreCarrera)</th>
                         <th>@Html.DisplayNameFor(model => model.Carrera[0].CodigoCarrera)</th>
                         <th>@Html.DisplayNameFor(model => model.Carrera[0].Duracion)</th>
                         <th>@Html.DisplayNameFor(model => model.Carrera[0].Ciclos)</th>
-                        <th>@Html.DisplayNameFor(model => model.Carrera[0].Activa)</th>
                         <th>@Html.DisplayNameFor(model => model.Carrera[0].Facultad)</th>
-                        <th class="text-center">Acciones</th>
+                        <th>@Html.DisplayNameFor(model => model.Carrera[0].Activa)</th>
+                        <th class="text-center rounded-end">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var item in Model.Carrera)
                     {
                         <tr>
-                            <td>@Html.DisplayFor(modelItem => item.NombreCarrera)</td>
-                            <td>@Html.DisplayFor(modelItem => item.CodigoCarrera)</td>
-                            <td>@Html.DisplayFor(modelItem => item.Duracion)</td>
-                            <td>@Html.DisplayFor(modelItem => item.Ciclos)</td>
-                            <td>@Html.DisplayFor(modelItem => item.Activa)</td>
-                            <td>@Html.DisplayFor(modelItem => item.Facultad.NombreFacultad)</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-primary bg-opacity-10 p-2 rounded-circle me-3">
+                                        <i class="bi bi-journal-bookmark text-primary fs-5"></i>
+                                    </div>
+                                    <span class="fw-semibold">@Html.DisplayFor(modelItem => item.NombreCarrera)</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">@Html.DisplayFor(modelItem => item.CodigoCarrera)</span>
+                            </td>
+                            <td>@Html.DisplayFor(modelItem => item.Duracion) años</td>
+                            <td>@Html.DisplayFor(modelItem => item.Ciclos) ciclos</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-bank text-muted me-2"></i>
+                                    <span>@Html.DisplayFor(modelItem => item.Facultad.NombreFacultad)</span>
+                                </div>
+                            </td>
+                            <td>
+                                @if (item.Activa)
+                                {
+                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1">Activa</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1">Inactiva</span>
+                                }
+                            </td>
                             <td class="text-center">
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                <div class="btn-group shadow-sm">
+                                    <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                                         Acciones
                                     </button>
-                                    <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" asp-page="/generales/pensum/Index" asp-route-id="@item.CarreraId">Ver planes de estudio<i class="bi bi-eye"></i></a></li>
-                                        <li><a class="dropdown-item" asp-page="./Create">Nuevo <i class="bi bi-plus-circle"></i></a></li>
-                                        <li><a class="dropdown-item" asp-page="./Edit" asp-route-id="@item.CarreraId">Editar <i class="bi bi-pencil-square"></i></a></li>
-                                        <!--  <li><a class="dropdown-item" asp-page="./Details" asp-route-id="@item.CarreraId">Detalles <i class="bi bi-info-circle"></i></a></li>
-                                       <li><a class="dropdown-item" asp-page="./Delete" asp-route-id="@item.CarreraId">Eliminar <i class="bi bi-trash"></i></a></li>-->
+                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                                        <li>
+                                            <a class="dropdown-item py-2" asp-page="/generales/pensum/Index" asp-route-id="@item.CarreraId">
+                                                <i class="bi bi-card-list me-2 text-primary"></i> Planes de Estudio
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a class="dropdown-item py-2" asp-page="./Edit" asp-route-id="@item.CarreraId">
+                                                <i class="bi bi-pencil-square me-2 text-secondary"></i> Editar
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item py-2" asp-page="./Details" asp-route-id="@item.CarreraId">
+                                                <i class="bi bi-eye me-2 text-info"></i> Detalles
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item py-2 text-danger" asp-page="./Delete" asp-route-id="@item.CarreraId">
+                                                <i class="bi bi-trash me-2"></i> Eliminar
+                                            </a>
+                                        </li>
                                     </ul>
                                 </div>
                             </td>
@@ -337,6 +97,13 @@
                     }
                 </tbody>
             </table>
+            @if (!Model.Carrera.Any())
+            {
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                    <p class="mb-0">No hay carreras registradas en el sistema.</p>
+                </div>
+            }
         </div>
     </div>
 </div>
