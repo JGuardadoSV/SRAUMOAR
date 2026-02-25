@@ -5,38 +5,61 @@
     ViewData["Title"] = "Finalizar Ciclo";
 }
 
-<h1>Finalizar Ciclo</h1>
-
-
-<hr />
-<div class="row">
-    <div class="col-md-6">
-        <form method="post" style="font-size:20px">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Ciclo.Id" />
-            <div class="alert alert-primary" role="alert">
-                <i class="bi bi-info-circle-fill"></i> Para finalizar el ciclo, quite la marca de la casilla y de clic en el boton de Finalizar ciclo.
-            </div>
-            <div class="form-group form-check">
-                <label class="form-check-label">
-                    <input class="form-check-input" asp-for="Ciclo.Activo" /> @Html.DisplayNameFor(model => model.Ciclo.Activo)
-                </label>
-            </div>
-            <input type="hidden" asp-for="Ciclo.NCiclo" />
-            <input type="hidden" asp-for="Ciclo.anio" />
-            <input type="hidden" asp-for="Ciclo.FechaInicio" />
-            <input type="hidden" asp-for="Ciclo.FechaFin" />
-            <input type="hidden" asp-for="Ciclo.CorrelativoCarnet" />
-            <br />
-            <div class="form-group">
-                <input type="submit" value="Finalizar Ciclo" class="btn btn-primary" /> |  <a asp-page="./Index" class="btn btn-danger">Volver</a>
-            </div>
-        </form>
+<div class="row mb-4 align-items-center">
+    <div class="col-sm-6">
+        <h4 class="mb-0">Finalizar Ciclo</h4>
+    </div>
+    <div class="col-sm-6">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-dark breadcrumb-transparent justify-content-sm-end mb-0">
+                <li class="breadcrumb-item"><a asp-page="/Index"><i class="bi bi-house-door-fill"></i></a></li>
+                <li class="breadcrumb-item"><a asp-page="./Index">Administración de ciclos</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Finalizar</li>
+            </ol>
+        </nav>
     </div>
 </div>
 
-<div>
-   
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Atención: Finalización de Ciclo</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" style="font-size:1.1rem;">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                    <input type="hidden" asp-for="Ciclo.Id" />
+                    <input type="hidden" asp-for="Ciclo.NCiclo" />
+                    <input type="hidden" asp-for="Ciclo.anio" />
+                    <input type="hidden" asp-for="Ciclo.FechaInicio" />
+                    <input type="hidden" asp-for="Ciclo.FechaFin" />
+                    <input type="hidden" asp-for="Ciclo.CorrelativoCarnet" />
+                    
+                    <div class="alert alert-info d-flex align-items-center mb-4" role="alert">
+                        <i class="bi bi-info-circle-fill fs-4 me-3"></i>
+                        <div>
+                            Para finalizar el ciclo de forma segura, <strong>quite la marca de la casilla</strong> y dé clic en el botón de confirmar.
+                        </div>
+                    </div>
+                    
+                    <div class="form-check form-switch mb-4 p-4 bg-light rounded border text-center d-flex justify-content-center align-items-center gap-3">
+                        <input class="form-check-input fs-3 m-0" type="checkbox" role="switch" id="switchActivo" asp-for="Ciclo.Activo" />
+                        <label class="form-check-label fs-5 fw-bold ms-2" for="switchActivo">@Html.DisplayNameFor(model => model.Ciclo.Activo)</label>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end gap-2 mt-4 border-top pt-3">
+                        <a asp-page="./Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-1"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-warning fw-bold text-dark">
+                            <i class="bi bi-save2-fill me-1"></i> Confirmar finalización
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {

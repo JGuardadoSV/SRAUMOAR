@@ -5,52 +5,77 @@
     ViewData["Title"] = "Editar";
 }
 
-<h1>Editar datos del ciclo</h1>
-
-
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Ciclo.Id" />
-            <input type="hidden" asp-for="Ciclo.Activo" />
-            
-            <div class="form-group">
-                <label asp-for="Ciclo.NCiclo" class="control-label"></label>
-                <input asp-for="Ciclo.NCiclo" class="form-control" />
-                <span asp-validation-for="Ciclo.NCiclo" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Ciclo.anio" class="control-label"></label>
-                <input asp-for="Ciclo.anio" class="form-control" />
-                <span asp-validation-for="Ciclo.anio" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Ciclo.FechaInicio" class="control-label"></label>
-                <input asp-for="Ciclo.FechaInicio" class="form-control" />
-                <span asp-validation-for="Ciclo.FechaInicio" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Ciclo.FechaFin" class="control-label"></label>
-                <input asp-for="Ciclo.FechaFin" class="form-control" />
-                <span asp-validation-for="Ciclo.FechaFin" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Ciclo.CorrelativoCarnet" class="control-label"></label>
-                <input asp-for="Ciclo.CorrelativoCarnet" class="form-control" />
-                <span asp-validation-for="Ciclo.CorrelativoCarnet" class="text-danger"></span>
-            </div>
-            <br />
-            <div class="form-group">
-                <input type="submit" value="Actualizar datos" class="btn btn-primary" /> | <a asp-page="./Index" class="btn btn-success">Volver</a>
-            </div>
-        </form>
+<div class="row mb-4 align-items-center">
+    <div class="col-sm-6">
+        <h4 class="mb-0">Editar datos del ciclo</h4>
+    </div>
+    <div class="col-sm-6">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-dark breadcrumb-transparent justify-content-sm-end mb-0">
+                <li class="breadcrumb-item"><a asp-page="/Index"><i class="bi bi-house-door-fill"></i></a></li>
+                <li class="breadcrumb-item"><a asp-page="./Index">Administración de ciclos</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Editar</li>
+            </ol>
+        </nav>
     </div>
 </div>
 
-<div>
-    
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Actualizar información del ciclo</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                    <input type="hidden" asp-for="Ciclo.Id" />
+                    <input type="hidden" asp-for="Ciclo.Activo" />
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6 form-group">
+                            <label asp-for="Ciclo.NCiclo" class="form-label fw-bold"></label>
+                            <input asp-for="Ciclo.NCiclo" class="form-control" />
+                            <span asp-validation-for="Ciclo.NCiclo" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="col-md-6 form-group">
+                            <label asp-for="Ciclo.anio" class="form-label fw-bold"></label>
+                            <input asp-for="Ciclo.anio" class="form-control" />
+                            <span asp-validation-for="Ciclo.anio" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="col-md-6 form-group">
+                            <label asp-for="Ciclo.FechaInicio" class="form-label fw-bold"></label>
+                            <input asp-for="Ciclo.FechaInicio" class="form-control" type="date" />
+                            <span asp-validation-for="Ciclo.FechaInicio" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="col-md-6 form-group">
+                            <label asp-for="Ciclo.FechaFin" class="form-label fw-bold"></label>
+                            <input asp-for="Ciclo.FechaFin" class="form-control" type="date" />
+                            <span asp-validation-for="Ciclo.FechaFin" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="col-12 form-group">
+                            <label asp-for="Ciclo.CorrelativoCarnet" class="form-label fw-bold"></label>
+                            <input asp-for="Ciclo.CorrelativoCarnet" class="form-control" />
+                            <span asp-validation-for="Ciclo.CorrelativoCarnet" class="text-danger"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end mt-4 gap-2">
+                        <a asp-page="./Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left-circle me-1"></i> Volver al listado
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-1"></i> Actualizar datos
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {

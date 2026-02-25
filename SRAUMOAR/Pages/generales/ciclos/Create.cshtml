@@ -5,72 +5,99 @@
     ViewData["Title"] = "Registrar ciclo";
 }
 
-<h1>Registro de nuevo ciclo</h1>
-
-
-<hr />
+<div class="row mb-4 align-items-center">
+    <div class="col-sm-6">
+        <h4 class="mb-0">Registro de nuevo ciclo</h4>
+    </div>
+    <div class="col-sm-6">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-dark breadcrumb-transparent justify-content-sm-end mb-0">
+                <li class="breadcrumb-item"><a asp-page="/Index"><i class="bi bi-house-door-fill"></i></a></li>
+                <li class="breadcrumb-item"><a asp-page="./Index">Administración de ciclos</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Registrar ciclo</li>
+            </ol>
+        </nav>
+    </div>
+</div>
 
 @if (Model.sePuedeRegistrar)
 {
-    <div class="row">
-        <div class="col-md-4">
-            <h4>Datos del nuevo ciclo</h4>
-            <form method="post">
-                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                <!--<div class="form-group form-check">
-                    <label class="form-check-label">
-                        <input class="form-check-input" asp-for="Ciclo.Activo" /> @Html.DisplayNameFor(model => model.Ciclo.Activo)
-                    </label>
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-calendar-plus me-2"></i>Datos del nuevo ciclo</h5>
                 </div>
-                -->
-                <div class="form-group">
-                    <label asp-for="Ciclo.NCiclo" class="control-label"></label>
-                    <input asp-for="Ciclo.NCiclo" class="form-control" />
-                    <span asp-validation-for="Ciclo.NCiclo" class="text-danger"></span>
+                <div class="card-body">
+                    <form method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6 form-group">
+                                <label asp-for="Ciclo.NCiclo" class="form-label fw-bold"></label>
+                                <input asp-for="Ciclo.NCiclo" class="form-control" placeholder="Ej: 01" />
+                                <span asp-validation-for="Ciclo.NCiclo" class="text-danger"></span>
+                            </div>
+                            
+                            <div class="col-md-6 form-group">
+                                <label asp-for="Ciclo.anio" class="form-label fw-bold"></label>
+                                <input asp-for="Ciclo.anio" class="form-control" placeholder="Ej: 2024" />
+                                <span asp-validation-for="Ciclo.anio" class="text-danger"></span>
+                            </div>
+                            
+                            <div class="col-md-6 form-group">
+                                <label asp-for="Ciclo.FechaInicio" class="form-label fw-bold"></label>
+                                <input asp-for="Ciclo.FechaInicio" class="form-control" type="date" />
+                                <span asp-validation-for="Ciclo.FechaInicio" class="text-danger"></span>
+                            </div>
+                            
+                            <div class="col-md-6 form-group">
+                                <label asp-for="Ciclo.FechaFin" class="form-label fw-bold"></label>
+                                <input asp-for="Ciclo.FechaFin" class="form-control" type="date" />
+                                <span asp-validation-for="Ciclo.FechaFin" class="text-danger"></span>
+                            </div>
+                            
+                            <div class="col-12 form-group">
+                                <label asp-for="Ciclo.CorrelativoCarnet" class="form-label fw-bold"></label>
+                                <input asp-for="Ciclo.CorrelativoCarnet" class="form-control" />
+                                <span asp-validation-for="Ciclo.CorrelativoCarnet" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-4 gap-2">
+                            <a asp-page="Index" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left-circle me-1"></i> Volver
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-1"></i> Registrar nuevo ciclo
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                <div class="form-group">
-                    <label asp-for="Ciclo.anio" class="control-label"></label>
-                    <input asp-for="Ciclo.anio" class="form-control" />
-                    <span asp-validation-for="Ciclo.anio" class="text-danger"></span>
-                </div>
-                <div class="form-group">
-                    <label asp-for="Ciclo.FechaInicio" class="control-label"></label>
-                    <input asp-for="Ciclo.FechaInicio" class="form-control" />
-                    <span asp-validation-for="Ciclo.FechaInicio" class="text-danger"></span>
-                </div>
-                <div class="form-group">
-                    <label asp-for="Ciclo.FechaFin" class="control-label"></label>
-                    <input asp-for="Ciclo.FechaFin" class="form-control" />
-                    <span asp-validation-for="Ciclo.FechaFin" class="text-danger"></span>
-                </div>
-                <div class="form-group">
-                    <label asp-for="Ciclo.CorrelativoCarnet" class="control-label"></label>
-                    <input asp-for="Ciclo.CorrelativoCarnet" class="form-control" />
-                    <span asp-validation-for="Ciclo.CorrelativoCarnet" class="text-danger"></span>
-                </div>
-                <br />
-                <div class="form-group">
-                    <input type="submit" value="Registrar nuevo ciclo" class="btn btn-primary" /> | 
-                        <a asp-page="Index" class="btn btn-success">Volver</a>
-                  
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 }
 else
 {
-    <div class="alert alert-danger" role="alert">
-        Existe un ciclo activo, no se puede registrar otro.
-    </div>
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="alert alert-danger shadow-sm d-flex align-items-center" role="alert">
+                <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
+                <div>
+                    <strong>No se puede proceder</strong><br>
+                    Existe un ciclo activo, no se puede registrar otro hasta que el actual sea finalizado.
+                </div>
+            </div>
 
-    <div>
-        <a asp-page="Index" class="btn btn-success">Volver</a>
+            <div class="text-center mt-3">
+                <a asp-page="Index" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left-circle me-1"></i> Volver al listado
+                </a>
+            </div>
+        </div>
     </div>
 }
-
-
-
 
 
 @section Scripts {

@@ -5,51 +5,76 @@
     ViewData["Title"] = "Details";
 }
 
-<h1>Details</h1>
-
-<div>
-    <h4>Ciclo</h4>
-    <hr />
-    <dl class="row">
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Ciclo.Activo)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Ciclo.Activo)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Ciclo.NCiclo)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Ciclo.NCiclo)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Ciclo.anio)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Ciclo.anio)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Ciclo.FechaInicio)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Ciclo.FechaInicio)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Ciclo.FechaFin)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Ciclo.FechaFin)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Ciclo.CorrelativoCarnet)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Ciclo.CorrelativoCarnet)
-        </dd>
-    </dl>
+<div class="row mb-4 align-items-center">
+    <div class="col-sm-6">
+        <h4 class="mb-0">Detalles del Ciclo</h4>
+    </div>
+    <div class="col-sm-6">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-dark breadcrumb-transparent justify-content-sm-end mb-0">
+                <li class="breadcrumb-item"><a asp-page="/Index"><i class="bi bi-house-door-fill"></i></a></li>
+                <li class="breadcrumb-item"><a asp-page="./Index">Administración de ciclos</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Detalles</li>
+            </ol>
+        </nav>
+    </div>
 </div>
-<div>
-    <a asp-page="./Edit" asp-route-id="@Model.Ciclo.Id">Edit</a> |
-    <a asp-page="./Index">Back to List</a>
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Información del Ciclo Lectivo</h5>
+                @if (Model.Ciclo.Activo)
+                {
+                    <span class="badge bg-success rounded-pill px-3 py-2">Activo</span>
+                }
+                else
+                {
+                    <span class="badge bg-danger rounded-pill px-3 py-2">Inactivo</span>
+                }
+            </div>
+            <div class="card-body">
+                <div class="row mb-3 pb-3 border-bottom">
+                    <div class="col-4 text-muted fw-bold">@Html.DisplayNameFor(model => model.Ciclo.NCiclo)</div>
+                    <div class="col-8">@Html.DisplayFor(model => model.Ciclo.NCiclo)</div>
+                </div>
+                
+                <div class="row mb-3 pb-3 border-bottom">
+                    <div class="col-4 text-muted fw-bold">@Html.DisplayNameFor(model => model.Ciclo.anio)</div>
+                    <div class="col-8">@Html.DisplayFor(model => model.Ciclo.anio)</div>
+                </div>
+                
+                <div class="row mb-3 pb-3 border-bottom">
+                    <div class="col-4 text-muted fw-bold">@Html.DisplayNameFor(model => model.Ciclo.FechaInicio)</div>
+                    <div class="col-8"><i class="bi bi-calendar px-1 text-primary"></i> @Html.DisplayFor(model => model.Ciclo.FechaInicio)</div>
+                </div>
+                
+                <div class="row mb-3 pb-3 border-bottom">
+                    <div class="col-4 text-muted fw-bold">@Html.DisplayNameFor(model => model.Ciclo.FechaFin)</div>
+                    <div class="col-8"><i class="bi bi-calendar-check px-1 text-primary"></i> @Html.DisplayFor(model => model.Ciclo.FechaFin)</div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-4 text-muted fw-bold">@Html.DisplayNameFor(model => model.Ciclo.CorrelativoCarnet)</div>
+                    <div class="col-8">
+                        <span class="badge bg-secondary">
+                            <i class="bi bi-123"></i> @Html.DisplayFor(model => model.Ciclo.CorrelativoCarnet)
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-light d-flex justify-content-end gap-2 p-3">
+                <a asp-page="./Index" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left-circle me-1"></i> Volver al listado
+                </a>
+                @if (Model.Ciclo.Activo)
+                {
+                    <a asp-page="./Editar" asp-route-id="@Model.Ciclo.Id" class="btn btn-primary">
+                        <i class="bi bi-pencil-fill me-1"></i> Modificar datos
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
 </div>

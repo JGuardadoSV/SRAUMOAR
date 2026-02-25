@@ -4,63 +4,63 @@
 @{
     ViewData["Title"] = "Editar";
 }
-<header class="bg-primary text-white text-center py-3 mb-4">
-    <h1> Edición Municipio</h1>
-</header>
-<hr />
-<div class="container mt-5">
-    <div class="card shadow-lg">
-        <div class="card-header bg-dark text-white text-center">
-            <h4 class="fs-4 fw-semibold text-white formal-text">Municipio</h4>
-        </div>
-        <div class="container mt-1">
-            <div class="row justify-content-center">
-                <div class="col-md-5">
-                    <div class="card-body">
-                        <form method="post">
-                            <div asp-validation-summary="ModelOnly" class="alert alert-danger d-flex align-items-center" role="alert"></div>
-                            <input type="hidden" asp-for="Municipio.MunicipioId" />
-                            <div class="mb-3">
-                                <label asp-for="Municipio.NombreMunicipio" class="form-label fs-4 fw-semibold text-dark formal-text">Municipio</label>
-                                <br>
-                                <br>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="bi bi-building"></i></span>
-                                    <input asp-for="Municipio.NombreMunicipio" class="form-control" placeholder="Ingrese el nombre del Municipio" />
-                                </div>
-                                <br>
-                                <span asp-validation-for="Municipio.NombreMunicipio" class="text-danger"></span>
-                            </div>
-                            <div class="mb-3">
-                                <label asp-for="Municipio.DistritoId" class="form-label fs-4 fw-semibold text-dark formal-text">Distrito</label>
-                                <br>
-                                <br>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="bi bi-map-fill"></i></span>
-                                    <select asp-for="Municipio.DistritoId" class="form-control" asp-items="ViewBag.DistritoId"></select>
-                                </div>
-                                <br>
-                                <span asp-validation-for="Municipio.DistritoId" class="text-danger"></span>
-                            </div>
-                            <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-primary btn-lg">
-                                    <i class="bi bi-arrow-clockwise"></i> Actualizar
-                                </button>
-                            </div>
-                            <br>
-                        </form>
+<div class="row mb-4 align-items-center">
+    <div class="col-sm-6">
+        <h4 class="mb-0">Editar Municipio</h4>
+    </div>
+    <div class="col-sm-6">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-dark breadcrumb-transparent justify-content-sm-end mb-0">
+                <li class="breadcrumb-item"><a asp-page="/Index"><i class="bi bi-house-door-fill"></i></a></li>
+                <li class="breadcrumb-item"><a asp-page="./Index">Municipios</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Editar</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Actualizar información del municipio</h5>
+            </div>
+            
+            <div class="card-body">
+                <form method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger d-flex align-items-center mb-3" role="alert"></div>
+                    <input type="hidden" asp-for="Municipio.MunicipioId" />
+                    
+                    <div class="form-group mb-4">
+                        <label asp-for="Municipio.NombreMunicipio" class="form-label fw-bold">Nombre del Municipio</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-building text-primary"></i></span>
+                            <input asp-for="Municipio.NombreMunicipio" class="form-control" placeholder="Ingrese el nombre del Municipio" />
+                        </div>
+                        <span asp-validation-for="Municipio.NombreMunicipio" class="text-danger small mt-1 d-block"></span>
                     </div>
-                    <br>
-                </div>
+
+                    <div class="form-group mb-4">
+                        <label asp-for="Municipio.DistritoId" class="form-label fw-bold">Distrito al que pertenece</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-map-fill text-primary"></i></span>
+                            <select asp-for="Municipio.DistritoId" class="form-select" asp-items="ViewBag.DistritoId"></select>
+                        </div>
+                        <span asp-validation-for="Municipio.DistritoId" class="text-danger small mt-1 d-block"></span>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <a asp-page="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left-circle me-1"></i> Volver al listado
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-1"></i> Actualizar
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
-</div>
-<br>
-<div class="text-center mt-3">
-    <a asp-page="Index" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left"></i> Volver a la lista
-    </a>
 </div>
 
 @section Scripts {
@@ -68,5 +68,3 @@
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
 }
-
-

@@ -5,77 +5,91 @@
     ViewData["Title"] = "Administracion de ciclos";
 }
 
-<h1>Administración de ciclos lectivos</h1>
+<div class="row mb-4 align-items-center">
+    <div class="col-sm-6">
+        <h4 class="mb-0">Administración de ciclos lectivos</h4>
+    </div>
+    <div class="col-sm-6">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-dark breadcrumb-transparent justify-content-sm-end mb-0">
+                <li class="breadcrumb-item"><a asp-page="/Index"><i class="bi bi-house-door-fill"></i></a></li>
+                <li class="breadcrumb-item active" aria-current="page">Administración de ciclos</li>
+            </ol>
+        </nav>
+    </div>
+</div>
 
-<p>
-    <a asp-page="Create" class="btn btn-primary">
-        Registrar uno nuevo <i class="nav-icon bi bi-plus"></i>
-    </a>
-</p>
-<table class="table table-striped table-hover">
-    <thead class="table-dark">
-        <tr>
-            <th>@Html.DisplayNameFor(model => model.Ciclo[0].Activo)</th>
-            <th>@Html.DisplayNameFor(model => model.Ciclo[0].anio)</th>
-            <th>@Html.DisplayNameFor(model => model.Ciclo[0].NCiclo)</th>
-            <th>@Html.DisplayNameFor(model => model.Ciclo[0].FechaInicio)</th>
-            <th>@Html.DisplayNameFor(model => model.Ciclo[0].FechaFin)</th>
-            <th>Días</th>
-            <th>@Html.DisplayNameFor(model => model.Ciclo[0].CorrelativoCarnet)</th>
-            <th>Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model.Ciclo)
-        {
-            <tr>
-                <td>
-                    @if (item.Activo)
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-calendar3 me-2"></i>Ciclos Lectivos</h5>
+        <a asp-page="Create" class="btn btn-light btn-sm text-primary">
+            <i class="bi bi-plus-circle me-1"></i> Registrar uno nuevo
+        </a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>@Html.DisplayNameFor(model => model.Ciclo[0].Activo)</th>
+                        <th>@Html.DisplayNameFor(model => model.Ciclo[0].anio)</th>
+                        <th>@Html.DisplayNameFor(model => model.Ciclo[0].NCiclo)</th>
+                        <th>@Html.DisplayNameFor(model => model.Ciclo[0].FechaInicio)</th>
+                        <th>@Html.DisplayNameFor(model => model.Ciclo[0].FechaFin)</th>
+                        <th>Días</th>
+                        <th>@Html.DisplayNameFor(model => model.Ciclo[0].CorrelativoCarnet)</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Ciclo)
                     {
-                        <span class="badge bg-success">
-                            Activo
-                        </span>
+                        <tr>
+                            <td>
+                                @if (item.Activo)
+                                {
+                                    <span class="badge bg-success">Activo</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Inactivo</span>
+                                }
+                            </td>
+                            <td>@Html.DisplayFor(modelItem => item.anio)</td>
+                            <td>@Html.DisplayFor(modelItem => item.NCiclo)</td>
+                            <td>@Html.DisplayFor(modelItem => item.FechaInicio)</td>
+                            <td>@Html.DisplayFor(modelItem => item.FechaFin)</td>
+                            <td>
+                                @{
+                                    var diasTotales = (item.FechaFin - item.FechaInicio).Days;
+                                }
+                                @diasTotales días
+                            </td>
+                            <td>@Html.DisplayFor(modelItem => item.CorrelativoCarnet)</td>
+                            <td>
+                                @if (item.Activo)
+                                {
+                                    <a asp-page="./Edit" asp-route-id="@item.Id" class="btn btn-primary btn-sm me-1 mb-1" title="Finalizar">
+                                        <i class="bi bi-arrow-right-circle-fill"></i> Finalizar
+                                    </a>
+                                    <a asp-page="./Editar" asp-route-id="@item.Id" class="btn btn-success btn-sm me-1 mb-1" title="Modificar">
+                                        <i class="bi bi-pencil-fill"></i> Modificar
+                                    </a>
+                                    <a asp-page="/aranceles/Index" class="btn btn-info btn-sm mb-1 text-white" title="Aranceles">
+                                        <i class="bi bi-coin"></i> Aranceles
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">
+                                        Ciclo finalizado <i class="bi bi-clock-fill"></i>
+                                    </span>
+                                }
+                            </td>
+                        </tr>
                     }
-                    else
-                    {
-                        <span class="badge bg-danger">
-                            Inactivo
-                        </span>
-                    }
-                </td>
-                <td>@Html.DisplayFor(modelItem => item.anio)</td>
-                <td>@Html.DisplayFor(modelItem => item.NCiclo)</td>
-                <td>@Html.DisplayFor(modelItem => item.FechaInicio)</td>
-                <td>@Html.DisplayFor(modelItem => item.FechaFin)</td>
-                <td>
-                    @{
-                        var diasTotales = (item.FechaFin - item.FechaInicio).Days;
-                    }
-                    @diasTotales días
-                </td>
-                <td>@Html.DisplayFor(modelItem => item.CorrelativoCarnet)</td>
-                <td>
-                    @if (item.Activo)
-                    {
-                        <a asp-page="./Edit" asp-route-id="@item.Id" class="btn btn-primary btn-sm me-2">
-                            Finalizar <i class="bi bi-arrow-right-circle-fill"></i>
-                        </a>
-                        <a asp-page="./Editar" asp-route-id="@item.Id" class="btn btn-success btn-sm">
-                            Modificar <i class="bi bi-pencil-fill"></i>
-                        </a>
-                        <a asp-page="/aranceles/Index" class="btn btn-info btn-sm">
-                            Aranceles <i class="bi bi-coin"></i>
-                        </a>
-                    }
-                    else
-                    {
-                        <span class="badge bg-secondary">
-                            Ciclo finalizado <i class="bi bi-clock-fill"></i>
-                        </span>
-                    }
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
-
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

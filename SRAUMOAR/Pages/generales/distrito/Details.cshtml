@@ -5,46 +5,57 @@
     ViewData["Title"] = "Detalles";
 }
 
-<!DOCTYPE html>
-<html lang="es">
-<body>
-    <header class="bg-primary text-white text-center py-4">
-        <h1>Detalles del Distrito</h1>
-    </header>
-    <div class="container mt-5">
-        <div class="card shadow-lg">
-            <div class="card-header bg-dark text-white text-center">
-                <h4 class="fs-4 fw-semibold text-white formal-text">Distrito</h4>
+<div class="row mb-4 align-items-center">
+    <div class="col-sm-6">
+        <h4 class="mb-0">Detalles del Distrito</h4>
+    </div>
+    <div class="col-sm-6">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-dark breadcrumb-transparent justify-content-sm-end mb-0">
+                <li class="breadcrumb-item"><a asp-page="/Index"><i class="bi bi-house-door-fill"></i></a></li>
+                <li class="breadcrumb-item"><a asp-page="./Index">Distritos</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Detalles</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Información del Distrito</h5>
+                <span class="badge bg-light text-primary rounded-pill px-3 py-2">ID: @Model.Distrito.DistritoId</span>
             </div>
-            <div class="card-body">
-                <dl class="row mb-0">
-                    <dt class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-map-fill">
+            <div class="card-body p-4">
+                <div class="row mb-3 align-items-center border-bottom pb-3">
+                    <div class="col-sm-5 text-muted fw-bold d-flex align-items-center">
+                        <i class="bi bi-map-fill text-primary me-2 fs-5"></i>
                         @Html.DisplayNameFor(model => model.Distrito.NombreDistrito)
-                    </dt>
-                    <dd class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-info-circle">
+                    </div>
+                    <div class="col-sm-7 fs-5 fw-semibold text-dark">
                         @Html.DisplayFor(model => model.Distrito.NombreDistrito)
-                    </dd>
-                </dl>
-            </div>
-            <div class="card-body">
-                <dl class="row mb-0">
-                    <dt class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-map">
+                    </div>
+                </div>
+                
+                <div class="row mb-0 align-items-center">
+                    <div class="col-sm-5 text-muted fw-bold d-flex align-items-center">
+                        <i class="bi bi-map text-primary me-2 fs-5"></i>
                         @Html.DisplayNameFor(model => model.Distrito.Departamento)
-                    </dt>
-                    <dd class="col-sm-4 text-left fw-semibold fs-5 fw-semibold bi bi-info-circle">
-                        @Html.DisplayFor(model => model.Distrito.Departamento.NombreDepartamento)   @*REVISAR*@
-                    </dd>
-                </dl>
+                    </div>
+                    <div class="col-sm-7 fs-5 fw-semibold text-dark">
+                        @Html.DisplayFor(model => model.Distrito.Departamento.NombreDepartamento)
+                    </div>
+                </div>
             </div>
-            <div class="card-footer text-end">
-                <a asp-page="./Edit" asp-route-id="@Model.Distrito.DistritoId" class="btn btn-primary">
-                    <i class="bi bi-pencil-square"></i> Editar
+            <div class="card-footer bg-light d-flex justify-content-end gap-2 p-3">
+                <a asp-page="./Index" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left-circle me-1"></i> Volver al listado
                 </a>
-                <a asp-page="./Index" class="btn btn-secondary ms-2">
-                    <i class="bi bi-arrow-left"></i> Volver a la lista
+                <a asp-page="./Edit" asp-route-id="@Model.Distrito.DistritoId" class="btn btn-primary">
+                    <i class="bi bi-pencil-fill me-1"></i> Modificar datos
                 </a>
             </div>
         </div>
     </div>
-</body>
-</html>
+</div>
