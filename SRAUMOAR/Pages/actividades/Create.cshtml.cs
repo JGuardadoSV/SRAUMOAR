@@ -25,13 +25,45 @@ namespace SRAUMOAR.Pages.actividades
         public IActionResult OnGet()
         {
             var cicloActivo = _context.Ciclos.FirstOrDefault(c => c.Activo == true);
+            CargarListas(
+                cicloId: cicloActivo?.Id,
+                arancelGeneralSeleccionadoId: null,
+                arancelEspecializacionSeleccionadoId: null,
+                soloCiclosActivos: true
+            );
+            return Page();
+        }
 
-            var arancelesQuery = _context.Aranceles.AsNoTracking();
-            if (cicloActivo != null)
+        private void CargarListas(int? cicloId, int? arancelGeneralSeleccionadoId, int? arancelEspecializacionSeleccionadoId, bool soloCiclosActivos)
+        {
+            var ciclosQuery = _context.Ciclos.AsNoTracking();
+            if (soloCiclosActivos)
             {
-                // Solo aranceles del ciclo activo, y que sean los que aplican a cobros academicos.
-                // (Se excluyen constancias y otros aranceles no obligatorios del ciclo.)
-                arancelesQuery = arancelesQuery.Where(a => a.CicloId == cicloActivo.Id);
+                ciclosQuery = ciclosQuery.Where(c => c.Activo == true);
+            }
+            else if (cicloId.HasValue)
+            {
+                ciclosQuery = ciclosQuery.Where(c => c.Activo == true || c.Id == cicloId.Value);
+            }
+
+            ViewData["CicloId"] = new SelectList(
+                ciclosQuery
+                    .Select(c => new
+                    {
+                        c.Id,
+                        Descripcion = $"Ciclo {c.NCiclo} - {c.anio}"
+                    }),
+                "Id",
+                "Descripcion",
+                cicloId
+            );
+
+            // Mantener el arancel actual tal cual (incluye obligatorios y especializacion)
+            var arancelesQuery = _context.Aranceles.AsNoTracking();
+            if (cicloId.HasValue)
+            {
+                // Solo aranceles del ciclo seleccionado.
+                arancelesQuery = arancelesQuery.Where(a => a.CicloId == cicloId.Value);
             }
 
             var aranceles = arancelesQuery
@@ -45,18 +77,14 @@ namespace SRAUMOAR.Pages.actividades
                 })
                 .ToList();
 
-            ViewData["ArancelId"] = new SelectList(aranceles, "ArancelId", "Descripcion");
-            ViewData["CicloId"] = new SelectList(
-                _context.Ciclos.Where(c => c.Activo == true)
-                    .Select(c => new
-                    {
-                        c.Id,
-                        Descripcion = $"Ciclo {c.NCiclo} - {c.anio}"
-                    }),
-                "Id",
-                "Descripcion"
-            );
-            return Page();
+            var arancelesEspecializacion = arancelesQuery
+                .Where(a => a.Activo && a.EsEspecializacion)
+                .OrderBy(a => a.Nombre)
+                .Select(a => new { a.ArancelId, a.Nombre })
+                .ToList();
+
+            ViewData["ArancelId"] = new SelectList(aranceles, "ArancelId", "Descripcion", arancelGeneralSeleccionadoId);
+            ViewData["ArancelEspecializacionId"] = new SelectList(arancelesEspecializacion, "ArancelId", "Nombre", arancelEspecializacionSeleccionadoId);
         }
 
         [BindProperty]
@@ -67,6 +95,12 @@ namespace SRAUMOAR.Pages.actividades
         {
             if (!ModelState.IsValid)
             {
+                CargarListas(
+                    cicloId: ActividadAcademica?.CicloId,
+                    arancelGeneralSeleccionadoId: ActividadAcademica?.ArancelId,
+                    arancelEspecializacionSeleccionadoId: ActividadAcademica?.ArancelEspecializacionId,
+                    soloCiclosActivos: true
+                );
                 return Page();
             }
             ActividadAcademica.ActivarIngresoNotas = false;

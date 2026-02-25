@@ -108,6 +108,13 @@
                                 </select>
                             </div>
 
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ActividadAcademica.ArancelEspecializacionId" class="form-label">Arancel de especializacion (opcional)</label>
+                                <select asp-for="ActividadAcademica.ArancelEspecializacionId" class="form-select" asp-items="ViewBag.ArancelEspecializacionId">
+                                    <option value="">Sin arancel de especializacion</option>
+                                </select>
+                            </div>
+
                             <div class="col-12">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <input type="submit" value="Actualizar" class="btn btn-primary" />

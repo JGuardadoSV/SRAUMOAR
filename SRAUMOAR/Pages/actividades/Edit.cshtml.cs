@@ -25,6 +25,55 @@ namespace SRAUMOAR.Pages.actividades
         [BindProperty]
         public ActividadAcademica ActividadAcademica { get; set; } = default!;
 
+        private void CargarListas(int cicloId, int arancelGeneralSeleccionadoId, int? arancelEspecializacionSeleccionadoId)
+        {
+            ViewData["CicloId"] = new SelectList(
+                _context.Ciclos
+                    .AsNoTracking()
+                    .Where(c => c.Activo == true || c.Id == cicloId)
+                    .Select(c => new
+                    {
+                        c.Id,
+                        Descripcion = $"Ciclo {c.NCiclo} - {c.anio}"
+                    }),
+                "Id",
+                "Descripcion",
+                cicloId
+            );
+
+            // Mantener el arancel requerido tal cual (obligatorios o de especializacion)
+            var arancelesRequeridos = _context.Aranceles
+                .AsNoTracking()
+                .Where(a =>
+                    // incluir el seleccionado aunque este inactivo/otro ciclo para no romper el edit
+                    (a.ArancelId == arancelGeneralSeleccionadoId || a.Activo) &&
+                    // Solo aranceles del ciclo de la actividad (y el seleccionado)
+                    (a.ArancelId == arancelGeneralSeleccionadoId || a.CicloId == cicloId) &&
+                    // Solo obligatorios o de especializacion (y el seleccionado)
+                    (a.ArancelId == arancelGeneralSeleccionadoId || a.Obligatorio || a.EsEspecializacion))
+                .OrderBy(a => a.EsEspecializacion)
+                .ThenBy(a => a.Nombre)
+                .Select(a => new
+                {
+                    a.ArancelId,
+                    Descripcion = $"{a.Nombre} {(a.EsEspecializacion ? "(Especializacion)" : "(General)")}" 
+                })
+                .ToList();
+
+            var arancelesEspecializacion = _context.Aranceles
+                .AsNoTracking()
+                .Where(a =>
+                    // incluir el seleccionado aunque este inactivo/otro ciclo para no romper el edit
+                    (arancelEspecializacionSeleccionadoId.HasValue && a.ArancelId == arancelEspecializacionSeleccionadoId.Value) ||
+                    (a.Activo && a.CicloId == cicloId && a.EsEspecializacion))
+                .OrderBy(a => a.Nombre)
+                .Select(a => new { a.ArancelId, a.Nombre })
+                .ToList();
+
+            ViewData["ArancelId"] = new SelectList(arancelesRequeridos, "ArancelId", "Descripcion", arancelGeneralSeleccionadoId);
+            ViewData["ArancelEspecializacionId"] = new SelectList(arancelesEspecializacion, "ArancelId", "Nombre", arancelEspecializacionSeleccionadoId);
+        }
+
         public async Task<IActionResult> OnGetAsync(int? id)
         {
             if (id == null)
@@ -39,39 +88,10 @@ namespace SRAUMOAR.Pages.actividades
             }
             ActividadAcademica = actividadacademica;
 
-            var cicloId = actividadacademica.CicloId;
-            var arancelSeleccionadoId = actividadacademica.ArancelId;
-
-            var aranceles = _context.Aranceles
-                .AsNoTracking()
-                .Where(a =>
-                    // incluir el seleccionado aunque este inactivo/otro ciclo para no romper el edit
-                    (a.ArancelId == arancelSeleccionadoId || a.Activo) &&
-                    // Solo aranceles del ciclo de la actividad (y el seleccionado)
-                    (a.ArancelId == arancelSeleccionadoId || a.CicloId == cicloId) &&
-                    // Solo obligatorios o de especializacion (y el seleccionado)
-                    (a.ArancelId == arancelSeleccionadoId || a.Obligatorio || a.EsEspecializacion))
-                .OrderBy(a => a.EsEspecializacion)
-                .ThenBy(a => a.Nombre)
-                .Select(a => new
-                {
-                    a.ArancelId,
-                    Descripcion = $"{a.Nombre} {(a.EsEspecializacion ? "(Especializacion)" : "(General)")}" 
-                })
-                .ToList();
-
-            ViewData["ArancelId"] = new SelectList(aranceles, "ArancelId", "Descripcion", arancelSeleccionadoId);
-            ViewData["CicloId"] = new SelectList(
-                _context.Ciclos
-                    .Where(c => c.Activo == true || c.Id == cicloId)
-                    .Select(c => new
-                    {
-                        c.Id,
-                        Descripcion = $"Ciclo {c.NCiclo} - {c.anio}"
-                    }),
-                "Id",
-                "Descripcion",
-                cicloId
+            CargarListas(
+                cicloId: actividadacademica.CicloId,
+                arancelGeneralSeleccionadoId: actividadacademica.ArancelId,
+                arancelEspecializacionSeleccionadoId: actividadacademica.ArancelEspecializacionId
             );
             return Page();
         }
@@ -82,6 +102,11 @@ namespace SRAUMOAR.Pages.actividades
         {
             if (!ModelState.IsValid)
             {
+                CargarListas(
+                    cicloId: ActividadAcademica.CicloId,
+                    arancelGeneralSeleccionadoId: ActividadAcademica.ArancelId,
+                    arancelEspecializacionSeleccionadoId: ActividadAcademica.ArancelEspecializacionId
+                );
                 return Page();
             }
 

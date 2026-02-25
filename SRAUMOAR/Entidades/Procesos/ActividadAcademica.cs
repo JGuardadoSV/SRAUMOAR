@@ -50,9 +50,14 @@ namespace SRAUMOAR.Entidades.Procesos
         [Display(Name = "Arancel requerido")]
         public int ArancelId { get; set; }
 
+        [ForeignKey(nameof(ArancelEspecializacion))]
+        [Display(Name = "Arancel de especializacion")]
+        public int? ArancelEspecializacionId { get; set; }
+
         // Relaciones de navegación
         public virtual Ciclo? Ciclo { get; set; }
         public virtual Arancel? Arancel { get; set; }
+        public virtual Arancel? ArancelEspecializacion { get; set; }
 
 
 
