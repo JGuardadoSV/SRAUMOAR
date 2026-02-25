@@ -70,6 +70,15 @@
             border: none;
         }
 
+        .table-responsive {
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+
+        .actions-floating-menu {
+            z-index: 3000;
+        }
+
         .table-header {
             background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
             color: white;
@@ -416,32 +425,50 @@
                                             }
                                         </td>
                                     }
-                                    <td>
-                                        <div class="actions-container">
-                                            @if (User.IsInRole("Administracion"))
-                                            {
-                                                <a class="btn btn-professional btn-aranceles" asp-page="/aranceles/Cobrar" asp-route-id="@item.AlumnoId">
-                                                    <i class="bi bi-dollar me-1"></i> Aranceles
-                                                </a>
-                                                <a class="btn btn-professional btn-inscribir-ciclo" asp-page="/inscripcion/Create" asp-route-id="@item.AlumnoId">
-                                                    <i class="bi bi-arrow-right-circle me-1"></i> Inscribir al ciclo
-                                                </a>
-                                                <a class="btn btn-professional btn-inscribir-materias" asp-page="/inscripcion/MateriasInscritas" asp-route-id="@item.AlumnoId">
-                                                    <i class="bi bi-journal-plus me-1"></i> Inscribir materias
-                                                </a>
-                                            }
-                                            else
-                                            {
-                                                <a class="btn btn-professional btn-nuevo" asp-page="./Create">
-                                                    <i class="bi bi-plus-circle me-1"></i> Nuevo
-                                                </a>
-                                                <a class="btn btn-professional btn-editar" asp-page="./Edit" asp-route-id="@item.AlumnoId">
-                                                    <i class="bi bi-pencil-square me-1"></i> Editar
-                                                </a>
-                                                <a class="btn btn-professional btn-detalles" asp-page="./Details" asp-route-id="@item.AlumnoId">
-                                                    <i class="bi bi-info-circle me-1"></i> Detalles
-                                                </a>
-                                            }
+                                    <td class="text-center">
+                                        <div class="dropdown actions-dropdown">
+                                            <button class="btn btn-professional btn-detalles dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="bi bi-gear me-1"></i>Acciones
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end shadow-sm actions-floating-menu">
+                                                @if (User.IsInRole("Administracion") || User.IsInRole("Administrador"))
+                                                {
+                                                    <li>
+                                                        <a class="dropdown-item" asp-page="/aranceles/Cobrar" asp-route-id="@item.AlumnoId">
+                                                            <i class="bi bi-dollar me-2"></i>Aranceles
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="dropdown-item" asp-page="/inscripcion/Create" asp-route-id="@item.AlumnoId">
+                                                            <i class="bi bi-arrow-right-circle me-2"></i>Inscribir al ciclo
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="dropdown-item" asp-page="/inscripcion/MateriasInscritas" asp-route-id="@item.AlumnoId">
+                                                            <i class="bi bi-journal-plus me-2"></i>Inscribir materias
+                                                        </a>
+                                                    </li>
+                                                }
+                                                @if (User.IsInRole("Administrador"))
+                                                {
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li>
+                                                        <a class="dropdown-item" asp-page="./Create">
+                                                            <i class="bi bi-plus-circle me-2"></i>Nuevo
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="dropdown-item" asp-page="./Edit" asp-route-id="@item.AlumnoId">
+                                                            <i class="bi bi-pencil-square me-2"></i>Editar
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="dropdown-item" asp-page="./Details" asp-route-id="@item.AlumnoId">
+                                                            <i class="bi bi-info-circle me-2"></i>Detalles
+                                                        </a>
+                                                    </li>
+                                                }
+                                            </ul>
                                         </div>
                                     </td>
                                 </tr>
@@ -491,5 +518,54 @@
             </div>
         </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            let dropdownCounter = 0;
+
+            document.addEventListener('shown.bs.dropdown', function (event) {
+                const dropdown = event.target.closest('.actions-dropdown');
+                if (!dropdown) return;
+
+                const menu = dropdown.querySelector('.actions-floating-menu');
+                const toggle = dropdown.querySelector('[data-bs-toggle="dropdown"]');
+                if (!menu || !toggle) return;
+
+                if (!dropdown.dataset.dropdownId) {
+                    dropdownCounter += 1;
+                    dropdown.dataset.dropdownId = 'actions-dd-' + dropdownCounter;
+                }
+                menu.dataset.ownerDropdownId = dropdown.dataset.dropdownId;
+
+                if (!menu.dataset.originalParent) {
+                    menu.dataset.originalParent = '1';
+                    document.body.appendChild(menu);
+                }
+
+                const rect = toggle.getBoundingClientRect();
+                menu.style.position = 'fixed';
+                menu.style.top = (rect.bottom + 4) + 'px';
+                menu.style.left = (rect.right - menu.offsetWidth) + 'px';
+                menu.style.transform = 'none';
+            });
+
+            document.addEventListener('hide.bs.dropdown', function (event) {
+                const dropdown = event.target.closest('.actions-dropdown');
+                if (!dropdown) return;
+
+                const ownerId = dropdown.dataset.dropdownId;
+                const menu = ownerId
+                    ? document.body.querySelector('.actions-floating-menu[data-owner-dropdown-id="' + ownerId + '"]')
+                    : null;
+                if (!menu) return;
+
+                dropdown.appendChild(menu);
+                menu.style.position = '';
+                menu.style.top = '';
+                menu.style.left = '';
+                menu.style.transform = '';
+                menu.removeAttribute('data-owner-dropdown-id');
+            });
+        });
+    </script>
 </body>
 </html>
