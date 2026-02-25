@@ -34,6 +34,7 @@ namespace SRAUMOAR.Pages.administracion
             public string NombreGrupo { get; set; } = string.Empty;
             public string NombreCarrera { get; set; } = string.Empty;
             public bool Solvente { get; set; }
+            public bool Procesada { get; set; }
         }
 
         public async Task<IActionResult> OnGetAsync(int cicloelegido = 0)
@@ -70,8 +71,15 @@ namespace SRAUMOAR.Pages.administracion
                     return RedirectToPage(new { cicloelegido });
                 }
 
+                // Regla: no permitir terminar/procesar el ciclo que está activo
+                if (CicloActual.Activo)
+                {
+                    TempData["Error"] = "No se puede terminar el ciclo que esta activo. Seleccione un ciclo inactivo para procesar historial.";
+                    return RedirectToPage(new { cicloelegido });
+                }
+
                 // Verificar que todas las materias estén solventes
-                var materiasNoSolventes = Materias.Where(m => !m.Solvente).ToList();
+                var materiasNoSolventes = Materias.Where(m => !m.Procesada && !m.Solvente).ToList();
                 if (materiasNoSolventes.Any())
                 {
                     TempData["Error"] = $"No se puede terminar el ciclo. Hay {materiasNoSolventes.Count} materia(s) que no están marcadas como solventes.";
@@ -85,7 +93,7 @@ namespace SRAUMOAR.Pages.administracion
                 {
                     var cicloTexto = $"{CicloActual.NCiclo:D2}-{CicloActual.anio}";
 
-                    // Obtener todos los grupos del ciclo activo
+                    // Obtener todos los grupos del ciclo
                     var grupos = await _context.Grupo
                         .Include(g => g.Carrera)
                         .Include(g => g.MateriasGrupos)
@@ -107,9 +115,10 @@ namespace SRAUMOAR.Pages.administracion
                         .ThenBy(a => a.Fecha)
                         .ToListAsync();
 
-                    // Obtener todos los alumnos únicos del ciclo
+                    // Obtener todos los alumnos únicos del ciclo (solo materias NO procesadas)
                     var alumnosIds = grupos
                         .SelectMany(g => g.MateriasGrupos)
+                        .Where(mg => !mg.Procesada)
                         .SelectMany(mg => mg.MateriasInscritas)
                         .Select(mi => mi.AlumnoId)
                         .Distinct()
@@ -136,7 +145,8 @@ namespace SRAUMOAR.Pages.administracion
                             .Include(mi => mi.Notas)
                                 .ThenInclude(n => n.ActividadAcademica)
                             .Where(mi => mi.AlumnoId == alumnoId && 
-                                        mi.MateriasGrupo.Grupo.CicloId == CicloActual.Id)
+                                        mi.MateriasGrupo.Grupo.CicloId == CicloActual.Id &&
+                                        !mi.MateriasGrupo.Procesada)
                             .ToListAsync();
 
                         if (!materiasInscritasAlumno.Any()) continue;
@@ -347,6 +357,252 @@ namespace SRAUMOAR.Pages.administracion
             }
         }
 
+        public async Task<IActionResult> OnPostProcesarMateriaGrupoAsync(int materiasGrupoId, int cicloelegido = 0)
+        {
+            try
+            {
+                await CargarDatosAsync(cicloelegido > 0 ? cicloelegido : null);
+
+                if (CicloActual == null)
+                {
+                    TempData["Error"] = "No hay un ciclo activo";
+                    return RedirectToPage(new { cicloelegido });
+                }
+
+                // Regla: no permitir procesar materias del ciclo activo
+                if (CicloActual.Activo)
+                {
+                    TempData["Error"] = "No se puede procesar materias del ciclo que esta activo. Seleccione un ciclo inactivo.";
+                    return RedirectToPage(new { cicloelegido });
+                }
+
+                var materiaGrupo = await _context.MateriasGrupo
+                    .Include(mg => mg.Grupo)
+                    .Include(mg => mg.Materia)
+                        .ThenInclude(m => m.Pensum)
+                    .FirstOrDefaultAsync(mg => mg.MateriasGrupoId == materiasGrupoId);
+
+                if (materiaGrupo == null)
+                {
+                    TempData["Error"] = "No se encontró la materia del grupo.";
+                    return RedirectToPage(new { cicloelegido });
+                }
+
+                if (materiaGrupo.Grupo == null || materiaGrupo.Grupo.CicloId != CicloActual.Id)
+                {
+                    TempData["Error"] = "La materia seleccionada no pertenece al ciclo elegido.";
+                    return RedirectToPage(new { cicloelegido });
+                }
+
+                if (materiaGrupo.Procesada)
+                {
+                    TempData["Success"] = "Esta materia ya estaba marcada como procesada.";
+                    return RedirectToPage(new { cicloelegido });
+                }
+
+                if (!materiaGrupo.Solvente)
+                {
+                    TempData["Error"] = "No se puede procesar esta materia porque no está marcada como solvente.";
+                    return RedirectToPage(new { cicloelegido });
+                }
+
+                var pensumId = materiaGrupo.Materia?.PensumId ?? 0;
+                var carreraId = materiaGrupo.Materia?.Pensum?.CarreraId ?? 0;
+
+                if (pensumId <= 0 || carreraId <= 0)
+                {
+                    TempData["Error"] = "No se puede procesar esta materia porque no tiene pensum/carrera asociado.";
+                    return RedirectToPage(new { cicloelegido });
+                }
+
+                using var transaction = await _context.Database.BeginTransactionAsync();
+                try
+                {
+                    var cicloTexto = $"{CicloActual.NCiclo:D2}-{CicloActual.anio}";
+
+                    var actividadesAcademicas = await _context.ActividadesAcademicas
+                        .Where(a => a.CicloId == CicloActual.Id)
+                        .OrderBy(a => a.TipoActividad)
+                        .ThenBy(a => a.Fecha)
+                        .ToListAsync();
+
+                    var actividadesIds = actividadesAcademicas
+                        .Select(a => a.ActividadAcademicaId)
+                        .ToHashSet();
+
+                    var materiasInscritas = await _context.MateriasInscritas
+                        .Include(mi => mi.Notas)
+                            .ThenInclude(n => n.ActividadAcademica)
+                        .Where(mi => mi.MateriasGrupoId == materiasGrupoId)
+                        .ToListAsync();
+
+                    int alumnosProcesados = 0;
+
+                    foreach (var materiaInscrita in materiasInscritas)
+                    {
+                        var alumnoId = materiaInscrita.AlumnoId;
+
+                        var historialAcademico = await _context.HistorialAcademico
+                            .FirstOrDefaultAsync(h => h.AlumnoId == alumnoId && h.CarreraId == carreraId);
+
+                        if (historialAcademico == null)
+                        {
+                            historialAcademico = new HistorialAcademico
+                            {
+                                AlumnoId = alumnoId,
+                                CarreraId = carreraId,
+                                FechaRegistro = DateTime.Now
+                            };
+                            _context.HistorialAcademico.Add(historialAcademico);
+                            await _context.SaveChangesAsync();
+                        }
+
+                        var historialCiclo = await _context.HistorialCiclo
+                            .FirstOrDefaultAsync(hc => hc.HistorialAcademicoId == historialAcademico.HistorialAcademicoId &&
+                                                      hc.CicloTexto == cicloTexto &&
+                                                      hc.PensumId == pensumId);
+
+                        if (historialCiclo == null)
+                        {
+                            historialCiclo = new HistorialCiclo
+                            {
+                                HistorialAcademicoId = historialAcademico.HistorialAcademicoId,
+                                CicloTexto = cicloTexto,
+                                PensumId = pensumId,
+                                FechaRegistro = DateTime.Now
+                            };
+                            _context.HistorialCiclo.Add(historialCiclo);
+                            await _context.SaveChangesAsync();
+                        }
+
+                        var historialMateriaExistente = await _context.HistorialMateria
+                            .FirstOrDefaultAsync(hm => hm.HistorialCicloId == historialCiclo.HistorialCicloId &&
+                                                      hm.MateriaId == materiaGrupo.MateriaId);
+
+                        var notasFiltradas = materiaInscrita.Notas
+                            ?.Where(n => n.ActividadAcademicaId > 0 && actividadesIds.Contains(n.ActividadAcademicaId))
+                            .ToList() ?? new List<Notas>();
+
+                        var laboratorios = notasFiltradas
+                            .Where(n => n.ActividadAcademica != null && n.ActividadAcademica.TipoActividad == 1)
+                            .OrderBy(n => n.ActividadAcademica!.Fecha)
+                            .Take(3)
+                            .ToList();
+
+                        var parciales = notasFiltradas
+                            .Where(n => n.ActividadAcademica != null && n.ActividadAcademica.TipoActividad == 2)
+                            .OrderBy(n => n.ActividadAcademica!.Fecha)
+                            .Take(3)
+                            .ToList();
+
+                        decimal nota1 = 0, nota2 = 0, nota3 = 0, nota4 = 0, nota5 = 0, nota6 = 0;
+                        if (laboratorios.Count > 0) nota1 = laboratorios[0].Nota;
+                        if (parciales.Count > 0) nota2 = parciales[0].Nota;
+                        if (laboratorios.Count > 1) nota3 = laboratorios[1].Nota;
+                        if (parciales.Count > 1) nota4 = parciales[1].Nota;
+                        if (laboratorios.Count > 2) nota5 = laboratorios[2].Nota;
+                        if (parciales.Count > 2) nota6 = parciales[2].Nota;
+
+                        decimal promedioFinal;
+                        if (materiaInscrita.NotaRecuperacion.HasValue)
+                        {
+                            promedioFinal = materiaInscrita.NotaRecuperacion.Value >= 7 ? 7 : materiaInscrita.NotaRecuperacion.Value;
+                        }
+                        else
+                        {
+                            promedioFinal = materiaInscrita.NotaPromedio > 0 ? materiaInscrita.NotaPromedio : 0;
+                        }
+
+                        bool aprobada = promedioFinal >= 7;
+
+                        if (historialMateriaExistente != null)
+                        {
+                            historialMateriaExistente.Nota1 = nota1;
+                            historialMateriaExistente.Nota2 = nota2;
+                            historialMateriaExistente.Nota3 = nota3;
+                            historialMateriaExistente.Nota4 = nota4;
+                            historialMateriaExistente.Nota5 = nota5;
+                            historialMateriaExistente.Nota6 = nota6;
+                            historialMateriaExistente.Promedio = promedioFinal;
+                            historialMateriaExistente.Aprobada = aprobada;
+                            historialMateriaExistente.FechaRegistro = DateTime.Now;
+                        }
+                        else
+                        {
+                            var historialMateria = new HistorialMateria
+                            {
+                                HistorialCicloId = historialCiclo.HistorialCicloId,
+                                MateriaId = materiaGrupo.MateriaId,
+                                Nota1 = nota1,
+                                Nota2 = nota2,
+                                Nota3 = nota3,
+                                Nota4 = nota4,
+                                Nota5 = nota5,
+                                Nota6 = nota6,
+                                Promedio = promedioFinal,
+                                Aprobada = aprobada,
+                                Equivalencia = false,
+                                ExamenSuficiencia = false,
+                                FechaRegistro = DateTime.Now
+                            };
+                            _context.HistorialMateria.Add(historialMateria);
+                        }
+
+                        alumnosProcesados++;
+                    }
+
+                    materiaGrupo.Procesada = true;
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    TempData["Success"] = $"Materia procesada exitosamente. Se procesaron {alumnosProcesados} alumno(s).";
+                    return RedirectToPage(new { cicloelegido });
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    TempData["Error"] = $"Error al procesar la materia: {ex.Message}";
+                    return RedirectToPage(new { cicloelegido });
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Error: {ex.Message}";
+                return RedirectToPage(new { cicloelegido });
+            }
+        }
+
+        public async Task<IActionResult> OnPostMarcarProcesadaAsync()
+        {
+            try
+            {
+                if (!int.TryParse(Request.Form["materiasGrupoId"].ToString(), out int materiasGrupoId))
+                {
+                    return new JsonResult(new { success = false, message = "Parámetro materiasGrupoId inválido." });
+                }
+
+                if (!bool.TryParse(Request.Form["procesada"].ToString(), out bool procesada))
+                {
+                    return new JsonResult(new { success = false, message = "Parámetro procesada inválido." });
+                }
+
+                var materiaGrupo = await _context.MateriasGrupo.FindAsync(materiasGrupoId);
+                if (materiaGrupo == null)
+                {
+                    return new JsonResult(new { success = false, message = "No se encontró la materia del grupo." });
+                }
+
+                materiaGrupo.Procesada = procesada;
+                await _context.SaveChangesAsync();
+
+                return new JsonResult(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return new JsonResult(new { success = false, message = "Error al actualizar el estado de procesada: " + ex.Message });
+            }
+        }
+
         private async Task CargarDatosAsync(int? cicloId = null)
         {
             if (cicloId.HasValue && cicloId.Value > 0)
@@ -382,7 +638,8 @@ namespace SRAUMOAR.Pages.administracion
                 NombreMateria = mg.Materia?.NombreMateria ?? "Sin nombre",
                 NombreGrupo = mg.Grupo?.Nombre ?? "Sin grupo",
                 NombreCarrera = mg.Materia?.Pensum?.Carrera?.NombreCarrera ?? "Sin carrera",
-                Solvente = mg.Solvente
+                Solvente = mg.Solvente,
+                Procesada = mg.Procesada
             }).ToList();
 
             // Contar alumnos únicos del ciclo

@@ -86,6 +86,9 @@ namespace SRAUMOAR.Entidades.Procesos
         [Display(Name = "Solvente")]
         public bool Solvente { get; set; }
 
+        [Display(Name = "Procesada")]
+        public bool Procesada { get; set; }
+
         //propiedad de navegacion MateriasInscritas
         public virtual ICollection<MateriasInscritas>? MateriasInscritas { get; set; }
 

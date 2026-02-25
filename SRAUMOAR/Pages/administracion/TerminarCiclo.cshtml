@@ -58,6 +58,15 @@
         padding: 0.35em 0.65em;
         border-radius: 0.25rem;
     }
+    .badge-procesada {
+        background-color: #6c757d;
+        color: white;
+        padding: 0.35em 0.65em;
+        border-radius: 0.25rem;
+    }
+    .row-procesada {
+        opacity: 0.75;
+    }
 </style>
 
 <div class="container py-3">
@@ -184,19 +193,21 @@
                                             <th>Materia</th>
                                             <th>Grupo</th>
                                             <th class="text-center">Estado</th>
+                                            <th class="text-center">Procesada</th>
                                             <th class="text-center">Acciones</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach (var materia in Model.Materias.OrderBy(m => m.NombreCarrera).ThenBy(m => m.NombreGrupo).ThenBy(m => m.NombreMateria))
                                         {
-                                            <tr>
+                                            <tr class="@(materia.Procesada ? "row-procesada" : "")">
                                                 <td class="col-carrera">@materia.NombreCarrera</td>
                                                 <td>@materia.NombreMateria</td>
                                                 <td>@materia.NombreGrupo</td>
                                                 <td class="text-center">
                                                     <input type="checkbox" class="form-check-input solvente-checkbox-terminar" 
                                                            data-materias-grupo-id="@materia.MateriasGrupoId" 
+                                                           @(materia.Procesada ? "disabled" : "")
                                                            @(materia.Solvente ? "checked" : "") />
                                                     <br>
                                                     <small>
@@ -215,13 +226,48 @@
                                                     </small>
                                                 </td>
                                                 <td class="text-center">
-                                                    <a asp-page="/administracion/EditarNotasGrupo" 
-                                                       asp-route-grupoId="@materia.GrupoId" 
-                                                       class="btn btn-sm btn-primary" 
-                                                       title="Revisar notas">
-                                                        <i class="bi bi-clipboard-check me-1"></i>
-                                                        Ver Notas
-                                                    </a>
+                                                    <input type="checkbox" class="form-check-input procesada-checkbox-terminar"
+                                                           data-materias-grupo-id="@materia.MateriasGrupoId"
+                                                           @(materia.Procesada ? "checked" : "") />
+                                                    <br>
+                                                    <small>
+                                                        @if (materia.Procesada)
+                                                        {
+                                                            <span class="badge-procesada">
+                                                                <i class="bi bi-archive me-1"></i>Procesada
+                                                            </span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="text-muted">No</span>
+                                                        }
+                                                    </small>
+                                                </td>
+                                                <td class="text-center">
+                                                    <div class="d-flex justify-content-center gap-2 flex-wrap">
+                                                        <a asp-page="/administracion/EditarNotasGrupo" 
+                                                           asp-route-grupoId="@materia.GrupoId" 
+                                                           class="btn btn-sm btn-primary" 
+                                                           title="Revisar notas">
+                                                            <i class="bi bi-clipboard-check me-1"></i>
+                                                            Ver Notas
+                                                        </a>
+
+                                                        @if (!materia.Procesada && !Model.CicloActual.Activo)
+                                                        {
+                                                            <form method="post" asp-page-handler="ProcesarMateriaGrupo" onsubmit="return confirmarProcesarMateria();" class="d-inline">
+                                                                <input type="hidden" name="materiasGrupoId" value="@materia.MateriasGrupoId" />
+                                                                <input type="hidden" name="cicloelegido" value="@Model.CicloActual?.Id" />
+                                                                <button type="submit"
+                                                                        class="btn btn-sm btn-warning"
+                                                                        title="Procesa esta materia y la marca como procesada"
+                                                                        @(materia.Solvente ? "" : "disabled")>
+                                                                    <i class="bi bi-gear me-1"></i>
+                                                                    Procesar
+                                                                </button>
+                                                            </form>
+                                                        }
+                                                    </div>
                                                 </td>
                                             </tr>
                                         }
@@ -249,25 +295,32 @@
                     </div>
                     <div class="card-body py-2">
                         <div class="alert alert-info py-2 mb-2">
-                            <small><strong><i class="bi bi-info-circle me-1"></i>Instrucciones:</strong> Verifique que todas las materias estén marcadas como <strong>Solventes</strong> antes de proceder. Este proceso creará o actualizará el historial académico de todos los alumnos del ciclo y es <strong>irreversible</strong>.</small>
+                            <small><strong><i class="bi bi-info-circle me-1"></i>Instrucciones:</strong> Verifique que todas las materias estén marcadas como <strong>Solventes</strong> antes de proceder. Este proceso creará o actualizará el historial académico de todos los alumnos del ciclo y es <strong>irreversible</strong>. Solo se permite procesar ciclos <strong>inactivos</strong>.</small>
                         </div>
 
-                        @if (Model.Materias.Any(m => !m.Solvente))
+                        @if (Model.CicloActual.Activo)
+                        {
+                            <div class="alert alert-warning py-2 mb-2">
+                                <small><i class="bi bi-exclamation-triangle me-1"></i><strong>Regla de seguridad:</strong> No se puede terminar/procesar el ciclo que está activo. Seleccione un ciclo inactivo.</small>
+                            </div>
+                        }
+
+                        @if (!Model.CicloActual.Activo && Model.Materias.Any(m => !m.Procesada && !m.Solvente))
                         {
                             <div class="alert alert-danger py-2 mb-2">
-                                <small><i class="bi bi-x-circle me-1"></i><strong>No se puede terminar el ciclo:</strong> Hay @Model.Materias.Count(m => !m.Solvente) materia(s) que no están marcadas como solventes. Marque todas las materias como solventes en la página de edición de grupos antes de continuar.</small>
+                                <small><i class="bi bi-x-circle me-1"></i><strong>No se puede terminar el ciclo:</strong> Hay @Model.Materias.Count(m => !m.Procesada && !m.Solvente) materia(s) no procesada(s) que no están marcadas como solventes.</small>
                             </div>
                         }
 
                         <form method="post" asp-page-handler="TerminarCiclo" onsubmit="return confirmarTerminacion();">
                             <input type="hidden" name="cicloelegido" value="@Model.CicloActual?.Id" />
                             <div class="text-center">
-                                <button type="submit" 
-                                        class="btn btn-success @(Model.Materias.Any(m => !m.Solvente) ? "disabled" : "")" 
-                                        @(Model.Materias.Any(m => !m.Solvente) ? "disabled" : "")>
-                                    <i class="bi bi-check-circle me-2"></i>
-                                    Terminar Ciclo y Alimentar Historial
-                                </button>
+                                 <button type="submit" 
+                                         class="btn btn-success @((Model.CicloActual.Activo || Model.Materias.Any(m => !m.Procesada && !m.Solvente)) ? "disabled" : "")" 
+                                         @((Model.CicloActual.Activo || Model.Materias.Any(m => !m.Procesada && !m.Solvente)) ? "disabled" : "")>
+                                     <i class="bi bi-check-circle me-2"></i>
+                                     Terminar Ciclo y Alimentar Historial
+                                 </button>
                                 <a asp-page="/administracion/EditarNotas" class="btn btn-secondary ms-2">
                                     <i class="bi bi-arrow-left me-2"></i>
                                     Volver
@@ -293,6 +346,10 @@
 
         function confirmarTerminacion() {
             return confirm('¿Está seguro de que desea terminar el ciclo? Este proceso creará o actualizará el historial académico de todos los alumnos. Esta acción no se puede deshacer.');
+        }
+
+        function confirmarProcesarMateria() {
+            return confirm('¿Desea procesar esta materia? Se creará o actualizará el historial de los alumnos inscritos en esta materia y se marcará como procesada. Esta acción no se puede deshacer.');
         }
 
         // Manejar cambio de checkbox de solvencia en la página de terminar ciclo
@@ -338,6 +395,40 @@
                         alert('Error técnico al actualizar el estado. Por favor, recargue la página e intente nuevamente.');
                         // Revertir el checkbox
                         checkbox.prop('checked', !esSolvente);
+                    }
+                });
+            });
+
+            // Marcar materia como procesada (no se toma en cuenta al terminar ciclo)
+            jQuery('.procesada-checkbox-terminar').on('change', function() {
+                var materiasGrupoId = jQuery(this).data('materias-grupo-id');
+                var esProcesada = jQuery(this).is(':checked');
+                var checkbox = jQuery(this);
+
+                jQuery.ajax({
+                    url: '?handler=MarcarProcesada',
+                    type: 'POST',
+                    data: jQuery.param({
+                        materiasGrupoId: materiasGrupoId,
+                        procesada: esProcesada
+                    }),
+                    contentType: 'application/x-www-form-urlencoded',
+                    dataType: 'json',
+                    success: function(result) {
+                        if (result && result.success) {
+                            setTimeout(function() {
+                                window.location.reload();
+                            }, 300);
+                        } else {
+                            alert(result ? (result.message || 'Error al actualizar el estado de procesada') : 'Error desconocido');
+                            checkbox.prop('checked', !esProcesada);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error AJAX:', {xhr: xhr, status: status, error: error});
+                        console.error('Response Text:', xhr.responseText);
+                        alert('Error técnico al actualizar el estado. Por favor, recargue la página e intente nuevamente.');
+                        checkbox.prop('checked', !esProcesada);
                     }
                 });
             });
