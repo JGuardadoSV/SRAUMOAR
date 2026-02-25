@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -201,7 +201,7 @@ namespace SRAUMOAR.Pages.aranceles
                     throw new InvalidOperationException("No hay un ciclo activo en el sistema");
                 }
 
-                // Verificar si el alumno tiene beca parcial
+                // Verificar si el alumno tiene beca parcial (cualquier ciclo)
                 var becaAlumno = await _context.Becados
                     .Include(b => b.Alumno)
                     .Where(b => b.AlumnoId == id && b.Estado && b.TipoBeca == 2) // TipoBeca = 2 es parcial
@@ -209,11 +209,12 @@ namespace SRAUMOAR.Pages.aranceles
 
                 AlumnoTieneBecaParcial = becaAlumno != null;
 
-                // Obtener aranceles personalizados si el alumno tiene beca parcial
+                // Obtener precios personalizados: del alumno, para aranceles del ciclo actual
+                // (independiente del ciclo del Becado, para cubrir registros creados con Becado de otro ciclo)
                 if (AlumnoTieneBecaParcial)
                 {
                     var arancelesPersonalizados = await _context.ArancelesBecados
-                        .Where(ab => ab.BecadosId == becaAlumno.BecadosId && ab.Activo)
+                        .Where(ab => ab.Becado.AlumnoId == id && ab.Activo && ab.Arancel != null && ab.Arancel.CicloId == cicloactual.Id)
                         .Include(ab => ab.Arancel)
                         .ToListAsync();
 

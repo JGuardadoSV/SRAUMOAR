@@ -97,12 +97,39 @@
     }
 
     @Html.AntiForgeryToken()
+
+    <!-- Selector de Ciclo -->
+    <div class="row justify-content-center mb-4">
+        <div class="col-lg-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <label for="cicloSelect" class="form-label fw-semibold mb-2">
+                                <i class="bi bi-calendar-check text-primary me-2"></i>
+                                Ciclo Académico
+                            </label>
+                        </div>
+                        <div class="col-md-8">
+                            <select id="cicloSelect" class="form-select form-select-lg" asp-items="ViewBag.CicloId" onchange="cambiarCiclo()">
+                                <option value="">Selecciona un ciclo</option>
+                            </select>
+                            <small class="form-text text-muted">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Puede seleccionar cualquier ciclo registrado. Por defecto se muestra el ciclo actual.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     
     @if (Model.CicloActual == null)
     {
         <div class="alert alert-warning">
             <i class="bi bi-exclamation-triangle me-2"></i>
-            No hay un ciclo activo en el sistema.
+            @(string.IsNullOrEmpty(Model.Mensaje) ? "No hay un ciclo activo en el sistema." : Model.Mensaje)
         </div>
     }
     else
@@ -233,6 +260,7 @@
                         }
 
                         <form method="post" asp-page-handler="TerminarCiclo" onsubmit="return confirmarTerminacion();">
+                            <input type="hidden" name="cicloelegido" value="@Model.CicloActual?.Id" />
                             <div class="text-center">
                                 <button type="submit" 
                                         class="btn btn-success @(Model.Materias.Any(m => !m.Solvente) ? "disabled" : "")" 
@@ -255,6 +283,14 @@
 
 @section Scripts {
     <script>
+        function cambiarCiclo() {
+            var cicloSelect = document.getElementById('cicloSelect');
+            var cicloId = cicloSelect.value;
+            if (cicloId && cicloId !== '') {
+                window.location.href = '/administracion/TerminarCiclo?cicloelegido=' + cicloId;
+            }
+        }
+
         function confirmarTerminacion() {
             return confirm('¿Está seguro de que desea terminar el ciclo? Este proceso creará o actualizará el historial académico de todos los alumnos. Esta acción no se puede deshacer.');
         }

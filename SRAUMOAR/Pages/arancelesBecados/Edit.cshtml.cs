@@ -115,9 +115,12 @@ namespace SRAUMOAR.Pages.arancelesBecados
 
             AlumnosBecadosList = new SelectList(alumnosBecados, "BecadosId", "DisplayText");
 
-            // Obtener solo aranceles activos y obligatorios
+            // Obtener ciclo actual y filtrar aranceles por ciclo (incluir arancel actual si no está en ciclo actual)
+            var cicloActual = await _context.Ciclos.Where(c => c.Activo).FirstOrDefaultAsync();
             var aranceles = await _context.Aranceles
-                .Where(a => a.Activo && a.Obligatorio)
+                .Where(a => a.Activo && a.Obligatorio && (
+                    (cicloActual != null && a.CicloId == cicloActual.Id) ||
+                    a.ArancelId == ArancelBecado.ArancelId))
                 .Select(a => new
                 {
                     ArancelId = a.ArancelId,

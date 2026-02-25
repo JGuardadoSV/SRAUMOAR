@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SRAUMOAR.Entidades.Procesos;
 using SRAUMOAR.Entidades.Historial;
@@ -35,22 +36,38 @@ namespace SRAUMOAR.Pages.administracion
             public bool Solvente { get; set; }
         }
 
-        public async Task<IActionResult> OnGetAsync()
+        public async Task<IActionResult> OnGetAsync(int cicloelegido = 0)
         {
-            await CargarDatosAsync();
+            var cicloActual = await _context.Ciclos.Where(c => c.Activo).FirstOrDefaultAsync();
+            int cicloSeleccionado = cicloActual?.Id ?? 0;
+            if (cicloelegido > 0)
+            {
+                var cicloExiste = await _context.Ciclos.AnyAsync(c => c.Id == cicloelegido);
+                if (cicloExiste)
+                    cicloSeleccionado = cicloelegido;
+            }
+
+            ViewData["CicloId"] = new SelectList(
+                _context.Ciclos
+                    .OrderByDescending(c => c.anio)
+                    .ThenByDescending(c => c.NCiclo)
+                    .Select(c => new { Id = c.Id, Nombre = c.NCiclo + " - " + c.anio })
+                , "Id", "Nombre", cicloSeleccionado);
+
+            await CargarDatosAsync(cicloSeleccionado > 0 ? cicloSeleccionado : null);
             return Page();
         }
 
-        public async Task<IActionResult> OnPostTerminarCicloAsync()
+        public async Task<IActionResult> OnPostTerminarCicloAsync(int cicloelegido = 0)
         {
             try
             {
-                await CargarDatosAsync();
+                await CargarDatosAsync(cicloelegido > 0 ? cicloelegido : null);
 
                 if (CicloActual == null)
                 {
                     TempData["Error"] = "No hay un ciclo activo";
-                    return RedirectToPage();
+                    return RedirectToPage(new { cicloelegido });
                 }
 
                 // Verificar que todas las materias estén solventes
@@ -58,7 +75,7 @@ namespace SRAUMOAR.Pages.administracion
                 if (materiasNoSolventes.Any())
                 {
                     TempData["Error"] = $"No se puede terminar el ciclo. Hay {materiasNoSolventes.Count} materia(s) que no están marcadas como solventes.";
-                    return RedirectToPage();
+                    return RedirectToPage(new { cicloelegido });
                 }
 
                 // Procesar historial de cada alumno
@@ -282,19 +299,19 @@ namespace SRAUMOAR.Pages.administracion
                     await transaction.CommitAsync();
 
                     TempData["Success"] = $"Ciclo terminado exitosamente. Se procesaron {alumnosProcesados} alumno(s) y {materiasProcesadas} materia(s).";
-                    return RedirectToPage();
+                    return RedirectToPage(new { cicloelegido });
                 }
                 catch (Exception ex)
                 {
                     await transaction.RollbackAsync();
                     TempData["Error"] = $"Error al procesar el historial: {ex.Message}";
-                    return RedirectToPage();
+                    return RedirectToPage(new { cicloelegido });
                 }
             }
             catch (Exception ex)
             {
                 TempData["Error"] = $"Error: {ex.Message}";
-                return RedirectToPage();
+                return RedirectToPage(new { cicloelegido });
             }
         }
 
@@ -330,15 +347,22 @@ namespace SRAUMOAR.Pages.administracion
             }
         }
 
-        private async Task CargarDatosAsync()
+        private async Task CargarDatosAsync(int? cicloId = null)
         {
-            CicloActual = await _context.Ciclos
-                .Where(c => c.Activo)
-                .FirstOrDefaultAsync();
+            if (cicloId.HasValue && cicloId.Value > 0)
+            {
+                CicloActual = await _context.Ciclos.FindAsync(cicloId.Value);
+            }
+            else
+            {
+                CicloActual = await _context.Ciclos
+                    .Where(c => c.Activo)
+                    .FirstOrDefaultAsync();
+            }
 
             if (CicloActual == null)
             {
-                Mensaje = "No hay un ciclo activo";
+                Mensaje = cicloId.HasValue ? "No se encontró el ciclo seleccionado." : "No hay un ciclo activo";
                 return;
             }
 
