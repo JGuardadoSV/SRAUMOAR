@@ -1,4 +1,4 @@
-ï»¿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -11,7 +11,7 @@ using SRAUMOAR.Modelos;
 
 namespace SRAUMOAR.Pages.aranceles
 {
-    [Authorize(Roles = "Administrador,Administracion")]
+    [Authorize(Roles = "Administrador,Administracion,Contabilidad")]
     public class IndexModel : PageModel
     {
         private readonly SRAUMOAR.Modelos.Contexto _context;
@@ -34,11 +34,11 @@ namespace SRAUMOAR.Pages.aranceles
                 .Include(a => a.Ciclo).ToListAsync();
 
             // Separar aranceles por tipo
-            // Aranceles obligatorios normales (no de especializaciÃ³n)
+            // Aranceles obligatorios normales (no de especialización)
             ArancelesObligatorios = todosLosAranceles.Where(a => a.Obligatorio && !a.EsEspecializacion).ToList();
-            // Aranceles no obligatorios normales (no de especializaciÃ³n)
+            // Aranceles no obligatorios normales (no de especialización)
             ArancelesNoObligatorios = todosLosAranceles.Where(a => !a.Obligatorio && !a.EsEspecializacion).ToList();
-            // Aranceles de especializaciÃ³n (obligatorios o no obligatorios)
+            // Aranceles de especialización (obligatorios o no obligatorios)
             ArancelesEspecializacion = todosLosAranceles.Where(a => a.EsEspecializacion).ToList();
             
             // Mantener la lista completa para compatibilidad
@@ -46,3 +46,4 @@ namespace SRAUMOAR.Pages.aranceles
         }
     }
 }
+

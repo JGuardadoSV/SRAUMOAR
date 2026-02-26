@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 namespace SRAUMOAR.Pages.aranceles
 {
-    [Authorize(Roles = "Administrador,Administracion")]
+    [Authorize(Roles = "Administrador,Administracion,Contabilidad")]
     public class DetallesCobroModel : PageModel
     {
 
@@ -59,5 +59,6 @@ namespace SRAUMOAR.Pages.aranceles
 
     }
 }
+
 
 

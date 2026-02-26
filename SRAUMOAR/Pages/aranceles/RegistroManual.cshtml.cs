@@ -15,7 +15,7 @@ using SRAUMOAR.Modelos;
 
 namespace SRAUMOAR.Pages.aranceles
 {
-    [Authorize(Roles = "Administrador,Administracion")]
+    [Authorize(Roles = "Administrador,Administracion,Contabilidad")]
     public class RegistroManualModel : PageModel
     {
         private readonly SRAUMOAR.Modelos.Contexto _context;

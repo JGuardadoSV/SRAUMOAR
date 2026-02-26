@@ -19,7 +19,7 @@ using OfficeOpenXml.Style;
 
 namespace SRAUMOAR.Pages.reportes.insolventes
 {
-    [Authorize(Roles = "Administrador,Administracion")]
+    [Authorize(Roles = "Administrador,Administracion,Contabilidad")]
     public class IndexModel : PageModel
     {
         private readonly Contexto _context;
@@ -1459,3 +1459,4 @@ namespace SRAUMOAR.Pages.reportes.insolventes
         public decimal TotalGeneral { get; set; }
     }
 }
+

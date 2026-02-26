@@ -15,7 +15,7 @@ using SRAUMOAR.Modelos;
 
 namespace SRAUMOAR.Pages.aranceles
 {
-    [Authorize(Roles = "Administrador,Administracion")]
+    [Authorize(Roles = "Administrador,Administracion,Contabilidad")]
     [IgnoreAntiforgeryToken] // Deshabilitar completamente para toda la página
     public class CobrarModel : PageModel
     {
@@ -449,3 +449,4 @@ namespace SRAUMOAR.Pages.aranceles
         }
     }
 }
+

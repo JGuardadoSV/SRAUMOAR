@@ -12,7 +12,7 @@ using SRAUMOAR.Modelos;
 
 namespace SRAUMOAR.Pages.facturacion.correlativos
 {
-    [Authorize(Roles = "Administrador,Administracion")]
+    [Authorize(Roles = "Administrador,Administracion,Contabilidad")]
     public class CreateModel : PageModel
     {
         private readonly SRAUMOAR.Modelos.Contexto _context;
@@ -93,4 +93,5 @@ namespace SRAUMOAR.Pages.facturacion.correlativos
         }
     }
 }
+
 

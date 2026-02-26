@@ -1,4 +1,4 @@
-ï»¿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -20,7 +20,7 @@ using SRAUMOAR.Servicios;
 
 namespace SRAUMOAR.Pages.aranceles
 {
-    [Authorize(Roles = "Administrador,Administracion")]
+    [Authorize(Roles = "Administrador,Administracion,Contabilidad")]
     public class FacturarModel : PageModel
     {
         private readonly SRAUMOAR.Modelos.Contexto _context;
@@ -35,7 +35,7 @@ namespace SRAUMOAR.Pages.aranceles
         }
         public List<Arancel> Aranceles { get; set; }
         
-        // MÃ©todo para cargar datos de la vista (reutilizable)
+        // Método para cargar datos de la vista (reutilizable)
         private async Task CargarDatosParaVista(int idalumno)
         {
             var alumno = await _context.Alumno.FirstOrDefaultAsync(m => m.AlumnoId == idalumno);
@@ -115,7 +115,7 @@ namespace SRAUMOAR.Pages.aranceles
         // For more information, see https://aka.ms/RazorPagesCRUD.
         public async Task<IActionResult> OnPostAsync(List<int> selectedAranceles, List<decimal> arancelescostos, int idalumno)
         {
-            // Validar que los parÃ¡metros no sean null
+            // Validar que los parámetros no sean null
             if (selectedAranceles == null || arancelescostos == null)
             {
                 ModelState.AddModelError("", "Los datos de aranceles son requeridos");
@@ -198,9 +198,9 @@ namespace SRAUMOAR.Pages.aranceles
             Guid codigoGeneracion = Guid.NewGuid();
 
             Random random = new Random();
-            int i = random.Next(1, 100001); // Genera un nÃºmero aleatorio entre 1 y 100000
+            int i = random.Next(1, 100001); // Genera un número aleatorio entre 1 y 100000
             string correlativo = i.ToString().PadLeft(15, '0'); // Rellena con ceros a la izquierda para que tenga 15 caracteres
-                                                                // Generar nÃºmero de control
+                                                                // Generar número de control
 
             int numero = (int)await _correlativoService.ObtenerSiguienteCorrelativo("01", ambiente == 1 ? "01" : "00");
             string numeroFormateado = numero.ToString("D15");
@@ -287,7 +287,7 @@ namespace SRAUMOAR.Pages.aranceles
                 correo = alumno.Email
             };
 
-            // Usar una consulta mÃ¡s segura que maneje aranceles sin ciclo
+            // Usar una consulta más segura que maneje aranceles sin ciclo
             var arancelesAPagar = await _context.Aranceles
                 .Where(a => selectedAranceles.Contains(a.ArancelId))
                 .ToListAsync();
@@ -387,7 +387,7 @@ namespace SRAUMOAR.Pages.aranceles
                 numPagoElectronico = "0"
             };
 
-            // Crear la extensiÃ³n
+            // Crear la extensión
             var extension = new
             {
                 nombEntrega = "ENCARGADO 1",
@@ -522,7 +522,7 @@ namespace SRAUMOAR.Pages.aranceles
                 aranceles.Add(arancel);
             }
             CobroArancel.DetallesCobroArancel = aranceles;
-            // Agregar nota si algÃºn arancel fue cobrado con mora
+            // Agregar nota si algún arancel fue cobrado con mora
             if (algunConMora)
             {
                 if (string.IsNullOrWhiteSpace(CobroArancel.nota))
@@ -548,3 +548,4 @@ namespace SRAUMOAR.Pages.aranceles
         }
     }
 }
+

@@ -37,6 +37,8 @@ namespace SRAUMOAR.Modelos
         public DbSet<Docente> Docentes { get; set; }
         public DbSet<NivelAcceso> NivelesAcceso { get; set; }
         public DbSet<Usuario> Usuarios { get; set; }
+        public DbSet<ModuloPermiso> ModulosPermiso { get; set; }
+        public DbSet<PermisoModuloRol> PermisosModuloRol { get; set; }
 
         public DbSet<Ciclo> Ciclos { get; set; }
         public DbSet<Inscripcion> Inscripciones { get; set; }
@@ -119,6 +121,26 @@ namespace SRAUMOAR.Modelos
                 .WithMany()
                 .HasForeignKey(hc => hc.PensumId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ModuloPermiso>()
+                .HasIndex(m => m.Codigo)
+                .IsUnique();
+
+            modelBuilder.Entity<PermisoModuloRol>()
+                .HasIndex(p => new { p.ModuloPermisoId, p.NivelAccesoId })
+                .IsUnique();
+
+            modelBuilder.Entity<PermisoModuloRol>()
+                .HasOne(p => p.ModuloPermiso)
+                .WithMany(m => m.PermisosPorRol)
+                .HasForeignKey(p => p.ModuloPermisoId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<PermisoModuloRol>()
+                .HasOne(p => p.NivelAcceso)
+                .WithMany()
+                .HasForeignKey(p => p.NivelAccesoId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
         public DbSet<SRAUMOAR.Entidades.Accesos.NivelAcceso> NivelAcceso { get; set; } = default!;
 

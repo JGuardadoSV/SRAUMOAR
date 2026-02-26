@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -11,7 +11,7 @@ using SRAUMOAR.Modelos;
 
 namespace SRAUMOAR.Pages.aranceles
 {
-    [Authorize(Roles = "Administrador,Administracion")]
+    [Authorize(Roles = "Administrador,Administracion,Contabilidad")]
     public class DeleteModel : PageModel
     {
         private readonly SRAUMOAR.Modelos.Contexto _context;
@@ -63,3 +63,4 @@ namespace SRAUMOAR.Pages.aranceles
         }
     }
 }
+

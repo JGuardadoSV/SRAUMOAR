@@ -1,4 +1,4 @@
-Ôªøusing System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -19,7 +19,7 @@ using SRAUMOAR.Entidades.Generales;
 
 namespace SRAUMOAR.Pages.aranceles
 {
-    [Authorize(Roles = "Administrador,Administracion")]
+    [Authorize(Roles = "Administrador,Administracion,Contabilidad")]
     public class FacturasModel : PageModel
     {
         private readonly SRAUMOAR.Modelos.Contexto _context;
@@ -63,14 +63,14 @@ namespace SRAUMOAR.Pages.aranceles
                 query = query.Where(c => c.Alumno.Carnet == carnetAlumno);
             }
 
-            // Obtener total de registros para paginaci√≥n
+            // Obtener total de registros para paginaciÛn
             TotalRegistros = await query.CountAsync();
             TotalPaginas = (int)Math.Ceiling((double)TotalRegistros / RegistrosPorPagina);
 
-            // Calcular total del monto de todos los registros filtrados (no solo los de la p√°gina actual)
+            // Calcular total del monto de todos los registros filtrados (no solo los de la p·gina actual)
             TotalMonto = await query.SumAsync(c => c.Total);
 
-            // Aplicar paginaci√≥n
+            // Aplicar paginaciÛn
             CobroArancel = await query
                 .OrderByDescending(c => c.CobroArancelId)
                 .Skip((PaginaActual - 1) * RegistrosPorPagina)
@@ -102,7 +102,7 @@ namespace SRAUMOAR.Pages.aranceles
         {
             try
             {
-                // Aqu√≠ puedes agregar tu l√≥gica para obtener el JSON y sello
+                // AquÌ puedes agregar tu lÛgica para obtener el JSON y sello
                 // Por ahora uso valores de ejemplo
                 CobroArancel cobroArancel = await _context.CobrosArancel
                     .Include(c => c.Alumno).ThenInclude(a => a.Carrera)
@@ -119,8 +119,8 @@ namespace SRAUMOAR.Pages.aranceles
                 }
               
 
-                var dteJson = factura.JsonDte; // Reemplazar con tu l√≥gica
-                var selloRecibido = factura.SelloRecepcion; // Reemplazar con tu l√≥gica
+                var dteJson = factura.JsonDte; // Reemplazar con tu lÛgica
+                var selloRecibido = factura.SelloRecepcion; // Reemplazar con tu lÛgica
                 var tipo = factura.TipoDTE.ToString().PadLeft(2, '0');
 
                 // Datos que necesitas enviar
@@ -144,9 +144,9 @@ namespace SRAUMOAR.Pages.aranceles
                 {
                     var pdfBytes = await response.Content.ReadAsByteArrayAsync();
 
-                    //Console.WriteLine($"[DEBUG CLIENT] PDF recibido, tama√±o: {pdfBytes.Length} bytes");
+                    //Console.WriteLine($"[DEBUG CLIENT] PDF recibido, tamaÒo: {pdfBytes.Length} bytes");
 
-                    // Respuesta m√°s simple - deja que la API maneje los headers
+                    // Respuesta m·s simple - deja que la API maneje los headers
                     return File(pdfBytes, "application/pdf");
                 }
                 else
@@ -159,10 +159,11 @@ namespace SRAUMOAR.Pages.aranceles
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR CLIENT] Excepci√≥n: {ex}");
+                Console.WriteLine($"[ERROR CLIENT] ExcepciÛn: {ex}");
                 TempData["Error"] = $"Error: {ex.Message}";
                 return RedirectToPage();
             }
         }
     }
 }
+

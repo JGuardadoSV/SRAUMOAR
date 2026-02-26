@@ -1,6 +1,7 @@
 using DinkToPdf.Contracts;
 using DinkToPdf;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SRAUMOAR.Modelos;
@@ -30,6 +31,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 
 // Registrar el servicio de respaldos
 builder.Services.AddScoped<IBackupService, BackupService>();
+builder.Services.AddScoped<PermisosVistaService>();
 
 // Registrar el servicio de configuración del emisor
 builder.Services.AddScoped<EmisorConfigService>();
@@ -80,8 +82,13 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 builder.Services.AddHttpClient();
 builder.Services.AddAuthorization(options =>
     {
+        options.FallbackPolicy = new AuthorizationPolicyBuilder()
+            .RequireAuthenticatedUser()
+            .Build();
+
         options.AddPolicy("RequireAdministratorRole", policy => policy.RequireRole("Administrador"));
         options.AddPolicy("RequireAdministracionRole", policy => policy.RequireRole("Administracion"));
+        options.AddPolicy("RequireContabilidadRole", policy => policy.RequireRole("Contabilidad"));
         options.AddPolicy("RequireDocentesRole", policy => policy.RequireRole("Docentes"));
         options.AddPolicy("RequireEstudiantesRole", policy => policy.RequireRole("Estudiantes"));
     });

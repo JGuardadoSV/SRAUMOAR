@@ -1,4 +1,4 @@
-锘縰sing System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -12,7 +12,7 @@ using SRAUMOAR.Modelos;
 
 namespace SRAUMOAR.Pages.aranceles
 {
-    [Authorize(Roles = "Administrador,Administracion")]
+    [Authorize(Roles = "Administrador,Administracion,Contabilidad")]
     public class EditModel : PageModel
     {
         private readonly SRAUMOAR.Modelos.Contexto _context;
@@ -52,10 +52,10 @@ namespace SRAUMOAR.Pages.aranceles
         // For more details, see https://aka.ms/RazorPagesCRUD.
         public async Task<IActionResult> OnPostAsync()
         {
-            // Validaci贸n condicional: si no es obligatorio NI especializaci贸n, los campos de ciclo y fechas son opcionales
+            // Validaci髇 condicional: si no es obligatorio NI especializaci髇, los campos de ciclo y fechas son opcionales
             if (!Arancel.Obligatorio && !Arancel.EsEspecializacion)
             {
-                // Remover errores de validaci贸n para campos opcionales cuando no es obligatorio ni especializaci贸n
+                // Remover errores de validaci髇 para campos opcionales cuando no es obligatorio ni especializaci髇
                 ModelState.Remove("Arancel.CicloId");
                 ModelState.Remove("Arancel.FechaInicio");
                 ModelState.Remove("Arancel.FechaFin");
@@ -125,3 +125,4 @@ namespace SRAUMOAR.Pages.aranceles
         }
     }
 }
+

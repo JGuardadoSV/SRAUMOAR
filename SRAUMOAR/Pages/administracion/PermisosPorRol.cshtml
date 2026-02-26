@@ -1,0 +1,61 @@
+@page
+@model SRAUMOAR.Pages.administracion.PermisosPorRolModel
+@{
+    ViewData["Title"] = "Permisos por Rol";
+}
+
+<div class="container-fluid py-3">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-1"><i class="bi bi-shield-check me-2"></i>Permisos por Rol</h4>
+                <p class="text-muted mb-0">Modifica qué módulos puede ver cada rol.</p>
+            </div>
+            <button type="submit" form="formPermisos" class="btn btn-success">
+                <i class="bi bi-save me-1"></i>Guardar cambios
+            </button>
+        </div>
+
+        <div class="card-body">
+            @if (TempData["SuccessMessage"] is string msg)
+            {
+                <div class="alert alert-success" role="alert">@msg</div>
+            }
+
+            <form method="post" id="formPermisos">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Módulo</th>
+                                <th class="text-center">Administrador</th>
+                                <th class="text-center">Administración</th>
+                                <th class="text-center">Contabilidad</th>
+                                <th class="text-center">Docentes</th>
+                                <th class="text-center">Estudiantes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (var i = 0; i < Model.Permisos.Count; i++)
+                            {
+                                <tr>
+                                    <td>
+                                        @Model.Permisos[i].Modulo
+                                        <input type="hidden" asp-for="Permisos[i].ModuloPermisoId" />
+                                        <input type="hidden" asp-for="Permisos[i].Codigo" />
+                                        <input type="hidden" asp-for="Permisos[i].Modulo" />
+                                    </td>
+                                    <td class="text-center"><input class="form-check-input" asp-for="Permisos[i].Administrador" /></td>
+                                    <td class="text-center"><input class="form-check-input" asp-for="Permisos[i].Administracion" /></td>
+                                    <td class="text-center"><input class="form-check-input" asp-for="Permisos[i].Contabilidad" /></td>
+                                    <td class="text-center"><input class="form-check-input" asp-for="Permisos[i].Docentes" /></td>
+                                    <td class="text-center"><input class="form-check-input" asp-for="Permisos[i].Estudiantes" /></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

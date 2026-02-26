@@ -1,4 +1,5 @@
-锘緻using System.Security.Claims
+@using System.Security.Claims
+@inject SRAUMOAR.Servicios.PermisosVistaService PermisosVistaService
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -431,6 +432,11 @@
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
+    @{
+        var permisosUsuario = User.Identity?.IsAuthenticated == true
+            ? await PermisosVistaService.ObtenerCodigosPermitidosAsync(User)
+            : new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    }
     <!--begin::App Wrapper-->
     <div class="app-wrapper">
         <!--begin::Header-->
@@ -449,6 +455,10 @@
                         {
                             <a asp-page="/Menu" class="nav-link"><i class="nav-icon bi bi-house"></i></a>
                         }
+                        @if (User.IsInRole("Contabilidad") && (permisosUsuario.Contains("COLECTURIA") || permisosUsuario.Contains("PERMISOS_ROL")))
+                        {
+                            <a asp-page="/Menu" class="nav-link"><i class="nav-icon bi bi-house"></i></a>
+                        }
                         @if (User.IsInRole("Docentes") )
                         {
                             <a asp-page="/portal/docente/Index" class="nav-link"><i class="nav-icon bi bi-house"></i></a>
@@ -461,7 +471,7 @@
                 </ul>
                 <!--end::Start Navbar Links-->
                 <div class="d-none d-md-flex align-items-center ms-auto" style="max-width: 420px; width: 100%;">
-                    @if (User.IsInRole("Administracion") || User.IsInRole("Administrador"))
+                    @if ((User.IsInRole("Administracion") || User.IsInRole("Administrador")) && (permisosUsuario.Contains("GESTION_ACADEMICA") || permisosUsuario.Contains("MATRICULA_INSCRIPCION") || permisosUsuario.Contains("COLECTURIA") || permisosUsuario.Contains("SEGURIDAD") || permisosUsuario.Contains("PERMISOS_ROL")))
                     {
                         <div class="search-container mb-0" style="width:100%;">
                             <form method="get" id="searchForm">
@@ -485,7 +495,7 @@
                     }
                 </div>
                 <ul class="navbar-nav ms-2">
-                    <!-- Quitar el icono de b煤squeda -->
+                    <!-- Quitar el icono de b鷖queda -->
                     <!--<li class="nav-item"> <a class="nav-link" data-widget="navbar-search" href="#" role="button"> <i class="bi bi-search"></i> </a> </li>-->
                     <!--end::Navbar Search-->
                     <!--begin::Messages Dropdown Menu-->
@@ -563,7 +573,8 @@
                                         var rolDescripcion = rol switch
                                         {
                                             "Administrador" => "Administrador",
-                                            "Administracion" => "Administraci贸n",
+                                            "Administracion" => "Administraci髇",
+                                            "Contabilidad" => "Contabilidad",
                                             "Docentes" => "Docente",
                                             "Estudiantes" => "Estudiante",
                                             _ => rol
@@ -630,7 +641,7 @@
                         <img src="~/assets/img/logo1.jpg" alt="Logo" class="brand-image opacity-75 shadow">
                         <span class="sidebar-brand-copy">
                             <span class="sidebar-brand-title">UMOAR</span>
-                            <span class="sidebar-brand-subtitle">Gesti贸n Acad茅mica</span>
+                            <span class="sidebar-brand-subtitle">Gesti髇 Acad閙ica</span>
                         </span>
                     </a>
                 }
@@ -640,17 +651,27 @@
                         <img src="~/assets/img/logo1.jpg" alt="Logo" class="brand-image opacity-75 shadow">
                         <span class="sidebar-brand-copy">
                             <span class="sidebar-brand-title">SRAUMOAR</span>
-                            <span class="sidebar-brand-subtitle">Gesti贸n Acad茅mica</span>
+                            <span class="sidebar-brand-subtitle">Gesti髇 Acad閙ica</span>
                         </span>
                     </a>
                 }
-                @if (User.IsInRole("Docentes"))
+                @if (User.IsInRole("Contabilidad") && (permisosUsuario.Contains("COLECTURIA") || permisosUsuario.Contains("PERMISOS_ROL")))
+                {
+                    <a asp-page="/Menu" class="brand-link">
+                        <img src="~/assets/img/logo1.jpg" alt="Logo" class="brand-image opacity-75 shadow">
+                        <span class="sidebar-brand-copy">
+                            <span class="sidebar-brand-title">SRAUMOAR</span>
+                            <span class="sidebar-brand-subtitle">Gesti髇 Acad閙ica</span>
+                        </span>
+                    </a>
+                }
+                @if (User.IsInRole("Docentes") && permisosUsuario.Contains("PORTAL_DOCENTE"))
                 {
                     <a asp-page="/portal/docente/Index" class="brand-link">
                         <img src="~/assets/img/logo1.jpg" alt="Logo" class="brand-image opacity-75 shadow">
                         <span class="sidebar-brand-copy">
                             <span class="sidebar-brand-title">SRAUMOAR</span>
-                            <span class="sidebar-brand-subtitle">Gesti贸n Acad茅mica</span>
+                            <span class="sidebar-brand-subtitle">Gesti髇 Acad閙ica</span>
                         </span>
                     </a>
                 }
@@ -660,7 +681,7 @@
                         <img src="~/assets/img/logo1.jpg" alt="Logo" class="brand-image opacity-75 shadow">
                         <span class="sidebar-brand-copy">
                             <span class="sidebar-brand-title">SRAUMOAR</span>
-                            <span class="sidebar-brand-subtitle">Gesti贸n Acad茅mica</span>
+                            <span class="sidebar-brand-subtitle">Gesti髇 Acad閙ica</span>
                         </span>
                     </a>
                 }
@@ -668,10 +689,10 @@
             </div> <!--end::Sidebar Brand--> <!--begin::Sidebar Wrapper-->
             <div class="sidebar-wrapper">
                 <nav class="mt-2">
-                    <p class="sidebar-caption">Navegaci贸n principal</p>
+                    <p class="sidebar-caption">Navegaci髇 principal</p>
                     <!--begin::Sidebar Menu-->
                     <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu" data-accordion="false">
-                        @if (User.IsInRole("Administrador") || User.IsInRole("Administracion"))
+                        @if ((User.IsInRole("Administrador") || User.IsInRole("Administracion")) && permisosUsuario.Contains("TABLAS_GENERALES"))
                         {
                             <!-- INICIA MENU TABLAS GENERALES  -->
                             <li class="nav-item">
@@ -751,7 +772,7 @@
                                         <a asp-area="" asp-page="/generales/codigoActividadEconomica/Index" class="nav-link">
                                             <i class="nav-icon bi bi-hash"></i>
                                             <p>
-                                                C贸digos Actividad Econ贸mica
+                                                C骴igos Actividad Econ髆ica
                                             </p>
                                         </a>
                                     </li>
@@ -761,7 +782,7 @@
                                  <a href="#" class="nav-link">
                                     <i class="nav-icon bi bi-table"></i>
                                     <p>
-                                        Facturaci贸n
+                                        Facturaci髇
                                         <i class="nav-arrow bi bi-chevron-right"></i>
                                     </p>
                                 </a>
@@ -839,7 +860,7 @@
                                     <li class="nav-item">
                                         <a asp-area="" asp-page="/becados/Index" class="nav-link">
                                             <i class="nav-icon bi bi-person-fill"></i>
-                                            <p>Administraci贸n de becados</p>
+                                            <p>Administraci髇 de becados</p>
                                         </a>
                                     </li>
                                     <li class="nav-item">
@@ -881,7 +902,7 @@
                             </li> <!-- Docentes -->
                             <!-- FIN MENU TABLAS GENERALES  -->
                         }
-                        @if (User.IsInRole("Administracion") || User.IsInRole("Administrador"))
+                        @if ((User.IsInRole("Administracion") || User.IsInRole("Administrador")) && (permisosUsuario.Contains("GESTION_ACADEMICA") || permisosUsuario.Contains("MATRICULA_INSCRIPCION") || permisosUsuario.Contains("COLECTURIA") || permisosUsuario.Contains("SEGURIDAD") || permisosUsuario.Contains("PERMISOS_ROL")))
                         {
                             <li class="nav-item">
                                 <a href="#" class="nav-link">
@@ -895,7 +916,7 @@
                                     <li class="nav-item">
                                         <a asp-area="" asp-page="/generales/ciclos/Index" class="nav-link">
                                             <i class="nav-icon bi bi-calendar"></i>
-                                            <p>Administraci贸n de ciclo</p>
+                                            <p>Administraci髇 de ciclo</p>
                                         </a>
                                     </li>
                                     <li class="nav-item">
@@ -913,13 +934,13 @@
                                     <li class="nav-item">
                                         <a asp-area="" asp-page="/grupos/Historico" class="nav-link">
                                             <i class="nav-icon bi bi-clock-history"></i>
-                                            <p>Consultas Hist贸ricas</p>
+                                            <p>Consultas Hist髍icas</p>
                                         </a>
                                     </li>
                                     <li class="nav-item">
                                         <a asp-area="" asp-page="/actividades/Index" class="nav-link">
                                             <i class="nav-icon bi bi-calendar-event"></i>
-                                            <p>Actividades acad茅micas</p>
+                                            <p>Actividades acad閙icas</p>
                                         </a>
                                     </li>
                                     <li class="nav-item">
@@ -981,7 +1002,7 @@
                                     <li class="nav-item">
                                         <a asp-area="" asp-page="/reportes/matricula-sin-inscripcion/Index" class="nav-link">
                                             <i class="bi bi-arrow-right-circle me-1"></i>
-                                            Matr铆cula Sin Inscripci贸n
+                                            Matr韈ula Sin Inscripci髇
                                         </a>
                                     </li>
                                 </ul>
@@ -1033,7 +1054,13 @@
                                     <li class="nav-item">
                                         <a asp-area="" asp-page="/Autenticacion/ResetearContrasenas" class="nav-link">
                                             <i class="nav-icon bi bi-key"></i>
-                                            <p>Resetear contrase帽as</p>
+                                            <p>Resetear contrase馻s</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a asp-area="" asp-page="/administracion/PermisosPorRol" class="nav-link">
+                                            <i class="nav-icon bi bi-shield-check"></i>
+                                            <p>Permisos por Rol</p>
                                         </a>
                                     </li>
                                 </ul>
@@ -1059,7 +1086,56 @@
                            
                            
                         }
-                        @if (User.IsInRole("Docentes"))
+                        @if (User.IsInRole("Contabilidad") && (permisosUsuario.Contains("COLECTURIA") || permisosUsuario.Contains("PERMISOS_ROL")))
+                        {
+                            <li class="nav-item">
+                                <a href="#" class="nav-link">
+                                    <i class="nav-icon bi bi-card-list"></i>
+                                    <p>
+                                        Colecturia
+                                        <i class="nav-arrow bi bi-chevron-right"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a asp-area="" asp-page="/aranceles/facturas" class="nav-link">
+                                            <i class="nav-icon bi bi-receipt"></i>
+                                            <p>Cobros</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a asp-area="" asp-page="/alumno/Busqueda" class="nav-link">
+                                            <i class="nav-icon bi bi-search"></i>
+                                            <p>Cobrar</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a asp-area="" asp-page="/reportes/insolventes/Index" class="nav-link">
+                                            <i class="bi bi-arrow-right-circle me-1"></i>
+                                            Insolventes
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#" class="nav-link">
+                                    <i class="nav-icon bi bi-shield-lock"></i>
+                                    <p>
+                                        Seguridad
+                                        <i class="nav-arrow bi bi-chevron-right"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a asp-area="" asp-page="/administracion/PermisosPorRol" class="nav-link">
+                                            <i class="nav-icon bi bi-shield-check"></i>
+                                            <p>Permisos por Rol</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                        @if (User.IsInRole("Docentes") && permisosUsuario.Contains("PORTAL_DOCENTE"))
                         {
                             <li class="nav-item">
                                 <a href="#" class="nav-link">
@@ -1079,7 +1155,7 @@
                                     <li class="nav-item">
                                         <a asp-area="" asp-page="/grupos/Historico" class="nav-link">
                                             <i class="bi bi-clock-history"></i>
-                                            <p>Consultas Hist贸ricas</p>
+                                            <p>Consultas Hist髍icas</p>
                                         </a>
                                     </li>
                                     <li class="nav-item">
@@ -1104,7 +1180,7 @@
                     <!--begin::Row-->
                     <div class="row">
                         <div class="container">
-                            @if (User.IsInRole("Administracion") || User.IsInRole("Administrador"))
+                            @if ((User.IsInRole("Administracion") || User.IsInRole("Administrador")) && (permisosUsuario.Contains("GESTION_ACADEMICA") || permisosUsuario.Contains("MATRICULA_INSCRIPCION") || permisosUsuario.Contains("COLECTURIA") || permisosUsuario.Contains("SEGURIDAD") || permisosUsuario.Contains("PERMISOS_ROL")))
                         {
                             <div class="container py-4">
                                 <div class="row justify-content-center">
@@ -1148,7 +1224,7 @@
             <!--begin::To the end-->
             <div class="float-end d-none d-sm-inline"></div> <!--end::To the end--> <!--begin::Copyright--> <strong>
                 <p>Copyright &copy; <script>document.write(new Date().getFullYear());</script>&nbsp;</p>
-                <a href="https://umoar.edu.sv" class="text-decoration-none">Universidad Monse帽or Romero</a>.
+                <a href="https://umoar.edu.sv" class="text-decoration-none">Universidad Monse駉r Romero</a>.
             </strong>
 
             <!--end::Copyright-->
@@ -1157,13 +1233,13 @@
     <!-- Primero jQuery -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
 
-    <!-- Despu茅s jQuery UI -->
+    <!-- Despu閟 jQuery UI -->
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
 
-    <!-- Configuraci贸n centralizada de jQuery -->
+    <!-- Configuraci髇 centralizada de jQuery -->
     <script src="~/js/jquery-config.js"></script>
     
-    <!-- Inicializaci贸n del autocomplete -->
+    <!-- Inicializaci髇 del autocomplete -->
     <script>
         jQuery(document).ready(function() {
             // Inicializar autocomplete de forma segura
@@ -1197,14 +1273,14 @@
         });
     </script>
 
-    <!-- DESPU脡S todos los dem谩s scripts -->
+    <!-- DESPU蒘 todos los dem醩 scripts -->
     <script src="~/js/overlayscrollbars.browser.es6.min.js"></script>
     <script src="~/js/popper.min.js"></script>
     <script src="~/js/bootstrap.min.js"></script>
     <script src="~/js/adminlte.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
 
-    <!-- Configuraci贸n de OverlayScrollbars -->
+    <!-- Configuraci髇 de OverlayScrollbars -->
     <script>
         const SELECTOR_SIDEBAR_WRAPPER = ".sidebar-wrapper";
         const Default = {
@@ -1300,7 +1376,7 @@
                     if (data.success && data.foto) {
                         const fotoUrl = `data:image/jpeg;base64,${data.foto}`;
                         
-                        // Actualizar la foto peque帽a en la barra de navegaci贸n
+                        // Actualizar la foto peque馻 en la barra de navegaci髇
                         if (userPhotoSmall) {
                             userPhotoSmall.src = fotoUrl;
                         }
@@ -1321,3 +1397,4 @@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
+

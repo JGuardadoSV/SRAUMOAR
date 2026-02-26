@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -10,6 +11,7 @@ using SRAUMOAR.Entidades.Generales;
 
 namespace SRAUMOAR.Pages
 {
+    [AllowAnonymous]
     public class IndexModel : PageModel
     {
         private readonly EmisorConfig _emisor;
@@ -82,6 +84,8 @@ namespace SRAUMOAR.Pages
                             return RedirectToPage("/Home");
                         case "administracion":
                             return RedirectToPage("/Menu");
+                        case "contabilidad":
+                            return RedirectToPage("/Menu");
                         case "docentes":
                             return RedirectToPage("/portal/docente/Index");
                         case "estudiantes":
@@ -122,3 +126,5 @@ namespace SRAUMOAR.Pages
 }
  
  */
+
+
