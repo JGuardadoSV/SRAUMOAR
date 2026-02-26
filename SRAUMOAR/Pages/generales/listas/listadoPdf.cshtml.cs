@@ -49,19 +49,46 @@ namespace SRAUMOAR.Pages.generales.listas
                 // Verificar si hay un parcial activo en el rango de fechas actual
                 var fechaActual = DateTime.Today;
 
-                // IMPORTANTE: Puede existir un parcial general y uno de especializacion en el mismo rango de fechas.
-                // Elegimos el que corresponda segun el tipo de grupo, usando la marca del arancel.
-                var parcialActivo = _context.ActividadesAcademicas
+                // Parciales (TipoActividad == 2): hoy se crea 1 parcial con 2 aranceles (general + especializacion).
+                // Para no romper data historica, consideramos tambien el esquema viejo (2 parciales separados por Arancel.EsEspecializacion).
+                var parcialesActivos = _context.ActividadesAcademicas
                     .AsNoTracking()
                     .Include(a => a.Arancel)
-                    .Where(a => a.TipoActividad == 2 && // Parcial
+                    .Where(a => a.TipoActividad == 2 &&
                                 a.CicloId == cicloId &&
                                 a.FechaInicio <= fechaActual &&
-                                a.FechaFin >= fechaActual &&
-                                a.Arancel != null &&
-                                a.Arancel.EsEspecializacion == esEspecializacionGrupo)
-                    .OrderBy(a => a.ActividadAcademicaId)
-                    .FirstOrDefault();
+                                a.FechaFin >= fechaActual)
+                    .ToList();
+
+                ActividadAcademica? parcialActivo;
+                if (esEspecializacionGrupo)
+                {
+                    parcialActivo = parcialesActivos
+                        .Where(a => a.ArancelEspecializacionId != null)
+                        .OrderBy(a => a.ActividadAcademicaId)
+                        .FirstOrDefault()
+                        ?? parcialesActivos
+                            .Where(a => a.Arancel != null && a.Arancel.EsEspecializacion)
+                            .OrderBy(a => a.ActividadAcademicaId)
+                            .FirstOrDefault()
+                        ?? parcialesActivos
+                            .OrderBy(a => a.ActividadAcademicaId)
+                            .FirstOrDefault();
+                }
+                else
+                {
+                    parcialActivo = parcialesActivos
+                        .Where(a => a.ArancelEspecializacionId == null)
+                        .OrderBy(a => a.ActividadAcademicaId)
+                        .FirstOrDefault()
+                        ?? parcialesActivos
+                            .Where(a => a.Arancel != null && !a.Arancel.EsEspecializacion)
+                            .OrderBy(a => a.ActividadAcademicaId)
+                            .FirstOrDefault()
+                        ?? parcialesActivos
+                            .OrderBy(a => a.ActividadAcademicaId)
+                            .FirstOrDefault();
+                }
 
                 // Solo si hay parcial activo, verificar estados
                 if (parcialActivo != null)
@@ -81,9 +108,14 @@ namespace SRAUMOAR.Pages.generales.listas
                         }
                         else
                         {
-                            // Verificar si pagó el arancel del parcial
+                            // Verificar si pago el arancel que corresponde segun el tipo de grupo.
+                            // Nota: ArancelEspecializacionId puede venir null (parcial sin arancel de especializacion), en ese caso se valida con ArancelId.
+                            var arancelIdAValidar = (esEspecializacionGrupo && parcialActivo.ArancelEspecializacionId.HasValue)
+                                ? parcialActivo.ArancelEspecializacionId.Value
+                                : parcialActivo.ArancelId;
+
                             var haPagado = _context.DetallesCobrosArancel
-                                .Any(d => d.ArancelId == parcialActivo.ArancelId &&
+                                .Any(d => d.ArancelId == arancelIdAValidar &&
                                          d.CobroArancel.AlumnoId == inscripcion.AlumnoId &&
                                          d.CobroArancel.CicloId == cicloId);
 
