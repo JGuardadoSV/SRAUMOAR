@@ -16,6 +16,168 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/css/jsvectormap.min.css" crossorigin="anonymous">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css" rel="stylesheet">
     <style>
+        :root {
+            --sidebar-bg: linear-gradient(180deg, #eff9ee 0%, #dff2dc 100%);
+            --sidebar-surface: rgba(255, 255, 255, 0.78);
+            --sidebar-border: rgba(22, 145, 16, 0.20);
+            --sidebar-text: #12310f;
+            --sidebar-muted: #3e6b3a;
+            --sidebar-accent: #169110;
+            --sidebar-accent-soft: rgba(22, 145, 16, 0.15);
+            --sidebar-active: #ffffff;
+        }
+
+        .elegant-sidebar {
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--sidebar-border);
+            box-shadow: 8px 0 30px rgba(48, 39, 29, 0.08);
+            color: var(--sidebar-text);
+            animation: sidebarReveal 320ms ease-out;
+        }
+
+        @@keyframes sidebarReveal {
+            from { opacity: 0; transform: translateX(-14px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .elegant-sidebar .sidebar-brand {
+            padding: 1rem 1rem 0.75rem;
+            border-bottom: 1px solid var(--sidebar-border);
+        }
+
+        .elegant-sidebar .brand-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--sidebar-text);
+        }
+
+        .elegant-sidebar .brand-image {
+            border-radius: 10px;
+            border: 1px solid var(--sidebar-border);
+            background: #fff;
+            padding: 0.15rem;
+        }
+
+        .sidebar-brand-copy {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.1;
+        }
+
+        .sidebar-brand-title {
+            font-family: "Georgia", "Times New Roman", serif;
+            font-size: 0.95rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--sidebar-text);
+            font-weight: 700;
+        }
+
+        .sidebar-brand-subtitle {
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--sidebar-muted);
+        }
+
+        .elegant-sidebar .sidebar-wrapper {
+            padding: 0.55rem 0.55rem 1rem;
+        }
+
+        .sidebar-caption {
+            margin: 0.4rem 0.45rem 0.7rem;
+            padding-left: 0.4rem;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
+            color: var(--sidebar-muted);
+        }
+
+        .elegant-sidebar .nav.sidebar-menu > .nav-item {
+            margin-bottom: 0.2rem;
+        }
+
+        .elegant-sidebar .nav-link {
+            border-radius: 12px;
+            min-height: 42px;
+            color: var(--sidebar-text);
+            margin: 0 0.3rem;
+            transition: all 180ms ease;
+        }
+
+        .elegant-sidebar .nav-link .nav-icon {
+            width: 1.45rem;
+            text-align: center;
+            color: var(--sidebar-muted);
+        }
+
+        .elegant-sidebar .nav-link:hover {
+            background: var(--sidebar-surface);
+            color: #1f1811;
+            transform: translateX(2px);
+        }
+
+        .elegant-sidebar .nav-link:hover .nav-icon {
+            color: var(--sidebar-accent);
+        }
+
+        .elegant-sidebar .nav-link:focus-visible {
+            outline: 2px solid var(--sidebar-accent);
+            outline-offset: 1px;
+            background: var(--sidebar-surface);
+        }
+
+        .elegant-sidebar .nav-item.menu-open > .nav-link,
+        .elegant-sidebar .nav-link.active,
+        .elegant-sidebar .nav-link.is-current {
+            background: var(--sidebar-active);
+            color: #241b13;
+            box-shadow: inset 0 0 0 1px var(--sidebar-border), 0 8px 16px rgba(58, 45, 33, 0.08);
+        }
+
+        .elegant-sidebar .nav-item.menu-open > .nav-link .nav-icon,
+        .elegant-sidebar .nav-link.active .nav-icon,
+        .elegant-sidebar .nav-link.is-current .nav-icon {
+            color: var(--sidebar-accent);
+        }
+
+        .elegant-sidebar .nav-treeview {
+            margin: 0.2rem 0 0.25rem 0.3rem;
+            border-left: 1px dashed rgba(142, 95, 62, 0.36);
+            padding-left: 0.2rem;
+        }
+
+        .elegant-sidebar .nav-treeview .nav-link {
+            font-size: 0.92rem;
+            margin-right: 0.1rem;
+            min-height: 38px;
+        }
+
+        .elegant-sidebar .nav-arrow {
+            color: var(--sidebar-muted);
+        }
+
+        .elegant-sidebar .menu-open > .nav-link .nav-arrow {
+            color: var(--sidebar-accent);
+        }
+
+        @@media (max-width: 991.98px) {
+            .elegant-sidebar .sidebar-brand-copy {
+                display: none;
+            }
+        }
+
+        @@media (prefers-reduced-motion: reduce) {
+            .elegant-sidebar,
+            .elegant-sidebar .nav-link {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+
         .ui-autocomplete {
         max-height: 300px;
         overflow-y: auto;
@@ -458,7 +620,7 @@
         </nav>
         <!--end::Header-->
         <!--begin::Sidebar-->
-        <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
+        <aside class="app-sidebar elegant-sidebar shadow-sm">
             <!--begin::Sidebar Brand-->
             <div class="sidebar-brand"> <!--begin::Brand Link-->
 
@@ -466,30 +628,47 @@
                 {
                     <a asp-page="/Home" class="brand-link">
                         <img src="~/assets/img/logo1.jpg" alt="Logo" class="brand-image opacity-75 shadow">
+                        <span class="sidebar-brand-copy">
+                            <span class="sidebar-brand-title">UMOAR</span>
+                            <span class="sidebar-brand-subtitle">Gestión Académica</span>
+                        </span>
                     </a>
                 }
                 @if (User.IsInRole("Administracion"))
                 {
                     <a asp-page="/Menu" class="brand-link">
                         <img src="~/assets/img/logo1.jpg" alt="Logo" class="brand-image opacity-75 shadow">
+                        <span class="sidebar-brand-copy">
+                            <span class="sidebar-brand-title">SRAUMOAR</span>
+                            <span class="sidebar-brand-subtitle">Gestión Académica</span>
+                        </span>
                     </a>
                 }
                 @if (User.IsInRole("Docentes"))
                 {
                     <a asp-page="/portal/docente/Index" class="brand-link">
                         <img src="~/assets/img/logo1.jpg" alt="Logo" class="brand-image opacity-75 shadow">
+                        <span class="sidebar-brand-copy">
+                            <span class="sidebar-brand-title">SRAUMOAR</span>
+                            <span class="sidebar-brand-subtitle">Gestión Académica</span>
+                        </span>
                     </a>
                 }
                 @if (User.IsInRole("Estudiantes"))
                 {
                     <a asp-page="/portal/estudiante/Index" class="brand-link">
                         <img src="~/assets/img/logo1.jpg" alt="Logo" class="brand-image opacity-75 shadow">
+                        <span class="sidebar-brand-copy">
+                            <span class="sidebar-brand-title">SRAUMOAR</span>
+                            <span class="sidebar-brand-subtitle">Gestión Académica</span>
+                        </span>
                     </a>
                 }
 
             </div> <!--end::Sidebar Brand--> <!--begin::Sidebar Wrapper-->
             <div class="sidebar-wrapper">
                 <nav class="mt-2">
+                    <p class="sidebar-caption">Navegación principal</p>
                     <!--begin::Sidebar Menu-->
                     <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu" data-accordion="false">
                         @if (User.IsInRole("Administrador") || User.IsInRole("Administracion"))
@@ -1046,6 +1225,57 @@
                         clickScroll: Default.scrollbarClickScroll,
                     },
                 });
+            }
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const normalizePath = (path) => {
+                if (!path) return "";
+                const clean = path.toLowerCase().split("?")[0].replace(/\/+$/, "");
+                return clean.length === 0 ? "/" : clean;
+            };
+
+            const currentPath = normalizePath(window.location.pathname);
+            const sidebarLinks = document.querySelectorAll(".sidebar-menu a.nav-link[href]");
+
+            let bestMatch = null;
+            sidebarLinks.forEach((link) => {
+                const linkPath = normalizePath(link.getAttribute("href"));
+                if (!linkPath || linkPath === "#") return;
+
+                const exactMatch = currentPath === linkPath;
+                const parentMatch = currentPath.startsWith(linkPath + "/");
+                if (!exactMatch && !parentMatch) return;
+
+                if (!bestMatch || linkPath.length > bestMatch.path.length) {
+                    bestMatch = { link, path: linkPath };
+                }
+            });
+
+            if (!bestMatch) return;
+
+            bestMatch.link.classList.add("is-current");
+            let parentItem = bestMatch.link.closest(".nav-item");
+            while (parentItem) {
+                if (parentItem.classList.contains("nav-treeview")) {
+                    parentItem = parentItem.closest(".nav-item");
+                    continue;
+                }
+
+                const parentTree = parentItem.closest(".nav-treeview");
+                if (!parentTree) break;
+
+                const parentNavItem = parentTree.closest(".nav-item");
+                if (!parentNavItem) break;
+
+                parentNavItem.classList.add("menu-open");
+                const parentLink = parentNavItem.querySelector(":scope > .nav-link");
+                if (parentLink) {
+                    parentLink.classList.add("active");
+                }
+                parentItem = parentNavItem;
             }
         });
     </script>
