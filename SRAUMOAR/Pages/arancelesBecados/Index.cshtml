@@ -29,11 +29,32 @@
                         <h3 class="card-title">Listado de Aranceles Personalizados para Alumnos Becados</h3>
                         <div class="card-tools">
                             <a asp-page="Create" class="btn btn-primary btn-sm">
-                                <i class="fas fa-plus"></i> Nuevo Arancel Becado
+                                <i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Nuevo Arancel Becado
                             </a>
                         </div>
                     </div>
                     <div class="card-body">
+                        <form method="get" class="mb-3">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-12 col-md-6">
+                                    <label asp-for="SearchAlumno" class="form-label">Alumno</label>
+                                    <input asp-for="SearchAlumno" class="form-control" placeholder="Buscar por nombre o apellido" />
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <label asp-for="SelectedCicloId" class="form-label">Ciclo</label>
+                                    <select asp-for="SelectedCicloId" asp-items="Model.Ciclos" class="form-select"></select>
+                                </div>
+                                <div class="col-12 col-md-2 d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-search me-1" aria-hidden="true"></i> Filtrar
+                                    </button>
+                                    <a asp-page="./Index" class="btn btn-outline-secondary">
+                                        <i class="bi bi-x-circle me-1" aria-hidden="true"></i> Limpiar
+                                    </a>
+                                </div>
+                            </div>
+                        </form>
+
                         <table class="table table-bordered table-striped">
                             <thead>
                                 <tr>
@@ -93,24 +114,26 @@
                                             @item.DescuentoAplicado.ToString("F1")%
                                         </td>
                                         <td>
-                                            @if (item.Activo)
-                                            {
-                                                <span class="badge badge-success">Activo</span>
+                                            @{
+                                                var estadoText = item.Activo ? "Activo" : "Inactivo";
+                                                var estadoBadgeClass = item.Activo
+                                                    ? "bg-success-subtle text-success-emphasis border border-success-subtle"
+                                                    : "bg-danger-subtle text-danger-emphasis border border-danger-subtle";
                                             }
-                                            else
-                                            {
-                                                <span class="badge badge-danger">Inactivo</span>
-                                            }
+                                            <span class="badge rounded-pill @estadoBadgeClass">@estadoText</span>
                                         </td>
                                         <td>
-                                            <a asp-page="./Edit" asp-route-id="@item.ArancelBecadoId" class="btn btn-warning btn-sm">
-                                                <i class="fas fa-edit"></i>
+                                            <a asp-page="./Edit" asp-route-id="@item.ArancelBecadoId" class="btn btn-warning btn-sm" title="Editar" aria-label="Editar">
+                                                <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                                                <span class="visually-hidden">Editar</span>
                                             </a>
-                                            <a asp-page="./Details" asp-route-id="@item.ArancelBecadoId" class="btn btn-info btn-sm">
-                                                <i class="fas fa-eye"></i>
+                                            <a asp-page="./Details" asp-route-id="@item.ArancelBecadoId" class="btn btn-info btn-sm" title="Ver detalles" aria-label="Ver detalles">
+                                                <i class="bi bi-eye" aria-hidden="true"></i>
+                                                <span class="visually-hidden">Ver detalles</span>
                                             </a>
-                                            <a asp-page="./Delete" asp-route-id="@item.ArancelBecadoId" class="btn btn-danger btn-sm">
-                                                <i class="fas fa-trash"></i>
+                                            <a asp-page="./Delete" asp-route-id="@item.ArancelBecadoId" class="btn btn-danger btn-sm" title="Eliminar" aria-label="Eliminar">
+                                                <i class="bi bi-trash" aria-hidden="true"></i>
+                                                <span class="visually-hidden">Eliminar</span>
                                             </a>
                                         </td>
                                     </tr>
