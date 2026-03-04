@@ -212,10 +212,22 @@ namespace SRAUMOAR.Pages.aranceles
 
             // Obtener ciclo activo
             var cicloActivo = await _context.Ciclos.Where(x => x.Activo).FirstOrDefaultAsync();
+
+            // Verificar si el alumno está inscrito en un grupo de especialización del ciclo actual
+            var alumnoEnGrupoEspecializacion = await EstaEnGrupoEspecializacionAsync(alumnoId, cicloActivo?.Id);
             
-            // Obtener aranceles disponibles (solo obligatorios del ciclo activo)
-            var aranceles = await _context.Aranceles
-                .Where(a => a.Activo && a.Obligatorio && a.CicloId != null && cicloActivo != null && a.CicloId == cicloActivo.Id)
+            // Obtener aranceles disponibles.
+            // Si el alumno está en especialización, mostrar solo aranceles de especialización.
+            // Si no, mantener el comportamiento actual.
+            var arancelesQuery = _context.Aranceles
+                .Where(a => a.Activo && a.Obligatorio && a.CicloId != null && cicloActivo != null && a.CicloId == cicloActivo.Id);
+
+            if (alumnoEnGrupoEspecializacion)
+            {
+                arancelesQuery = arancelesQuery.Where(a => a.EsEspecializacion);
+            }
+
+            var aranceles = await arancelesQuery
                 .Include(a => a.Ciclo)
                 .OrderBy(a => a.Nombre)
                 .ToListAsync();
@@ -265,6 +277,21 @@ namespace SRAUMOAR.Pages.aranceles
                 }).ToList(),
                 arancelesPagados = arancelesPagados
             });
+        }
+
+        private async Task<bool> EstaEnGrupoEspecializacionAsync(int alumnoId, int? cicloId)
+        {
+            if (!cicloId.HasValue)
+            {
+                return false;
+            }
+
+            return await _context.MateriasInscritas
+                .Include(mi => mi.MateriasGrupo)
+                    .ThenInclude(mg => mg.Grupo)
+                .AnyAsync(mi => mi.AlumnoId == alumnoId
+                    && mi.MateriasGrupo.Grupo.CicloId == cicloId.Value
+                    && mi.MateriasGrupo.Grupo.EsEspecializacion);
         }
 
         private async Task CargarDatosParaVista()
