@@ -274,7 +274,7 @@ namespace SRAUMOAR.Pages.puntoventa
             if (ModelState.IsValid)
             {
                 //se corrige si viene @gmail o @umoar y no terminan en .com o .edu.sv respectivamente
-                Factura.Receptor.Correo=CorregirCorreo(Factura.Receptor.Correo);
+                Factura.Receptor.Correo = CorregirCorreo(Factura.Receptor.Correo);
                 if (Factura.TipoDocumento == "01")
                 {
                     // CONSUMIDOR FINAL
@@ -355,12 +355,21 @@ namespace SRAUMOAR.Pages.puntoventa
                         codPuntoVenta = "P001",
                         correo = _emisor.EMAIL
                     };
+                    var nitLimpio = Factura.Receptor.Nit?.Replace("-", "").Trim();
 
                     // Crear el objeto para el receptor
                     var receptor = new
                     {
-                        tipoDocumento = "37",
-                        numDocumento = (string)null,
+                        tipoDocumento = string.IsNullOrWhiteSpace(nitLimpio)
+                        ? "37"
+                        : nitLimpio.Length == 9
+                            ? "13"
+                            : nitLimpio.Length == 14
+                                ? "36"
+                                : "37",
+                        numDocumento = string.IsNullOrWhiteSpace(nitLimpio)
+                        ? (string)null
+                        : nitLimpio,
                         nrc = (string)null,
                         nombre = Factura.Receptor.Nombre,
                         codActividad = (string)null,
@@ -568,7 +577,7 @@ namespace SRAUMOAR.Pages.puntoventa
                     Guid codigoGeneracion = Guid.NewGuid();
 
                     // Generar número de control
-                  
+
                     int numero = (int)await _correlativoService.ObtenerSiguienteCorrelativo("03", ambiente == 1 ? "01" : "00");
                     string numeroFormateado = numero.ToString("D15");
                     string numeroControl = "DTE-" + "03" + "-" + "M001P001" + "-" + numeroFormateado;
@@ -671,7 +680,7 @@ namespace SRAUMOAR.Pages.puntoventa
                             tributos = new[] { "20" },
                             psv = producto.PrecioUnitario,
                             noGravado = 0.0
-                            
+
                         })
                         .ToArray();
 
@@ -829,7 +838,7 @@ namespace SRAUMOAR.Pages.puntoventa
                     //FIN CREACION DEL DTE
                     //****************************************************
                 }
-                
+
                 else if (Factura.TipoDocumento == "14")
                 {
                     //SUJETO EXCLUIDO
@@ -927,7 +936,7 @@ namespace SRAUMOAR.Pages.puntoventa
                             uniMedida = 59, // Unidad de medida estándar
                             descripcion = producto.Descripcion,
                             precioUni = producto.PrecioUnitario,
-                            montoDescu =0,
+                            montoDescu = 0,
                             compra = producto.Cantidad * producto.PrecioUnitario
                         })
                         .ToArray();
@@ -937,7 +946,7 @@ namespace SRAUMOAR.Pages.puntoventa
                     decimal totalDescuento = cuerpoDocumento.Sum(item => (decimal)item.montoDescu);
                     decimal subTotal = totalCompra;
                     decimal ivaRete1 = 0; // Para sujeto excluido generalmente es 0
-                    decimal reteRenta = retencion ? Math.Round(totalCompra * 0.10m, 2):0; // totalCompra*0.10; // Retención de renta si aplica
+                    decimal reteRenta = retencion ? Math.Round(totalCompra * 0.10m, 2) : 0; // totalCompra*0.10; // Retención de renta si aplica
                     decimal totalPagar = subTotal - reteRenta;
                     string totalLetras = new Conversor().ConvertirNumeroALetras(totalPagar);
 
@@ -964,7 +973,7 @@ namespace SRAUMOAR.Pages.puntoventa
                                 plazo = (string)null
                             }
                         },
-                                            observaciones = (string)null
+                        observaciones = (string)null
                     };
 
                     // Crear el apéndice (opcional)
@@ -1000,7 +1009,7 @@ namespace SRAUMOAR.Pages.puntoventa
                     };
 
                     var selloRecibido = "";
-                   // string selloRecibido = null;
+                    // string selloRecibido = null;
                     int intentos = 0;
                     int maxIntentos = 3;
 
@@ -1158,7 +1167,7 @@ namespace SRAUMOAR.Pages.puntoventa
                         .Select((producto, index) => new
                         {
                             numItem = index + 1,
-                            tipoDonacion =int.Parse(Factura.TipoDonacion), // Tipo de donación por defecto
+                            tipoDonacion = int.Parse(Factura.TipoDonacion), // Tipo de donación por defecto
                             cantidad = producto.Cantidad,
                             codigo = producto.Codigo,
                             uniMedida = 99, // Unidad de medida estándar
@@ -1247,7 +1256,7 @@ namespace SRAUMOAR.Pages.puntoventa
                         }
                         catch (Exception)
                         {
-                            
+
                         }
 
                         if (string.IsNullOrEmpty(selloRecibido) && intentos < maxIntentos)
