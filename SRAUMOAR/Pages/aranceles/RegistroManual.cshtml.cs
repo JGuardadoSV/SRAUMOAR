@@ -40,6 +40,9 @@ namespace SRAUMOAR.Pages.aranceles
         [BindProperty]
         public DateTime FechaPago { get; set; } = DateTime.Now;
 
+        [BindProperty]
+        public int? CicloSeleccionadoId { get; set; }
+
         // Listas para los dropdowns
         public SelectList Alumnos { get; set; } = new SelectList(new List<object>());
         public SelectList Aranceles { get; set; } = new SelectList(new List<object>());
@@ -173,15 +176,22 @@ namespace SRAUMOAR.Pages.aranceles
             CobroArancel.Total = 0;
             CobroArancel.EfectivoRecibido = 0;
             CobroArancel.Cambio = 0;
-            // Asignar el CicloId si existe un ciclo en los aranceles
-            var cicloDeAranceles = await _context.Aranceles
-                .Where(a => SelectedAranceles.Contains(a.ArancelId) && a.CicloId.HasValue)
-                .Include(a => a.Ciclo)
-                .FirstOrDefaultAsync();
-
-            if (cicloDeAranceles?.Ciclo != null)
+            // Asignar el CicloId seleccionado o, como respaldo, el del primer arancel con ciclo
+            if (CicloSeleccionadoId.HasValue)
             {
-                CobroArancel.CicloId = cicloDeAranceles.Ciclo.Id;
+                CobroArancel.CicloId = CicloSeleccionadoId.Value;
+            }
+            else
+            {
+                var cicloDeAranceles = await _context.Aranceles
+                    .Where(a => SelectedAranceles.Contains(a.ArancelId) && a.CicloId.HasValue)
+                    .Include(a => a.Ciclo)
+                    .FirstOrDefaultAsync();
+
+                if (cicloDeAranceles?.Ciclo != null)
+                {
+                    CobroArancel.CicloId = cicloDeAranceles.Ciclo.Id;
+                }
             }
 
             // Guardar en la base de datos
@@ -192,7 +202,7 @@ namespace SRAUMOAR.Pages.aranceles
             return RedirectToPage("./Facturas");
         }
 
-        public async Task<IActionResult> OnGetAlumnoInfoAsync(int alumnoId)
+        public async Task<IActionResult> OnGetAlumnoInfoAsync(int alumnoId, int? cicloId)
         {
             var alumno = await _context.Alumno
                 .Include(a => a.Carrera)
@@ -212,15 +222,16 @@ namespace SRAUMOAR.Pages.aranceles
 
             // Obtener ciclo activo
             var cicloActivo = await _context.Ciclos.Where(x => x.Activo).FirstOrDefaultAsync();
+            var cicloConsultaId = cicloId ?? cicloActivo?.Id;
 
-            // Verificar si el alumno está inscrito en un grupo de especialización del ciclo actual
-            var alumnoEnGrupoEspecializacion = await EstaEnGrupoEspecializacionAsync(alumnoId, cicloActivo?.Id);
+            // Verificar si el alumno está inscrito en un grupo de especialización del ciclo consultado
+            var alumnoEnGrupoEspecializacion = await EstaEnGrupoEspecializacionAsync(alumnoId, cicloConsultaId);
             
             // Obtener aranceles disponibles.
             // Si el alumno está en especialización, mostrar solo aranceles de especialización.
             // Si no, mantener el comportamiento actual.
             var arancelesQuery = _context.Aranceles
-                .Where(a => a.Activo && a.Obligatorio && a.CicloId != null && cicloActivo != null && a.CicloId == cicloActivo.Id);
+                .Where(a => a.Activo && a.Obligatorio && a.CicloId != null && cicloConsultaId != null && a.CicloId == cicloConsultaId);
 
             if (alumnoEnGrupoEspecializacion)
             {
@@ -261,7 +272,8 @@ namespace SRAUMOAR.Pages.aranceles
                     nombres = alumno.Nombres,
                     apellidos = alumno.Apellidos,
                     carrera = alumno.Carrera?.NombreCarrera,
-                    exentoMora = alumno.ExentoMora
+                    exentoMora = alumno.ExentoMora,
+                    esPreEspecializacion = alumnoEnGrupoEspecializacion
                 },
                 tieneBecaParcial = tieneBecaParcial,
                 aranceles = aranceles.Select(a => new
@@ -316,23 +328,35 @@ namespace SRAUMOAR.Pages.aranceles
 
             // Obtener ciclo activo
             var cicloActivo = await _context.Ciclos.Where(x => x.Activo).FirstOrDefaultAsync();
+            var cicloConsultaId = CicloSeleccionadoId ?? cicloActivo?.Id;
+
+            if (!CicloSeleccionadoId.HasValue && cicloActivo != null)
+            {
+                CicloSeleccionadoId = cicloActivo.Id;
+            }
             
-            // Cargar aranceles activos del ciclo actual
+            // Cargar aranceles activos del ciclo seleccionado
             Aranceles = new SelectList(await _context.Aranceles
-                .Where(a => a.Activo && ((a.CicloId != null && cicloActivo != null && a.CicloId == cicloActivo.Id) || (!a.Obligatorio && a.CicloId == null)))
+                .Where(a => a.Activo && ((a.CicloId != null && cicloConsultaId != null && a.CicloId == cicloConsultaId) || (!a.Obligatorio && a.CicloId == null)))
                 .OrderBy(a => a.Nombre)
                 .ToListAsync(), "ArancelId", "Nombre");
 
-            // Cargar ciclos activos
-            Ciclos = new SelectList(await _context.Ciclos
-                .Where(c => c.Activo)
+            // Cargar todos los ciclos para poder registrar deudas de ciclos anteriores
+            var ciclos = await _context.Ciclos
                 .OrderByDescending(c => c.anio)
                 .ThenByDescending(c => c.NCiclo)
-                .ToListAsync(), "Id", "NCiclo");
+                .Select(c => new
+                {
+                    c.Id,
+                    Nombre = $"Ciclo {c.NCiclo} - {c.anio}" + (c.Activo ? " (Activo)" : "")
+                })
+                .ToListAsync();
 
-            // Cargar aranceles disponibles del ciclo activo
+            Ciclos = new SelectList(ciclos, "Id", "Nombre", CicloSeleccionadoId);
+
+            // Cargar aranceles disponibles del ciclo seleccionado
             ArancelesDisponibles = await _context.Aranceles
-                .Where(a => a.Activo && ((a.CicloId != null && cicloActivo != null && a.CicloId == cicloActivo.Id) || (!a.Obligatorio && a.CicloId == null)))
+                .Where(a => a.Activo && ((a.CicloId != null && cicloConsultaId != null && a.CicloId == cicloConsultaId) || (!a.Obligatorio && a.CicloId == null)))
                 .Include(a => a.Ciclo)
                 .OrderBy(a => a.Nombre)
                 .ToListAsync();

@@ -462,6 +462,10 @@
                                     <div class="student-detail-label">Carrera</div>
                                     <div class="student-detail-value" id="studentCarrera">-</div>
                                 </div>
+                                <div class="student-detail">
+                                    <div class="student-detail-label">Pre especializacion</div>
+                                    <div class="student-detail-value" id="studentPreEspecializacion">-</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -471,6 +475,16 @@
                         <h3 class="section-title">📋 Información del Pago</h3>
                         
                         <div class="form-row">
+                            <div class="form-group">
+                                <label class="control-label">Ciclo</label>
+                                <select asp-for="CicloSeleccionadoId" asp-items="Model.Ciclos" class="form-control" id="cicloSelect">
+                                    <option value="">-- Selecciona un ciclo --</option>
+                                </select>
+                                <small class="text-muted" style="font-size: 0.875rem; margin-top: 0.25rem; display: block;">
+                                    Selecciona el ciclo del que se cargaran los aranceles.
+                                </small>
+                            </div>
+
                             <div class="form-group">
                                 <label class="control-label">Fecha de Pago</label>
                                 <input asp-for="FechaPago" class="form-control" type="date" />
@@ -530,11 +544,11 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             let selectedAranceles = [];
-            let arancelesData = [];
             let todosLosAlumnos = [];
 
             // Cargar todos los alumnos al inicio
             const selectAlumnos = document.getElementById('alumnoSelect');
+            const selectCiclos = document.getElementById('cicloSelect');
             Array.from(selectAlumnos.options).forEach(option => {
                 if (option.value) {
                     todosLosAlumnos.push({
@@ -617,23 +631,43 @@
                 }
             });
 
+            document.getElementById('cicloSelect').addEventListener('change', function() {
+                selectedAranceles = [];
+                actualizarTotal();
+
+                if (selectAlumnos.value) {
+                    cargarInformacionAlumno(selectAlumnos.value);
+                }
+            });
+
             function cargarInformacionAlumno(alumnoId) {
                 document.getElementById('loadingAranceles').style.display = 'block';
                 document.getElementById('arancelesContainer').style.display = 'none';
 
-                fetch(`?handler=AlumnoInfo&alumnoId=${alumnoId}`)
+                selectedAranceles = [];
+                actualizarTotal();
+
+                const query = new URLSearchParams({
+                    handler: 'AlumnoInfo',
+                    alumnoId: alumnoId
+                });
+
+                if (selectCiclos.value) {
+                    query.append('cicloId', selectCiclos.value);
+                }
+
+                fetch(`?${query.toString()}`)
                     .then(response => response.json())
                     .then(data => {
                         // Mostrar información del alumno
                         document.getElementById('studentName').textContent = `${data.alumno.nombres} ${data.alumno.apellidos}`;
                         document.getElementById('studentCarrera').textContent = data.alumno.carrera || 'No especificada';
+                        document.getElementById('studentPreEspecializacion').textContent = data.alumno.esPreEspecializacion ? 'Si' : 'No';
                         document.getElementById('studentInfoCard').style.display = 'block';
 
-                        // Guardar datos de aranceles
-                        arancelesData = data.aranceles;
                         let arancelesPagados = data.arancelesPagados || [];
                         // Renderizar aranceles
-                        renderizarAranceles(data.aranceles, data.tieneBecaParcial, arancelesPagados);
+                        renderizarAranceles(data.aranceles, arancelesPagados);
                         
                         document.getElementById('loadingAranceles').style.display = 'none';
                         document.getElementById('arancelesContainer').style.display = 'block';
@@ -647,13 +681,19 @@
             function ocultarInformacionAlumno() {
                 document.getElementById('studentInfoCard').style.display = 'none';
                 document.getElementById('arancelesContainer').style.display = 'none';
+                document.getElementById('arancelesContainer').innerHTML = '';
                 selectedAranceles = [];
                 actualizarTotal();
             }
 
-            function renderizarAranceles(aranceles, tieneBecaParcial, arancelesPagados) {
+            function renderizarAranceles(aranceles, arancelesPagados) {
                 const container = document.getElementById('arancelesContainer');
                 container.innerHTML = '';
+
+                if (!aranceles.length) {
+                    container.innerHTML = '<div class="text-muted">No hay aranceles obligatorios disponibles para el ciclo seleccionado.</div>';
+                    return;
+                }
 
                 aranceles.forEach(function(arancel) {
                     const precioFinal = arancel.precioPersonalizado || arancel.costoConMora;
@@ -685,25 +725,23 @@
                     `;
                     container.insertAdjacentHTML('beforeend', arancelHtml);
                 });
-
-                // Manejar cambios en checkboxes
-                document.addEventListener('change', function(e) {
-                    if (e.target.classList.contains('arancel-checkbox')) {
-                        const arancelId = parseInt(e.target.value);
-                        const precio = parseFloat(e.target.dataset.precio);
-                        
-                        if (e.target.checked) {
-                            if (!selectedAranceles.includes(arancelId)) {
-                                selectedAranceles.push(arancelId);
-                            }
-                        } else {
-                            selectedAranceles = selectedAranceles.filter(id => id !== arancelId);
-                        }
-                        
-                        actualizarTotal();
-                    }
-                });
             }
+
+            document.addEventListener('change', function(e) {
+                if (e.target.classList.contains('arancel-checkbox')) {
+                    const arancelId = parseInt(e.target.value);
+
+                    if (e.target.checked) {
+                        if (!selectedAranceles.includes(arancelId)) {
+                            selectedAranceles.push(arancelId);
+                        }
+                    } else {
+                        selectedAranceles = selectedAranceles.filter(id => id !== arancelId);
+                    }
+
+                    actualizarTotal();
+                }
+            });
 
             function actualizarTotal() {
                 let total = 0;
@@ -721,6 +759,10 @@
                     alert('Debe seleccionar al menos un arancel');
                     return false;
                 }
+
+                document.querySelectorAll('input[name="SelectedAranceles"]').forEach(function(input) {
+                    input.remove();
+                });
 
                 // Agregar aranceles seleccionados al formulario
                 selectedAranceles.forEach(function(arancelId) {
