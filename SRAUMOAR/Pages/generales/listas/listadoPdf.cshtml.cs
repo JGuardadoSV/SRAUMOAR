@@ -60,33 +60,40 @@ namespace SRAUMOAR.Pages.generales.listas
                                 a.FechaFin >= fechaActual)
                     .ToList();
 
+                // Si hay más de un parcial vigente, priorizamos por fecha de inicio más reciente.
                 ActividadAcademica? parcialActivo;
                 if (esEspecializacionGrupo)
                 {
                     parcialActivo = parcialesActivos
                         .Where(a => a.ArancelEspecializacionId != null)
-                        .OrderBy(a => a.ActividadAcademicaId)
+                        .OrderByDescending(a => a.FechaInicio)
+                        .ThenByDescending(a => a.ActividadAcademicaId)
                         .FirstOrDefault()
                         ?? parcialesActivos
                             .Where(a => a.Arancel != null && a.Arancel.EsEspecializacion)
-                            .OrderBy(a => a.ActividadAcademicaId)
+                            .OrderByDescending(a => a.FechaInicio)
+                            .ThenByDescending(a => a.ActividadAcademicaId)
                             .FirstOrDefault()
                         ?? parcialesActivos
-                            .OrderBy(a => a.ActividadAcademicaId)
+                            .OrderByDescending(a => a.FechaInicio)
+                            .ThenByDescending(a => a.ActividadAcademicaId)
                             .FirstOrDefault();
                 }
                 else
                 {
                     parcialActivo = parcialesActivos
                         .Where(a => a.ArancelEspecializacionId == null)
-                        .OrderBy(a => a.ActividadAcademicaId)
+                        .OrderByDescending(a => a.FechaInicio)
+                        .ThenByDescending(a => a.ActividadAcademicaId)
                         .FirstOrDefault()
                         ?? parcialesActivos
                             .Where(a => a.Arancel != null && !a.Arancel.EsEspecializacion)
-                            .OrderBy(a => a.ActividadAcademicaId)
+                            .OrderByDescending(a => a.FechaInicio)
+                            .ThenByDescending(a => a.ActividadAcademicaId)
                             .FirstOrDefault()
                         ?? parcialesActivos
-                            .OrderBy(a => a.ActividadAcademicaId)
+                            .OrderByDescending(a => a.FechaInicio)
+                            .ThenByDescending(a => a.ActividadAcademicaId)
                             .FirstOrDefault();
                 }
 
@@ -100,7 +107,8 @@ namespace SRAUMOAR.Pages.generales.listas
                         // Verificar si es becado
                         var esBecado = _context.Becados
                             .Any(b => b.AlumnoId == inscripcion.AlumnoId &&
-                                     b.CicloId == cicloId);
+                                     b.CicloId == cicloId &&
+                                     b.Estado);
 
                         if (esBecado)
                         {
@@ -110,12 +118,21 @@ namespace SRAUMOAR.Pages.generales.listas
                         {
                             // Verificar si pago el arancel que corresponde segun el tipo de grupo.
                             // Nota: ArancelEspecializacionId puede venir null (parcial sin arancel de especializacion), en ese caso se valida con ArancelId.
-                            var arancelIdAValidar = (esEspecializacionGrupo && parcialActivo.ArancelEspecializacionId.HasValue)
-                                ? parcialActivo.ArancelEspecializacionId.Value
-                                : parcialActivo.ArancelId;
+                            int? arancelIdAValidar = null;
+
+                            if (esEspecializacionGrupo)
+                            {
+                                // En especialización prioriza el arancel dedicado; si no existe, fallback al histórico.
+                                arancelIdAValidar = parcialActivo.ArancelEspecializacionId ?? parcialActivo.ArancelId;
+                            }
+                            else
+                            {
+                                arancelIdAValidar = parcialActivo.ArancelId;
+                            }
 
                             var haPagado = _context.DetallesCobrosArancel
-                                .Any(d => d.ArancelId == arancelIdAValidar &&
+                                .Any(d => arancelIdAValidar.HasValue &&
+                                         d.ArancelId == arancelIdAValidar.Value &&
                                          d.CobroArancel.AlumnoId == inscripcion.AlumnoId &&
                                          d.CobroArancel.CicloId == cicloId);
 
