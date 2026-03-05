@@ -137,14 +137,14 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                 // Filtrar por alumnos con beca según la opción seleccionada
                 var incluirBecados = incluirAlumnosConBeca ?? IncluirAlumnosConBeca;
 
-                // Obtener aranceles obligatorios que YA VENCIERON
-                var arancelesObligatorios = await _context.Aranceles
-                    .Where(a => a.CicloId == cicloActual.Id && a.Obligatorio && a.Activo && a.FechaFin.HasValue && a.FechaFin.Value.Date < DateTime.Now.Date)
+                // Obtener aranceles del ciclo actual que YA VENCIERON (independiente de si son obligatorios)
+                var arancelesVencidos = await _context.Aranceles
+                    .Where(a => a.CicloId == cicloActual.Id && a.Activo && a.FechaFin.HasValue && a.FechaFin.Value.Date < DateTime.Now.Date)
                     .ToListAsync();
 
-                if (!arancelesObligatorios.Any())
+                if (!arancelesVencidos.Any())
                 {
-                    TempData["Error"] = "No hay aranceles obligatorios vencidos para el ciclo actual";
+                    TempData["Error"] = "No hay aranceles vencidos para el ciclo actual";
                     return RedirectToPage(new { SelectedCicloId = cicloActual.Id, SelectedCarreraId = carreraId, IncluirAlumnosConBeca = incluirBecados, AsuntoCorreo });
                 }
 
@@ -182,8 +182,9 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                     .Where(g => g.CicloId == cicloActual.Id && g.Activo)
                     .ToListAsync();
 
-                // Procesar alumnos insolventes
-                var alumnosInsolventes = await ProcesarAlumnosInsolventesAsync(inscripciones, arancelesObligatorios, cicloActual.Id);
+                // Procesar alumnos insolventes usando todos los aranceles vencidos,
+                // aplicando la obligatoriedad dependiendo del tipo de alumno (normal / especialización)
+                var alumnosInsolventes = await ProcesarAlumnosInsolventesAsync(inscripciones, arancelesVencidos, cicloActual.Id);
 
                 if (!alumnosInsolventes.Any())
                 {
@@ -232,16 +233,16 @@ namespace SRAUMOAR.Pages.reportes.insolventes
 
                 var incluirBecados = incluirAlumnosConBeca ?? IncluirAlumnosConBeca;
 
-                                 // Obtener aranceles obligatorios que YA VENCIERON
-                 var arancelesObligatorios = await _context.Aranceles
-                     .Where(a => a.CicloId == cicloActual.Id && a.Obligatorio && a.Activo && a.FechaFin.HasValue && a.FechaFin.Value.Date < DateTime.Now.Date)
-                     .ToListAsync();
+                // Obtener aranceles del ciclo actual que YA VENCIERON (independiente de si son obligatorios)
+                var arancelesVencidos = await _context.Aranceles
+                    .Where(a => a.CicloId == cicloActual.Id && a.Activo && a.FechaFin.HasValue && a.FechaFin.Value.Date < DateTime.Now.Date)
+                    .ToListAsync();
 
-                 if (!arancelesObligatorios.Any())
-                 {
-                     TempData["Error"] = "No hay aranceles obligatorios vencidos para el ciclo actual";
-                     return RedirectToPage(new { SelectedCicloId = cicloActual.Id, SelectedCarreraId = carreraId, IncluirAlumnosConBeca = incluirBecados, AsuntoCorreo });
-                 }
+                if (!arancelesVencidos.Any())
+                {
+                    TempData["Error"] = "No hay aranceles vencidos para el ciclo actual";
+                    return RedirectToPage(new { SelectedCicloId = cicloActual.Id, SelectedCarreraId = carreraId, IncluirAlumnosConBeca = incluirBecados, AsuntoCorreo });
+                }
 
                                  // Obtener alumnos inscritos, filtrando por beca según la opción
                  var query = _context.Inscripciones
@@ -277,8 +278,9 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                     .Where(g => g.CicloId == cicloActual.Id && g.Activo)
                     .ToListAsync();
 
-                // Procesar alumnos insolventes
-                var alumnosInsolventes = await ProcesarAlumnosInsolventesAsync(inscripciones, arancelesObligatorios, cicloActual.Id);
+                // Procesar alumnos insolventes usando todos los aranceles vencidos,
+                // aplicando la obligatoriedad dependiendo del tipo de alumno (normal / especialización)
+                var alumnosInsolventes = await ProcesarAlumnosInsolventesAsync(inscripciones, arancelesVencidos, cicloActual.Id);
 
                 if (!alumnosInsolventes.Any())
                 {
@@ -458,14 +460,8 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                 worksheet.Cells[currentRow, 6].Style.Numberformat.Format = "#,##0.00";
                 worksheet.Cells[currentRow, 6].Style.Font.Bold = true;
 
-                                 // Autoajustar columnas
-                 worksheet.Cells.AutoFitColumns();
-
-                 // Obtener aranceles vencidos para el resumen
-                 var arancelesVencidos = await _context.Aranceles
-                     .Where(a => a.CicloId == cicloActual.Id && a.Obligatorio && a.Activo && a.FechaFin.HasValue && a.FechaFin.Value.Date < DateTime.Now.Date)
-                     .OrderBy(a => a.FechaFin)
-                     .ToListAsync();
+                // Autoajustar columnas
+                worksheet.Cells.AutoFitColumns();
 
                  // Agregar hoja de aranceles vencidos si existen
                  if (arancelesVencidos.Any())
@@ -616,18 +612,16 @@ namespace SRAUMOAR.Pages.reportes.insolventes
             
             Console.WriteLine($"Ciclo activo encontrado: {cicloActual.NCiclo}");
 
-             // Obtener aranceles obligatorios del ciclo actual que YA VENCIERON (sin tracking)
-             // Nota: este resultado se usa tanto para el procesamiento como para el resumen.
-             var arancelesVencidos = await _context.Aranceles
-                 .AsNoTracking()
-                 .Where(a => a.CicloId == cicloActual.Id && a.Obligatorio && a.Activo && a.FechaFin.HasValue && a.FechaFin.Value.Date < DateTime.Now.Date)
-                 .OrderBy(a => a.FechaFin)
-                 .ToListAsync();
+            // Obtener aranceles del ciclo actual que YA VENCIERON (sin tracking, independiente de si son obligatorios).
+            // Nota: este resultado se usa tanto para el procesamiento como para el resumen.
+            var arancelesVencidos = await _context.Aranceles
+                .AsNoTracking()
+                .Where(a => a.CicloId == cicloActual.Id && a.Activo && a.FechaFin.HasValue && a.FechaFin.Value.Date < DateTime.Now.Date)
+                .OrderBy(a => a.FechaFin)
+                .ToListAsync();
 
-             var arancelesObligatorios = arancelesVencidos;
-
-             Console.WriteLine($"Aranceles obligatorios vencidos encontrados: {arancelesObligatorios.Count}");
-             foreach (var arancel in arancelesObligatorios)
+             Console.WriteLine($"Aranceles vencidos encontrados: {arancelesVencidos.Count}");
+             foreach (var arancel in arancelesVencidos)
              {
                  Console.WriteLine($"- {arancel.Nombre}: Vencido el {arancel.FechaFin:dd/MM/yyyy}");
              }
@@ -655,9 +649,9 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                  TotalCostoVencido = ArancelesVencidos.Sum(a => a.Costo);
                  TotalMoraVencido = ArancelesVencidos.Sum(a => a.ValorMora);
 
-                          if (!arancelesObligatorios.Any())
+                          if (!arancelesVencidos.Any())
               {
-                  TempData["Warning"] = "No hay aranceles obligatorios vencidos para el ciclo actual";
+                  TempData["Warning"] = "No hay aranceles vencidos para el ciclo actual";
                   return;
               }
 
@@ -688,8 +682,9 @@ namespace SRAUMOAR.Pages.reportes.insolventes
 
              var inscripciones = await query.ToListAsync();
 
-             // Procesar alumnos insolventes
-             var alumnosInsolventes = await ProcesarAlumnosInsolventesAsync(inscripciones, arancelesObligatorios, cicloActual.Id);
+             // Procesar alumnos insolventes usando todos los aranceles vencidos,
+             // aplicando la obligatoriedad dependiendo del tipo de alumno (normal / especialización)
+             var alumnosInsolventes = await ProcesarAlumnosInsolventesAsync(inscripciones, arancelesVencidos, cicloActual.Id);
 
              // Detectar repeticiones sin cargar todo el grafo de Grupos/Materias.
              // Traemos solo (Carrera, Grupo, AlumnoId) para los alumnos insolventes del listado actual.
@@ -750,7 +745,7 @@ namespace SRAUMOAR.Pages.reportes.insolventes
 
         private async Task<List<AlumnoInsolvente>> ProcesarAlumnosInsolventesAsync(
             List<Inscripcion> inscripciones, 
-            List<Arancel> arancelesObligatorios, 
+            List<Arancel> arancelesVencidos, 
             int cicloId)
         {
             var alumnosInsolventes = new List<AlumnoInsolvente>();
@@ -810,17 +805,18 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                 // Obtener aranceles pagados por este alumno
                 var arancelesPagados = pagosPorAlumno.GetValueOrDefault(alumno.AlumnoId, new HashSet<int>());
 
-                // Determinar qué aranceles obligatorios verificar según si está en grupo de especialización
-                var arancelesAVerificar = arancelesObligatorios.AsEnumerable();
+                // Determinar qué aranceles vencidos verificar según si está en grupo de especialización
+                // - Alumno en grupo de especialización: todos los aranceles de especialización vencidos
+                //   (se consideran obligatorios para este alumno aunque no tengan Obligatorio=true en catálogo).
+                // - Alumno normal: solo aranceles vencidos obligatorios que NO sean de especialización.
+                var arancelesAVerificar = arancelesVencidos.AsEnumerable();
                 if (alumnosEnGrupoEspecializacion.Contains(alumno.AlumnoId))
                 {
-                    // Si está en grupo de especialización, solo verificar aranceles obligatorios de especialización
-                    arancelesAVerificar = arancelesObligatorios.Where(a => a.EsEspecializacion);
+                    arancelesAVerificar = arancelesVencidos.Where(a => a.EsEspecializacion);
                 }
                 else
                 {
-                    // Si NO está en grupo de especialización, solo verificar aranceles obligatorios normales (no de especialización)
-                    arancelesAVerificar = arancelesObligatorios.Where(a => !a.EsEspecializacion);
+                    arancelesAVerificar = arancelesVencidos.Where(a => a.Obligatorio && !a.EsEspecializacion);
                 }
 
                 foreach (var arancel in arancelesAVerificar)
@@ -886,15 +882,15 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                     return RedirectToPage(new { SelectedCicloId, SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
                 }
 
-                // Obtener aranceles obligatorios vencidos
-                var arancelesObligatorios = await _context.Aranceles
+                // Obtener aranceles del ciclo actual que YA VENCIERON (independiente de si son obligatorios)
+                var arancelesVencidos = await _context.Aranceles
                     .AsNoTracking()
-                    .Where(a => a.CicloId == cicloActual.Id && a.Obligatorio && a.Activo && a.FechaFin.HasValue && a.FechaFin.Value.Date < DateTime.Now.Date)
+                    .Where(a => a.CicloId == cicloActual.Id && a.Activo && a.FechaFin.HasValue && a.FechaFin.Value.Date < DateTime.Now.Date)
                     .ToListAsync();
 
-                if (!arancelesObligatorios.Any())
+                if (!arancelesVencidos.Any())
                 {
-                    TempData["Error"] = "No hay aranceles obligatorios vencidos para el ciclo actual";
+                    TempData["Error"] = "No hay aranceles vencidos para el ciclo actual";
                     return RedirectToPage(new { SelectedCicloId, SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
                 }
 
@@ -927,8 +923,9 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                     return RedirectToPage(new { SelectedCicloId, SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
                 }
 
-                // Procesar solo este alumno
-                var alumnosInsolventes = await ProcesarAlumnosInsolventesAsync(inscripciones, arancelesObligatorios, cicloActual.Id);
+                // Procesar solo este alumno usando todos los aranceles vencidos,
+                // aplicando la obligatoriedad dependiendo del tipo de alumno (normal / especialización)
+                var alumnosInsolventes = await ProcesarAlumnosInsolventesAsync(inscripciones, arancelesVencidos, cicloActual.Id);
                 var alumno = alumnosInsolventes.FirstOrDefault(a => a.AlumnoId == alumnoId);
 
                 if (alumno == null)
@@ -983,15 +980,15 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                     return RedirectToPage(new { SelectedCicloId, SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
                 }
 
-                // Obtener aranceles obligatorios vencidos
-                var arancelesObligatorios = await _context.Aranceles
+                // Obtener aranceles del ciclo actual que YA VENCIERON (independiente de si son obligatorios)
+                var arancelesVencidos = await _context.Aranceles
                     .AsNoTracking()
-                    .Where(a => a.CicloId == cicloActual.Id && a.Obligatorio && a.Activo && a.FechaFin.HasValue && a.FechaFin.Value.Date < DateTime.Now.Date)
+                    .Where(a => a.CicloId == cicloActual.Id && a.Activo && a.FechaFin.HasValue && a.FechaFin.Value.Date < DateTime.Now.Date)
                     .ToListAsync();
 
-                if (!arancelesObligatorios.Any())
+                if (!arancelesVencidos.Any())
                 {
-                    TempData["Error"] = "No hay aranceles obligatorios vencidos para el ciclo actual";
+                    TempData["Error"] = "No hay aranceles vencidos para el ciclo actual";
                     return RedirectToPage(new { SelectedCicloId, SelectedCarreraId, IncluirAlumnosConBeca, AsuntoCorreo });
                 }
 
@@ -1018,7 +1015,7 @@ namespace SRAUMOAR.Pages.reportes.insolventes
                 }
 
                 var inscripciones = await query.ToListAsync();
-                var alumnosInsolventes = await ProcesarAlumnosInsolventesAsync(inscripciones, arancelesObligatorios, cicloActual.Id);
+                var alumnosInsolventes = await ProcesarAlumnosInsolventesAsync(inscripciones, arancelesVencidos, cicloActual.Id);
 
                 if (alumnosInsolventes == null || !alumnosInsolventes.Any())
                 {

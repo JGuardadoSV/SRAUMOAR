@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model SRAUMOAR.Pages.alumno.BusquedaModel
 
 @{
@@ -29,6 +29,7 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 20px;
             box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+            overflow: visible !important;
         }
 
         .search-input {
@@ -71,8 +72,8 @@
         }
 
         .table-responsive {
-            overflow-x: auto;
-            overflow-y: visible;
+            overflow-x: auto !important;
+            overflow-y: visible !important;
         }
 
         .actions-dropdown {
@@ -443,7 +444,10 @@
                                     }
                                     <td class="text-center">
                                         <div class="dropdown actions-dropdown">
-                                            <button class="btn btn-professional btn-detalles dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <button class="btn btn-professional btn-detalles dropdown-toggle"
+                                                    type="button"
+                                                    data-bs-toggle="dropdown"
+                                                    aria-expanded="false">
                                                 <i class="bi bi-gear me-1"></i>Acciones
                                             </button>
                                             <ul class="dropdown-menu dropdown-menu-end shadow-sm">

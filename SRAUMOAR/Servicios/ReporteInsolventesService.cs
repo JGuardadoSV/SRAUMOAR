@@ -63,14 +63,9 @@ namespace SRAUMOAR.Servicios
                     throw new InvalidOperationException(cicloId.HasValue ? "No se encontró el ciclo seleccionado" : "No hay un ciclo activo");
                 }
 
-                // Obtener aranceles obligatorios del ciclo actual que YA VENCIERON
-                var arancelesObligatorios = await _context.Aranceles
-                    .Where(a => a.CicloId == cicloActual.Id && a.Obligatorio && a.Activo && a.FechaFin.HasValue && a.FechaFin.Value.Date < DateTime.Now.Date)
-                    .ToListAsync();
-
-                // Obtener aranceles vencidos para el resumen
+                // Obtener aranceles del ciclo actual que YA VENCIERON (independiente de si son obligatorios)
                 var arancelesVencidos = await _context.Aranceles
-                    .Where(a => a.CicloId == cicloActual.Id && a.Obligatorio && a.Activo && a.FechaFin.HasValue && a.FechaFin.Value.Date < DateTime.Now.Date)
+                    .Where(a => a.CicloId == cicloActual.Id && a.Activo && a.FechaFin.HasValue && a.FechaFin.Value.Date < DateTime.Now.Date)
                     .OrderBy(a => a.FechaFin)
                     .ToListAsync();
 
@@ -93,9 +88,9 @@ namespace SRAUMOAR.Servicios
                      ValorMora = a.ValorMora
                  }).ToList();
 
-                 if (!arancelesObligatorios.Any())
+                 if (!arancelesVencidos.Any())
                 {
-                    throw new InvalidOperationException("No hay aranceles obligatorios vencidos para el ciclo actual");
+                    throw new InvalidOperationException("No hay aranceles vencidos para el ciclo actual");
                 }
 
                 // Obtener alumnos inscritos en el ciclo actual
@@ -133,8 +128,9 @@ namespace SRAUMOAR.Servicios
                     .Where(g => g.CicloId == cicloActual.Id && g.Activo)
                     .ToListAsync();
 
-                // Procesar alumnos insolventes
-                var alumnosInsolventes = await ProcesarAlumnosInsolventesAsync(inscripciones, arancelesObligatorios, cicloActual.Id);
+                // Procesar alumnos insolventes usando todos los aranceles vencidos,
+                // aplicando la obligatoriedad dependiendo del tipo de alumno (normal / especialización)
+                var alumnosInsolventes = await ProcesarAlumnosInsolventesAsync(inscripciones, arancelesVencidos, cicloActual.Id);
 
 
 
@@ -169,7 +165,7 @@ namespace SRAUMOAR.Servicios
 
         private async Task<List<AlumnoInsolvente>> ProcesarAlumnosInsolventesAsync(
             List<Inscripcion> inscripciones, 
-            List<Arancel> arancelesObligatorios, 
+            List<Arancel> arancelesVencidos, 
             int cicloId)
         {
             var alumnosInsolventes = new List<AlumnoInsolvente>();
@@ -220,17 +216,18 @@ namespace SRAUMOAR.Servicios
                 // Obtener aranceles pagados por este alumno
                 var arancelesPagados = pagosPorAlumno.GetValueOrDefault(alumno.AlumnoId, new HashSet<int>());
 
-                // Determinar qué aranceles obligatorios verificar según si está en grupo de especialización
-                var arancelesAVerificar = arancelesObligatorios.AsEnumerable();
+                // Determinar qué aranceles vencidos verificar según si está en grupo de especialización
+                // - Alumno en grupo de especialización: todos los aranceles de especialización vencidos
+                //   (se consideran obligatorios para este alumno aunque no tengan Obligatorio=true en catálogo).
+                // - Alumno normal: solo aranceles vencidos obligatorios que NO sean de especialización.
+                var arancelesAVerificar = arancelesVencidos.AsEnumerable();
                 if (alumnosEnGrupoEspecializacion.Contains(alumno.AlumnoId))
                 {
-                    // Si está en grupo de especialización, solo verificar aranceles obligatorios de especialización
-                    arancelesAVerificar = arancelesObligatorios.Where(a => a.EsEspecializacion);
+                    arancelesAVerificar = arancelesVencidos.Where(a => a.EsEspecializacion);
                 }
                 else
                 {
-                    // Si NO está en grupo de especialización, solo verificar aranceles obligatorios normales (no de especialización)
-                    arancelesAVerificar = arancelesObligatorios.Where(a => !a.EsEspecializacion);
+                    arancelesAVerificar = arancelesVencidos.Where(a => a.Obligatorio && !a.EsEspecializacion);
                 }
 
                 foreach (var arancel in arancelesAVerificar)
