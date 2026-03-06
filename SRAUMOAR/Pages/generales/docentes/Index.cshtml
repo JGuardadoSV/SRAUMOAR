@@ -72,17 +72,24 @@
                                     </div>
                                 </td>
                                 <td>
-                                    @if(item.Usuario?.ToString().Length > 0)
+                                    @if (User.IsInRole("Administrador"))
                                     {
-                                        <a href="/autenticacion/AdministrarUsuario/@item.DocenteId/2" class="btn btn-sm btn-outline-primary rounded-pill px-3">
-                                            <i class="bi bi-gear me-1"></i> Administrar
-                                        </a>
+                                        @if(item.Usuario?.ToString().Length > 0)
+                                        {
+                                            <a href="/autenticacion/AdministrarUsuario/@item.DocenteId/2" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                                <i class="bi bi-gear me-1"></i> Administrar
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <a href="/autenticacion/crearusuariodocente/@item.DocenteId/@item.Usuario?.IdUsuario" class="btn btn-sm btn-outline-success rounded-pill px-3">
+                                                <i class="bi bi-person-plus me-1"></i> Crear
+                                            </a>
+                                        }
                                     }
                                     else
                                     {
-                                        <a href="/autenticacion/crearusuariodocente/@item.DocenteId/@item.Usuario?.IdUsuario" class="btn btn-sm btn-outline-success rounded-pill px-3">
-                                            <i class="bi bi-person-plus me-1"></i> Crear
-                                        </a>
+                                        <span class="text-muted small">Solo administrador</span>
                                     }
                                 </td>
                                 <td class="text-end pe-4">

@@ -618,6 +618,14 @@
                                     </a>
                                 }
 
+                                @if (User.IsInRole("Administrador") || User.IsInRole("Administracion") || User.IsInRole("Contabilidad"))
+                                {
+                                    <a asp-area="" asp-page="/Autenticacion/CambiarContrasena" class="nav-link">
+                                        <i class="nav-icon bi bi-key"></i>
+                                        Cambiar contrasena
+                                    </a>
+                                }
+
                                 <a asp-area="" asp-page="/salir" class="nav-link">
                                     <i class="nav-icon bi bi-building"></i>
                                     Salir

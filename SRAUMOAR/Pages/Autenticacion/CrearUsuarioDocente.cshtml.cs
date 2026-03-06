@@ -14,7 +14,7 @@ using SRAUMOAR.Modelos;
 
 namespace SRAUMOAR.Pages.Autenticacion
 {
-    [Authorize(Roles = "Administrador,Administracion")]
+    [Authorize(Roles = "Administrador")]
     public class CrearUsuarioDocenteModel : PageModel
     {
         private readonly SRAUMOAR.Modelos.Contexto _context;
@@ -37,7 +37,7 @@ namespace SRAUMOAR.Pages.Autenticacion
             email = resultado.Email;
 
 
-            ViewData["NivelAccesoId"] = new SelectList(_context.NivelesAcceso.Where(x=>x.Id>=2 && x.Id<4), "Id", "Nombre");
+            CargarNivelesAccesoPermitidos();
             return Page();
         }
 
@@ -49,8 +49,28 @@ namespace SRAUMOAR.Pages.Autenticacion
         {
             if (!ModelState.IsValid)
             {
+                Docente? docenteActual = await _context.Docentes.FindAsync(DocenteId);
+                nombre = docenteActual != null ? $"{docenteActual.Nombres} {docenteActual.Apellidos}" : string.Empty;
+                email = docenteActual?.Email ?? string.Empty;
+                CargarNivelesAccesoPermitidos();
                 return Page();
             }
+
+            var rolesPermitidos = await _context.NivelesAcceso
+                .Where(x => x.Nombre == "Docentes" || x.Nombre == "Administracion" || x.Nombre == "Contabilidad")
+                .Select(x => x.Id)
+                .ToListAsync();
+
+            if (!rolesPermitidos.Contains(Usuario.NivelAccesoId))
+            {
+                ModelState.AddModelError("Usuario.NivelAccesoId", "Seleccione un nivel de acceso valido.");
+                Docente? docenteActual = await _context.Docentes.FindAsync(DocenteId);
+                nombre = docenteActual != null ? $"{docenteActual.Nombres} {docenteActual.Apellidos}" : string.Empty;
+                email = docenteActual?.Email ?? string.Empty;
+                CargarNivelesAccesoPermitidos();
+                return Page();
+            }
+
             Usuario.Activo = true;
             _context.Usuarios.Add(Usuario);
             await _context.SaveChangesAsync();
@@ -68,6 +88,17 @@ namespace SRAUMOAR.Pages.Autenticacion
 
             return Redirect("/generales/docentes");
 
+        }
+
+        private void CargarNivelesAccesoPermitidos()
+        {
+            ViewData["NivelAccesoId"] = new SelectList(
+                _context.NivelesAcceso.Where(x =>
+                    x.Nombre == "Docentes" ||
+                    x.Nombre == "Administracion" ||
+                    x.Nombre == "Contabilidad"),
+                "Id",
+                "Nombre");
         }
     }
 }

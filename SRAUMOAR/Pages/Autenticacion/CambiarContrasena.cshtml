@@ -1,0 +1,65 @@
+@page
+@model SRAUMOAR.Pages.Autenticacion.CambiarContrasenaModel
+@{
+    ViewData["Title"] = "Cambiar contrasena";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-xl-5">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-header bg-primary text-white rounded-top-4 py-3">
+                    <h3 class="mb-0 fs-4">
+                        <i class="bi bi-key me-2"></i>
+                        Cambiar contrasena
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    @if (TempData["SuccessMessage"] is string successMessage)
+                    {
+                        <div class="alert alert-success" role="alert">@successMessage</div>
+                    }
+
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Usuario actual</label>
+                        <input class="form-control" value="@Model.NombreUsuarioActual" readonly />
+                    </div>
+
+                    <form method="post">
+                        <div class="mb-3">
+                            <label asp-for="ContrasenaActual" class="form-label"></label>
+                            <input asp-for="ContrasenaActual" type="password" class="form-control" autocomplete="current-password" />
+                            <span asp-validation-for="ContrasenaActual" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="NuevaContrasena" class="form-label"></label>
+                            <input asp-for="NuevaContrasena" type="password" class="form-control" autocomplete="new-password" />
+                            <span asp-validation-for="NuevaContrasena" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="ConfirmarContrasena" class="form-label"></label>
+                            <input asp-for="ConfirmarContrasena" type="password" class="form-control" autocomplete="new-password" />
+                            <span asp-validation-for="ConfirmarContrasena" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check2-circle me-1"></i>
+                                Actualizar contrasena
+                            </button>
+                            <a asp-page="/Menu" class="btn btn-outline-secondary">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

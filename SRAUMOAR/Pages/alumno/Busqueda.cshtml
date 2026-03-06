@@ -443,53 +443,70 @@
                                         </td>
                                     }
                                     <td class="text-center">
-                                        <div class="dropdown actions-dropdown">
-                                            <button class="btn btn-professional btn-detalles dropdown-toggle"
-                                                    type="button"
-                                                    data-bs-toggle="dropdown"
-                                                    aria-expanded="false">
-                                                <i class="bi bi-gear me-1"></i>Acciones
-                                            </button>
-                                            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
-                                                @if (User.IsInRole("Administracion") || User.IsInRole("Administrador"))
-                                                {
-                                                    <li>
-                                                        <a class="dropdown-item" asp-page="/aranceles/Cobrar" asp-route-id="@item.AlumnoId">
-                                                            <i class="bi bi-dollar me-2"></i>Aranceles
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a class="dropdown-item" asp-page="/inscripcion/Create" asp-route-id="@item.AlumnoId">
-                                                            <i class="bi bi-arrow-right-circle me-2"></i>Inscribir al ciclo
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a class="dropdown-item" asp-page="/inscripcion/MateriasInscritas" asp-route-id="@item.AlumnoId">
-                                                            <i class="bi bi-journal-plus me-2"></i>Inscribir materias
-                                                        </a>
-                                                    </li>
-                                                }
-                                                @if (User.IsInRole("Administrador"))
-                                                {
-                                                    <li><hr class="dropdown-divider"></li>
-                                                    <li>
-                                                        <a class="dropdown-item" asp-page="./Create">
-                                                            <i class="bi bi-plus-circle me-2"></i>Nuevo
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a class="dropdown-item" asp-page="./Edit" asp-route-id="@item.AlumnoId">
-                                                            <i class="bi bi-pencil-square me-2"></i>Editar
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a class="dropdown-item" asp-page="./Details" asp-route-id="@item.AlumnoId">
-                                                            <i class="bi bi-info-circle me-2"></i>Detalles
-                                                        </a>
-                                                    </li>
-                                                }
-                                            </ul>
-                                        </div>
+                                        @if (User.IsInRole("Administracion") && !User.IsInRole("Administrador"))
+                                        {
+                                            <div class="actions-container">
+                                                <a class="btn btn-professional btn-aranceles" asp-page="/aranceles/Cobrar" asp-route-id="@item.AlumnoId">
+                                                    <i class="bi bi-dollar me-1"></i>Aranceles
+                                                </a>
+                                                <a class="btn btn-professional btn-inscribir-ciclo" asp-page="/inscripcion/Create" asp-route-id="@item.AlumnoId">
+                                                    <i class="bi bi-arrow-right-circle me-1"></i>Inscribir al ciclo
+                                                </a>
+                                                <a class="btn btn-professional btn-inscribir-materias" asp-page="/inscripcion/MateriasInscritas" asp-route-id="@item.AlumnoId">
+                                                    <i class="bi bi-journal-plus me-1"></i>Inscribir materias
+                                                </a>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="dropdown actions-dropdown">
+                                                <button class="btn btn-professional btn-detalles dropdown-toggle"
+                                                        type="button"
+                                                        data-bs-toggle="dropdown"
+                                                        aria-expanded="false">
+                                                    <i class="bi bi-gear me-1"></i>Acciones
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                                    @if (User.IsInRole("Administracion") || User.IsInRole("Administrador"))
+                                                    {
+                                                        <li>
+                                                            <a class="dropdown-item" asp-page="/aranceles/Cobrar" asp-route-id="@item.AlumnoId">
+                                                                <i class="bi bi-dollar me-2"></i>Aranceles
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <a class="dropdown-item" asp-page="/inscripcion/Create" asp-route-id="@item.AlumnoId">
+                                                                <i class="bi bi-arrow-right-circle me-2"></i>Inscribir al ciclo
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <a class="dropdown-item" asp-page="/inscripcion/MateriasInscritas" asp-route-id="@item.AlumnoId">
+                                                                <i class="bi bi-journal-plus me-2"></i>Inscribir materias
+                                                            </a>
+                                                        </li>
+                                                    }
+                                                    @if (User.IsInRole("Administrador"))
+                                                    {
+                                                        <li><hr class="dropdown-divider"></li>
+                                                        <li>
+                                                            <a class="dropdown-item" asp-page="./Create">
+                                                                <i class="bi bi-plus-circle me-2"></i>Nuevo
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <a class="dropdown-item" asp-page="./Edit" asp-route-id="@item.AlumnoId">
+                                                                <i class="bi bi-pencil-square me-2"></i>Editar
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <a class="dropdown-item" asp-page="./Details" asp-route-id="@item.AlumnoId">
+                                                                <i class="bi bi-info-circle me-2"></i>Detalles
+                                                            </a>
+                                                        </li>
+                                                    }
+                                                </ul>
+                                            </div>
+                                        }
                                     </td>
                                 </tr>
                             }

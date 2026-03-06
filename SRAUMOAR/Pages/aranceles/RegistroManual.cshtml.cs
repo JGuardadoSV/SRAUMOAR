@@ -231,7 +231,11 @@ namespace SRAUMOAR.Pages.aranceles
             // Si el alumno está en especialización, mostrar solo aranceles de especialización.
             // Si no, mantener el comportamiento actual.
             var arancelesQuery = _context.Aranceles
-                .Where(a => a.Activo && a.Obligatorio && a.CicloId != null && cicloConsultaId != null && a.CicloId == cicloConsultaId);
+                .Where(a => a.Activo
+                    && (a.Obligatorio || a.EsEspecializacion)
+                    && a.CicloId != null
+                    && cicloConsultaId != null
+                    && a.CicloId == cicloConsultaId);
 
             if (alumnoEnGrupoEspecializacion)
             {
