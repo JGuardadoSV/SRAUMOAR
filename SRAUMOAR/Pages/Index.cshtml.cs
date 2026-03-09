@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.Cookies;
+Ôªøusing Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -29,46 +29,66 @@ namespace SRAUMOAR.Pages
         public LoginModel? LoginData { get; set; }
         public async Task<IActionResult> OnPostAsync()
         {
-            bool existealumno = false;
             if (ModelState.IsValid)
             {
-                var usuario = await _context.Usuarios.Where(x=>x.NombreUsuario==LoginData.NombreUsuario && x.Clave==LoginData.Clave && x.Activo==true).Include(x=>x.NivelAcceso).FirstOrDefaultAsync();
-                if (usuario != null)
-                {
-                    string nombre;string idalumno="0";
-                    try
-                    {
-                        if (usuario.NivelAcceso.Nombre == "Estudiantes")
-                        {
-                            nombre = _context.Alumno.Where(x => x.UsuarioId == usuario.IdUsuario).First().Nombres;
-                            idalumno = _context.Alumno.Where(x => x.UsuarioId == usuario.IdUsuario).First().AlumnoId.ToString();
-                            var alumno = _context.Alumno.Where(x => x.UsuarioId == usuario.IdUsuario).FirstOrDefault();
-                            if (alumno != null)
-                            {
-                                existealumno = true;
-                            }
-                            else
-                            {
-                                existealumno = false;
-                                ModelState.AddModelError(string.Empty, "Nombre de usuario o contraseÒa incorrectos.");
-                            }
-                        }
-                        else
-                        {
-                            nombre = _context.Docentes.Where(x => x.UsuarioId == usuario.IdUsuario).First().Nombres;
-                        }
-                    }
-                    catch (Exception)
-                    {
+                var usuarios = await _context.Usuarios
+                    .Where(x => x.NombreUsuario == LoginData.NombreUsuario && x.Clave == LoginData.Clave && x.Activo == true)
+                    .Include(x => x.NivelAcceso)
+                    .OrderBy(x => x.IdUsuario)
+                    .ToListAsync();
 
-                        nombre = "NOMBRE_USUARIO";
+                if (usuarios.Any())
+                {
+                    var usuario = usuarios.First();
+                    string nombre;
+                    string idalumno = "0";
+
+                    if (string.Equals(usuario.NivelAcceso?.Nombre, "Estudiantes", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var usuarioIds = usuarios
+                            .Where(x => string.Equals(x.NivelAcceso?.Nombre, "Estudiantes", StringComparison.OrdinalIgnoreCase))
+                            .Select(x => x.IdUsuario)
+                            .ToList();
+
+                        var alumnosPorUsuario = await _context.Alumno
+                            .Where(x => x.UsuarioId.HasValue && usuarioIds.Contains(x.UsuarioId.Value))
+                            .ToDictionaryAsync(x => x.UsuarioId!.Value);
+
+                        var usuarioValido = usuarios
+                            .Where(x => string.Equals(x.NivelAcceso?.Nombre, "Estudiantes", StringComparison.OrdinalIgnoreCase))
+                            .FirstOrDefault(x => alumnosPorUsuario.ContainsKey(x.IdUsuario));
+
+                        if (usuarioValido == null)
+                        {
+                            ModelState.AddModelError(string.Empty, "Se encontraron usuarios estudiante con estas credenciales, pero ninguno est√° vinculado a un registro de alumno. Contacta al administrador.");
+                            return Page();
+                        }
+
+                        usuario = usuarioValido;
+                        var alumno = alumnosPorUsuario[usuario.IdUsuario];
+                        nombre = alumno.Nombres ?? usuario.NombreUsuario;
+                        idalumno = alumno.AlumnoId.ToString();
+                    }
+                    else
+                    {
+                        try
+                        {
+                            nombre = await _context.Docentes
+                                .Where(x => x.UsuarioId == usuario.IdUsuario)
+                                .Select(x => x.Nombres)
+                                .FirstOrDefaultAsync() ?? usuario.NombreUsuario;
+                        }
+                        catch (Exception)
+                        {
+                            nombre = usuario.NombreUsuario;
+                        }
                     }
                     
 
                     var claims = new List<Claim>
                 {
                     new Claim(ClaimTypes.Name, value: usuario.NombreUsuario),
-                    new Claim(ClaimTypes.Role, usuario.NivelAcceso.Nombre.ToString()),
+                    new Claim(ClaimTypes.Role, usuario.NivelAcceso!.Nombre.ToString()),
                     new Claim(ClaimTypes.Email, usuario.NombreUsuario),
                     new Claim("NombreCompleto", nombre),
                      new Claim("idalumno", idalumno),
@@ -78,7 +98,7 @@ namespace SRAUMOAR.Pages
                     var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                     await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity));
 
-                    switch (usuario.NivelAcceso.Nombre.ToLower())
+                    switch (usuario.NivelAcceso!.Nombre.ToLower())
                     {
                         case "administrador":
                             return RedirectToPage("/Home");
@@ -94,7 +114,7 @@ namespace SRAUMOAR.Pages
                             return new StatusCodeResult(StatusCodes.Status403Forbidden);
                     }
                 }
-                ModelState.AddModelError(string.Empty, "Nombre de usuario o contraseÒa incorrectos.");
+                ModelState.AddModelError(string.Empty, "Nombre de usuario o contrase√±a incorrectos.");
             }
             return Page();
         }
@@ -114,7 +134,7 @@ namespace SRAUMOAR.Pages
     // Usa estos datos como necesites
 }
 
-// En una p·gina Razor
+// En una p√°gina Razor
 @page
 @model MiPagina
 @{
@@ -126,5 +146,6 @@ namespace SRAUMOAR.Pages
 }
  
  */
+
 
 

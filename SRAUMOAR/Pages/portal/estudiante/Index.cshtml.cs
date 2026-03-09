@@ -1,4 +1,4 @@
-using iText.Kernel.Pdf;
+﻿using iText.Kernel.Pdf;
 using iText.Layout.Element;
 using iText.Layout;
 using Microsoft.AspNetCore.Authorization;
@@ -52,12 +52,36 @@ namespace SRAUMOAR.Pages.portal.estudiante
         public IList<DetallesCobroArancel> DetallesCobroArancel { get; set; } = default!;
         public async Task<IActionResult> OnGetAsync()
         {
-            var userId = User.FindFirstValue("UserId") ?? "0"; 
-            int idusuario = int.Parse(userId);
-            int rol = _context.Usuarios.Where(x => x.IdUsuario == idusuario).First().NivelAccesoId;
-            this.Alumno = _context.Alumno.Include(c=>c.Carrera).Where(c=>c.UsuarioId == idusuario).First();
+            var userId = User.FindFirstValue("UserId") ?? "0";
+            if (!int.TryParse(userId, out int idusuario) || idusuario <= 0)
+            {
+                TempData["ErrorMessage"] = "No se pudo identificar el usuario autenticado.";
+                return RedirectToPage("/Index");
+            }
 
-            Ciclo = _context.Ciclos.Where(x => x.Activo == true).First();
+            var usuario = await _context.Usuarios
+                .FirstOrDefaultAsync(x => x.IdUsuario == idusuario);
+            if (usuario == null)
+            {
+                TempData["ErrorMessage"] = "El usuario autenticado ya no existe en el sistema.";
+                return RedirectToPage("/Index");
+            }
+
+            Alumno = await _context.Alumno
+                .Include(c => c.Carrera)
+                .FirstOrDefaultAsync(c => c.UsuarioId == idusuario);
+            if (Alumno == null)
+            {
+                TempData["ErrorMessage"] = "Tu usuario no está vinculado a un registro de alumno. Contacta al administrador.";
+                return RedirectToPage("/Index");
+            }
+
+            Ciclo = await _context.Ciclos.FirstOrDefaultAsync(x => x.Activo == true);
+            if (Ciclo == null)
+            {
+                TempData["ErrorMessage"] = "No hay un ciclo activo configurado.";
+                return RedirectToPage("/Index");
+            }
 
             // Verificar si el alumno es becado en el ciclo actual
             EsBecado = await _context.Becados
@@ -65,7 +89,7 @@ namespace SRAUMOAR.Pages.portal.estudiante
                               b.CicloId == Ciclo.Id && 
                               b.Estado == true);
 
-            // Verificar si el alumno está inscrito en algún grupo de especialización del ciclo actual
+            // Verificar si el alumno estÃ¡ inscrito en algÃºn grupo de especializaciÃ³n del ciclo actual
             EstaEnGrupoEspecializacion = await _context.MateriasInscritas
                 .Include(mi => mi.MateriasGrupo)
                     .ThenInclude(mg => mg.Grupo)
@@ -80,25 +104,25 @@ namespace SRAUMOAR.Pages.portal.estudiante
      .Include(mi => mi.MateriasGrupo)
          .ThenInclude(mg => mg.Docente)
      .Include(mi => mi.MateriasGrupo)
-         .ThenInclude(mg => mg.Grupo)  // Agregamos esta l�nea para incluir el Grupo
+         .ThenInclude(mg => mg.Grupo)  // Agregamos esta lï¿½nea para incluir el Grupo
      .Include(mi => mi.Notas)
          .ThenInclude(n => n.ActividadAcademica)
      .Where(mi => mi.MateriasGrupo.Grupo.CicloId == Ciclo.Id &&
                   mi.Alumno.AlumnoId == Alumno.AlumnoId)
      .ToListAsync();
 
-            // Obtener actividades académicas del ciclo para calcular promedios
+            // Obtener actividades acadÃ©micas del ciclo para calcular promedios
             ActividadAcademica = await _context.ActividadesAcademicas
                 .Include(a => a.Arancel)
                 .Include(a => a.Ciclo)
                 .Where(c => c.CicloId == Ciclo.Id)
                 .ToListAsync();
 
-            // Calcular y actualizar promedios si están en 0.0 o desactualizados
+            // Calcular y actualizar promedios si estÃ¡n en 0.0 o desactualizados
             bool hayCambios = false;
             foreach (var materia in MateriasInscritas)
             {
-                // Recalcular el promedio si hay actividades académicas definidas
+                // Recalcular el promedio si hay actividades acadÃ©micas definidas
                 if (ActividadAcademica != null && ActividadAcademica.Any())
                 {
                     var promedioCalculado = CalcularPromedioMateria(materia.Notas, ActividadAcademica);
@@ -120,7 +144,7 @@ namespace SRAUMOAR.Pages.portal.estudiante
                 await _context.SaveChangesAsync();
             }
 
-            // Consulta modificada para manejar m�ltiples pagos
+            // Consulta modificada para manejar mï¿½ltiples pagos
             var todosLosAranceles = await _context.Aranceles.Where(x => x.Ciclo.Id == Ciclo.Id)
                  .Include(a => a.Ciclo).ToListAsync();
 
@@ -129,12 +153,12 @@ namespace SRAUMOAR.Pages.portal.estudiante
                 .Include(x => x.Arancel)
                 .Where(x => x.CobroArancel.CicloId == Ciclo.Id && x.CobroArancel.AlumnoId == Alumno.AlumnoId).ToListAsync();
 
-            // Filtrar aranceles según si el estudiante está en grupo de pre-especialización
+            // Filtrar aranceles segÃºn si el estudiante estÃ¡ en grupo de pre-especializaciÃ³n
             if (EstaEnGrupoEspecializacion)
             {
-                // Si está en grupo de especialización:
-                // - Mostrar aranceles obligatorios que sean de especialización
-                // - Mostrar todos los aranceles no obligatorios (que no sean de especialización)
+                // Si estÃ¡ en grupo de especializaciÃ³n:
+                // - Mostrar aranceles obligatorios que sean de especializaciÃ³n
+                // - Mostrar todos los aranceles no obligatorios (que no sean de especializaciÃ³n)
                 Arancel = todosLosAranceles.Where(a => 
                     (a.Obligatorio && a.EsEspecializacion) || 
                     (!a.Obligatorio && !a.EsEspecializacion)
@@ -142,9 +166,9 @@ namespace SRAUMOAR.Pages.portal.estudiante
             }
             else
             {
-                // Si NO está en grupo de especialización:
-                // - Mostrar solo aranceles obligatorios normales (no de especialización)
-                // - Mostrar todos los aranceles no obligatorios (que no sean de especialización)
+                // Si NO estÃ¡ en grupo de especializaciÃ³n:
+                // - Mostrar solo aranceles obligatorios normales (no de especializaciÃ³n)
+                // - Mostrar todos los aranceles no obligatorios (que no sean de especializaciÃ³n)
                 Arancel = todosLosAranceles.Where(a => 
                     (a.Obligatorio && !a.EsEspecializacion) || 
                     (!a.Obligatorio && !a.EsEspecializacion)
@@ -154,16 +178,16 @@ namespace SRAUMOAR.Pages.portal.estudiante
             // Verificar si tiene aranceles retrasados (solo si no es becado)
             if (!EsBecado)
             {
-                // Determinar qué aranceles verificar según si está en grupo de especialización
+                // Determinar quÃ© aranceles verificar segÃºn si estÃ¡ en grupo de especializaciÃ³n
                 var arancelesAVerificar = Arancel.AsEnumerable();
                 if (EstaEnGrupoEspecializacion)
                 {
-                    // Si está en grupo de especialización, solo verificar aranceles obligatorios de especialización
+                    // Si estÃ¡ en grupo de especializaciÃ³n, solo verificar aranceles obligatorios de especializaciÃ³n
                     arancelesAVerificar = Arancel.Where(a => !a.Obligatorio || a.EsEspecializacion);
                 }
                 else
                 {
-                    // Si no está en grupo de especialización, verificar todos los aranceles obligatorios
+                    // Si no estÃ¡ en grupo de especializaciÃ³n, verificar todos los aranceles obligatorios
                     arancelesAVerificar = Arancel;
                 }
 
@@ -173,7 +197,7 @@ namespace SRAUMOAR.Pages.portal.estudiante
             }
 
 
-            // Calcular estadísticas del historial académico
+            // Calcular estadÃ­sticas del historial acadÃ©mico
             var historialAcademico = await _context.HistorialAcademico
                 .Include(h => h.CiclosHistorial)
                     .ThenInclude(hc => hc.MateriasHistorial)
@@ -290,7 +314,7 @@ namespace SRAUMOAR.Pages.portal.estudiante
         {
             try
             {
-                // Aqu� puedes agregar tu l�gica para obtener el JSON y sello
+                // Aquï¿½ puedes agregar tu lï¿½gica para obtener el JSON y sello
                 // Por ahora uso valores de ejemplo
                 CobroArancel cobroArancel = await _context.CobrosArancel
                     .Include(c => c.Alumno)
@@ -312,8 +336,8 @@ namespace SRAUMOAR.Pages.portal.estudiante
                 }
 
 
-                var dteJson = factura.JsonDte; // Reemplazar con tu l�gica
-                var selloRecibido = factura.SelloRecepcion; // Reemplazar con tu l�gica
+                var dteJson = factura.JsonDte; // Reemplazar con tu lï¿½gica
+                var selloRecibido = factura.SelloRecepcion; // Reemplazar con tu lï¿½gica
                 var tipo = factura.TipoDTE.ToString().PadLeft(2, '0');
 
                 // Datos que necesitas enviar
@@ -335,9 +359,9 @@ namespace SRAUMOAR.Pages.portal.estudiante
                 {
                     var pdfBytes = await response.Content.ReadAsByteArrayAsync();
 
-                    //Console.WriteLine($"[DEBUG CLIENT] PDF recibido, tama�o: {pdfBytes.Length} bytes");
+                    //Console.WriteLine($"[DEBUG CLIENT] PDF recibido, tamaï¿½o: {pdfBytes.Length} bytes");
 
-                    // Respuesta m�s simple - deja que la API maneje los headers
+                    // Respuesta mï¿½s simple - deja que la API maneje los headers
                     return File(pdfBytes, "application/pdf");
                 }
                 else
@@ -350,7 +374,7 @@ namespace SRAUMOAR.Pages.portal.estudiante
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR CLIENT] Excepci�n: {ex}");
+                Console.WriteLine($"[ERROR CLIENT] Excepciï¿½n: {ex}");
                 TempData["Error"] = $"Error: {ex.Message}";
                 return RedirectToPage();
             }
@@ -362,20 +386,20 @@ namespace SRAUMOAR.Pages.portal.estudiante
             {
                 if (nuevaFoto == null || nuevaFoto.Length == 0)
                 {
-                    return new JsonResult(new { success = false, message = "No se seleccionó ninguna imagen." });
+                    return new JsonResult(new { success = false, message = "No se seleccionÃ³ ninguna imagen." });
                 }
 
-                // Validar tamaño (5MB máximo antes de optimización)
+                // Validar tamaÃ±o (5MB mÃ¡ximo antes de optimizaciÃ³n)
                 if (nuevaFoto.Length > 5 * 1024 * 1024)
                 {
-                    return new JsonResult(new { success = false, message = "La imagen es demasiado grande. El tamaño máximo es 5MB." });
+                    return new JsonResult(new { success = false, message = "La imagen es demasiado grande. El tamaÃ±o mÃ¡ximo es 5MB." });
                 }
 
                 // Validar tipo de archivo
                 var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png" };
                 if (!allowedTypes.Contains(nuevaFoto.ContentType.ToLower()))
                 {
-                    return new JsonResult(new { success = false, message = "Formato de imagen no válido. Solo se permiten JPG y PNG." });
+                    return new JsonResult(new { success = false, message = "Formato de imagen no vÃ¡lido. Solo se permiten JPG y PNG." });
                 }
 
                 // Obtener el alumno actual
@@ -398,7 +422,7 @@ namespace SRAUMOAR.Pages.portal.estudiante
 
                 return new JsonResult(new { 
                     success = true, 
-                    message = $"Foto actualizada exitosamente. Tamaño optimizado: {(fotoBytes.Length / 1024.0):F1} KB" 
+                    message = $"Foto actualizada exitosamente. TamaÃ±o optimizado: {(fotoBytes.Length / 1024.0):F1} KB" 
                 });
             }
             catch (Exception ex)
@@ -407,7 +431,7 @@ namespace SRAUMOAR.Pages.portal.estudiante
             }
         }
 
-        // Método para calcular el promedio de una materia usando todas las actividades académicas
+        // MÃ©todo para calcular el promedio de una materia usando todas las actividades acadÃ©micas
         private static decimal CalcularPromedioMateria(ICollection<Notas> notas, IList<ActividadAcademica> actividadesAcademicas)
         {
             if (actividadesAcademicas == null || !actividadesAcademicas.Any())
@@ -416,7 +440,7 @@ namespace SRAUMOAR.Pages.portal.estudiante
             decimal sumaPonderada = 0;
             decimal totalPorcentaje = 0;
 
-            // Iterar sobre TODAS las actividades académicas del ciclo
+            // Iterar sobre TODAS las actividades acadÃ©micas del ciclo
             foreach (var actividad in actividadesAcademicas)
             {
                 if (actividad == null) continue;
@@ -441,26 +465,26 @@ namespace SRAUMOAR.Pages.portal.estudiante
         }
 
         /// <summary>
-        /// Calcula la nota final aplicando las reglas de reposición
+        /// Calcula la nota final aplicando las reglas de reposiciÃ³n
         /// </summary>
         private static decimal CalcularNotaFinal(MateriasInscritas materiaInscrita, decimal promedioCalculado)
         {
-            // Aplicar regla de reposición
+            // Aplicar regla de reposiciÃ³n
             if (materiaInscrita.NotaRecuperacion.HasValue)
             {
                 if (materiaInscrita.NotaRecuperacion.Value >= 7)
                 {
-                    // Si aprobó recuperación (>=7), la nota final es 7
+                    // Si aprobÃ³ recuperaciÃ³n (>=7), la nota final es 7
                     return 7;
                 }
                 else
                 {
-                    // Si tiene nota de recuperación pero reprobó (<7), usar esa nota redondeada a 1 decimal
+                    // Si tiene nota de recuperaciÃ³n pero reprobÃ³ (<7), usar esa nota redondeada a 1 decimal
                     return Math.Round(materiaInscrita.NotaRecuperacion.Value, 1, MidpointRounding.AwayFromZero);
                 }
             }
 
-            // Si no tiene nota de recuperación, usar el promedio calculado (ya redondeado a 1 decimal)
+            // Si no tiene nota de recuperaciÃ³n, usar el promedio calculado (ya redondeado a 1 decimal)
             return promedioCalculado;
         }
 
@@ -474,7 +498,7 @@ namespace SRAUMOAR.Pages.portal.estudiante
 
                 using var image = await ImageSharpImage.LoadAsync(memoryStream);
                 
-                // Redimensionar si es muy grande (máximo 300x300 píxeles)
+                // Redimensionar si es muy grande (mÃ¡ximo 300x300 pÃ­xeles)
                 var maxSize = 300;
                 if (image.Width > maxSize || image.Height > maxSize)
                 {
@@ -485,16 +509,16 @@ namespace SRAUMOAR.Pages.portal.estudiante
                     image.Mutate(x => x.Resize(newWidth, newHeight));
                 }
 
-                // Convertir a JPEG con compresión
+                // Convertir a JPEG con compresiÃ³n
                 using var outputStream = new MemoryStream();
                 await image.SaveAsync(outputStream, new JpegEncoder
                 {
-                    Quality = 85 // Calidad del 85% para buen balance entre tamaño y calidad
+                    Quality = 85 // Calidad del 85% para buen balance entre tamaÃ±o y calidad
                 });
 
                 var optimizedBytes = outputStream.ToArray();
                 
-                // Log del tamaño optimizado
+                // Log del tamaÃ±o optimizado
                 var originalSize = memoryStream.Length;
                 var optimizedSize = optimizedBytes.Length;
                 var compressionRatio = (double)optimizedSize / originalSize * 100;
@@ -506,7 +530,7 @@ namespace SRAUMOAR.Pages.portal.estudiante
             catch (Exception ex)
             {
                 Console.WriteLine($"Error al optimizar imagen: {ex.Message}");
-                // Si falla la optimización, devolver la imagen original
+                // Si falla la optimizaciÃ³n, devolver la imagen original
                 using var memoryStream = new MemoryStream();
                 await imagen.CopyToAsync(memoryStream);
                 return memoryStream.ToArray();
@@ -514,3 +538,4 @@ namespace SRAUMOAR.Pages.portal.estudiante
         }
     }
 }
+

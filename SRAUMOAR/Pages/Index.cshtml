@@ -196,6 +196,10 @@
             </div>
             <div class="card-body login-card-body">
                 <p class="login-box-msg">Bienvenido al Sistema de Registro Académico</p>
+                @if (TempData["ErrorMessage"] is string errorMessage && !string.IsNullOrWhiteSpace(errorMessage))
+                {
+                    <div class="alert alert-danger" role="alert">@errorMessage</div>
+                }
                 <div asp-validation-summary="All" class="text-danger"></div>
                 <form method="post">
                     <div class="input-group mb-4">
