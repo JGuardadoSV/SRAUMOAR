@@ -27,10 +27,21 @@ namespace SRAUMOAR.Pages.materiasGrupo
         public async Task OnGetAsync()
         {
             var userId = User.FindFirstValue("UserId") ?? "0"; // Si lo guardaste con el nombre "UserId"
-            int idusuario = int.Parse(userId);
-            int rol = _context.Usuarios.Where(x => x.IdUsuario == idusuario).First().NivelAccesoId;
-            int iddocente= _context.Docentes.Where(x => x.UsuarioId == idusuario).First().DocenteId;
-            
+            if (!int.TryParse(userId, out int idusuario) || idusuario <= 0)
+            {
+                MateriasGrupo = new List<MateriasGrupo>();
+                return;
+            }
+
+            var docente = await _context.Docentes
+                .FirstOrDefaultAsync(x => x.UsuarioId == idusuario);
+
+            if (docente == null)
+            {
+                MateriasGrupo = new List<MateriasGrupo>();
+                return;
+            }
+             
             // Obtener ciclo actual
             var cicloActual = await _context.Ciclos.Where(x => x.Activo == true).FirstOrDefaultAsync();
             if (cicloActual == null)
@@ -38,9 +49,9 @@ namespace SRAUMOAR.Pages.materiasGrupo
                 MateriasGrupo = new List<MateriasGrupo>();
                 return;
             }
-            
+             
             MateriasGrupo = await _context.MateriasGrupo
-                .Where(x => x.DocenteId == iddocente && x.Grupo.CicloId == cicloActual.Id)
+                .Where(x => x.DocenteId == docente.DocenteId && x.Grupo.CicloId == cicloActual.Id)
                 .Include(m => m.Grupo)
                 .Include(m => m.Materia)
                 .ToListAsync();

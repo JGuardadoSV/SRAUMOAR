@@ -69,6 +69,31 @@ namespace SRAUMOAR.Pages
                         nombre = alumno.Nombres ?? usuario.NombreUsuario;
                         idalumno = alumno.AlumnoId.ToString();
                     }
+                    else if (string.Equals(usuario.NivelAcceso?.Nombre, "Docentes", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var usuarioIds = usuarios
+                            .Where(x => string.Equals(x.NivelAcceso?.Nombre, "Docentes", StringComparison.OrdinalIgnoreCase))
+                            .Select(x => x.IdUsuario)
+                            .ToList();
+
+                        var docentesPorUsuario = await _context.Docentes
+                            .Where(x => x.UsuarioId.HasValue && usuarioIds.Contains(x.UsuarioId.Value))
+                            .ToDictionaryAsync(x => x.UsuarioId!.Value);
+
+                        var usuarioValido = usuarios
+                            .Where(x => string.Equals(x.NivelAcceso?.Nombre, "Docentes", StringComparison.OrdinalIgnoreCase))
+                            .FirstOrDefault(x => docentesPorUsuario.ContainsKey(x.IdUsuario));
+
+                        if (usuarioValido == null)
+                        {
+                            ModelState.AddModelError(string.Empty, "Se encontraron usuarios docente con estas credenciales, pero ninguno está vinculado a un registro de docente. Contacta al administrador.");
+                            return Page();
+                        }
+
+                        usuario = usuarioValido;
+                        var docente = docentesPorUsuario[usuario.IdUsuario];
+                        nombre = docente.Nombres ?? usuario.NombreUsuario;
+                    }
                     else
                     {
                         try

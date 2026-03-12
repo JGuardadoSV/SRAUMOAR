@@ -114,9 +114,19 @@ namespace SRAUMOAR.Pages.grupos
             if (CicloId.HasValue && CicloSeleccionado != null)
             {
                 var userId = User.FindFirstValue("UserId") ?? "0";
-                int idusuario = int.Parse(userId);
-                int rol = _context.Usuarios.Where(x => x.IdUsuario == idusuario).First().NivelAccesoId;
-                
+                if (!int.TryParse(userId, out int idusuario) || idusuario <= 0)
+                {
+                    return Unauthorized();
+                }
+
+                var usuario = await _context.Usuarios.FirstOrDefaultAsync(x => x.IdUsuario == idusuario);
+                if (usuario == null)
+                {
+                    return Unauthorized();
+                }
+
+                int rol = usuario.NivelAccesoId;
+                 
                 IQueryable<Grupo> query;
                 
                 if (rol == 1 || rol == 2) // Administrador o Administracion
@@ -129,7 +139,14 @@ namespace SRAUMOAR.Pages.grupos
                 }
                 else if (rol == 3) // Docente
                 {
-                    int IdDocente = _context.Docentes.Where(x => x.UsuarioId == idusuario).First().DocenteId;
+                    var docente = await _context.Docentes.FirstOrDefaultAsync(x => x.UsuarioId == idusuario);
+                    if (docente == null)
+                    {
+                        Grupo = new List<Grupo>();
+                        return Page();
+                    }
+
+                    int IdDocente = docente.DocenteId;
                     query = _context.Grupo
                    .Where(x => x.CicloId == CicloId.Value && x.Docente.DocenteId == IdDocente)
                    .Include(g => g.Carrera)

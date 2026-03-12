@@ -194,6 +194,41 @@
         border-left: 4px solid var(--primary-green);
     }
 
+    .empty-state {
+        background: white;
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        padding: 3rem 2rem;
+        text-align: center;
+        margin-bottom: 2rem;
+        border: 1px solid var(--border-color);
+    }
+
+    .empty-state-icon {
+        width: 72px;
+        height: 72px;
+        margin: 0 auto 1.25rem;
+        border-radius: 50%;
+        background: var(--light-green);
+        color: var(--dark-green);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+    }
+
+    .empty-state h3 {
+        color: var(--text-dark);
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+    }
+
+    .empty-state p {
+        color: var(--text-light);
+        max-width: 520px;
+        margin: 0 auto 1.5rem;
+    }
+
     .stats-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -346,94 +381,103 @@
         </div>
     </form>
 
-    <!-- Table Section -->
-    <div class="table-container">
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>@Html.DisplayNameFor(model => model.Grupo[0].Nombre)</th>
-                        <th>@Html.DisplayNameFor(model => model.Grupo[0].Limite)</th>
-                        <th>@Html.DisplayNameFor(model => model.Grupo[0].Activo)</th>
-                        <th>@Html.DisplayNameFor(model => model.Grupo[0].Carrera)</th>
-                        <th>@Html.DisplayNameFor(model => model.Grupo[0].Ciclo)</th>
-                        <th>@Html.DisplayNameFor(model => model.Grupo[0].Docente)</th>
-                        <th class="text-center">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in Model.Grupo)
-                    {
-                        <tr>
-                            <td>
-                                <strong>@Html.DisplayFor(modelItem => item.Nombre)</strong>
-                            </td>
-                            <td>
-                                <span class="badge bg-light text-dark">@Html.DisplayFor(modelItem => item.Limite) estudiantes</span>
-                            </td>
-                            <td>
-                                @if (item.Activo)
-                                {
-                                    <span class="status-badge status-active">Activo</span>
-                                }
-                                else
-                                {
-                                    <span class="status-badge status-inactive">Inactivo</span>
-                                }
-                            </td>
-                            <td class="col-carrera">
-                                <div class="text-wrap">
-                                    @Html.DisplayFor(modelItem => item.Carrera.NombreCarrera)
-                                </div>
-                            </td>
-                            <td>
-                                <span class="badge bg-secondary">
-                                    @Html.DisplayFor(modelItem => item.Ciclo.NCiclo)-@Html.DisplayFor(modelItem => item.Ciclo.anio)
-                                </span>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="avatar-placeholder me-2" style="width: 32px; height: 32px; background: var(--accent-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--dark-green); font-weight: 600; font-size: 0.8rem;">
-                                        @(item.Docente.Nombres.FirstOrDefault())@(item.Docente.Apellidos.FirstOrDefault())
-                                    </div>
-                                    <div>
-                                        <strong>@Html.DisplayFor(modelItem => item.Docente.Nombres)</strong>
-                                        <strong>@Html.DisplayFor(modelItem => item.Docente.Apellidos)</strong>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="text-center">
-                                <div class="d-flex justify-content-center align-items-center gap-2 flex-wrap">
-                                    <a asp-page="./Details" asp-route-id="@item.GrupoId" class="btn-action">
-                                        <svg class="icon" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 4px;">
-                                            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
-                                        </svg>
-                                        Notas
-                                    </a>
-                                    @if (User.IsInRole("Administrador"))
-                                    {
-                                        <a asp-page="./Edit" asp-route-id="@item.GrupoId" class="btn-action">
-                                            <svg class="icon" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 4px;">
-                                                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-                                            </svg>
-                                            Editar
-                                        </a>
-                                    }
-                                   @*  else
-                                    {
-                                        <a asp-page="./Edit" asp-route-id="@item.GrupoId" class="btn-action">
-                                            <svg class="icon" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 4px;">
-                                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-                                            </svg>
-                                            Administrar
-                                        </a>
-                                    } *@
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+    @if (User.IsInRole("Docentes") && !Model.Grupo.Any())
+    {
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="bi bi-journal-text"></i>
+            </div>
+            <h3>No tienes grupos que administrar</h3>
+            <p>
+                Aun no tienes grupos asignados en el ciclo actual. Mientras tanto, puedes revisar tus materias asignadas para validar si ya existen cargas disponibles.
+            </p>
+            <a href="/materiasGrupo" class="btn-primary-green">
+                <i class="bi bi-arrow-right-circle"></i>
+                Ver materias asignadas
+            </a>
         </div>
-    </div>
+    }
+    else if (Model.Grupo.Any())
+    {
+        <div class="table-container">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>@Html.DisplayNameFor(model => model.Grupo[0].Nombre)</th>
+                            <th>@Html.DisplayNameFor(model => model.Grupo[0].Limite)</th>
+                            <th>@Html.DisplayNameFor(model => model.Grupo[0].Activo)</th>
+                            <th>@Html.DisplayNameFor(model => model.Grupo[0].Carrera)</th>
+                            <th>@Html.DisplayNameFor(model => model.Grupo[0].Ciclo)</th>
+                            <th>@Html.DisplayNameFor(model => model.Grupo[0].Docente)</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Grupo)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@Html.DisplayFor(modelItem => item.Nombre)</strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark">@Html.DisplayFor(modelItem => item.Limite) estudiantes</span>
+                                </td>
+                                <td>
+                                    @if (item.Activo)
+                                    {
+                                        <span class="status-badge status-active">Activo</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge status-inactive">Inactivo</span>
+                                    }
+                                </td>
+                                <td class="col-carrera">
+                                    <div class="text-wrap">
+                                        @Html.DisplayFor(modelItem => item.Carrera.NombreCarrera)
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">
+                                        @Html.DisplayFor(modelItem => item.Ciclo.NCiclo)-@Html.DisplayFor(modelItem => item.Ciclo.anio)
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-placeholder me-2" style="width: 32px; height: 32px; background: var(--accent-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--dark-green); font-weight: 600; font-size: 0.8rem;">
+                                            @(item.Docente.Nombres.FirstOrDefault())@(item.Docente.Apellidos.FirstOrDefault())
+                                        </div>
+                                        <div>
+                                            <strong>@Html.DisplayFor(modelItem => item.Docente.Nombres)</strong>
+                                            <strong>@Html.DisplayFor(modelItem => item.Docente.Apellidos)</strong>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <div class="d-flex justify-content-center align-items-center gap-2 flex-wrap">
+                                        <a asp-page="./Details" asp-route-id="@item.GrupoId" class="btn-action">
+                                            <svg class="icon" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 4px;">
+                                                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
+                                            </svg>
+                                            Notas
+                                        </a>
+                                        @if (User.IsInRole("Administrador"))
+                                        {
+                                            <a asp-page="./Edit" asp-route-id="@item.GrupoId" class="btn-action">
+                                                <svg class="icon" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 4px;">
+                                                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+                                                </svg>
+                                                Editar
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
 </div>
