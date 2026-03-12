@@ -90,6 +90,45 @@ namespace SRAUMOAR.Pages.reportes.notas
             _fontBold = PdfFontFactory.CreateFont(StandardFonts.TIMES_BOLD);
         }
 
+        private string ObtenerEstadoSolvencia(int alumnoId, int cicloId)
+        {
+            var fechaActual = DateTime.Now;
+            var esBecado = _context.Becados.Any(b => b.AlumnoId == alumnoId && b.CicloId == cicloId && b.Estado);
+            if (esBecado)
+            {
+                return "Solvente";
+            }
+
+            var alumnoEnGrupoEspecializacion = _context.MateriasInscritas
+                .Include(mi => mi.MateriasGrupo)!.ThenInclude(mg => mg!.Grupo)
+                .Any(mi => mi.AlumnoId == alumnoId &&
+                           mi.MateriasGrupo!.Grupo!.CicloId == cicloId &&
+                           mi.MateriasGrupo.Grupo.EsEspecializacion);
+
+            var arancelesPagadosIds = _context.DetallesCobrosArancel
+                .Where(d => d.CobroArancel.AlumnoId == alumnoId && d.CobroArancel.CicloId == cicloId)
+                .Select(d => d.ArancelId)
+                .ToHashSet();
+
+            var arancelesAVerificar = _context.Aranceles
+                .Where(a => a.CicloId == cicloId &&
+                            a.Activo &&
+                            a.FechaFin.HasValue &&
+                            a.FechaFin.Value < fechaActual);
+
+            if (alumnoEnGrupoEspecializacion)
+            {
+                arancelesAVerificar = arancelesAVerificar.Where(a => a.EsEspecializacion);
+            }
+            else
+            {
+                arancelesAVerificar = arancelesAVerificar.Where(a => a.Obligatorio && !a.EsEspecializacion);
+            }
+
+            bool tienePendientes = arancelesAVerificar.Any(a => !arancelesPagadosIds.Contains(a.ArancelId));
+            return tienePendientes ? "No solvente" : "Solvente";
+        }
+
         public IActionResult OnGet(int alumnoId, int cicloId)
         {
             InitializeFonts();
@@ -112,6 +151,7 @@ namespace SRAUMOAR.Pages.reportes.notas
 
             var materiasInscritas = _context.MateriasInscritas
                 .Include(mi => mi.MateriasGrupo)!.ThenInclude(mg => mg!.Materia)
+                .Include(mi => mi.MateriasGrupo)!.ThenInclude(mg => mg!.Grupo)
                 .Include(mi => mi.Notas)!.ThenInclude(n => n!.ActividadAcademica)
                 .Where(mi => mi.AlumnoId == alumnoId && mi.MateriasGrupo!.Grupo!.CicloId == cicloId)
                 .ToList();
@@ -126,17 +166,7 @@ namespace SRAUMOAR.Pages.reportes.notas
             string tituloReporte = $"Informe de notas finales ciclo {ciclo.NCiclo} - {ciclo.anio}";
 
             // Determinar estado de solvencia del ciclo histórico
-            var hoy = DateTime.Now.Date;
-            var esBecado = _context.Becados.Any(b => b.AlumnoId == alumnoId && b.CicloId == cicloId && b.Estado);
-            var arancelesObligatoriosVigentes = _context.Aranceles
-                .Where(a => a.CicloId == cicloId && a.Obligatorio && a.Activo && a.FechaInicio <= hoy)
-                .ToList();
-            var arancelesPagadosIds = _context.DetallesCobrosArancel
-                .Where(d => d.CobroArancel.AlumnoId == alumnoId && d.CobroArancel.CicloId == cicloId)
-                .Select(d => d.ArancelId)
-                .ToHashSet();
-            bool tienePendientes = arancelesObligatoriosVigentes.Any(a => !arancelesPagadosIds.Contains(a.ArancelId));
-            string estadoSolvencia = esBecado ? "Solvente" : (tienePendientes ? "No solvente" : "Solvente");
+            string estadoSolvencia = ObtenerEstadoSolvencia(alumnoId, cicloId);
 
             using var ms = new MemoryStream();
             using (var writer = new PdfWriter(ms))
