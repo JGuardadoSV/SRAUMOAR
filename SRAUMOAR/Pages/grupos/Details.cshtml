@@ -245,11 +245,7 @@
                                         while (labsList.Count < 3) { labsList.Add(null); }
                                         while (parsList.Count < 3) { parsList.Add(null); }
 
-                                        decimal labSum = (labsList[0] ?? 0) + (labsList[1] ?? 0) + (labsList[2] ?? 0);
-                                        decimal parSum = (parsList[0] ?? 0) + (parsList[1] ?? 0) + (parsList[2] ?? 0);
-                                        decimal labAvg = labSum / 3m;
-                                        decimal parAvg = parSum / 3m;
-                                        decimal promedioBase = Math.Round(labAvg * 0.30m + parAvg * 0.70m, 2);
+                                        decimal promedioBase = SRAUMOAR.Pages.grupos.DetailsModel.CalcularPromedioMateriaComun(notasMateria, Model.ActividadesAcademicas);
                                         
                                         // Aplicar lógica de reposición
                                         decimal notaFinal = SRAUMOAR.Pages.grupos.DetailsModel.CalcularPromedioFinalConReposicion(promedioBase, materiaInscrita.NotaRecuperacion);

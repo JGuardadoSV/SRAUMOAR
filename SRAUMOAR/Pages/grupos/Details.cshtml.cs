@@ -27,6 +27,31 @@ namespace SRAUMOAR.Pages.grupos
         public IList<ActividadAcademica> ActividadesAcademicas { get; set; } = new List<ActividadAcademica>();
         public IList<EstudianteConNotas> EstudiantesConNotas { get; set; } = new List<EstudianteConNotas>();
 
+        public static decimal CalcularPromedioMateriaComun(ICollection<Notas> notas, IList<ActividadAcademica> actividadesAcademicas)
+        {
+            if (actividadesAcademicas == null || !actividadesAcademicas.Any())
+                return 0;
+
+            decimal sumaPonderada = 0;
+            decimal totalPorcentaje = 0;
+
+            foreach (var actividad in actividadesAcademicas)
+            {
+                if (actividad == null) continue;
+
+                int porcentaje = actividad.Porcentaje;
+                totalPorcentaje += porcentaje;
+
+                var notaRegistrada = notas?.FirstOrDefault(n => n.ActividadAcademicaId == actividad.ActividadAcademicaId);
+                decimal valorNota = notaRegistrada?.Nota ?? 0;
+                sumaPonderada += valorNota * porcentaje;
+            }
+
+            if (totalPorcentaje <= 0) return 0;
+
+            return Math.Round(sumaPonderada / totalPorcentaje, 1, MidpointRounding.AwayFromZero);
+        }
+
         // Método para calcular el promedio final considerando la nota de reposición
         public static decimal CalcularPromedioFinalConReposicion(decimal promedioBase, decimal? notaRecuperacion)
         {

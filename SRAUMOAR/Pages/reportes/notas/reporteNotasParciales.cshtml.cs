@@ -35,6 +35,31 @@ namespace SRAUMOAR.Pages.reportes.notas
             _fontBold = PdfFontFactory.CreateFont(StandardFonts.TIMES_BOLD);
         }
 
+        private static decimal CalcularPromedioMateriaComun(ICollection<Notas> notas, IList<ActividadAcademica> actividadesAcademicas)
+        {
+            if (actividadesAcademicas == null || !actividadesAcademicas.Any())
+                return 0;
+
+            decimal sumaPonderada = 0;
+            decimal totalPorcentaje = 0;
+
+            foreach (var actividad in actividadesAcademicas)
+            {
+                if (actividad == null) continue;
+
+                int porcentaje = actividad.Porcentaje;
+                totalPorcentaje += porcentaje;
+
+                var notaRegistrada = notas?.FirstOrDefault(n => n.ActividadAcademicaId == actividad.ActividadAcademicaId);
+                decimal valorNota = notaRegistrada?.Nota ?? 0;
+                sumaPonderada += valorNota * porcentaje;
+            }
+
+            if (totalPorcentaje <= 0) return 0;
+
+            return Math.Round(sumaPonderada / totalPorcentaje, 1, MidpointRounding.AwayFromZero);
+        }
+
         // Método para calcular el promedio final considerando la nota de reposición
         private static decimal CalcularPromedioFinalConReposicion(decimal promedioBase, decimal? notaRecuperacion)
         {
@@ -81,6 +106,11 @@ namespace SRAUMOAR.Pages.reportes.notas
                 .Include(mi => mi.MateriasGrupo)!.ThenInclude(mg => mg!.Materia)
                 .Include(mi => mi.Notas)!.ThenInclude(n => n!.ActividadAcademica)
                 .Where(mi => mi.AlumnoId == alumnoId && mi.MateriasGrupo!.Grupo!.CicloId == cicloActual.Id)
+                .ToList();
+
+            var actividadesAcademicas = _context.ActividadesAcademicas
+                .Where(a => a.CicloId == cicloActual.Id)
+                .OrderBy(a => a.FechaInicio)
                 .ToList();
 
             // Determinar estado de solvencia
@@ -194,12 +224,7 @@ namespace SRAUMOAR.Pages.reportes.notas
                     tabla.AddCell(CeldaNota(labs[2], isAlt));
                     tabla.AddCell(CeldaNota(pars[2], isAlt));
 
-                    // Promedio final: (promedio LAB * 0.30) + (promedio PAR * 0.70)
-                    decimal labSum = (labs[0] ?? 0) + (labs[1] ?? 0) + (labs[2] ?? 0);
-                    decimal parSum = (pars[0] ?? 0) + (pars[1] ?? 0) + (pars[2] ?? 0);
-                    decimal labAvg = labSum / 3m;
-                    decimal parAvg = parSum / 3m;
-                    decimal promedioBase = Math.Round(labAvg * 0.30m + parAvg * 0.70m, 1, MidpointRounding.AwayFromZero);
+                    decimal promedioBase = CalcularPromedioMateriaComun(notas, actividadesAcademicas);
                     
                     // Aplicar lógica de reposición
                     decimal notaFinal = CalcularPromedioFinalConReposicion(promedioBase, mi.NotaRecuperacion);
