@@ -35,7 +35,7 @@ namespace SRAUMOAR.Pages.aranceles
         }
         public List<Arancel> Aranceles { get; set; }
         
-        // Método para cargar datos de la vista (reutilizable)
+        // Mï¿½todo para cargar datos de la vista (reutilizable)
         private async Task CargarDatosParaVista(int idalumno)
         {
             var alumno = await _context.Alumno.FirstOrDefaultAsync(m => m.AlumnoId == idalumno);
@@ -46,6 +46,60 @@ namespace SRAUMOAR.Pages.aranceles
                 ViewData["AlumnoId"] = alumno.AlumnoId;
                 ViewData["ExentoMora"] = alumno.ExentoMora;
             }
+        }
+
+        private static int? ObtenerCicloUnico(List<Arancel> aranceles)
+        {
+            if (aranceles == null || aranceles.Count == 0)
+                return null;
+
+            var ciclos = aranceles
+                .Where(a => a.CicloId.HasValue)
+                .Select(a => a.CicloId!.Value)
+                .Distinct()
+                .ToList();
+
+            if (ciclos.Count == 0)
+                return null;
+
+            if (ciclos.Count > 1)
+                return -1; // marcador: ciclos mezclados
+
+            return ciclos[0];
+        }
+
+        private async Task<Dictionary<int, decimal>> ObtenerPreciosPersonalizadosAsync(int alumnoId, List<int> arancelIds, int? cicloId)
+        {
+            if (arancelIds == null || arancelIds.Count == 0)
+                return new Dictionary<int, decimal>();
+
+            // Solo aplica si el alumno tiene beca parcial activa
+            var alumnoTieneBecaParcial = await _context.Becados
+                .AsNoTracking()
+                .AnyAsync(b => b.AlumnoId == alumnoId && b.Estado && b.TipoBeca == 2);
+
+            if (!alumnoTieneBecaParcial)
+                return new Dictionary<int, decimal>();
+
+            var query = _context.ArancelesBecados
+                .AsNoTracking()
+                .Where(ab =>
+                    ab.Activo &&
+                    arancelIds.Contains(ab.ArancelId) &&
+                    ab.Becado != null &&
+                    ab.Becado.AlumnoId == alumnoId &&
+                    ab.Arancel != null);
+
+            if (cicloId.HasValue)
+            {
+                query = query.Where(ab => ab.Arancel!.CicloId == cicloId.Value);
+            }
+
+            var personalizados = await query.ToListAsync();
+
+            return personalizados
+                .GroupBy(p => p.ArancelId)
+                .ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.FechaRegistro).First().PrecioPersonalizado);
         }
         
         //public async Task<IActionResult> OnGet(int alumnoId, int arancelId)
@@ -59,26 +113,22 @@ namespace SRAUMOAR.Pages.aranceles
                 .Where(a => arancelIdsList.Contains(a.ArancelId))
                 .ToListAsync();
 
-            // Verificar si el alumno tiene beca parcial
-            var becaAlumno = await _context.Becados
-                .Where(b => b.AlumnoId == idalumno && b.Estado && b.TipoBeca == 2)
-                .FirstOrDefaultAsync();
-
-            if (becaAlumno != null)
+            var cicloUnico = ObtenerCicloUnico(aranceles);
+            if (cicloUnico == -1)
             {
-                // Obtener aranceles personalizados activos para este becado
-                var arancelesPersonalizados = await _context.ArancelesBecados
-                    .Where(ab => ab.BecadosId == becaAlumno.BecadosId && ab.Activo)
-                    .ToListAsync();
+                ModelState.AddModelError(string.Empty, "No se puede facturar aranceles de ciclos distintos en una sola operaciï¿½n.");
+                await CargarDatosParaVista(idalumno);
+                Aranceles = aranceles;
+                ViewData["Ciclo"] = null;
+                return Page();
+            }
 
-                // Reemplazar el costo de los aranceles seleccionados por el personalizado si existe
-                foreach (var arancel in aranceles)
+            var preciosPersonalizados = await ObtenerPreciosPersonalizadosAsync(idalumno, arancelIdsList, cicloUnico);
+            foreach (var arancel in aranceles)
+            {
+                if (preciosPersonalizados.TryGetValue(arancel.ArancelId, out var precio))
                 {
-                    var personalizado = arancelesPersonalizados.FirstOrDefault(ab => ab.ArancelId == arancel.ArancelId);
-                    if (personalizado != null)
-                    {
-                        arancel.Costo = personalizado.PrecioPersonalizado;
-                    }
+                    arancel.Costo = precio;
                 }
             }
 
@@ -115,7 +165,7 @@ namespace SRAUMOAR.Pages.aranceles
         // For more information, see https://aka.ms/RazorPagesCRUD.
         public async Task<IActionResult> OnPostAsync(List<int> selectedAranceles, List<decimal> arancelescostos, int idalumno)
         {
-            // Validar que los parámetros no sean null
+            // Validar que los parï¿½metros no sean null
             if (selectedAranceles == null || arancelescostos == null)
             {
                 ModelState.AddModelError("", "Los datos de aranceles son requeridos");
@@ -131,22 +181,22 @@ namespace SRAUMOAR.Pages.aranceles
             }
 
             // Verificar si el alumno tiene beca parcial y obtener precios personalizados
-            var becaAlumno = await _context.Becados
-                .Where(b => b.AlumnoId == idalumno && b.Estado && b.TipoBeca == 2)
-                .FirstOrDefaultAsync();
+            var arancelesSeleccionadosDb = await _context.Aranceles
+                .AsNoTracking()
+                .Where(a => selectedAranceles.Contains(a.ArancelId))
+                .ToListAsync();
 
-            Dictionary<int, decimal> preciosPersonalizados = new Dictionary<int, decimal>();
-            if (becaAlumno != null)
+            var cicloUnico = ObtenerCicloUnico(arancelesSeleccionadosDb);
+            if (cicloUnico == -1)
             {
-                var arancelesPersonalizados = await _context.ArancelesBecados
-                    .Where(ab => ab.BecadosId == becaAlumno.BecadosId && ab.Activo)
-                    .ToListAsync();
-
-                foreach (var personalizado in arancelesPersonalizados)
-                {
-                    preciosPersonalizados[personalizado.ArancelId] = personalizado.PrecioPersonalizado;
-                }
+                ModelState.AddModelError(string.Empty, "No se puede facturar aranceles de ciclos distintos en una sola operaciï¿½n.");
+                await CargarDatosParaVista(idalumno);
+                Aranceles = arancelesSeleccionadosDb;
+                ViewData["Ciclo"] = null;
+                return Page();
             }
+
+            Dictionary<int, decimal> preciosPersonalizados = await ObtenerPreciosPersonalizadosAsync(idalumno, selectedAranceles, cicloUnico);
 
             // Validar que el efectivo recibido sea suficiente
             if (CobroArancel.EfectivoRecibido <= 0)
@@ -158,20 +208,25 @@ namespace SRAUMOAR.Pages.aranceles
 
             // Calcular el total a cobrar usando los precios correctos
             decimal totalACobrar = 0;
+            var arancelesById = arancelesSeleccionadosDb.ToDictionary(a => a.ArancelId, a => a);
             for (int x = 0; x < selectedAranceles.Count; x++)
             {
                 var arancelId = selectedAranceles[x];
-                var precioOriginal = arancelescostos[x];
-                
-                // Si el alumno tiene beca parcial y hay precio personalizado, usar ese
-                if (preciosPersonalizados.ContainsKey(arancelId))
+                if (!arancelesById.TryGetValue(arancelId, out var arancelDb))
                 {
-                    totalACobrar += preciosPersonalizados[arancelId];
+                    // Respaldo: si no se encontrï¿½ en BD, usar el valor posteado
+                    totalACobrar += arancelescostos[x];
+                    continue;
                 }
-                else
-                {
-                    totalACobrar += precioOriginal;
-                }
+
+                // Base: precio personalizado si existe, sino el costo normal
+                var costoBase = preciosPersonalizados.TryGetValue(arancelId, out var precioPers)
+                    ? precioPers
+                    : arancelDb.Costo;
+
+                // Mora si aplica
+                var mostrarMora = arancelDb.EstaVencido && !alumno.ExentoMora;
+                totalACobrar += mostrarMora ? costoBase + arancelDb.ValorMora : costoBase;
             }
 
             if (CobroArancel.EfectivoRecibido < totalACobrar)
@@ -198,9 +253,9 @@ namespace SRAUMOAR.Pages.aranceles
             Guid codigoGeneracion = Guid.NewGuid();
 
             Random random = new Random();
-            int i = random.Next(1, 100001); // Genera un número aleatorio entre 1 y 100000
+            int i = random.Next(1, 100001); // Genera un nï¿½mero aleatorio entre 1 y 100000
             string correlativo = i.ToString().PadLeft(15, '0'); // Rellena con ceros a la izquierda para que tenga 15 caracteres
-                                                                // Generar número de control
+                                                                // Generar nï¿½mero de control
 
             int numero = (int)await _correlativoService.ObtenerSiguienteCorrelativo("01", ambiente == 1 ? "01" : "00");
             string numeroFormateado = numero.ToString("D15");
@@ -287,7 +342,7 @@ namespace SRAUMOAR.Pages.aranceles
                 correo = alumno.Email
             };
 
-            // Usar una consulta más segura que maneje aranceles sin ciclo
+            // Usar una consulta mï¿½s segura que maneje aranceles sin ciclo
             var arancelesAPagar = await _context.Aranceles
                 .Where(a => selectedAranceles.Contains(a.ArancelId))
                 .ToListAsync();
@@ -387,7 +442,7 @@ namespace SRAUMOAR.Pages.aranceles
                 numPagoElectronico = "0"
             };
 
-            // Crear la extensión
+            // Crear la extensiï¿½n
             var extension = new
             {
                 nombEntrega = "ENCARGADO 1",
@@ -522,7 +577,7 @@ namespace SRAUMOAR.Pages.aranceles
                 aranceles.Add(arancel);
             }
             CobroArancel.DetallesCobroArancel = aranceles;
-            // Agregar nota si algún arancel fue cobrado con mora
+            // Agregar nota si algï¿½n arancel fue cobrado con mora
             if (algunConMora)
             {
                 if (string.IsNullOrWhiteSpace(CobroArancel.nota))
