@@ -19,12 +19,63 @@ namespace SRAUMOAR.Pages.aranceles
 
         public List<DetallesCobroArancel> Pagos { get; set; } = new List<DetallesCobroArancel>();
 
-        public async Task<IActionResult> OnGetAsync(int? alumnoId)
+        [BindProperty(SupportsGet = true)]
+        public int? AlumnoId { get; set; }
+
+        [BindProperty]
+        public string? FiltroAlumno { get; set; }
+
+        public List<Alumno> ResultadosBusqueda { get; set; } = new List<Alumno>();
+
+        public async Task<IActionResult> OnGetAsync()
+        {
+            await CargarHistorialAsync(AlumnoId);
+            return Page();
+        }
+
+        public async Task<IActionResult> OnPostBuscarAlumnoAsync()
+        {
+            // Búsqueda de alumnos por nombre, apellido o carnet
+            ResultadosBusqueda = new List<Alumno>();
+
+            if (!string.IsNullOrWhiteSpace(FiltroAlumno))
+            {
+                var filtro = FiltroAlumno.Trim();
+
+                ResultadosBusqueda = await _context.Alumno
+                    .Where(a =>
+                        (a.Nombres != null && a.Nombres.Contains(filtro)) ||
+                        (a.Apellidos != null && a.Apellidos.Contains(filtro)) ||
+                        (a.Carnet != null && a.Carnet.Contains(filtro)))
+                    .OrderBy(a => a.Apellidos)
+                    .ThenBy(a => a.Nombres)
+                    .Take(25)
+                    .ToListAsync();
+            }
+
+            // Mantener el historial del alumno actual si AlumnoId sigue presente
+            await CargarHistorialAsync(AlumnoId);
+
+            return Page();
+        }
+
+        private async Task CargarHistorialAsync(int? alumnoId)
         {
             if (alumnoId == null)
-                return NotFound();
+            {
+                ViewData["Alumno"] = null;
+                Pagos = new List<DetallesCobroArancel>();
+                return;
+            }
 
             var alumno = await _context.Alumno.FirstOrDefaultAsync(a => a.AlumnoId == alumnoId);
+            if (alumno == null)
+            {
+                ViewData["Alumno"] = null;
+                Pagos = new List<DetallesCobroArancel>();
+                return;
+            }
+
             ViewData["Alumno"] = alumno;
 
             Pagos = await _context.DetallesCobrosArancel
@@ -33,8 +84,6 @@ namespace SRAUMOAR.Pages.aranceles
                 .Where(d => d.CobroArancel.AlumnoId == alumnoId)
                 .OrderByDescending(d => d.CobroArancel.Fecha)
                 .ToListAsync();
-
-            return Page();
         }
 
         public async Task<IActionResult> OnPostEliminarPagoAsync(string codigoGeneracion, int? alumnoId)
@@ -42,7 +91,8 @@ namespace SRAUMOAR.Pages.aranceles
             if (string.IsNullOrEmpty(codigoGeneracion) || alumnoId == null)
             {
                 ModelState.AddModelError(string.Empty, "Faltan parámetros requeridos para eliminar el pago.");
-                await OnGetAsync(alumnoId);
+                AlumnoId = alumnoId;
+                await CargarHistorialAsync(AlumnoId);
                 return Page();
             }
 

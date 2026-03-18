@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -22,6 +22,9 @@ namespace SRAUMOAR.Pages.generales.docentes
         public IList<Docente> Docente { get;set; } = default!;
         
         [BindProperty(SupportsGet = true)]
+        public string? SearchTerm { get; set; }
+        
+        [BindProperty(SupportsGet = true)]
         public int PageNumber { get; set; } = 1;
         
         public int PageSize { get; set; } = 10;
@@ -33,12 +36,27 @@ namespace SRAUMOAR.Pages.generales.docentes
 
         public async Task OnGetAsync()
         {
-            var totalItems = await _context.Docentes.CountAsync();
+            var query = _context.Docentes
+                .Include(u => u.Usuario)
+                .Include(d => d.Profesion)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(SearchTerm))
+            {
+                var term = SearchTerm.Trim();
+                query = query.Where(d =>
+                    (d.Nombres != null && d.Nombres.Contains(term)) ||
+                    (d.Apellidos != null && d.Apellidos.Contains(term)) ||
+                    (d.Dui != null && d.Dui.Contains(term)) ||
+                    (d.Email != null && d.Email.Contains(term)));
+            }
+
+            var totalItems = await query.CountAsync();
             TotalPages = (int)Math.Ceiling(totalItems / (double)PageSize);
 
-            Docente = await _context.Docentes
-                .Include(u=>u.Usuario)
-                .Include(d => d.Profesion)
+            Docente = await query
+                .OrderBy(d => d.Apellidos)
+                .ThenBy(d => d.Nombres)
                 .Skip((PageNumber - 1) * PageSize)
                 .Take(PageSize)
                 .ToListAsync();

@@ -21,7 +21,7 @@ using iText.Kernel.Pdf.Canvas.Draw;
 
 namespace SRAUMOAR.Servicios
 {
-    public class ReporteInscripcionesService
+        public class ReporteInscripcionesService
     {
         private readonly Contexto _context;
         private readonly PdfFont _fontNormal;
@@ -83,8 +83,10 @@ namespace SRAUMOAR.Servicios
                     .Include(g => g.Carrera)
                     .Include(g => g.Docente)
                     .Include(g => g.MateriasGrupos)
-                    .ThenInclude(mg => mg.MateriasInscritas)
-                    .ThenInclude(mi => mi.Alumno)
+                        .ThenInclude(mg => mg.Materia) // incluir Materia para poder leer su Ciclo
+                    .Include(g => g.MateriasGrupos)
+                        .ThenInclude(mg => mg.MateriasInscritas)
+                            .ThenInclude(mi => mi.Alumno)
                     .Where(g => g.CicloId == cicloactual.Id && g.Activo)
                     .ToListAsync();
 
@@ -93,6 +95,17 @@ namespace SRAUMOAR.Servicios
                     .GroupBy(g => g.Carrera)
                     .OrderBy(g => g.Key?.NombreCarrera)
                     .ToList();
+
+                // Calcular alumnos únicos y totales globales de género a partir de las inscripciones
+                var alumnosUnicos = inscripciones
+                    .Where(i => i.Alumno != null)
+                    .Select(i => i.Alumno)
+                    .GroupBy(a => a.AlumnoId)
+                    .Select(g => g.First())
+                    .ToList();
+
+                int totalHombresGlobal = alumnosUnicos.Count(a => a.Genero == 0);
+                int totalMujeresGlobal = alumnosUnicos.Count(a => a.Genero == 1);
 
                 using var memoryStream = new MemoryStream();
                 using var writer = new PdfWriter(memoryStream);
@@ -108,10 +121,10 @@ namespace SRAUMOAR.Servicios
                 AgregarEncabezado(document, esFiltrado, carreraId, genero);
 
                 // Agregar contenido del reporte
-                await AgregarContenidoReporte(document, carrerasConGrupos, inscripciones);
+                await AgregarContenidoReporte(document, carrerasConGrupos, inscripciones, totalHombresGlobal, totalMujeresGlobal);
 
-                // Agregar pie de página
-                AgregarPiePagina(document, inscripciones.Count);
+                // Agregar pie de página (usando total de alumnos únicos)
+                AgregarPiePagina(document, alumnosUnicos.Count);
 
                 document.Close();
 
@@ -191,15 +204,76 @@ namespace SRAUMOAR.Servicios
                 .SetMarginBottom(15));
         }
 
-        private async Task AgregarContenidoReporte(Document document, List<IGrouping<Carrera, Grupo>> carrerasConGrupos, List<Inscripcion> inscripciones)
+        private string GetCarnetFromAlumno(Alumno estudiante)
         {
-            int totalHombres = 0;
-            int totalMujeres = 0;
+            if (!string.IsNullOrWhiteSpace(estudiante.Carnet))
+            {
+                return estudiante.Carnet;
+            }
+
+            if (!string.IsNullOrWhiteSpace(estudiante.Email) && estudiante.Email.EndsWith("@umoar.edu.sv", StringComparison.OrdinalIgnoreCase))
+            {
+                var partes = estudiante.Email.Split('@');
+                if (partes.Length > 1)
+                {
+                    return partes[0];
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private string GetRomanFromCiclo(int? ciclo)
+        {
+            if (!ciclo.HasValue || ciclo.Value <= 0) return string.Empty;
+
+            return ciclo.Value switch
+            {
+                1 => "I",
+                2 => "II",
+                3 => "III",
+                4 => "IV",
+                5 => "V",
+                6 => "VI",
+                7 => "VII",
+                8 => "VIII",
+                9 => "IX",
+                10 => "X",
+                _ => ciclo.Value.ToString()
+            };
+        }
+
+        private int? GetCicloActualAlumno(int alumnoId, List<Grupo> grupos)
+        {
+            var materiasAlumno = grupos
+                .Where(g => !g.EsEspecializacion)
+                .SelectMany(g => g.MateriasGrupos ?? Enumerable.Empty<MateriasGrupo>())
+                .Where(mg => mg.Materia != null &&
+                             (mg.MateriasInscritas ?? Enumerable.Empty<MateriasInscritas>())
+                                 .Any(mi => mi.AlumnoId == alumnoId))
+                .Select(mg => mg.Materia!)
+                .ToList();
+
+            if (!materiasAlumno.Any())
+            {
+                return null;
+            }
+
+            return materiasAlumno.Max(m => m.Ciclo);
+        }
+
+        private async Task AgregarContenidoReporte(Document document, List<IGrouping<Carrera, Grupo>> carrerasConGrupos, List<Inscripcion> inscripciones, int totalHombresGlobal, int totalMujeresGlobal)
+        {
+            int totalHombresPorGrupos = 0;
+            int totalMujeresPorGrupos = 0;
 
             foreach (var carreraGrupo in carrerasConGrupos)
             {
                 var carrera = carreraGrupo.Key;
-                var grupos = carreraGrupo.ToList();
+                var grupos = carreraGrupo
+                    .OrderBy(g => g.EsEspecializacion) // primero grupos normales (false), luego especialización (true)
+                    .ThenBy(g => g.Nombre)
+                    .ToList();
 
                 // Título de la carrera
                 document.Add(new Paragraph($"{carrera?.NombreCarrera?.ToUpper()}")
@@ -214,7 +288,8 @@ namespace SRAUMOAR.Servicios
                 int hombresCarrera = 0;
                 int mujeresCarrera = 0;
 
-                foreach (var grupo in grupos.OrderBy(g => g.Nombre))
+                // Recorrer todos los grupos (incluyendo especialización) para mostrarlos en el reporte
+                foreach (var grupo in grupos)
                 {
                     // Obtener estudiantes inscritos en este grupo
                     var estudiantesGrupo = grupo.MateriasGrupos?
@@ -238,8 +313,8 @@ namespace SRAUMOAR.Servicios
                         .SetKeepWithNext(true);
                     document.Add(grupoParrafo);
 
-                    // Tabla de estudiantes
-                    var tablaEstudiantes = new Table(new float[] { 1, 3, 2, 1 })
+                    // Tabla de estudiantes (No., Nombre, Carnet, Género, Ciclo)
+                    var tablaEstudiantes = new Table(new float[] { 1, 3, 2, 1, 1 })
                         .SetWidth(UnitValue.CreatePercentValue(100))
                         .SetFontSize(8);
 
@@ -248,20 +323,37 @@ namespace SRAUMOAR.Servicios
                     tablaEstudiantes.AddHeaderCell(new Cell().Add(new Paragraph("Nombre Completo").SetFont(_fontBold)).SetTextAlignment(TextAlignment.CENTER));
                     tablaEstudiantes.AddHeaderCell(new Cell().Add(new Paragraph("Carnet").SetFont(_fontBold)).SetTextAlignment(TextAlignment.CENTER));
                     tablaEstudiantes.AddHeaderCell(new Cell().Add(new Paragraph("Género").SetFont(_fontBold)).SetTextAlignment(TextAlignment.CENTER));
+                    tablaEstudiantes.AddHeaderCell(new Cell().Add(new Paragraph("Ciclo").SetFont(_fontBold)).SetTextAlignment(TextAlignment.CENTER));
 
                     int contador = 1;
                     int hombresGrupo = 0;
                     int mujeresGrupo = 0;
 
-                    foreach (var estudiante in estudiantesGrupo.OrderBy(e => e.Apellidos).ThenBy(e => e.Nombres))
+                    var alumnosConCiclo = estudiantesGrupo
+                        .Select(e => new
+                        {
+                            Estudiante = e,
+                            Ciclo = GetCicloActualAlumno(e.AlumnoId, grupos)
+                        })
+                        .OrderBy(ac => ac.Ciclo ?? int.MaxValue)
+                        .ThenBy(ac => ac.Estudiante.Apellidos)
+                        .ThenBy(ac => ac.Estudiante.Nombres)
+                        .ToList();
+
+                    foreach (var ac in alumnosConCiclo)
                     {
+                        var estudiante = ac.Estudiante;
+                        var cicloTexto = GetRomanFromCiclo(ac.Ciclo);
+
                         tablaEstudiantes.AddCell(new Cell().Add(new Paragraph(contador.ToString())).SetTextAlignment(TextAlignment.CENTER));
                         tablaEstudiantes.AddCell(new Cell().Add(new Paragraph($"{estudiante.Apellidos}, {estudiante.Nombres}")));
-                        string carnetOCorreo = estudiante.Carnet ?? estudiante.Email?.Split('@')[0] ?? "";
-                        tablaEstudiantes.AddCell(new Cell().Add(new Paragraph(carnetOCorreo)).SetTextAlignment(TextAlignment.CENTER));
+                        string carnet = GetCarnetFromAlumno(estudiante);
+                        tablaEstudiantes.AddCell(new Cell().Add(new Paragraph(carnet)).SetTextAlignment(TextAlignment.CENTER));
 
                         var generoText = estudiante.Genero == 0 ? "M" : estudiante.Genero == 1 ? "F" : "O";
                         tablaEstudiantes.AddCell(new Cell().Add(new Paragraph(generoText)).SetTextAlignment(TextAlignment.CENTER));
+
+                        tablaEstudiantes.AddCell(new Cell().Add(new Paragraph(cicloTexto)).SetTextAlignment(TextAlignment.CENTER));
 
                         if (estudiante.Genero == 0) hombresGrupo++;
                         else if (estudiante.Genero == 1) mujeresGrupo++;
@@ -284,7 +376,7 @@ namespace SRAUMOAR.Servicios
                 }
 
                 // Resumen de la carrera
-                document.Add(new Paragraph($"RESUMEN CARRERA: {hombresCarrera} hombres, {mujeresCarrera} mujeres")
+                document.Add(new Paragraph($"RESUMEN CARRERA (por grupos): {hombresCarrera} hombres, {mujeresCarrera} mujeres")
                     .SetFont(_fontBold)
                     .SetFontSize(10)
                     .SetFontColor(new DeviceRgb(0, 74, 0))
@@ -292,49 +384,54 @@ namespace SRAUMOAR.Servicios
                     .SetMarginBottom(15)
                     .SetKeepTogether(true));
 
-                totalHombres += hombresCarrera;
-                totalMujeres += mujeresCarrera;
+                totalHombresPorGrupos += hombresCarrera;
+                totalMujeresPorGrupos += mujeresCarrera;
             }
 
-            // Resumen general
+            // Separador antes de los resúmenes globales
             document.Add(new Paragraph("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
                 .SetFontSize(8)
                 .SetTextAlignment(TextAlignment.CENTER)
                 .SetMarginTop(15)
                 .SetMarginBottom(10));
 
-            document.Add(new Paragraph($"RESUMEN GENERAL: {totalHombres} hombres, {totalMujeres} mujeres")
+            // Resumen general basado en alumnos únicos de inscripciones
+            document.Add(new Paragraph($"RESUMEN GENERAL: {totalHombresGlobal} hombres, {totalMujeresGlobal} mujeres")
                 .SetFont(_fontBold)
                 .SetFontSize(12)
                 .SetFontColor(new DeviceRgb(0, 74, 0))
                 .SetTextAlignment(TextAlignment.CENTER));
         }
 
-        private void AgregarPiePagina(Document document, int totalRegistros)
+        private void AgregarPiePagina(Document document, int totalEstudiantes)
         {
-            // Línea separadora
-            document.Add(new Paragraph("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+            // Agrupar todo el pie en un solo bloque para evitar que se corte entre páginas
+            var pie = new Div()
+                .SetKeepTogether(true);
+
+            pie.Add(new Paragraph("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
                 .SetFontSize(8)
                 .SetTextAlignment(TextAlignment.CENTER)
                 .SetMarginTop(15)
                 .SetMarginBottom(5));
 
-            document.Add(new Paragraph($"Reporte generado el: {DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss")}")
+            pie.Add(new Paragraph($"Reporte generado el: {DateTime.Now:dd/MM/yyyy HH:mm:ss}")
                 .SetFont(_fontNormal)
                 .SetFontSize(8)
                 .SetTextAlignment(TextAlignment.CENTER));
 
-            document.Add(new Paragraph($"Total de estudiantes: {totalRegistros}")
+            pie.Add(new Paragraph($"Total de estudiantes: {totalEstudiantes}")
                 .SetFont(_fontNormal)
                 .SetFontSize(8)
                 .SetTextAlignment(TextAlignment.CENTER));
 
-            // Información del documento
-            document.Add(new Paragraph($"Documento generado el {DateTime.Now:dd/MM/yyyy} a las {DateTime.Now:HH:mm:ss}")
+            pie.Add(new Paragraph($"Documento generado el {DateTime.Now:dd/MM/yyyy} a las {DateTime.Now:HH:mm:ss}")
                 .SetFont(_fontNormal)
                 .SetFontSize(8)
                 .SetTextAlignment(TextAlignment.CENTER)
                 .SetMarginTop(5));
+
+            document.Add(pie);
         }
 
 

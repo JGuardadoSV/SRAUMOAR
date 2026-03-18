@@ -10,6 +10,57 @@
 }
 
 <h2>Historial de Aranceles Pagados</h2>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="post" asp-page-handler="BuscarAlumno" class="row g-2 align-items-end">
+            <div class="col-md-8">
+                <label asp-for="FiltroAlumno" class="form-label">Buscar alumno</label>
+                <input asp-for="FiltroAlumno" class="form-control" placeholder="Buscar por nombre, apellido o carnet" />
+            </div>
+            @* Mantener AlumnoId actual en el post para no perder el historial cargado *@
+            <input type="hidden" asp-for="AlumnoId" />
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary mt-3 mt-md-0 w-100">
+                    Buscar
+                </button>
+            </div>
+        </form>
+
+        @if (Model.ResultadosBusqueda != null && Model.ResultadosBusqueda.Any())
+        {
+            <hr />
+            <h5>Resultados de la búsqueda</h5>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Alumno</th>
+                            <th>Carnet</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var a in Model.ResultadosBusqueda)
+                    {
+                        <tr>
+                            <td>@a.Apellidos, @a.Nombres</td>
+                            <td>@a.Carnet</td>
+                            <td>
+                                <a class="btn btn-outline-primary btn-sm"
+                                   asp-page="/aranceles/HistorialPagos"
+                                   asp-route-alumnoId="@a.AlumnoId">
+                                    Ver historial
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
 @if (alumno != null)
 {
     <div class="mb-3">
