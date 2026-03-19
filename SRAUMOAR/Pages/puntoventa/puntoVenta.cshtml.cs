@@ -662,36 +662,50 @@ namespace SRAUMOAR.Pages.puntoventa
 
                     // Crear el cuerpo del documento
                     var cuerpoDocumento = Factura.Productos
-                        .Select((producto, index) => new
+                        .Select((producto, index) =>
                         {
-                            numItem = index + 1,
-                            tipoItem = 1,
-                            numeroDocumento = (string)null,
-                            cantidad = producto.Cantidad,
-                            codigo = producto.Codigo,
-                            codTributo = (string)null,
-                            uniMedida = 59,
-                            descripcion = producto.Descripcion,
-                            precioUni = producto.PrecioUnitario,
-                            montoDescu = 0.0,
-                            ventaNoSuj = 0.0,
-                            ventaExenta = producto.EsExento ? producto.SubTotal : 0.0m,
-                            ventaGravada = !producto.EsExento ? producto.SubTotal : 0.0m,
-                            tributos = new[] { "20" },
-                            psv = producto.PrecioUnitario,
-                            noGravado = 0.0
+                            // Para Crédito Fiscal, el validador del sistema exige múltiplos de 0.01.
+                            // Redondeamos el subtotal por línea a 2 decimales para que el total sea consistente.
+                            var subTotalProducto = Math.Round(producto.SubTotal, 2);
 
+                            return new
+                            {
+                                numItem = index + 1,
+                                tipoItem = 1,
+                                numeroDocumento = (string)null,
+                                cantidad = producto.Cantidad,
+                                codigo = producto.Codigo,
+                                codTributo = (string)null,
+                                uniMedida = 59,
+                                descripcion = producto.Descripcion,
+                                precioUni = producto.PrecioUnitario,
+                                montoDescu = 0.0,
+                                ventaNoSuj = 0.0,
+                                ventaExenta = producto.EsExento ? subTotalProducto : 0.0m,
+                                ventaGravada = !producto.EsExento ? subTotalProducto : 0.0m,
+                                tributos = new[] { "20" },
+                                psv = producto.PrecioUnitario,
+                                noGravado = 0.0
+                            };
                         })
                         .ToArray();
 
-                    decimal totalVenta = Factura.Productos.Where(p => !p.EsExento).Sum(p => p.SubTotal);
-                    decimal totalVentaExenta = Factura.Productos.Where(p => p.EsExento).Sum(p => p.SubTotal);
-                    decimal totalIva = Factura.Productos.Where(p => !p.EsExento).Sum(p => p.SubTotal * 0.13m);
+                    decimal totalVenta = Factura.Productos
+                        .Where(p => !p.EsExento)
+                        .Sum(p => Math.Round(p.SubTotal, 2));
+                    decimal totalVentaExenta = Factura.Productos
+                        .Where(p => p.EsExento)
+                        .Sum(p => Math.Round(p.SubTotal, 2));
 
-                    decimal subTotalVentas = totalVenta + totalVentaExenta;
-                    decimal subTotal = totalVenta + totalVentaExenta;
-                    decimal montoTotalOperacion = totalVenta + totalVentaExenta + totalIva;
-                    decimal totalPagar = totalVenta + totalVentaExenta + totalIva;
+                    decimal totalIva = Factura.Productos
+                        .Where(p => !p.EsExento)
+                        // IVA por línea: redondeamos a 2 decimales antes de sumar.
+                        .Sum(p => Math.Round(Math.Round(p.SubTotal, 2) * 0.13m, 2));
+
+                    decimal subTotalVentas = Math.Round(totalVenta + totalVentaExenta, 2);
+                    decimal subTotal = subTotalVentas;
+                    decimal montoTotalOperacion = Math.Round(subTotalVentas + totalIva, 2);
+                    decimal totalPagar = montoTotalOperacion;
                     string totalLetras = new Conversor().ConvertirNumeroALetras(totalPagar);
 
                     // Crear el objeto resumen
@@ -706,7 +720,7 @@ namespace SRAUMOAR.Pages.puntoventa
                         descuGravada = 0.0,
                         porcentajeDescuento = 0,
                         totalDescu = 0.0,
-                        tributos = new[]
+                                tributos = new[]
                          {
                             new
                             {

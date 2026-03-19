@@ -1,4 +1,4 @@
-﻿@page "/puntoventa/puntoVenta"
+@page "/puntoventa/puntoVenta"
 
 @model SRAUMOAR.Pages.puntoventa.puntoVentaModel
 @{
@@ -1052,6 +1052,19 @@
                 }
             });
 
+            // Sincronizar valor inicial desde los hidden inputs
+            // (para que Select2 conserve la selección si el servidor devuelve el formulario con error)
+            var codInicial = jQuery('#Factura_Receptor_CodActividad').val();
+            var descInicial = jQuery('#Factura_Receptor_DescActividad').val();
+            if (codInicial) {
+                if (jQuery('#codigoActividadSelect option[value="' + codInicial + '"]').length === 0) {
+                    jQuery('#codigoActividadSelect').append(
+                        new Option(descInicial || codInicial, codInicial, true, true)
+                    );
+                }
+                jQuery('#codigoActividadSelect').val(codInicial).trigger('change.select2');
+            }
+
             // Manejar la selección de un código
             jQuery('#codigoActividadSelect').on('select2:select', function (e) {
                 var data = e.params.data;
@@ -1060,6 +1073,7 @@
                 
                 // Asegurar que solo se guarde el código, no el texto completo
                 jQuery('#codigoActividadSelect').val(codigo);
+                jQuery('#Factura_Receptor_CodActividad').val(codigo);
                 
                 // Llenar el campo de giro con la descripción
                 jQuery('#Factura_Receptor_DescActividad').val(descripcion);
@@ -1067,6 +1081,7 @@
 
             // Limpiar campos cuando se deselecciona
             jQuery('#codigoActividadSelect').on('select2:clear', function (e) {
+                jQuery('#Factura_Receptor_CodActividad').val('');
                 jQuery('#Factura_Receptor_DescActividad').val('');
             });
 
