@@ -16,11 +16,16 @@ namespace SRAUMOAR.Pages.inscripcion
     {
         private readonly SRAUMOAR.Modelos.Contexto _context;
         private readonly ReporteInscripcionesService _reporteService;
+        private readonly ReporteCuadroEstadisticoService _reporteCuadroEstadisticoService;
         
-        public DashboardModel(SRAUMOAR.Modelos.Contexto context, ReporteInscripcionesService reporteService)
+        public DashboardModel(
+            SRAUMOAR.Modelos.Contexto context,
+            ReporteInscripcionesService reporteService,
+            ReporteCuadroEstadisticoService reporteCuadroEstadisticoService)
         {
             _context = context;
             _reporteService = reporteService;
+            _reporteCuadroEstadisticoService = reporteCuadroEstadisticoService;
         }
 
         public List<SelectListItem> Carreras { get; set; } = new List<SelectListItem>();
@@ -96,6 +101,35 @@ namespace SRAUMOAR.Pages.inscripcion
             {
                 TempData["Error"] = $"Error al generar reporte: {ex.Message}";
                 return RedirectToPage();
+            }
+        }
+
+        public async Task<IActionResult> OnGetGenerarCuadroEstadisticoExcelAsync()
+        {
+            try
+            {
+                var cicloActual = await _context.Ciclos
+                    .Where(x => x.Activo)
+                    .FirstOrDefaultAsync();
+
+                if (cicloActual == null)
+                {
+                    TempData["Error"] = "No hay un ciclo activo para generar el cuadro estadistico.";
+                    return RedirectToPage(new { SelectedCarreraId, Genero });
+                }
+
+                var archivo = await _reporteCuadroEstadisticoService.GenerarExcelAsync(cicloActual.Id, SelectedCarreraId);
+                var fileName = $"Cuadro_Estadistico_{cicloActual.NCiclo}_{cicloActual.anio}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+
+                return File(
+                    archivo,
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    fileName);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Error al generar cuadro estadistico: {ex.Message}";
+                return RedirectToPage(new { SelectedCarreraId, Genero });
             }
         }
     }

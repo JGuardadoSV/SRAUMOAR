@@ -50,6 +50,7 @@ builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new 
 // Agregar despu�s de AddRazorPages()
 builder.Services.AddScoped<PdfService>();
 builder.Services.AddScoped<ReporteInscripcionesService>();
+builder.Services.AddScoped<ReporteCuadroEstadisticoService>();
 builder.Services.AddScoped<ReporteInsolventesService>();
 builder.Services.AddScoped<ReporteAlumnosService>();
 builder.Services.AddScoped<ReporteDesercionesService>();

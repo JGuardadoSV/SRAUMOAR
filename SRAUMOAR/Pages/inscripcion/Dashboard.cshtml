@@ -230,6 +230,10 @@
         background: linear-gradient(135deg, #0dcaf0 0%, #0aa2c0 100%);
     }
 
+    .report-btn.excel {
+        background: linear-gradient(135deg, #198754 0%, #0f5132 100%);
+    }
+
     .form-select, .form-control {
         border-radius: 8px;
         border: 2px solid #e9ecef;
@@ -357,8 +361,11 @@
                     <a href="?handler=GenerarReporteCompleto" class="report-btn" target="_blank">
                         <i class="bi bi-file-earmark-pdf me-2"></i>Generar Reporte Completo
                     </a>
-                    <a href="?handler=GenerarReporteFiltrado" class="report-btn info" target="_blank">
+                    <a asp-page-handler="GenerarReporteFiltrado" asp-route-SelectedCarreraId="@Model.SelectedCarreraId" asp-route-Genero="@Model.Genero" class="report-btn info" target="_blank">
                         <i class="bi bi-funnel me-2"></i>Generar Reporte Filtrado
+                    </a>
+                    <a asp-page-handler="GenerarCuadroEstadisticoExcel" asp-route-SelectedCarreraId="@Model.SelectedCarreraId" asp-route-Genero="@Model.Genero" class="report-btn excel">
+                        <i class="bi bi-file-earmark-excel me-2"></i>Cuadro Estadístico Excel
                     </a>
                 </div>
             </div>
@@ -397,14 +404,17 @@
         <div class="col-md-3 fade-in-up">
             <div class="card stats-card text-white bg-success h-100">
                 <div class="card-body text-center p-4">
-                    <i class="bi bi-file-earmark-pdf stats-icon"></i>
-                    <div class="stats-label">Reportes PDF</div>
+                    <i class="bi bi-file-earmark-spreadsheet stats-icon"></i>
+                    <div class="stats-label">Reportes</div>
                     <div class="mt-3">
                         <a href="?handler=GenerarReporteCompleto" class="btn btn-light btn-sm me-2">
                             <i class="bi bi-download me-1"></i>Completo
                         </a>
-                        <a href="?handler=GenerarReporteFiltrado" class="btn btn-light btn-sm">
+                        <a asp-page-handler="GenerarReporteFiltrado" asp-route-SelectedCarreraId="@Model.SelectedCarreraId" asp-route-Genero="@Model.Genero" class="btn btn-light btn-sm me-2">
                             <i class="bi bi-funnel me-1"></i>Filtrado
+                        </a>
+                        <a asp-page-handler="GenerarCuadroEstadisticoExcel" asp-route-SelectedCarreraId="@Model.SelectedCarreraId" asp-route-Genero="@Model.Genero" class="btn btn-light btn-sm">
+                            <i class="bi bi-file-earmark-excel me-1"></i>Excel
                         </a>
                     </div>
                 </div>
