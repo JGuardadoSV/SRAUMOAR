@@ -1,0 +1,187 @@
+@page
+@model SRAUMOAR.Pages.deserciones.IndexModel
+@{
+    ViewData["Title"] = "Deserciones por ciclo";
+}
+
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0">Deserciones y retiros por ciclo</h1>
+            </div>
+            <div class="col-sm-6 text-sm-right">
+                <a asp-page="./Create" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Nuevo registro
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success">@TempData["Success"]</div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger">@TempData["Error"]</div>
+        }
+        @if (TempData["Info"] != null)
+        {
+            <div class="alert alert-info">@TempData["Info"]</div>
+        }
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Filtros del reporte</h3>
+            </div>
+            <div class="card-body">
+                <form method="get">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label asp-for="SelectedCicloId">Ciclo</label>
+                                <select asp-for="SelectedCicloId" asp-items="@(ViewData["Ciclos"] as SelectList)" class="form-control"></select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label asp-for="SelectedCausaDesercionId">Causa</label>
+                                <select asp-for="SelectedCausaDesercionId" asp-items="@(ViewData["CausasDesercion"] as SelectList)" class="form-control">
+                                    <option value="">Todas</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label asp-for="Buscar">Buscar alumno</label>
+                                <input asp-for="Buscar" class="form-control" placeholder="Nombre, apellido, carnet o correo" />
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary mr-2">
+                                        <i class="bi bi-search"></i> Filtrar
+                                    </button>
+                                    <a asp-page="./Index" class="btn btn-secondary">
+                                        <i class="bi bi-x-circle"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="small-box bg-info">
+                    <div class="inner">
+                        <h3>@Model.TotalRegistros</h3>
+                        <p>Total de registros</p>
+                    </div>
+                    <div class="icon"><i class="bi bi-person-dash"></i></div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Resumen por causa</h3>
+                        @if (Model.SelectedCicloId.HasValue && Model.SelectedCicloId.Value > 0)
+                        {
+                            <div class="card-tools">
+                                <a href="@Url.Page("", "GenerarExcel", new { cicloId = Model.SelectedCicloId, causaDesercionId = Model.SelectedCausaDesercionId })" class="btn btn-success btn-sm">
+                                    <i class="bi bi-file-earmark-excel"></i> Exportar Excel
+                                </a>
+                            </div>
+                        }
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-sm mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Causa</th>
+                                    <th class="text-right">Cantidad</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.ResumenPorCausa.Any())
+                                {
+                                    @foreach (var item in Model.ResumenPorCausa)
+                                    {
+                                        <tr>
+                                            <td>@item.Causa</td>
+                                            <td class="text-right">@item.Cantidad</td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="2" class="text-center text-muted">No hay datos para mostrar.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Detalle del ciclo</h3>
+            </div>
+            <div class="card-body table-responsive p-0">
+                <table class="table table-hover text-nowrap mb-0">
+                    <thead>
+                        <tr>
+                            <th>Ciclo</th>
+                            <th>Carnet</th>
+                            <th>Alumno</th>
+                            <th>Carrera</th>
+                            <th>Causa</th>
+                            <th>Observación</th>
+                            <th>Fecha registro</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Deserciones.Any())
+                        {
+                            @foreach (var item in Model.Deserciones)
+                            {
+                                <tr>
+                                    <td>@item.CicloNombre</td>
+                                    <td>@item.Carnet</td>
+                                    <td>@item.Alumno</td>
+                                    <td>@item.Carrera</td>
+                                    <td>@item.Causa</td>
+                                    <td style="white-space: normal;">@item.Observacion</td>
+                                    <td>@item.FechaRegistro.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>
+                                        <a asp-page="./Edit" asp-route-id="@item.DesercionAlumnoId" class="btn btn-warning btn-sm">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-4">No se encontraron registros para los filtros seleccionados.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>

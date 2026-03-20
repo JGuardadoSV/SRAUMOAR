@@ -41,6 +41,8 @@ namespace SRAUMOAR.Modelos
         public DbSet<PermisoModuloRol> PermisosModuloRol { get; set; }
 
         public DbSet<Ciclo> Ciclos { get; set; }
+        public DbSet<CausaDesercion> CausasDesercion { get; set; }
+        public DbSet<DesercionAlumno> DesercionesAlumno { get; set; }
         public DbSet<Inscripcion> Inscripciones { get; set; }
         public DbSet<Arancel> Aranceles { get; set; }
 
@@ -141,6 +143,35 @@ namespace SRAUMOAR.Modelos
                 .WithMany()
                 .HasForeignKey(p => p.NivelAccesoId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<DesercionAlumno>()
+                .HasOne(d => d.Alumno)
+                .WithMany()
+                .HasForeignKey(d => d.AlumnoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<DesercionAlumno>()
+                .HasOne(d => d.Ciclo)
+                .WithMany()
+                .HasForeignKey(d => d.CicloId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<DesercionAlumno>()
+                .HasOne(d => d.CausaDesercion)
+                .WithMany()
+                .HasForeignKey(d => d.CausaDesercionId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<DesercionAlumno>()
+                .HasIndex(d => new { d.AlumnoId, d.CicloId })
+                .IsUnique();
+
+            modelBuilder.Entity<CausaDesercion>().HasData(
+                new CausaDesercion { CausaDesercionId = 1, Nombre = "Abandono", Activo = true },
+                new CausaDesercion { CausaDesercionId = 2, Nombre = "Deserción", Activo = true },
+                new CausaDesercion { CausaDesercionId = 3, Nombre = "Retiro de ciclo", Activo = true }
+            );
+
         }
         public DbSet<SRAUMOAR.Entidades.Accesos.NivelAcceso> NivelAcceso { get; set; } = default!;
 

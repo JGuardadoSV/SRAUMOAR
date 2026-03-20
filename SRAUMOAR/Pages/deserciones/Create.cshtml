@@ -1,0 +1,152 @@
+@page
+@model SRAUMOAR.Pages.deserciones.CreateModel
+@{
+    ViewData["Title"] = "Registrar deserción";
+}
+
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0">Registrar deserción o retiro</h1>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        @if (TempData["Info"] != null)
+        {
+            <div class="alert alert-info">@TempData["Info"]</div>
+        }
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">1. Seleccionar ciclo y buscar alumno</h3>
+            </div>
+            <div class="card-body">
+                <form method="get">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="CicloId">Ciclo</label>
+                                <select id="CicloId" name="CicloId" asp-items="@(ViewData["CicloId"] as SelectList)" class="form-control"></select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="Buscar">Buscar alumno</label>
+                                <input id="Buscar" name="Buscar" value="@Model.Buscar" class="form-control" placeholder="Nombre, apellido, carnet, correo o teléfono" />
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <div>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-search"></i> Buscar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                @if (Model.ResultadosBusqueda.Any())
+                {
+                    <div class="table-responsive mt-3">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Carnet</th>
+                                    <th>Alumno</th>
+                                    <th>Carrera</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.ResultadosBusqueda)
+                                {
+                                    var carnet = !string.IsNullOrWhiteSpace(item.Carnet)
+                                        ? item.Carnet
+                                        : (!string.IsNullOrWhiteSpace(item.Email) && item.Email.Contains('@') ? item.Email.Split('@')[0] : string.Empty);
+                                    <tr>
+                                        <td>@carnet</td>
+                                        <td>@item.Apellidos, @item.Nombres</td>
+                                        <td>@item.Carrera?.NombreCarrera</td>
+                                        <td class="text-right">
+                                            <a asp-page="./Create" asp-route-CicloId="@Model.DesercionAlumno.CicloId" asp-route-AlumnoId="@item.AlumnoId" class="btn btn-outline-primary btn-sm">
+                                                Seleccionar
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">2. Registrar causa</h3>
+            </div>
+            <div class="card-body">
+                @if (Model.AlumnoSeleccionado == null)
+                {
+                    <div class="alert alert-warning mb-0">Selecciona un alumno para continuar con el registro.</div>
+                }
+                else
+                {
+                    <div class="alert alert-light border">
+                        <strong>Alumno seleccionado:</strong> @Model.AlumnoSeleccionado.Apellidos, @Model.AlumnoSeleccionado.Nombres
+                        <br />
+                        <strong>Carrera:</strong> @Model.AlumnoSeleccionado.Carrera?.NombreCarrera
+                    </div>
+
+                    <form method="post">
+                        <input asp-for="DesercionAlumno.AlumnoId" type="hidden" />
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label asp-for="DesercionAlumno.CicloId"></label>
+                                    <select asp-for="DesercionAlumno.CicloId" asp-items="@(ViewData["CicloId"] as SelectList)" class="form-control"></select>
+                                    <span asp-validation-for="DesercionAlumno.CicloId" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label asp-for="DesercionAlumno.CausaDesercionId"></label>
+                                    <select asp-for="DesercionAlumno.CausaDesercionId" asp-items="@(ViewData["CausaDesercionId"] as SelectList)" class="form-control">
+                                        <option value="">Seleccione una causa</option>
+                                    </select>
+                                    <span asp-validation-for="DesercionAlumno.CausaDesercionId" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label asp-for="DesercionAlumno.Observacion"></label>
+                                    <textarea asp-for="DesercionAlumno.Observacion" class="form-control" rows="4" placeholder="Detalle opcional del registro"></textarea>
+                                    <span asp-validation-for="DesercionAlumno.Observacion" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Guardar
+                            </button>
+                            <a asp-page="./Index" class="btn btn-secondary">Cancelar</a>
+                        </div>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

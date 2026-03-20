@@ -471,7 +471,7 @@
                 </ul>
                 <!--end::Start Navbar Links-->
                 <div class="d-none d-md-flex align-items-center ms-auto" style="max-width: 420px; width: 100%;">
-                    @if ((User.IsInRole("Administracion") || User.IsInRole("Administrador")) && (permisosUsuario.Contains("GESTION_ACADEMICA") || permisosUsuario.Contains("MATRICULA_INSCRIPCION") || permisosUsuario.Contains("COLECTURIA") || permisosUsuario.Contains("SEGURIDAD") || permisosUsuario.Contains("PERMISOS_ROL")))
+                    @if ((User.IsInRole("Administracion") || User.IsInRole("Administrador")) && (permisosUsuario.Contains("GESTION_ACADEMICA") || permisosUsuario.Contains("MATRICULA_INSCRIPCION") || permisosUsuario.Contains("COLECTURIA") || permisosUsuario.Contains("SEGURIDAD") || permisosUsuario.Contains("PERMISOS_ROL") || permisosUsuario.Contains("DESERCIONES")))
                     {
                         <div class="search-container mb-0" style="width:100%;">
                             <form method="get" id="searchForm">
@@ -910,7 +910,7 @@
                             </li> <!-- Docentes -->
                             <!-- FIN MENU TABLAS GENERALES  -->
                         }
-                        @if ((User.IsInRole("Administracion") || User.IsInRole("Administrador")) && (permisosUsuario.Contains("GESTION_ACADEMICA") || permisosUsuario.Contains("MATRICULA_INSCRIPCION") || permisosUsuario.Contains("COLECTURIA") || permisosUsuario.Contains("SEGURIDAD") || permisosUsuario.Contains("PERMISOS_ROL")))
+                        @if ((User.IsInRole("Administracion") || User.IsInRole("Administrador")) && (permisosUsuario.Contains("GESTION_ACADEMICA") || permisosUsuario.Contains("MATRICULA_INSCRIPCION") || permisosUsuario.Contains("COLECTURIA") || permisosUsuario.Contains("SEGURIDAD") || permisosUsuario.Contains("PERMISOS_ROL") || permisosUsuario.Contains("DESERCIONES")))
                         {
                             <li class="nav-item">
                                 <a href="#" class="nav-link">
@@ -949,6 +949,12 @@
                                         <a asp-area="" asp-page="/actividades/Index" class="nav-link">
                                             <i class="nav-icon bi bi-calendar-event"></i>
                                             <p>Actividades académicas</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a asp-area="" asp-page="/deserciones/Index" class="nav-link">
+                                            <i class="nav-icon bi bi-person-dash"></i>
+                                            <p>Deserciones</p>
                                         </a>
                                     </li>
                                     <li class="nav-item">

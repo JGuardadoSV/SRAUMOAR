@@ -52,6 +52,7 @@ builder.Services.AddScoped<PdfService>();
 builder.Services.AddScoped<ReporteInscripcionesService>();
 builder.Services.AddScoped<ReporteInsolventesService>();
 builder.Services.AddScoped<ReporteAlumnosService>();
+builder.Services.AddScoped<ReporteDesercionesService>();
 // En Program.cs
 builder.Services.Configure<EmisorConfig>(
     builder.Configuration.GetSection("EMISOR"));
