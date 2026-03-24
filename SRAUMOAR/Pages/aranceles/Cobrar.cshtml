@@ -417,16 +417,34 @@
         </div>
     </div>
 
+    <div class="alumno-card">
+        <div class="alumno-info">
+            <form method="get" class="row g-3 align-items-end">
+                <input type="hidden" name="id" value="@alumno?.AlumnoId" />
+                <div class="col-md-8">
+                    <label for="cicloelegido" class="alumno-label">Ciclo a mostrar</label>
+                    <select id="cicloelegido" name="cicloelegido" class="form-select" asp-items="Model.CiclosDisponibles" onchange="this.form.submit()">
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <div class="alumno-label">Ciclo cargado</div>
+                    <div class="alumno-name">@Model.CicloSeleccionadoTexto</div>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Tabla de Aranceles con Radio Buttons -->
     <div class="aranceles-container">
         <form method="post">
             <input type="hidden" name="alumnoId" value="@alumno?.AlumnoId" />
+            <input type="hidden" name="cicloelegido" value="@Model.CicloSeleccionadoId" />
 
             <!-- Radio Buttons para elegir el tipo de arancel -->
             <div style="display: flex; gap: 2rem; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap;">
                 <label style="font-weight: 600;">
                     <input type="radio" name="tipoArancel" value="obligatorios" checked onclick="mostrarTabla('obligatorios')" style="margin-right: 0.5rem;" />
-                    Aranceles del ciclo
+                    Aranceles del ciclo @Model.CicloSeleccionadoTexto
                 </label>
                 <label style="font-weight: 600;">
                     <input type="radio" name="tipoArancel" value="no-obligatorios" onclick="mostrarTabla('no-obligatorios')" style="margin-right: 0.5rem;" />
@@ -577,8 +595,10 @@
                                                     <i class="bi bi-receipt me-1"></i>Ver Recibo
                                                 </a>
                                                 <form method="post" asp-page-handler="EliminarPago" style="display:inline;">
+                                                    <input type="hidden" name="id" value="@alumno?.AlumnoId" />
                                                     <input type="hidden" name="arancelId" value="@item.ArancelId" />
                                                     <input type="hidden" name="alumnoId" value="@alumno?.AlumnoId" />
+                                                    <input type="hidden" name="cicloelegido" value="@Model.CicloSeleccionadoId" />
                                                     <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Está seguro de eliminar este pago?');">
                                                         <i class="bi bi-trash"></i> Eliminar
                                                     </button>
@@ -810,7 +830,7 @@
                 <div class="no-aranceles">
                     <i class="bi bi-info-circle-fill"></i>
                     <h4 class="fw-bold mt-2">Sin aranceles configurados</h4>
-                    <p class="mb-0">No hay aranceles disponibles para este alumno en el ciclo actual.</p>
+                    <p class="mb-0">No hay aranceles disponibles para este alumno en el ciclo @Model.CicloSeleccionadoTexto.</p>
                 </div>
             }
         </form>

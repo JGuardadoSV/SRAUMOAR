@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SRAUMOAR.Entidades.Alumnos;
 using SRAUMOAR.Entidades.Becas;
@@ -32,6 +33,9 @@ namespace SRAUMOAR.Pages.aranceles
         public IList<Arancel> ArancelesEspecializacion { get; set; } = default!;
         public Dictionary<int, decimal> PreciosPersonalizados { get; set; } = new Dictionary<int, decimal>();
         public Dictionary<int, decimal> PorcentajesDescuento { get; set; } = new Dictionary<int, decimal>();
+        public SelectList CiclosDisponibles { get; set; } = default!;
+        public int CicloSeleccionadoId { get; set; }
+        public string CicloSeleccionadoTexto { get; set; } = string.Empty;
         public bool AlumnoTieneBecaParcial { get; set; } = false;
 
         public async Task<string> GenerarReporteDebug(int? alumnoId)
@@ -97,7 +101,7 @@ namespace SRAUMOAR.Pages.aranceles
             }
         }
 
-        public async Task<bool> VerificarIntegridadRelaciones(int alumnoId)
+        public async Task<bool> VerificarIntegridadRelaciones(int alumnoId, int cicloId)
         {
             try
             {
@@ -113,22 +117,11 @@ namespace SRAUMOAR.Pages.aranceles
                     return false;
                 }
 
-                // Verificar que hay un ciclo activo
-                var cicloActivo = await _context.Ciclos.Where(x => x.Activo).FirstOrDefaultAsync();
-                if (cicloActivo == null)
+                // Verificar que el ciclo seleccionado existe
+                var cicloExiste = await _context.Ciclos.AnyAsync(x => x.Id == cicloId);
+                if (!cicloExiste)
                 {
-                    System.Diagnostics.Debug.WriteLine("VerificarIntegridadRelaciones: No hay ciclo activo");
-                    return false;
-                }
-
-                // Verificar que hay aranceles disponibles
-                var arancelesDisponibles = await _context.Aranceles
-                    .Where(x => x.Activo && ((x.CicloId != null && x.CicloId == cicloActivo.Id) || (!x.Obligatorio && x.CicloId == null)))
-                    .CountAsync();
-
-                if (arancelesDisponibles == 0)
-                {
-                    System.Diagnostics.Debug.WriteLine("VerificarIntegridadRelaciones: No hay aranceles disponibles");
+                    System.Diagnostics.Debug.WriteLine($"VerificarIntegridadRelaciones: Ciclo no encontrado: {cicloId}");
                     return false;
                 }
 
@@ -171,7 +164,7 @@ namespace SRAUMOAR.Pages.aranceles
             }
         }
 
-        public async Task OnGetAsync(int? id)
+        public async Task OnGetAsync(int? id, int? cicloelegido)
         {
             try
             {
@@ -179,12 +172,6 @@ namespace SRAUMOAR.Pages.aranceles
                 if (!await ValidarAlumno(id))
                 {
                     throw new ArgumentException($"No se pudo validar el alumno con ID: {id}");
-                }
-
-                // Verificar integridad de las relaciones
-                if (!await VerificarIntegridadRelaciones(id.Value))
-                {
-                    throw new InvalidOperationException($"Problemas de integridad en las relaciones para el alumno con ID: {id}");
                 }
 
                 var alumno = await _context.Alumno.FirstOrDefaultAsync(m => m.AlumnoId == id);
@@ -201,6 +188,38 @@ namespace SRAUMOAR.Pages.aranceles
                     throw new InvalidOperationException("No hay un ciclo activo en el sistema");
                 }
 
+                var cicloSeleccionado = cicloactual;
+                if (cicloelegido.HasValue && cicloelegido.Value > 0)
+                {
+                    var cicloElegido = await _context.Ciclos.FirstOrDefaultAsync(c => c.Id == cicloelegido.Value);
+                    if (cicloElegido != null)
+                    {
+                        cicloSeleccionado = cicloElegido;
+                    }
+                }
+
+                CicloSeleccionadoId = cicloSeleccionado.Id;
+                CicloSeleccionadoTexto = $"{cicloSeleccionado.NCiclo} - {cicloSeleccionado.anio}";
+                CiclosDisponibles = new SelectList(
+                    await _context.Ciclos
+                        .OrderByDescending(c => c.anio)
+                        .ThenByDescending(c => c.NCiclo)
+                        .Select(c => new
+                        {
+                            Id = c.Id,
+                            Nombre = c.NCiclo + " - " + c.anio
+                        })
+                        .ToListAsync(),
+                    "Id",
+                    "Nombre",
+                    cicloSeleccionado.Id);
+
+                // Verificar integridad de las relaciones
+                if (!await VerificarIntegridadRelaciones(id.Value, cicloSeleccionado.Id))
+                {
+                    throw new InvalidOperationException($"Problemas de integridad en las relaciones para el alumno con ID: {id}");
+                }
+
                 // Verificar si el alumno tiene beca parcial (cualquier ciclo)
                 var becaAlumno = await _context.Becados
                     .Include(b => b.Alumno)
@@ -214,7 +233,7 @@ namespace SRAUMOAR.Pages.aranceles
                 if (AlumnoTieneBecaParcial)
                 {
                     var arancelesPersonalizados = await _context.ArancelesBecados
-                        .Where(ab => ab.Becado.AlumnoId == id && ab.Activo && ab.Arancel != null && ab.Arancel.CicloId == cicloactual.Id)
+                        .Where(ab => ab.Becado.AlumnoId == id && ab.Activo && ab.Arancel != null && ab.Arancel.CicloId == cicloSeleccionado.Id)
                         .Include(ab => ab.Arancel)
                         .ToListAsync();
 
@@ -230,7 +249,7 @@ namespace SRAUMOAR.Pages.aranceles
                     .Include(mi => mi.MateriasGrupo)
                         .ThenInclude(mg => mg.Grupo)
                     .Where(mi => mi.AlumnoId == id && 
-                                 mi.MateriasGrupo.Grupo.CicloId == cicloactual.Id &&
+                                 mi.MateriasGrupo.Grupo.CicloId == cicloSeleccionado.Id &&
                                  mi.MateriasGrupo.Grupo.EsEspecializacion)
                     .AnyAsync();
 
@@ -242,7 +261,7 @@ namespace SRAUMOAR.Pages.aranceles
                     .ToListAsync();
 
                 Arancel = await _context.Aranceles
-                    .Where(x => x.Activo && ((x.CicloId != null && x.CicloId == cicloactual.Id) || (!x.Obligatorio && x.CicloId == null)))
+                    .Where(x => x.Activo && ((x.CicloId != null && x.CicloId == cicloSeleccionado.Id) || (!x.Obligatorio && x.CicloId == null)))
                     .Include(a => a.Ciclo).ToListAsync();
 
                 // Separar aranceles en tres categorías:
@@ -288,12 +307,14 @@ namespace SRAUMOAR.Pages.aranceles
                 ArancelesEspecializacion = new List<Arancel>();
                 PreciosPersonalizados = new Dictionary<int, decimal>();
                 PorcentajesDescuento = new Dictionary<int, decimal>();
+                CiclosDisponibles = new SelectList(Enumerable.Empty<SelectListItem>());
+                CicloSeleccionadoTexto = string.Empty;
                 AlumnoTieneBecaParcial = false;
             }
         }
 
         [IgnoreAntiforgeryToken]
-        public IActionResult OnPost(List<int> selectedAranceles, int alumnoId)
+        public IActionResult OnPost(List<int> selectedAranceles, int alumnoId, int? cicloelegido)
         {
             if (selectedAranceles == null || !selectedAranceles.Any())
             {
@@ -302,17 +323,17 @@ namespace SRAUMOAR.Pages.aranceles
             }
 
             // Redirigir a la página de cobro con los IDs de los aranceles seleccionados
-            return RedirectToPage("./Facturar", new { arancelIds = string.Join(",", selectedAranceles),idalumno=alumnoId });
+            return RedirectToPage("./Facturar", new { arancelIds = string.Join(",", selectedAranceles), idalumno = alumnoId, cicloelegido });
         }
 
-        public async Task<IActionResult> OnPostEliminarPago(int id, int? arancelId, int? alumnoId)
+        public async Task<IActionResult> OnPostEliminarPago(int id, int? arancelId, int? alumnoId, int? cicloelegido)
         {
             System.Diagnostics.Debug.WriteLine($"Handler ejecutado: id={id}, arancelId={arancelId}, alumnoId={alumnoId}");
 
             if (arancelId == null || alumnoId == null)
             {
                 ModelState.AddModelError(string.Empty, "Faltan parámetros requeridos para eliminar el pago.");
-                await OnGetAsync(id); // Usar el id de la ruta
+                await OnGetAsync(id, cicloelegido); // Usar el id de la ruta
                 return Page();
             }
 
@@ -341,7 +362,7 @@ namespace SRAUMOAR.Pages.aranceles
             }
 
             // Redirigir de nuevo a la página de cobro
-            return RedirectToPage(new { id = alumnoId.Value });
+            return RedirectToPage(new { id = alumnoId.Value, cicloelegido });
         }
 
         public bool AlumnoHaPagado(int arancelId, int alumnoId) {
