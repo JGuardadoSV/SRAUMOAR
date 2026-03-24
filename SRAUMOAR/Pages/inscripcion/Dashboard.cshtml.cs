@@ -67,9 +67,16 @@ namespace SRAUMOAR.Pages.inscripcion
             }
 
             Inscripciones = await query.ToListAsync();
-            TotalInscripciones = Inscripciones.Count;
-            TotalHombres = Inscripciones.Count(i => i.Alumno.Genero == 0);
-            TotalMujeres = Inscripciones.Count(i => i.Alumno.Genero == 1);
+
+            var inscripcionesUnicas = Inscripciones
+                .Where(i => i.Alumno != null)
+                .GroupBy(i => i.AlumnoId)
+                .Select(g => g.First())
+                .ToList();
+
+            TotalInscripciones = inscripcionesUnicas.Count;
+            TotalHombres = inscripcionesUnicas.Count(i => i.Alumno!.Genero == 0);
+            TotalMujeres = inscripcionesUnicas.Count(i => i.Alumno!.Genero == 1);
         }
 
         public async Task<IActionResult> OnGetGenerarReporteCompletoAsync()

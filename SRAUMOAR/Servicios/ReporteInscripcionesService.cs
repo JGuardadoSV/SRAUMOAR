@@ -97,15 +97,14 @@ namespace SRAUMOAR.Servicios
                     .ToList();
 
                 // Calcular alumnos únicos y totales globales de género a partir de las inscripciones
-                var alumnosUnicos = inscripciones
+                var alumnoIdsPermitidos = inscripciones
                     .Where(i => i.Alumno != null)
-                    .Select(i => i.Alumno)
-                    .GroupBy(a => a.AlumnoId)
-                    .Select(g => g.First())
-                    .ToList();
+                    .Select(i => i.AlumnoId)
+                    .ToHashSet();
 
-                int totalHombresGlobal = alumnosUnicos.Count(a => a.Genero == 0);
-                int totalMujeresGlobal = alumnosUnicos.Count(a => a.Genero == 1);
+                var alumnosCanonicos = ResolverGruposCanonicosPorAlumno(grupos, alumnoIdsPermitidos);
+                int totalHombresGlobal = alumnosCanonicos.Count(a => a.Alumno.Genero == 0);
+                int totalMujeresGlobal = alumnosCanonicos.Count(a => a.Alumno.Genero == 1);
 
                 using var memoryStream = new MemoryStream();
                 using var writer = new PdfWriter(memoryStream);
@@ -124,7 +123,7 @@ namespace SRAUMOAR.Servicios
                 await AgregarContenidoReporte(document, carrerasConGrupos, inscripciones, totalHombresGlobal, totalMujeresGlobal);
 
                 // Agregar pie de página (usando total de alumnos únicos)
-                AgregarPiePagina(document, alumnosUnicos.Count);
+                AgregarPiePagina(document, alumnosCanonicos.Count);
 
                 document.Close();
 
@@ -243,29 +242,61 @@ namespace SRAUMOAR.Servicios
             };
         }
 
-        private int? GetCicloActualAlumno(int alumnoId, List<Grupo> grupos)
+        private List<AlumnoGrupoCanonico> ResolverGruposCanonicosPorAlumno(List<Grupo> grupos, HashSet<int> alumnoIdsPermitidos)
         {
-            var materiasAlumno = grupos
-                .Where(g => !g.EsEspecializacion)
-                .SelectMany(g => g.MateriasGrupos ?? Enumerable.Empty<MateriasGrupo>())
-                .Where(mg => mg.Materia != null &&
-                             (mg.MateriasInscritas ?? Enumerable.Empty<MateriasInscritas>())
-                                 .Any(mi => mi.AlumnoId == alumnoId))
-                .Select(mg => mg.Materia!)
+            var asignaciones = grupos
+                .SelectMany(g => (g.MateriasGrupos ?? Enumerable.Empty<MateriasGrupo>())
+                    .SelectMany(mg => (mg.MateriasInscritas ?? Enumerable.Empty<MateriasInscritas>())
+                        .Where(mi => mi.Alumno != null && alumnoIdsPermitidos.Contains(mi.AlumnoId))
+                        .Select(mi => new
+                        {
+                            Grupo = g,
+                            Alumno = mi.Alumno!,
+                            CicloMateria = g.EsEspecializacion ? (int?)null : mg.Materia?.Ciclo
+                        })))
+                .GroupBy(x => new { x.Alumno.AlumnoId, x.Grupo.GrupoId })
+                .Select(g => new
+                {
+                    Alumno = g.First().Alumno,
+                    Grupo = g.First().Grupo,
+                    CicloMayorGrupo = g.Max(x => x.CicloMateria)
+                })
+                .GroupBy(x => x.Alumno.AlumnoId)
+                .Select(g => g
+                    .OrderByDescending(x => x.CicloMayorGrupo ?? int.MinValue)
+                    .ThenBy(x => x.Grupo.GrupoId)
+                    .Select(x => new AlumnoGrupoCanonico
+                    {
+                        Alumno = x.Alumno,
+                        GrupoId = x.Grupo.GrupoId,
+                        Ciclo = x.CicloMayorGrupo
+                    })
+                    .First())
                 .ToList();
-
-            if (!materiasAlumno.Any())
-            {
-                return null;
-            }
-
-            return materiasAlumno.Max(m => m.Ciclo);
+            
+            return asignaciones;
         }
 
         private async Task AgregarContenidoReporte(Document document, List<IGrouping<Carrera, Grupo>> carrerasConGrupos, List<Inscripcion> inscripciones, int totalHombresGlobal, int totalMujeresGlobal)
         {
-            int totalHombresPorGrupos = 0;
-            int totalMujeresPorGrupos = 0;
+            var alumnoIdsPermitidos = inscripciones
+                .Where(i => i.Alumno != null)
+                .Select(i => i.AlumnoId)
+                .ToHashSet();
+
+            var gruposReporte = carrerasConGrupos
+                .SelectMany(cg => cg)
+                .ToList();
+
+            var alumnosCanonicos = ResolverGruposCanonicosPorAlumno(gruposReporte, alumnoIdsPermitidos);
+            var alumnosCanonicosPorGrupo = alumnosCanonicos
+                .GroupBy(x => x.GrupoId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.OrderBy(x => x.Ciclo ?? int.MaxValue)
+                          .ThenBy(x => x.Alumno.Apellidos)
+                          .ThenBy(x => x.Alumno.Nombres)
+                          .ToList());
 
             foreach (var carreraGrupo in carrerasConGrupos)
             {
@@ -291,12 +322,10 @@ namespace SRAUMOAR.Servicios
                 // Recorrer todos los grupos (incluyendo especialización) para mostrarlos en el reporte
                 foreach (var grupo in grupos)
                 {
-                    // Obtener estudiantes inscritos en este grupo
-                    var estudiantesGrupo = grupo.MateriasGrupos?
-                        .SelectMany(mg => mg.MateriasInscritas ?? Enumerable.Empty<MateriasInscritas>())
-                        .Select(mi => mi.Alumno)
-                        .Distinct()
-                        .ToList() ?? new List<Alumno>();
+                    // Obtener estudiantes asignados canonicamente a este grupo
+                    var estudiantesGrupo = alumnosCanonicosPorGrupo.TryGetValue(grupo.GrupoId, out var alumnosGrupo)
+                        ? alumnosGrupo
+                        : new List<AlumnoGrupoCanonico>();
 
                     if (!estudiantesGrupo.Any()) continue;
 
@@ -329,20 +358,9 @@ namespace SRAUMOAR.Servicios
                     int hombresGrupo = 0;
                     int mujeresGrupo = 0;
 
-                    var alumnosConCiclo = estudiantesGrupo
-                        .Select(e => new
-                        {
-                            Estudiante = e,
-                            Ciclo = GetCicloActualAlumno(e.AlumnoId, grupos)
-                        })
-                        .OrderBy(ac => ac.Ciclo ?? int.MaxValue)
-                        .ThenBy(ac => ac.Estudiante.Apellidos)
-                        .ThenBy(ac => ac.Estudiante.Nombres)
-                        .ToList();
-
-                    foreach (var ac in alumnosConCiclo)
+                    foreach (var ac in estudiantesGrupo)
                     {
-                        var estudiante = ac.Estudiante;
+                        var estudiante = ac.Alumno;
                         var cicloTexto = GetRomanFromCiclo(ac.Ciclo);
 
                         tablaEstudiantes.AddCell(new Cell().Add(new Paragraph(contador.ToString())).SetTextAlignment(TextAlignment.CENTER));
@@ -383,9 +401,6 @@ namespace SRAUMOAR.Servicios
                     .SetMarginTop(10)
                     .SetMarginBottom(15)
                     .SetKeepTogether(true));
-
-                totalHombresPorGrupos += hombresCarrera;
-                totalMujeresPorGrupos += mujeresCarrera;
             }
 
             // Separador antes de los resúmenes globales
@@ -434,6 +449,12 @@ namespace SRAUMOAR.Servicios
             document.Add(pie);
         }
 
+        private class AlumnoGrupoCanonico
+        {
+            public required Alumno Alumno { get; set; }
+            public int GrupoId { get; set; }
+            public int? Ciclo { get; set; }
+        }
 
     }
 } 
