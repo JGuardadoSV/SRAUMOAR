@@ -321,7 +321,19 @@
     <!-- Filtros -->
     <div class="filter-card">
         <form method="get" class="row g-3 align-items-end">
-            <div class="col-md-5">
+            <div class="col-lg-4 col-md-6">
+                <label for="cicloSelect" class="form-label">
+                    <i class="bi bi-calendar3 me-2"></i>Ciclo
+                </label>
+                <select name="SelectedCicloId" class="form-select" id="cicloSelect">
+                    @foreach (var ciclo in Model.Ciclos)
+                    {
+                        var isSelected = ciclo.Value == Model.SelectedCicloId?.ToString() ? "selected" : "";
+                        @Html.Raw($"<option value=\"{ciclo.Value}\" {isSelected}>{ciclo.Text}</option>")
+                    }
+                </select>
+            </div>
+            <div class="col-lg-4 col-md-6">
                 <label for="carreraSelect" class="form-label">
                     <i class="bi bi-mortarboard me-2"></i>Carrera
                 </label>
@@ -337,7 +349,7 @@
                     }
                 </select>
             </div>
-            <div class="col-md-4">
+            <div class="col-lg-2 col-md-6">
                 <label for="generoSelect" class="form-label">
                     <i class="bi bi-people me-2"></i>Género
                 </label>
@@ -347,7 +359,7 @@
                     @Html.Raw($"<option value=\"1\" {(Model.Genero == "1" ? "selected" : "")}>Mujeres</option>")
                 </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-lg-2 col-md-6">
                 <button type="submit" class="btn btn-success filter-btn w-100">
                     <i class="bi bi-funnel me-2"></i>Filtrar
                 </button>
@@ -357,15 +369,18 @@
         <!-- Botones de reportes -->
         <div class="row mt-3">
             <div class="col-12">
-                <div class="d-flex justify-content-center gap-3">
-                    <a href="?handler=GenerarReporteCompleto" class="report-btn" target="_blank">
+                <div class="d-flex justify-content-center gap-3 flex-wrap">
+                    <a asp-page-handler="GenerarReporteCompleto" asp-route-SelectedCicloId="@Model.SelectedCicloId" asp-route-SelectedCarreraId="@Model.SelectedCarreraId" asp-route-Genero="@Model.Genero" class="report-btn" target="_blank">
                         <i class="bi bi-file-earmark-pdf me-2"></i>Generar Reporte Completo
                     </a>
-                    <a asp-page-handler="GenerarReporteFiltrado" asp-route-SelectedCarreraId="@Model.SelectedCarreraId" asp-route-Genero="@Model.Genero" class="report-btn info" target="_blank">
+                    <a asp-page-handler="GenerarReporteFiltrado" asp-route-SelectedCicloId="@Model.SelectedCicloId" asp-route-SelectedCarreraId="@Model.SelectedCarreraId" asp-route-Genero="@Model.Genero" class="report-btn info" target="_blank">
                         <i class="bi bi-funnel me-2"></i>Generar Reporte Filtrado
                     </a>
-                    <a asp-page-handler="GenerarCuadroEstadisticoExcel" asp-route-SelectedCarreraId="@Model.SelectedCarreraId" asp-route-Genero="@Model.Genero" class="report-btn excel">
+                    <a asp-page-handler="GenerarCuadroEstadisticoExcel" asp-route-SelectedCicloId="@Model.SelectedCicloId" asp-route-SelectedCarreraId="@Model.SelectedCarreraId" asp-route-Genero="@Model.Genero" class="report-btn excel">
                         <i class="bi bi-file-earmark-excel me-2"></i>Cuadro Estadístico Excel
+                    </a>
+                    <a asp-page-handler="GenerarExcelInscripciones" asp-route-SelectedCicloId="@Model.SelectedCicloId" asp-route-SelectedCarreraId="@Model.SelectedCarreraId" asp-route-Genero="@Model.Genero" class="report-btn excel">
+                        <i class="bi bi-table me-2"></i>Excel de Inscripciones
                     </a>
                 </div>
             </div>
@@ -407,14 +422,17 @@
                     <i class="bi bi-file-earmark-spreadsheet stats-icon"></i>
                     <div class="stats-label">Reportes</div>
                     <div class="mt-3">
-                        <a href="?handler=GenerarReporteCompleto" class="btn btn-light btn-sm me-2">
+                        <a asp-page-handler="GenerarReporteCompleto" asp-route-SelectedCicloId="@Model.SelectedCicloId" asp-route-SelectedCarreraId="@Model.SelectedCarreraId" asp-route-Genero="@Model.Genero" class="btn btn-light btn-sm me-2">
                             <i class="bi bi-download me-1"></i>Completo
                         </a>
-                        <a asp-page-handler="GenerarReporteFiltrado" asp-route-SelectedCarreraId="@Model.SelectedCarreraId" asp-route-Genero="@Model.Genero" class="btn btn-light btn-sm me-2">
+                        <a asp-page-handler="GenerarReporteFiltrado" asp-route-SelectedCicloId="@Model.SelectedCicloId" asp-route-SelectedCarreraId="@Model.SelectedCarreraId" asp-route-Genero="@Model.Genero" class="btn btn-light btn-sm me-2">
                             <i class="bi bi-funnel me-1"></i>Filtrado
                         </a>
-                        <a asp-page-handler="GenerarCuadroEstadisticoExcel" asp-route-SelectedCarreraId="@Model.SelectedCarreraId" asp-route-Genero="@Model.Genero" class="btn btn-light btn-sm">
+                        <a asp-page-handler="GenerarCuadroEstadisticoExcel" asp-route-SelectedCicloId="@Model.SelectedCicloId" asp-route-SelectedCarreraId="@Model.SelectedCarreraId" asp-route-Genero="@Model.Genero" class="btn btn-light btn-sm me-2">
                             <i class="bi bi-file-earmark-excel me-1"></i>Excel
+                        </a>
+                        <a asp-page-handler="GenerarExcelInscripciones" asp-route-SelectedCicloId="@Model.SelectedCicloId" asp-route-SelectedCarreraId="@Model.SelectedCarreraId" asp-route-Genero="@Model.Genero" class="btn btn-light btn-sm">
+                            <i class="bi bi-table me-1"></i>Inscripciones
                         </a>
                     </div>
                 </div>

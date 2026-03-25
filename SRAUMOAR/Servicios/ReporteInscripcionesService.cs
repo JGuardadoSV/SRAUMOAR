@@ -36,24 +36,24 @@ namespace SRAUMOAR.Servicios
             _fontTitle = PdfFontFactory.CreateFont(StandardFonts.TIMES_BOLD);
         }
 
-        public async Task<byte[]> GenerarReporteCompletoAsync()
+        public async Task<byte[]> GenerarReporteCompletoAsync(int? cicloId = null)
         {
-            return await GenerarReporteAsync(null, null, false);
+            return await GenerarReporteAsync(cicloId, null, null, false);
         }
 
-        public async Task<byte[]> GenerarReporteFiltradoAsync(int? carreraId, string genero)
+        public async Task<byte[]> GenerarReporteFiltradoAsync(int? cicloId, int? carreraId, string? genero)
         {
-            return await GenerarReporteAsync(carreraId, genero, true);
+            return await GenerarReporteAsync(cicloId, carreraId, genero, true);
         }
 
-        private async Task<byte[]> GenerarReporteAsync(int? carreraId, string genero, bool esFiltrado)
+        private async Task<byte[]> GenerarReporteAsync(int? cicloId, int? carreraId, string? genero, bool esFiltrado)
         {
             try
             {
-                var cicloactual = await _context.Ciclos.Where(x => x.Activo == true).FirstOrDefaultAsync();
+                var cicloactual = await ObtenerCicloReporteAsync(cicloId);
                 if (cicloactual == null)
                 {
-                    throw new InvalidOperationException("No hay un ciclo activo");
+                    throw new InvalidOperationException("No hay un ciclo disponible para generar el reporte");
                 }
 
                 // Obtener inscripciones con filtros
@@ -117,7 +117,7 @@ namespace SRAUMOAR.Servicios
                 document.SetMargins(30, 30, 30, 30);
 
                 // Agregar encabezado
-                AgregarEncabezado(document, esFiltrado, carreraId, genero);
+                AgregarEncabezado(document, cicloactual, esFiltrado, carreraId, genero);
 
                 // Agregar contenido del reporte
                 await AgregarContenidoReporte(document, carrerasConGrupos, inscripciones, totalHombresGlobal, totalMujeresGlobal);
@@ -138,7 +138,22 @@ namespace SRAUMOAR.Servicios
             }
         }
 
-        private void AgregarEncabezado(Document document, bool esFiltrado, int? carreraId, string genero)
+        private async Task<Ciclo?> ObtenerCicloReporteAsync(int? cicloId)
+        {
+            if (cicloId.HasValue && cicloId.Value > 0)
+            {
+                return await _context.Ciclos
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(c => c.Id == cicloId.Value);
+            }
+
+            return await _context.Ciclos
+                .AsNoTracking()
+                .Where(c => c.Activo)
+                .FirstOrDefaultAsync();
+        }
+
+        private void AgregarEncabezado(Document document, Ciclo cicloActual, bool esFiltrado, int? carreraId, string? genero)
         {
             // Logo y título
             try
@@ -169,6 +184,12 @@ namespace SRAUMOAR.Servicios
                 .SetFontSize(14)
                 .SetTextAlignment(TextAlignment.CENTER)
                 .SetMarginBottom(10));
+
+            document.Add(new Paragraph($"Ciclo consultado: {cicloActual.NCiclo} - {cicloActual.anio}")
+                .SetFont(_fontBold)
+                .SetFontSize(10)
+                .SetTextAlignment(TextAlignment.CENTER)
+                .SetMarginBottom(5));
 
             // Información de filtros si aplica
             if (esFiltrado)
@@ -252,8 +273,20 @@ namespace SRAUMOAR.Servicios
                         {
                             Grupo = g,
                             Alumno = mi.Alumno!,
-                            CicloMateria = g.EsEspecializacion ? (int?)null : mg.Materia?.Ciclo
+                            CicloMateria = g.EsEspecializacion ? (int?)null : mg.Materia?.Ciclo,
+                            mg.MateriaId
                         })))
+                .ToList();
+
+            var totalMateriasPorAlumno = asignaciones
+                .GroupBy(x => x.Alumno.AlumnoId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(x => x.MateriaId)
+                          .Distinct()
+                          .Count());
+
+            var gruposCanonicos = asignaciones
                 .GroupBy(x => new { x.Alumno.AlumnoId, x.Grupo.GrupoId })
                 .Select(g => new
                 {
@@ -269,12 +302,15 @@ namespace SRAUMOAR.Servicios
                     {
                         Alumno = x.Alumno,
                         GrupoId = x.Grupo.GrupoId,
-                        Ciclo = x.CicloMayorGrupo
+                        Ciclo = x.CicloMayorGrupo,
+                        TotalMaterias = totalMateriasPorAlumno.TryGetValue(x.Alumno.AlumnoId, out var totalMaterias)
+                            ? totalMaterias
+                            : 0
                     })
                     .First())
                 .ToList();
-            
-            return asignaciones;
+
+            return gruposCanonicos;
         }
 
         private async Task AgregarContenidoReporte(Document document, List<IGrouping<Carrera, Grupo>> carrerasConGrupos, List<Inscripcion> inscripciones, int totalHombresGlobal, int totalMujeresGlobal)
@@ -342,8 +378,8 @@ namespace SRAUMOAR.Servicios
                         .SetKeepWithNext(true);
                     document.Add(grupoParrafo);
 
-                    // Tabla de estudiantes (No., Nombre, Carnet, Género, Ciclo)
-                    var tablaEstudiantes = new Table(new float[] { 1, 3, 2, 1, 1 })
+                    // Tabla de estudiantes (No., Nombre, Carnet, Género, Ciclo, Total Materias)
+                    var tablaEstudiantes = new Table(new float[] { 1, 3, 2, 1, 1, 1.3f })
                         .SetWidth(UnitValue.CreatePercentValue(100))
                         .SetFontSize(8);
 
@@ -353,6 +389,7 @@ namespace SRAUMOAR.Servicios
                     tablaEstudiantes.AddHeaderCell(new Cell().Add(new Paragraph("Carnet").SetFont(_fontBold)).SetTextAlignment(TextAlignment.CENTER));
                     tablaEstudiantes.AddHeaderCell(new Cell().Add(new Paragraph("Género").SetFont(_fontBold)).SetTextAlignment(TextAlignment.CENTER));
                     tablaEstudiantes.AddHeaderCell(new Cell().Add(new Paragraph("Ciclo").SetFont(_fontBold)).SetTextAlignment(TextAlignment.CENTER));
+                    tablaEstudiantes.AddHeaderCell(new Cell().Add(new Paragraph("Total Materias").SetFont(_fontBold)).SetTextAlignment(TextAlignment.CENTER));
 
                     int contador = 1;
                     int hombresGrupo = 0;
@@ -372,6 +409,7 @@ namespace SRAUMOAR.Servicios
                         tablaEstudiantes.AddCell(new Cell().Add(new Paragraph(generoText)).SetTextAlignment(TextAlignment.CENTER));
 
                         tablaEstudiantes.AddCell(new Cell().Add(new Paragraph(cicloTexto)).SetTextAlignment(TextAlignment.CENTER));
+                        tablaEstudiantes.AddCell(new Cell().Add(new Paragraph(ac.TotalMaterias.ToString())).SetTextAlignment(TextAlignment.CENTER));
 
                         if (estudiante.Genero == 0) hombresGrupo++;
                         else if (estudiante.Genero == 1) mujeresGrupo++;
@@ -454,6 +492,7 @@ namespace SRAUMOAR.Servicios
             public required Alumno Alumno { get; set; }
             public int GrupoId { get; set; }
             public int? Ciclo { get; set; }
+            public int TotalMaterias { get; set; }
         }
 
     }

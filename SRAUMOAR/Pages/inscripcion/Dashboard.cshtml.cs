@@ -17,19 +17,25 @@ namespace SRAUMOAR.Pages.inscripcion
         private readonly SRAUMOAR.Modelos.Contexto _context;
         private readonly ReporteInscripcionesService _reporteService;
         private readonly ReporteCuadroEstadisticoService _reporteCuadroEstadisticoService;
+        private readonly ReporteInscripcionesExcelService _reporteInscripcionesExcelService;
         
         public DashboardModel(
             SRAUMOAR.Modelos.Contexto context,
             ReporteInscripcionesService reporteService,
-            ReporteCuadroEstadisticoService reporteCuadroEstadisticoService)
+            ReporteCuadroEstadisticoService reporteCuadroEstadisticoService,
+            ReporteInscripcionesExcelService reporteInscripcionesExcelService)
         {
             _context = context;
             _reporteService = reporteService;
             _reporteCuadroEstadisticoService = reporteCuadroEstadisticoService;
+            _reporteInscripcionesExcelService = reporteInscripcionesExcelService;
         }
 
+        public List<SelectListItem> Ciclos { get; set; } = new List<SelectListItem>();
         public List<SelectListItem> Carreras { get; set; } = new List<SelectListItem>();
         public IList<Inscripcion> Inscripciones { get; set; } = new List<Inscripcion>();
+        [BindProperty(SupportsGet = true)]
+        public int? SelectedCicloId { get; set; }
         [BindProperty(SupportsGet = true)]
         public int? SelectedCarreraId { get; set; }
         [BindProperty(SupportsGet = true)]
@@ -40,15 +46,33 @@ namespace SRAUMOAR.Pages.inscripcion
 
         public async Task OnGetAsync()
         {
-            var cicloactual = await _context.Ciclos.Where(x => x.Activo == true).FirstOrDefaultAsync();
+            await CargarCiclosAsync();
+
+            if (!SelectedCicloId.HasValue || SelectedCicloId.Value <= 0)
+            {
+                SelectedCicloId = await ObtenerCicloPorDefectoAsync() ?? 0;
+            }
+
+            var cicloactual = await ObtenerCicloSeleccionadoAsync();
+            if (cicloactual == null)
+            {
+                Inscripciones = new List<Inscripcion>();
+                TotalInscripciones = 0;
+                TotalHombres = 0;
+                TotalMujeres = 0;
+                return;
+            }
+
             var query = _context.Inscripciones
+                .AsNoTracking()
                 .Include(i => i.Alumno)
                 .ThenInclude(a => a.Carrera)
                 .Include(i => i.Ciclo)
                 .Where(i => i.CicloId == cicloactual.Id);
 
-            // Filtro por carrera
             Carreras = await _context.Carreras
+                .AsNoTracking()
+                .OrderBy(c => c.NombreCarrera)
                 .Select(c => new SelectListItem { Value = c.CarreraId.ToString(), Text = c.NombreCarrera })
                 .ToListAsync();
 
@@ -83,7 +107,14 @@ namespace SRAUMOAR.Pages.inscripcion
         {
             try
             {
-                var pdfBytes = await _reporteService.GenerarReporteCompletoAsync();
+                var cicloSeleccionado = await ObtenerCicloSeleccionadoAsync();
+                if (cicloSeleccionado == null)
+                {
+                    TempData["Error"] = "No se encontró el ciclo seleccionado para generar el reporte.";
+                    return RedirectToPage(new { SelectedCicloId, SelectedCarreraId, Genero });
+                }
+
+                var pdfBytes = await _reporteService.GenerarReporteCompletoAsync(cicloSeleccionado.Id);
                 var fileName = $"ReporteInscripcionesCompleto_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
                 Response.Headers["Content-Disposition"] = $"inline; filename={fileName}";
                 return File(pdfBytes, "application/pdf");
@@ -91,7 +122,7 @@ namespace SRAUMOAR.Pages.inscripcion
             catch (Exception ex)
             {
                 TempData["Error"] = $"Error al generar reporte: {ex.Message}";
-                return RedirectToPage();
+                return RedirectToPage(new { SelectedCicloId, SelectedCarreraId, Genero });
             }
         }
 
@@ -99,7 +130,14 @@ namespace SRAUMOAR.Pages.inscripcion
         {
             try
             {
-                var pdfBytes = await _reporteService.GenerarReporteFiltradoAsync(SelectedCarreraId, Genero);
+                var cicloSeleccionado = await ObtenerCicloSeleccionadoAsync();
+                if (cicloSeleccionado == null)
+                {
+                    TempData["Error"] = "No se encontró el ciclo seleccionado para generar el reporte.";
+                    return RedirectToPage(new { SelectedCicloId, SelectedCarreraId, Genero });
+                }
+
+                var pdfBytes = await _reporteService.GenerarReporteFiltradoAsync(cicloSeleccionado.Id, SelectedCarreraId, Genero);
                 var fileName = $"ReporteInscripcionesFiltrado_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
                 Response.Headers["Content-Disposition"] = $"inline; filename={fileName}";
                 return File(pdfBytes, "application/pdf");
@@ -107,7 +145,7 @@ namespace SRAUMOAR.Pages.inscripcion
             catch (Exception ex)
             {
                 TempData["Error"] = $"Error al generar reporte: {ex.Message}";
-                return RedirectToPage();
+                return RedirectToPage(new { SelectedCicloId, SelectedCarreraId, Genero });
             }
         }
 
@@ -115,14 +153,12 @@ namespace SRAUMOAR.Pages.inscripcion
         {
             try
             {
-                var cicloActual = await _context.Ciclos
-                    .Where(x => x.Activo)
-                    .FirstOrDefaultAsync();
+                var cicloActual = await ObtenerCicloSeleccionadoAsync();
 
                 if (cicloActual == null)
                 {
-                    TempData["Error"] = "No hay un ciclo activo para generar el cuadro estadistico.";
-                    return RedirectToPage(new { SelectedCarreraId, Genero });
+                    TempData["Error"] = "No se encontró el ciclo seleccionado para generar el cuadro estadístico.";
+                    return RedirectToPage(new { SelectedCicloId, SelectedCarreraId, Genero });
                 }
 
                 var archivo = await _reporteCuadroEstadisticoService.GenerarExcelAsync(cicloActual.Id, SelectedCarreraId);
@@ -136,8 +172,97 @@ namespace SRAUMOAR.Pages.inscripcion
             catch (Exception ex)
             {
                 TempData["Error"] = $"Error al generar cuadro estadistico: {ex.Message}";
-                return RedirectToPage(new { SelectedCarreraId, Genero });
+                return RedirectToPage(new { SelectedCicloId, SelectedCarreraId, Genero });
             }
+        }
+
+        public async Task<IActionResult> OnGetGenerarExcelInscripcionesAsync()
+        {
+            try
+            {
+                var cicloSeleccionado = await ObtenerCicloSeleccionadoAsync();
+                if (cicloSeleccionado == null)
+                {
+                    TempData["Error"] = "No se encontró el ciclo seleccionado para generar el Excel.";
+                    return RedirectToPage(new { SelectedCicloId, SelectedCarreraId, Genero });
+                }
+
+                var archivo = await _reporteInscripcionesExcelService.GenerarExcelAsync(
+                    cicloSeleccionado.Id,
+                    SelectedCarreraId,
+                    Genero);
+
+                var fileName = $"Inscripciones_{cicloSeleccionado.NCiclo}_{cicloSeleccionado.anio}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+
+                return File(
+                    archivo,
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    fileName);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Error al generar Excel de inscripciones: {ex.Message}";
+                return RedirectToPage(new { SelectedCicloId, SelectedCarreraId, Genero });
+            }
+        }
+
+        private async Task CargarCiclosAsync()
+        {
+            var ciclos = await _context.Ciclos
+                .AsNoTracking()
+                .OrderByDescending(c => c.anio)
+                .ThenByDescending(c => c.NCiclo)
+                .Select(c => new SelectListItem
+                {
+                    Value = c.Id.ToString(),
+                    Text = $"Ciclo {c.NCiclo} - {c.anio}"
+                })
+                .ToListAsync();
+
+            Ciclos = ciclos;
+        }
+
+        private async Task<int?> ObtenerCicloPorDefectoAsync()
+        {
+            var cicloActivoId = await _context.Ciclos
+                .AsNoTracking()
+                .Where(c => c.Activo)
+                .Select(c => (int?)c.Id)
+                .FirstOrDefaultAsync();
+
+            if (cicloActivoId.HasValue)
+            {
+                return cicloActivoId.Value;
+            }
+
+            return await _context.Ciclos
+                .AsNoTracking()
+                .OrderByDescending(c => c.anio)
+                .ThenByDescending(c => c.NCiclo)
+                .Select(c => (int?)c.Id)
+                .FirstOrDefaultAsync();
+        }
+
+        private async Task<Ciclo?> ObtenerCicloSeleccionadoAsync()
+        {
+            if (SelectedCicloId.HasValue && SelectedCicloId.Value > 0)
+            {
+                return await _context.Ciclos
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(c => c.Id == SelectedCicloId.Value);
+            }
+
+            var cicloPorDefectoId = await ObtenerCicloPorDefectoAsync();
+            if (!cicloPorDefectoId.HasValue)
+            {
+                return null;
+            }
+
+            SelectedCicloId = cicloPorDefectoId.Value;
+
+            return await _context.Ciclos
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == cicloPorDefectoId.Value);
         }
     }
 } 
