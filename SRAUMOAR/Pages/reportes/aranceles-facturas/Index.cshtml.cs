@@ -225,7 +225,10 @@ namespace SRAUMOAR.Pages.reportes.aranceles_facturas
 
             if (SelectedCicloId.HasValue)
             {
-                arancelesQuery = arancelesQuery.Where(a => a.CicloId == SelectedCicloId.Value);
+                // Mantener consistencia con /aranceles: incluir ciclo actual y no obligatorios globales.
+                arancelesQuery = arancelesQuery.Where(a =>
+                    (a.CicloId != null && a.CicloId == SelectedCicloId.Value) ||
+                    (!a.Obligatorio && a.CicloId == null));
             }
 
             var aranceles = await arancelesQuery
