@@ -28,6 +28,25 @@
         </div>
     </div>
 
+    <div class="mb-3">
+        @if (Model.ArancelId.HasValue)
+        {
+            <a asp-page="./AlumnosPorArancel"
+               asp-route-ArancelId="@Model.ArancelId"
+               asp-route-FechaInicio="@Model.FechaInicio?.ToString("yyyy-MM-dd")"
+               asp-route-FechaFin="@Model.FechaFin?.ToString("yyyy-MM-dd")"
+               class="btn btn-outline-primary">
+                Ver alumnos que pagaron este arancel
+            </a>
+        }
+        else
+        {
+            <button class="btn btn-outline-secondary" disabled>
+                Seleccione un arancel para ver alumnos pagadores
+            </button>
+        }
+    </div>
+
     @if (TempData["Error"] != null)
     {
         <div class="alert alert-danger">@TempData["Error"]</div>
