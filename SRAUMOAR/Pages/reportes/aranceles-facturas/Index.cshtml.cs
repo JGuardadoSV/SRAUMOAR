@@ -33,6 +33,9 @@ namespace SRAUMOAR.Pages.reportes.aranceles_facturas
         public int? ArancelId { get; set; }
 
         [BindProperty(SupportsGet = true)]
+        public int? SelectedCicloId { get; set; }
+
+        [BindProperty(SupportsGet = true)]
         public DateTime? FechaInicio { get; set; } = DateTime.Today;
 
         [BindProperty(SupportsGet = true)]
@@ -45,12 +48,16 @@ namespace SRAUMOAR.Pages.reportes.aranceles_facturas
 
         public async Task OnGetAsync()
         {
+            SelectedCicloId = await ObtenerCicloSeleccionadoAsync();
+
             if (!ValidarRangoFechas())
             {
+                await CargarCiclosAsync();
                 await CargarArancelesAsync();
                 return;
             }
 
+            await CargarCiclosAsync();
             await CargarArancelesAsync();
             await CargarReporteAsync();
         }
@@ -59,14 +66,17 @@ namespace SRAUMOAR.Pages.reportes.aranceles_facturas
         {
             if (!ValidarRangoFechas())
             {
-                return RedirectToPage(new { ArancelId, FechaInicio, FechaFin });
+                return RedirectToPage(new { ArancelId, SelectedCicloId, FechaInicio, FechaFin });
             }
 
+            SelectedCicloId = await ObtenerCicloSeleccionadoAsync();
+            await CargarCiclosAsync();
+            await CargarArancelesAsync();
             await CargarReporteAsync();
             if (!Registros.Any())
             {
                 TempData["Error"] = "No hay datos para exportar a Excel con los filtros seleccionados.";
-                return RedirectToPage(new { ArancelId, FechaInicio, FechaFin });
+                return RedirectToPage(new { ArancelId, SelectedCicloId, FechaInicio, FechaFin });
             }
 
             ExcelPackage.License.SetNonCommercialOrganization("SRAUMOAR");
@@ -146,14 +156,17 @@ namespace SRAUMOAR.Pages.reportes.aranceles_facturas
         {
             if (!ValidarRangoFechas())
             {
-                return RedirectToPage(new { ArancelId, FechaInicio, FechaFin });
+                return RedirectToPage(new { ArancelId, SelectedCicloId, FechaInicio, FechaFin });
             }
 
+            SelectedCicloId = await ObtenerCicloSeleccionadoAsync();
+            await CargarCiclosAsync();
+            await CargarArancelesAsync();
             await CargarReporteAsync();
             if (!Registros.Any())
             {
                 TempData["Error"] = "No hay datos para exportar a PDF con los filtros seleccionados.";
-                return RedirectToPage(new { ArancelId, FechaInicio, FechaFin });
+                return RedirectToPage(new { ArancelId, SelectedCicloId, FechaInicio, FechaFin });
             }
 
             using var memoryStream = new MemoryStream();
@@ -206,14 +219,72 @@ namespace SRAUMOAR.Pages.reportes.aranceles_facturas
 
         private async Task CargarArancelesAsync()
         {
-            var aranceles = await _context.Aranceles
+            var arancelesQuery = _context.Aranceles
                 .AsNoTracking()
-                .Where(a => a.Activo)
+                .Where(a => a.Activo);
+
+            if (SelectedCicloId.HasValue)
+            {
+                arancelesQuery = arancelesQuery.Where(a => a.CicloId == SelectedCicloId.Value);
+            }
+
+            var aranceles = await arancelesQuery
                 .OrderBy(a => a.Nombre)
                 .Select(a => new { a.ArancelId, Nombre = a.Nombre ?? $"Arancel {a.ArancelId}" })
                 .ToListAsync();
 
             ViewData["Aranceles"] = new SelectList(aranceles, "ArancelId", "Nombre", ArancelId);
+        }
+
+        private async Task CargarCiclosAsync()
+        {
+            var ciclos = await _context.Ciclos
+                .AsNoTracking()
+                .OrderByDescending(c => c.anio)
+                .ThenByDescending(c => c.NCiclo)
+                .Select(c => new
+                {
+                    c.Id,
+                    Nombre = c.Activo
+                        ? $"{c.anio} - Ciclo {c.NCiclo} (Activo)"
+                        : $"{c.anio} - Ciclo {c.NCiclo}"
+                })
+                .ToListAsync();
+
+            ViewData["Ciclos"] = new SelectList(ciclos, "Id", "Nombre", SelectedCicloId);
+        }
+
+        private async Task<int?> ObtenerCicloSeleccionadoAsync()
+        {
+            if (SelectedCicloId.HasValue)
+            {
+                var existe = await _context.Ciclos
+                    .AsNoTracking()
+                    .AnyAsync(c => c.Id == SelectedCicloId.Value);
+
+                if (existe)
+                {
+                    return SelectedCicloId;
+                }
+            }
+
+            var cicloActivo = await _context.Ciclos
+                .AsNoTracking()
+                .Where(c => c.Activo)
+                .Select(c => (int?)c.Id)
+                .FirstOrDefaultAsync();
+
+            if (cicloActivo.HasValue)
+            {
+                return cicloActivo;
+            }
+
+            return await _context.Ciclos
+                .AsNoTracking()
+                .OrderByDescending(c => c.anio)
+                .ThenByDescending(c => c.NCiclo)
+                .Select(c => (int?)c.Id)
+                .FirstOrDefaultAsync();
         }
 
         private bool ValidarRangoFechas()
@@ -237,6 +308,29 @@ namespace SRAUMOAR.Pages.reportes.aranceles_facturas
         {
             var fechaInicio = FechaInicio!.Value.Date;
             var fechaFin = FechaFin!.Value.Date.AddDays(1).AddSeconds(-1);
+            if (SelectedCicloId.HasValue)
+            {
+                var ciclo = await _context.Ciclos
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(c => c.Id == SelectedCicloId.Value);
+
+                if (ciclo != null)
+                {
+                    var inicioCiclo = ciclo.FechaInicio.Date;
+                    var finCiclo = ciclo.FechaFin.Date.AddDays(1).AddSeconds(-1);
+                    fechaInicio = fechaInicio < inicioCiclo ? inicioCiclo : fechaInicio;
+                    fechaFin = fechaFin > finCiclo ? finCiclo : fechaFin;
+                }
+            }
+
+            if (fechaInicio > fechaFin)
+            {
+                Registros = new List<ReporteItem>();
+                TotalFacturasValidas = 0;
+                TotalArancelesCobrados = 0;
+                SubtotalDonaciones = 0;
+                return;
+            }
 
             var facturasValidas = await _context.Facturas
                 .AsNoTracking()
@@ -257,12 +351,16 @@ namespace SRAUMOAR.Pages.reportes.aranceles_facturas
                 .AsNoTracking()
                 .Include(c => c.DetallesCobroArancel!)
                     .ThenInclude(d => d.Arancel)
-                .Where(c => c.CodigoGeneracion != null && codigosGeneracion.Contains(c.CodigoGeneracion))
+                .Where(c =>
+                    c.CodigoGeneracion != null &&
+                    codigosGeneracion.Contains(c.CodigoGeneracion) &&
+                    (!SelectedCicloId.HasValue || c.CicloId == SelectedCicloId.Value))
                 .ToListAsync();
 
             var cobrosPorCodigo = cobros
                 .Where(c => !string.IsNullOrEmpty(c.CodigoGeneracion))
-                .ToDictionary(c => c.CodigoGeneracion!, c => c);
+                .GroupBy(c => c.CodigoGeneracion!)
+                .ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.CobroArancelId).First());
 
             var registros = new List<ReporteItem>();
             foreach (var factura in facturasValidas)

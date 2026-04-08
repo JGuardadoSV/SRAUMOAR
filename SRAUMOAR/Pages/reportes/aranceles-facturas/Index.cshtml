@@ -12,6 +12,7 @@
             <a asp-page="./Index"
                asp-page-handler="GenerarPDF"
                asp-route-ArancelId="@Model.ArancelId"
+               asp-route-SelectedCicloId="@Model.SelectedCicloId"
                asp-route-FechaInicio="@Model.FechaInicio?.ToString("yyyy-MM-dd")"
                asp-route-FechaFin="@Model.FechaFin?.ToString("yyyy-MM-dd")"
                class="btn btn-danger me-2">
@@ -20,6 +21,7 @@
             <a asp-page="./Index"
                asp-page-handler="GenerarExcel"
                asp-route-ArancelId="@Model.ArancelId"
+               asp-route-SelectedCicloId="@Model.SelectedCicloId"
                asp-route-FechaInicio="@Model.FechaInicio?.ToString("yyyy-MM-dd")"
                asp-route-FechaFin="@Model.FechaFin?.ToString("yyyy-MM-dd")"
                class="btn btn-success">
@@ -33,6 +35,7 @@
         {
             <a asp-page="./AlumnosPorArancel"
                asp-route-ArancelId="@Model.ArancelId"
+               asp-route-CicloId="@Model.SelectedCicloId"
                asp-route-FechaInicio="@Model.FechaInicio?.ToString("yyyy-MM-dd")"
                asp-route-FechaFin="@Model.FechaFin?.ToString("yyyy-MM-dd")"
                class="btn btn-outline-primary">
@@ -55,17 +58,27 @@
     <div class="card mb-3">
         <div class="card-body">
             <form method="get" class="row g-3 align-items-end">
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label">Fecha Inicio</label>
                     <input type="date" class="form-control" name="FechaInicio"
                            value="@Model.FechaInicio?.ToString("yyyy-MM-dd")" />
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label">Fecha Fin</label>
                     <input type="date" class="form-control" name="FechaFin"
                            value="@Model.FechaFin?.ToString("yyyy-MM-dd")" />
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
+                    <label class="form-label">Ciclo</label>
+                    <select name="SelectedCicloId" class="form-select">
+                        @foreach (var item in (IEnumerable<SelectListItem>)ViewData["Ciclos"]!)
+                        {
+                            var selected = item.Value == Model.SelectedCicloId?.ToString();
+                            <option value="@item.Value" selected="@selected">@item.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
                     <label class="form-label">Arancel</label>
                     <select name="ArancelId" class="form-select">
                         <option value="">Todos los aranceles</option>
