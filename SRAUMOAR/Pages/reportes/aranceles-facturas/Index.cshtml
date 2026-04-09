@@ -4,6 +4,24 @@
 @{
     ViewData["Title"] = "Reporte de Aranceles y Facturas";
 }
+<style>
+    .col-arancel {
+        width: 220px;
+        min-width: 220px;
+        max-width: 220px;
+    }
+
+    .detalle-arancel {
+        white-space: pre-line;
+        max-height: 3.2em;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        line-height: 1.6em;
+    }
+</style>
 
 <div class="container-fluid mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -135,7 +153,7 @@
                             <th>No. Control</th>
                             <th>Código Generación</th>
                             <th>Origen</th>
-                            <th>Arancel</th>
+                                    <th class="col-arancel">Arancel</th>
                             <th>Total Factura</th>
                             <th>Monto Arancel</th>
                             <th>Donación</th>
@@ -152,7 +170,7 @@
                                     <td>@item.NumeroControl</td>
                                     <td><small>@item.CodigoGeneracion</small></td>
                                     <td>@item.Origen</td>
-                                    <td>@(item.ArancelNombre ?? "-")</td>
+                                    <td class="detalle-arancel col-arancel" title="@item.ArancelNombre">@(item.ArancelNombre ?? "-")</td>
                                     <td class="text-end">$@item.TotalFactura.ToString("N2")</td>
                                     <td class="text-end">$@item.MontoArancel.ToString("N2")</td>
                                     <td>@(item.EsDonacion ? "Sí" : "No")</td>

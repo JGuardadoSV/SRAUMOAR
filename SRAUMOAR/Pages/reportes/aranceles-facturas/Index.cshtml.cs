@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json.Linq;
 using OfficeOpenXml;
 using SRAUMOAR.Modelos;
 
@@ -311,20 +312,6 @@ namespace SRAUMOAR.Pages.reportes.aranceles_facturas
         {
             var fechaInicio = FechaInicio!.Value.Date;
             var fechaFin = FechaFin!.Value.Date.AddDays(1).AddSeconds(-1);
-            if (SelectedCicloId.HasValue)
-            {
-                var ciclo = await _context.Ciclos
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(c => c.Id == SelectedCicloId.Value);
-
-                if (ciclo != null)
-                {
-                    var inicioCiclo = ciclo.FechaInicio.Date;
-                    var finCiclo = ciclo.FechaFin.Date.AddDays(1).AddSeconds(-1);
-                    fechaInicio = fechaInicio < inicioCiclo ? inicioCiclo : fechaInicio;
-                    fechaFin = fechaFin > finCiclo ? finCiclo : fechaFin;
-                }
-            }
 
             if (fechaInicio > fechaFin)
             {
@@ -357,7 +344,7 @@ namespace SRAUMOAR.Pages.reportes.aranceles_facturas
                 .Where(c =>
                     c.CodigoGeneracion != null &&
                     codigosGeneracion.Contains(c.CodigoGeneracion) &&
-                    (!SelectedCicloId.HasValue || c.CicloId == SelectedCicloId.Value))
+                    (!SelectedCicloId.HasValue || c.CicloId == SelectedCicloId.Value || c.CicloId == null))
                 .ToListAsync();
 
             var cobrosPorCodigo = cobros
@@ -397,6 +384,7 @@ namespace SRAUMOAR.Pages.reportes.aranceles_facturas
                 }
                 else if (!ArancelId.HasValue)
                 {
+                    var detallePuntoVenta = ObtenerDetallePuntoVenta(factura.JsonDte);
                     registros.Add(new ReporteItem
                     {
                         Fecha = factura.Fecha,
@@ -405,7 +393,7 @@ namespace SRAUMOAR.Pages.reportes.aranceles_facturas
                         NumeroControl = factura.NumeroControl,
                         CodigoGeneracion = factura.CodigoGeneracion,
                         Origen = "Punto de venta",
-                        ArancelNombre = null,
+                        ArancelNombre = detallePuntoVenta,
                         TotalFactura = factura.TotalPagar,
                         MontoArancel = 0,
                         EsDonacion = factura.TipoDTE == 15
@@ -431,6 +419,36 @@ namespace SRAUMOAR.Pages.reportes.aranceles_facturas
                 .Distinct()
                 .Join(facturasValidas.Where(f => f.TipoDTE == 15), codigo => codigo, factura => factura.CodigoGeneracion, (_, factura) => factura.TotalPagar)
                 .Sum();
+        }
+
+        private static string? ObtenerDetallePuntoVenta(string? jsonDte)
+        {
+            if (string.IsNullOrWhiteSpace(jsonDte))
+            {
+                return null;
+            }
+
+            try
+            {
+                var json = JObject.Parse(jsonDte);
+                var descripciones = json["cuerpoDocumento"]?
+                    .Children()
+                    .Select(item => item["descripcion"]?.ToString()?.Trim())
+                    .Where(descripcion => !string.IsNullOrWhiteSpace(descripcion))
+                    .Distinct()
+                    .ToList();
+
+                if (descripciones == null || descripciones.Count == 0)
+                {
+                    return null;
+                }
+
+                return string.Join(Environment.NewLine, descripciones!);
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private static string ObtenerTipoDTETexto(int tipoDte)
