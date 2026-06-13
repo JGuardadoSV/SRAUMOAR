@@ -1,0 +1,266 @@
+@page
+@model SRAUMOAR.Pages.historial.EstudiosEquivalencia.CrearModel
+@{
+    ViewData["Title"] = "Nuevo Estudio de Equivalencia";
+}
+
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>
+                        <i class="bi bi-file-earmark-plus text-success me-2"></i>
+                        Nuevo Estudio de Equivalencia
+                    </h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-end">
+                        <li class="breadcrumb-item"><a href="/Menu">Inicio</a></li>
+                        <li class="breadcrumb-item"><a href="/historial/EstudiosEquivalencia/Index">Estudios</a></li>
+                        <li class="breadcrumb-item active">Nuevo</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Por favor corrige los siguientes errores:</strong>
+                    <div asp-validation-summary="All" class="mt-2 small"></div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            <form method="post" id="formEstudio">
+                <div class="row">
+                    <!-- Cabecera del Estudio -->
+                    <div class="col-md-12">
+                        <div class="card shadow-sm border-0 mb-4">
+                            <div class="card-header bg-white font-weight-bold text-muted py-3">
+                                <i class="bi bi-info-circle-fill text-primary me-2"></i>Información General
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    
+                                    <!-- Buscador de Alumno -->
+                                    <div class="col-md-6">
+                                        <label class="form-label font-weight-bold">Buscar Alumno:</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-search"></i></span>
+                                            <input type="text" id="buscadorAlumnoEstudio" class="form-control border-start-0 bg-light" placeholder="Escriba apellidos, nombres o carnet..." value="@Model.NombreAlumno" />
+                                        </div>
+                                        <input type="hidden" asp-for="AlumnoId" id="alumnoIdSelected" />
+                                        <span class="text-danger small" asp-validation-for="AlumnoId"></span>
+                                        <div id="alumnoSeleccionadoLabel" class="mt-2 text-success font-weight-bold @(Model.AlumnoId != 0 ? "" : "d-none")">
+                                            <i class="bi bi-check-circle-fill me-1"></i> Seleccionado: <span id="nombreAlumnoSpan">@Model.NombreAlumno</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Universidad de Origen -->
+                                    <div class="col-md-6">
+                                        <label asp-for="UniversidadOrigen" class="form-label font-weight-bold">Universidad de Origen:</label>
+                                        <input asp-for="UniversidadOrigen" class="form-control" placeholder="Ej: Universidad de El Salvador" />
+                                        <span asp-validation-for="UniversidadOrigen" class="text-danger small"></span>
+                                    </div>
+
+                                    <!-- Carrera de Origen -->
+                                    <div class="col-md-6">
+                                        <label asp-for="CarreraOrigen" class="form-label font-weight-bold">Carrera de Origen:</label>
+                                        <input asp-for="CarreraOrigen" class="form-control" placeholder="Ej: Licenciatura en Administración de Empresas" />
+                                        <span asp-validation-for="CarreraOrigen" class="text-danger small"></span>
+                                    </div>
+
+                                    <!-- Fecha del Estudio -->
+                                    <div class="col-md-6">
+                                        <label asp-for="FechaEstudio" class="form-label font-weight-bold">Fecha de Evaluación:</label>
+                                        <input asp-for="FechaEstudio" type="date" class="form-control" value="@Model.FechaEstudio.ToString("yyyy-MM-dd")" />
+                                        <span asp-validation-for="FechaEstudio" class="text-danger small"></span>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detalle de Materias Homologadas -->
+                    <div class="col-md-12">
+                        <div class="card shadow-sm border-0 mb-4">
+                            <div class="card-header bg-white font-weight-bold text-muted py-3 d-flex justify-content-between align-items-center">
+                                <span><i class="bi bi-list-check text-primary me-2"></i>Materias Homologadas</span>
+                                <button type="button" id="btnAddRow" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-plus-lg me-1"></i>Agregar Fila
+                                </button>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0" id="tablaMaterias">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th style="width: 15%;">Código Origen</th>
+                                                <th style="width: 30%;">Asignatura Externa</th>
+                                                <th style="width: 12%;">Nota Externa</th>
+                                                <th style="width: 30%;">Materia UMOAR Equivalente</th>
+                                                <th style="width: 12%;">Nota UMOAR</th>
+                                                <th style="width: 5%;" class="text-center"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tbodyMaterias">
+                                            <!-- Las filas se añadirán dinámicamente con Javascript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botones de Acción -->
+                    <div class="col-12 text-end mb-4">
+                        <a href="/historial/EstudiosEquivalencia/Index" class="btn btn-secondary px-4 me-2">Cancelar</a>
+                        <button type="submit" class="btn btn-success px-4">
+                            <i class="bi bi-save me-2"></i>Guardar como Borrador
+                        </button>
+                    </div>
+
+                </div>
+            </form>
+
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+    <style>
+        .ui-autocomplete {
+            max-height: 250px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            z-index: 9999 !important;
+        }
+    </style>
+    <script>
+        // Array de materias disponibles serializado desde C# para construir el selector en JS
+        const materiasDisponibles = @Html.Raw(Json.Serialize(Model.MateriasDisponibles.Select(m => new { id = m.MateriaId, nombre = m.NombreMateria + " (" + m.CodigoMateria + ")" })));
+        
+        let rowCount = 0;
+
+        jQuery(document).ready(function () {
+            // Autocomplete para seleccionar alumno
+            jQuery('#buscadorAlumnoEstudio').autocomplete({
+                source: function (request, response) {
+                    if (request.term.length < 3) {
+                        response([]);
+                        return;
+                    }
+                    jQuery.get('/historial?handler=BuscarAlumnos&term=' + encodeURIComponent(request.term))
+                        .done(function (data) {
+                            response(data);
+                        })
+                        .fail(function () {
+                            response([]);
+                        });
+                },
+                minLength: 3,
+                delay: 300,
+                select: function (event, ui) {
+                    jQuery('#alumnoIdSelected').val(ui.item.id);
+                    jQuery('#nombreAlumnoSpan').text(ui.item.value);
+                    jQuery('#alumnoSeleccionadoLabel').removeClass('d-none');
+                    return false;
+                }
+            }).autocomplete("instance")._renderItem = function (ul, item) {
+                return jQuery("<li>")
+                    .append("<div><strong>" + item.value + "</strong><br><small class='text-muted'>Carnet: " + item.carnet + "</small></div>")
+                    .appendTo(ul);
+            };
+
+            // Evento para añadir filas
+            jQuery('#btnAddRow').click(function () {
+                agregarFila();
+            });
+
+            // Añadir la primera fila por defecto si la lista de la maqueta está vacía
+            agregarFila();
+
+            // Eliminar fila
+            jQuery(document).on('click', '.btn-delete-row', function () {
+                if (jQuery('#tbodyMaterias tr').length > 1) {
+                    jQuery(this).closest('tr').remove();
+                    renumerarFilas();
+                } else {
+                    alert("Debe haber al menos una fila.");
+                }
+            });
+        });
+
+        function agregarFila() {
+            const index = rowCount++;
+            
+            // Construir select de materias
+            let options = '<option value="">-- Seleccione una materia --</option>';
+            materiasDisponibles.forEach(function (m) {
+                options += `<option value="${m.id}">${m.nombre}</option>`;
+            });
+
+            const trHtml = `
+                <tr class="materia-row" id="row-${index}">
+                    <td>
+                        <input name="Detalles[${index}].MateriaOrigenCodigo" class="form-control form-control-sm" required placeholder="Cod: MAT101" />
+                    </td>
+                    <td>
+                        <input name="Detalles[${index}].MateriaOrigenNombre" class="form-control form-control-sm" required placeholder="Nombre de asignatura" />
+                    </td>
+                    <td>
+                        <input name="Detalles[${index}].NotaOrigen" type="number" step="0.1" min="0" max="10" class="form-control form-control-sm" required placeholder="Nota: 8.5" />
+                    </td>
+                    <td>
+                        <select name="Detalles[${index}].MateriaDestinoId" class="form-select form-select-sm" required>
+                            ${options}
+                        </select>
+                    </td>
+                    <td>
+                        <input name="Detalles[${index}].NotaEquivalencia" type="number" step="0.1" min="7" max="10" class="form-control form-control-sm" required placeholder="Nota >= 7.0" />
+                    </td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-outline-danger btn-sm btn-delete-row" title="Quitar fila">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+
+            jQuery('#tbodyMaterias').append(trHtml);
+        }
+
+        function renumerarFilas() {
+            rowCount = 0;
+            jQuery('#tbodyMaterias tr').each(function () {
+                const tr = jQuery(this);
+                const oldIndex = tr.attr('id').split('-')[1];
+                const newIndex = rowCount++;
+                
+                tr.attr('id', `row-${newIndex}`);
+                
+                // Renombrar inputs
+                tr.find('input, select').each(function () {
+                    const input = jQuery(this);
+                    const name = input.attr('name');
+                    if (name) {
+                        const newName = name.replace(/\[\d+\]/, `[${newNameIndex()}]`);
+                        input.attr('name', newName);
+                    }
+                });
+                
+                function newNameIndex() {
+                    return newIndex;
+                }
+            });
+        }
+    </script>
+}

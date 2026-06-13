@@ -1,0 +1,197 @@
+@page
+@model SRAUMOAR.Pages.historial.EstudiosEquivalencia.VerModel
+@{
+    ViewData["Title"] = "Detalle de Estudio de Equivalencia";
+}
+
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>
+                        <i class="bi bi-file-earmark-text text-success me-2"></i>
+                        Detalle de Estudio
+                    </h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-end">
+                        <li class="breadcrumb-item"><a href="/Menu">Inicio</a></li>
+                        <li class="breadcrumb-item"><a href="/historial/EstudiosEquivalencia/Index">Estudios</a></li>
+                        <li class="breadcrumb-item active">Detalle</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle me-2"></i>
+                    @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            <div class="row">
+                
+                <!-- Tarjeta de Información General -->
+                <div class="col-md-4">
+                    <div class="card shadow-sm border-0 mb-4 h-100">
+                        <div class="card-header bg-white font-weight-bold text-muted py-3">
+                            <i class="bi bi-info-circle-fill text-primary me-2"></i>Datos del Estudio
+                        </div>
+                        <div class="card-body">
+                            
+                            <div class="mb-4">
+                                <label class="text-muted small d-block mb-1">Alumno Evaluado</label>
+                                <h5 class="text-dark font-weight-bold">
+                                    <i class="bi bi-person me-1"></i>
+                                    @(Model.Estudio.Alumno != null ? $"{Model.Estudio.Alumno.Nombres} {Model.Estudio.Alumno.Apellidos}" : "N/A")
+                                </h5>
+                                <span class="badge bg-light text-secondary border">ID Alumno: @Model.Estudio.AlumnoId</span>
+                            </div>
+
+                            <hr />
+
+                            <div class="mb-3">
+                                <label class="text-muted small d-block mb-1">Universidad de Origen</label>
+                                <span class="text-dark font-weight-bold"><i class="bi bi-building me-1"></i>@Model.Estudio.UniversidadOrigen</span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="text-muted small d-block mb-1">Carrera de Origen</label>
+                                <span class="text-dark"><i class="bi bi-mortarboard me-1"></i>@Model.Estudio.CarreraOrigen</span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="text-muted small d-block mb-1">Fecha de Evaluación</label>
+                                <span class="text-dark"><i class="bi bi-calendar-event me-1"></i>@Model.Estudio.FechaEstudio.ToString("dd/MM/yyyy")</span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="text-muted small d-block mb-1">Estado de Aprobación</label>
+                                @if (Model.Estudio.Estado == "Aprobado")
+                                {
+                                    <span class="badge bg-success fs-6 px-3 py-2 d-inline-block w-100 text-start">
+                                        <i class="bi bi-check-circle-fill me-2"></i>Aprobado
+                                    </span>
+                                    <small class="text-muted d-block mt-1">Aprobado el: @Model.Estudio.FechaAprobacion?.ToString("dd/MM/yyyy hh:mm tt")</small>
+                                }
+                                else if (Model.Estudio.Estado == "Rechazado")
+                                {
+                                    <span class="badge bg-danger fs-6 px-3 py-2 d-inline-block w-100 text-start">
+                                        <i class="bi bi-x-circle-fill me-2"></i>Rechazado
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark fs-6 px-3 py-2 d-inline-block w-100 text-start">
+                                        <i class="bi bi-hourglass-split me-2"></i>Borrador
+                                    </span>
+                                }
+                            </div>
+
+                            @if (Model.Estudio.Estado == "Aprobado")
+                            {
+                                <div class="mt-4 pt-3 border-top">
+                                    <a href="/historial/Ver?alumnoId=@Model.Estudio.AlumnoId" class="btn btn-primary w-100">
+                                        <i class="bi bi-eye me-2"></i>Ver en Historial
+                                    </a>
+                                </div>
+                            }
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de Materias Homologadas -->
+                <div class="col-md-8">
+                    <div class="card shadow-sm border-0 mb-4 h-100">
+                        <div class="card-header bg-white font-weight-bold text-muted py-3 d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-list-check text-primary me-2"></i>Materias Acreditadas</span>
+                            <span class="badge bg-secondary font-weight-normal px-2.5 py-1.5">@(Model.Estudio.Detalles?.Count ?? 0) Materias</span>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Materia Origen</th>
+                                            <th class="text-center">Nota Origen</th>
+                                            <th>Materia UMOAR Equivalente</th>
+                                            <th class="text-center">Nota Equivalente</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (Model.Estudio.Detalles != null)
+                                        {
+                                            foreach (var det in Model.Estudio.Detalles)
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        <strong>@det.MateriaOrigenNombre</strong>
+                                                        <span class="d-block text-muted small">Cod: @det.MateriaOrigenCodigo</span>
+                                                    </td>
+                                                    <td class="text-center font-weight-bold">
+                                                        <span class="badge bg-light text-dark border">@det.NotaOrigen.ToString("0.0")</span>
+                                                    </td>
+                                                    <td>
+                                                        <strong>@(det.MateriaDestino != null ? det.MateriaDestino.NombreMateria : "N/A")</strong>
+                                                        <span class="d-block text-muted small">Cod: @(det.MateriaDestino != null ? det.MateriaDestino.CodigoMateria : "N/A")</span>
+                                                    </td>
+                                                    <td class="text-center font-weight-bold text-success">
+                                                        <span class="badge bg-success-soft text-success border border-success-soft fs-6 px-2.5">@det.NotaEquivalencia.ToString("0.0")</span>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Panel de Aprobación / Acciones -->
+                        @if (Model.Estudio.Estado == "Borrador")
+                        {
+                            <div class="card-footer bg-white py-3 text-end border-top">
+                                <form method="post" class="d-inline">
+                                    <button type="submit" asp-page-handler="Rechazar" asp-route-id="@Model.Estudio.EstudioEquivalenciaId" class="btn btn-outline-danger px-4 me-2" onclick="return confirm('¿Está seguro de que desea rechazar este estudio de equivalencias?');">
+                                        <i class="bi bi-x-lg me-2"></i>Rechazar
+                                    </button>
+                                    <button type="submit" asp-page-handler="Aprobar" asp-route-id="@Model.Estudio.EstudioEquivalenciaId" class="btn btn-success px-4" onclick="return confirm('Al aprobar se registrarán permanentemente las materias homologadas en el historial académico del alumno. ¿Desea continuar?');">
+                                        <i class="bi bi-check-lg me-2"></i>Aprobar y Registrar
+                                    </button>
+                                </form>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+</div>
+
+<style>
+    .bg-success-soft {
+        background-color: rgba(40, 167, 69, 0.1) !important;
+    }
+    .border-success-soft {
+        border-color: rgba(40, 167, 69, 0.2) !important;
+    }
+</style>

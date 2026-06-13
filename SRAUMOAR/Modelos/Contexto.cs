@@ -70,6 +70,8 @@ namespace SRAUMOAR.Modelos
         public DbSet<HistorialCiclo> HistorialCiclo { get; set; } = null!;
         public DbSet<HistorialMateria> HistorialMateria { get; set; } = null!;
         public DbSet<ConfiguracionReporte> ConfiguracionesReportes { get; set; } = null!;
+        public DbSet<EstudioEquivalencia> EstudiosEquivalencia { get; set; } = null!;
+        public DbSet<DetalleEquivalencia> DetallesEquivalencia { get; set; } = null!;
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Arancel>()
@@ -182,6 +184,25 @@ namespace SRAUMOAR.Modelos
                 new ConfiguracionReporte { Id = 6, Reporte = "CertificacionNotas", Clave = "FirmaCargo", Valor = "", Descripcion = "Cargo del firmante en el pie de página" },
                 new ConfiguracionReporte { Id = 7, Reporte = "CertificacionNotas", Clave = "FirmaSublinea", Valor = "", Descripcion = "Información adicional o segunda línea de firma (ej. Sello o Registro)" }
             );
+
+            // Relaciones para Estudios de Equivalencia
+            modelBuilder.Entity<DetalleEquivalencia>()
+                .HasOne(d => d.EstudioEquivalencia)
+                .WithMany(e => e.Detalles)
+                .HasForeignKey(d => d.EstudioEquivalenciaId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<DetalleEquivalencia>()
+                .HasOne(d => d.MateriaDestino)
+                .WithMany()
+                .HasForeignKey(d => d.MateriaDestinoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<EstudioEquivalencia>()
+                .HasOne(e => e.Alumno)
+                .WithMany()
+                .HasForeignKey(e => e.AlumnoId)
+                .OnDelete(DeleteBehavior.Restrict);
 
         }
         public DbSet<SRAUMOAR.Entidades.Accesos.NivelAcceso> NivelAcceso { get; set; } = default!;

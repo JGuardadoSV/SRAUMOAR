@@ -1,0 +1,133 @@
+@page
+@model SRAUMOAR.Pages.historial.EstudiosEquivalencia.IndexModel
+@{
+    ViewData["Title"] = "Estudios de Equivalencia";
+}
+
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>
+                        <i class="bi bi-journal-check text-success me-2"></i>
+                        Estudios de Equivalencia
+                    </h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-end">
+                        <li class="breadcrumb-item"><a href="/Menu">Inicio</a></li>
+                        <li class="breadcrumb-item active">Estudios de Equivalencia</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle me-2"></i>
+                    @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-muted font-weight-bold">Listado de Estudios Evaluados</h5>
+                    <a href="/historial/EstudiosEquivalencia/Crear" class="btn btn-success">
+                        <i class="bi bi-plus-circle me-2"></i>Nuevo Estudio
+                    </a>
+                </div>
+                <div class="card-body">
+                    
+                    <!-- Buscador -->
+                    <form method="get" class="mb-4">
+                        <div class="row g-2">
+                            <div class="col-md-9">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search"></i></span>
+                                    <input type="text" asp-for="BuscarTermino" class="form-control border-start-0 bg-light" placeholder="Buscar por Alumno, Universidad de origen o Carrera..." />
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="bi bi-funnel me-2"></i>Filtrar
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Alumno</th>
+                                    <th>Universidad de Origen</th>
+                                    <th>Carrera de Origen</th>
+                                    <th>Estado</th>
+                                    <th>Materias</th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (!Model.Estudios.Any())
+                                {
+                                    <tr>
+                                        <td colspan="7" class="text-center py-5 text-muted">
+                                            <i class="bi bi-folder-x display-4 mb-3 d-block"></i>
+                                            No se encontraron estudios de equivalencia registrados.
+                                        </td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    foreach (var estudio in Model.Estudios)
+                                    {
+                                        <tr>
+                                            <td>@estudio.FechaEstudio.ToString("dd/MM/yyyy")</td>
+                                            <td>
+                                                <strong>@(estudio.Alumno != null ? $"{estudio.Alumno.Nombres} {estudio.Alumno.Apellidos}" : "N/A")</strong>
+                                            </td>
+                                            <td>@estudio.UniversidadOrigen</td>
+                                            <td>@estudio.CarreraOrigen</td>
+                                            <td>
+                                                @if (estudio.Estado == "Aprobado")
+                                                {
+                                                    <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Aprobado</span>
+                                                }
+                                                else if (estudio.Estado == "Rechazado")
+                                                {
+                                                    <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Rechazado</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i>Borrador</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">@(estudio.Detalles?.Count ?? 0) materias</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <a href="/historial/EstudiosEquivalencia/Ver?id=@estudio.EstudioEquivalenciaId" class="btn btn-info btn-sm text-white">
+                                                    <i class="bi bi-eye-fill me-1"></i>Ver Detalle
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </section>
+</div>
