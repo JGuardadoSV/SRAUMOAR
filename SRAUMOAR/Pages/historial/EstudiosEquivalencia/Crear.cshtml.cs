@@ -42,6 +42,7 @@ namespace SRAUMOAR.Pages.historial.EstudiosEquivalencia
 
         public List<Materia> MateriasDisponibles { get; set; } = new();
         public string NombreAlumno { get; set; } = string.Empty;
+        public string DetallesJson { get; set; } = "[]";
 
         public class DetalleEquivalenciaViewModel
         {
@@ -76,6 +77,7 @@ namespace SRAUMOAR.Pages.historial.EstudiosEquivalencia
             }
 
             await CargarMaterias();
+            await PrepararDetallesJson();
             return Page();
         }
 
@@ -94,6 +96,7 @@ namespace SRAUMOAR.Pages.historial.EstudiosEquivalencia
             if (!ModelState.IsValid)
             {
                 await CargarMaterias();
+                await PrepararDetallesJson();
                 if (AlumnoId != 0)
                 {
                     var alumno = await _context.Alumno.FindAsync(AlumnoId);
@@ -143,15 +146,77 @@ namespace SRAUMOAR.Pages.historial.EstudiosEquivalencia
             {
                 ModelState.AddModelError("", "Ocurrió un error al guardar el estudio: " + ex.Message);
                 await CargarMaterias();
+                await PrepararDetallesJson();
                 return Page();
+            }
+        }
+
+        public async Task<JsonResult> OnGetBuscarMateriasAsync(string term)
+        {
+            if (string.IsNullOrWhiteSpace(term))
+            {
+                return new JsonResult(new List<object>());
+            }
+
+            var termLower = term.ToLower();
+
+            var materias = await _context.Materias
+                .Include(m => m.Pensum)
+                    .ThenInclude(p => p!.Carrera)
+                .Where(m => (m.NombreMateria != null && m.NombreMateria.ToLower().Contains(termLower)) || 
+                            (m.CodigoMateria != null && m.CodigoMateria.ToLower().Contains(termLower)))
+                .Take(25)
+                .Select(m => new
+                {
+                    id = m.MateriaId,
+                    codigo = m.CodigoMateria ?? string.Empty,
+                    nombre = m.NombreMateria ?? string.Empty,
+                    carrera = m.Pensum != null && m.Pensum.Carrera != null ? m.Pensum.Carrera.NombreCarrera : "Sin Carrera",
+                    pensum = m.Pensum != null ? m.Pensum.NombrePensum : "Sin Pensum",
+                    ciclo = m.Ciclo,
+                    uv = m.uv
+                })
+                .ToListAsync();
+
+            return new JsonResult(materias);
+        }
+
+        private async Task PrepararDetallesJson()
+        {
+            if (Detalles != null && Detalles.Any())
+            {
+                var materiaIds = Detalles.Select(d => d.MateriaDestinoId).Distinct().ToList();
+                var materiasInfo = await _context.Materias
+                    .Include(m => m.Pensum)
+                        .ThenInclude(p => p!.Carrera)
+                    .Where(m => materiaIds.Contains(m.MateriaId))
+                    .ToDictionaryAsync(m => m.MateriaId);
+
+                var listToSerialize = Detalles.Select(d => {
+                    var mInfo = materiasInfo.TryGetValue(d.MateriaDestinoId, out var m) ? m : null;
+                    return new {
+                        materiaOrigenCodigo = d.MateriaOrigenCodigo,
+                        materiaOrigenNombre = d.MateriaOrigenNombre,
+                        notaOrigen = d.NotaOrigen,
+                        materiaDestinoId = d.MateriaDestinoId,
+                        notaEquivalencia = d.NotaEquivalencia,
+                        materiaDestinoNombre = mInfo != null ? $"{mInfo.NombreMateria} ({mInfo.CodigoMateria})" : "",
+                        materiaDestinoInfo = mInfo != null ? $"<strong>{mInfo.NombreMateria} ({mInfo.CodigoMateria})</strong><br>Carrera: {(mInfo.Pensum?.Carrera?.NombreCarrera ?? "Sin Carrera")}<br>Pensum: {(mInfo.Pensum?.NombrePensum ?? "Sin Pensum")}" : ""
+                    };
+                }).ToList();
+
+                DetallesJson = System.Text.Json.JsonSerializer.Serialize(listToSerialize);
+            }
+            else
+            {
+                DetallesJson = "[]";
             }
         }
 
         private async Task CargarMaterias()
         {
-            MateriasDisponibles = await _context.Materias
-                .OrderBy(m => m.NombreMateria)
-                .ToListAsync();
+            MateriasDisponibles = new List<Materia>();
+            await Task.CompletedTask;
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model SRAUMOAR.Pages.IndexModel
 @{
     Layout = null;
@@ -8,16 +8,13 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - SRAUMOAR</title>
-    <!-- <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" /> -->
+    <title>Iniciar Sesión - SRAUMOAR</title>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/SRAUMOAR.styles.css" asp-append-version="true" />
-    @Html.Raw("<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css\" integrity=\"sha256-tXJfXfp6Ewt1ilPzLDtQnJV4hclT9XuaZUKyUvmyr+Q=\" crossorigin=\"anonymous\">")
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.3.0/styles/overlayscrollbars.min.css" integrity="sha256-dSokZseQNT08wYEWiz5iLI8QPlKxG+TswNRD8k35cpg=" crossorigin="anonymous"><!--end::Third Party Plugin(OverlayScrollbars)--><!--begin::Third Party Plugin(Bootstrap Icons)-->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.min.css" integrity="sha256-Qsx5lrStHZyR9REqhUF8iQt73X06c8LGIUPzpOhwRrI=" crossorigin="anonymous"><!--end::Third Party Plugin(Bootstrap Icons)--><!--begin::Required Plugin(AdminLTE)-->
-    <link rel="stylesheet" href="~/css/adminlte.css"><!--end::Required Plugin(AdminLTE)--><!-- apexcharts -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/apexcharts@3.37.1/dist/apexcharts.css" integrity="sha256-4MX+61mt9NVvvuPjUWdUdyfZfxSB1/Rf9WtqRHgG5S0=" crossorigin="anonymous"><!-- jsvectormap -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/css/jsvectormap.min.css" integrity="sha256-+uGLJmmTKOqBr+2E6KDYs/NRsHxSkONXFHUL0fy2O/4=" crossorigin="anonymous">
+    @Html.Raw("<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css\" crossorigin=\"anonymous\">")
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="~/css/adminlte.css">
+    
     <style>
         :root {
             --primary-green: #1B5E20;
@@ -27,226 +24,385 @@
         }
 
         body {
-            background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 25%, var(--light-green) 50%, var(--accent-green) 75%, #e8f5e9 100%);
+            background-color: #f8fafc;
             min-height: 100vh;
+            margin: 0;
+            font-family: 'Source Sans 3', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .login-container {
             display: flex;
-            align-items: center;
-            justify-content: center;
+            min-height: 100vh;
+            width: 100vw;
+        }
+
+        /* Lado Izquierdo (Aesthetic) */
+        .login-left {
+            flex: 0 0 60%;
+            background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 50%, #0d3811 100%);
             position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 3rem;
+            color: white;
             overflow: hidden;
         }
 
-        body::before {
+        /* Orbes brillantes animados en el fondo izquierdo */
+        .login-left::before {
             content: '';
             position: absolute;
-            width: 200%;
-            height: 200%;
-            background: 
-                radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
-            opacity: 0.3;
-            animation: rotate 30s linear infinite;
+            width: 350px;
+            height: 350px;
+            background: rgba(76, 175, 80, 0.25);
+            border-radius: 50%;
+            filter: blur(80px);
+            top: 15%;
+            left: 10%;
+            animation: float1 15s ease-in-out infinite alternate;
         }
 
-        @@keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+        .login-left::after {
+            content: '';
+            position: absolute;
+            width: 450px;
+            height: 450px;
+            background: rgba(129, 199, 132, 0.18);
+            border-radius: 50%;
+            filter: blur(100px);
+            bottom: 15%;
+            right: 10%;
+            animation: float2 20s ease-in-out infinite alternate;
         }
 
-        .login-box {
-            width: 400px;
+        @@keyframes float1 {
+            0% { transform: translateY(0) scale(1); }
+            100% { transform: translateY(40px) scale(1.1); }
+        }
+
+        @@keyframes float2 {
+            0% { transform: translateY(0) scale(1); }
+            100% { transform: translateY(-50px) scale(1.15); }
+        }
+
+        .brand-content {
             position: relative;
-            z-index: 1;
-            backdrop-filter: blur(10px);
+            z-index: 2;
+            text-align: center;
+            max-width: 550px;
+            animation: fadeIn 0.8s ease-out;
         }
 
-        .card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            overflow: hidden;
-            background: rgba(255, 255, 255, 0.95);
+        @@keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .card-header {
-            background: var(--primary-green);
-            padding: 2rem 1rem;
-            border-bottom: none;
-        }
-
-        .card-header img {
-            max-height: 120px;
-            transition: transform 0.3s ease;
-        }
-
-        .card-header img:hover {
-            transform: scale(1.05);
-        }
-
-        .login-card-body {
-            padding: 2rem;
+        .brand-logo-container {
+            display: inline-block;
             background: white;
+            padding: 1.25rem;
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            margin-bottom: 2.5rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
-        .login-box-msg {
+        .brand-logo-container:hover {
+            transform: scale(1.04) rotate(1deg);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+        }
+
+        .brand-logo-container img {
+            max-height: 120px;
+            width: auto;
+        }
+
+        .brand-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1.25rem;
+            letter-spacing: 0.5px;
+            line-height: 1.2;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.15);
+        }
+
+        .brand-subtitle {
+            font-size: 1.15rem;
+            opacity: 0.9;
+            font-weight: 300;
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 420px;
+        }
+
+        /* Lado Derecho (Formulario) */
+        .login-right {
+            flex: 0 0 40%;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 4rem 3.5rem;
+            box-shadow: -15px 0 40px rgba(0,0,0,0.03);
+            position: relative;
+            z-index: 10;
+            animation: slideIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @@keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        .login-form-container {
+            max-width: 380px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .form-header {
+            margin-bottom: 3rem;
+        }
+
+        .form-title {
+            font-size: 1.9rem;
+            font-weight: 800;
             color: var(--primary-green);
-            font-size: 1.2rem;
-            font-weight: 500;
-            margin-bottom: 1.5rem;
+            margin-bottom: 0.5rem;
         }
 
-        .form-floating > .form-control {
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            height: calc(3.5rem + 2px);
-            padding: 1rem 0.75rem;
-            transition: all 0.3s ease;
-            background-color: #f8f9fa;
-            font-size: 1rem;
-        }
-
-        .form-floating > .form-control:focus {
-            border-color: var(--light-green);
-            box-shadow: 0 0 0 0.25rem rgba(76, 175, 80, 0.15);
-            background-color: #ffffff;
-        }
-
-        .form-floating > .form-control:hover {
-            border-color: var(--accent-green);
-            background-color: #ffffff;
-        }
-
-        .input-group-text {
-            background: var(--primary-green);
-            border: none;
-            color: white;
-            border-radius: 0 8px 8px 0;
-            transition: all 0.3s ease;
-        }
-
-        .input-group:hover .input-group-text {
-            background: var(--secondary-green);
-        }
-
-        .form-floating > label {
-            color: #666;
-            padding: 1rem 0.75rem;
+        .form-subtitle {
+            color: #64748b;
             font-size: 0.95rem;
+        }
+
+        /* Inputs Estilizados */
+        .input-group-custom {
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1.5px solid #e2e8f0;
+            transition: all 0.25s ease;
+        }
+
+        .input-group-custom:hover {
+            border-color: var(--accent-green);
+        }
+
+        .input-group-custom:focus-within {
+            border-color: var(--light-green);
+            box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.12);
+        }
+
+        .form-floating-custom {
+            flex-grow: 1;
+            position: relative;
+        }
+
+        .form-control-custom {
+            border: none;
+            width: 100%;
+            padding: 1.5rem 1rem 0.5rem 1rem;
+            font-size: 0.95rem;
+            background-color: #f8fafc;
+            color: #1e293b;
+            outline: none;
+            height: 58px;
+            transition: background-color 0.2s;
+        }
+
+        .form-control-custom:focus {
+            background-color: white;
+        }
+
+        .form-floating-custom label {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+            font-size: 0.95rem;
+            pointer-events: none;
             transition: all 0.2s ease;
         }
 
-        .form-floating > .form-control:focus ~ label,
-        .form-floating > .form-control:not(:placeholder-shown) ~ label {
+        /* Float label behavior */
+        .form-control-custom:focus + label,
+        .form-control-custom:not(:placeholder-shown) + label {
+            top: 30%;
+            font-size: 0.75rem;
             color: var(--primary-green);
-            transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+            font-weight: 600;
         }
 
-        .input-group {
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .input-group:hover {
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-
-        .btn-success {
-            background: var(--primary-green);
+        .input-group-text-custom {
+            background: #f8fafc;
             border: none;
-            padding: 0.8rem 2rem;
-            font-weight: 500;
-            border-radius: 8px;
-            transition: all 0.3s ease;
+            color: #64748b;
+            padding: 0 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            cursor: pointer;
+            transition: all 0.2s;
         }
 
-        .btn-success:hover {
-            background: var(--secondary-green);
+        .form-control-custom:focus ~ .input-group-text-custom,
+        .input-group-custom:focus-within .input-group-text-custom {
+            background: white;
+            color: var(--primary-green);
+        }
+
+        /* Botón Iniciar Sesión */
+        .btn-login-custom {
+            background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%);
+            border: none;
+            padding: 0.95rem;
+            font-weight: 700;
+            font-size: 1rem;
+            border-radius: 12px;
+            color: white;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 12px rgba(27, 94, 32, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+        }
+
+        .btn-login-custom:hover {
+            background: linear-gradient(135deg, var(--secondary-green) 0%, var(--light-green) 100%);
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(46, 125, 50, 0.3);
+            box-shadow: 0 6px 20px rgba(27, 94, 32, 0.25);
         }
 
-        .validation-summary-errors {
-            background: #ffebee;
-            border-radius: 8px;
+        .btn-login-custom:active {
+            transform: translateY(0);
+        }
+
+        /* Alertas de error */
+        .alert-danger-custom {
+            background: #fef2f2;
+            border: 1.5px solid #fecaca;
+            color: #991b1b;
             padding: 1rem;
-            margin-bottom: 1rem;
-            color: #c62828;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            animation: shake 0.4s ease;
         }
 
-        @@media (max-width: 576px) {
-            .login-box {
-                width: 90%;
-                margin: 1rem;
+        @@keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* Responsive */
+        @@media (max-width: 992px) {
+            .login-left {
+                display: none;
+            }
+            .login-right {
+                flex: 0 0 100%;
+                padding: 3rem 2rem;
+                animation: fadeIn 0.6s ease-out;
+            }
+            .login-form-container {
+                max-width: 400px;
             }
         }
     </style>
-
-   
 </head>
-<body class="login-page bg-body-primary">
-    <div class="login-box">
-        <div class="card card-outline card-success shadow-lg">
-            <div class="card-header text-center bg-success text-white">
-                <a href="#" class="link-dark text-center link-offset-2 link-opacity-100 link-opacity-50-hover">
-                    <h1 class="mb-0">
-                        <img src="~/assets/img/logo1.jpg" class="img-fluid" alt="Logo" />
-                    </h1>
-                </a>
+<body>
+    <div class="login-container">
+        
+        <!-- Panel Izquierdo (Diseño e Identidad) -->
+        <div class="login-left">
+            <div class="brand-content">
+                <div class="brand-logo-container">
+                    <img src="~/assets/img/logo1.jpg" alt="Logo UMOAR" />
+                </div>
+                <h1 class="brand-title">Universidad Monseñor Oscar Arnulfo Romero</h1>
+                <p class="brand-subtitle">
+                    Sistema de Registro Académico. Educación con valores hacia la excelencia académica.
+                </p>
             </div>
-            <div class="card-body login-card-body">
-                <p class="login-box-msg">Bienvenido al Sistema de Registro Académico</p>
+        </div>
+
+        <!-- Panel Derecho (Formulario de Inicio de Sesión) -->
+        <div class="login-right">
+            <div class="login-form-container">
+                
+                <div class="form-header">
+                    <h2 class="form-title">Bienvenido</h2>
+                    <p class="form-subtitle">Ingresa tus credenciales para acceder al sistema</p>
+                </div>
+
                 @if (TempData["ErrorMessage"] is string errorMessage && !string.IsNullOrWhiteSpace(errorMessage))
                 {
-                    <div class="alert alert-danger" role="alert">@errorMessage</div>
+                    <div class="alert-danger-custom">
+                        <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                        <div>@errorMessage</div>
+                    </div>
                 }
-                <div asp-validation-summary="All" class="text-danger"></div>
+
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert-danger-custom">
+                        <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                        <div asp-validation-summary="All" class="small"></div>
+                    </div>
+                }
+
                 <form method="post">
-                    <div class="input-group mb-4">
-                        <div class="form-floating flex-grow-1">
-                            <input name="NombreUsuario" required="true" id="loginEmail" type="email" class="form-control" placeholder=" " />
+                    
+                    <!-- Campo Correo -->
+                    <div class="input-group-custom">
+                        <div class="form-floating-custom">
+                            <input name="NombreUsuario" required id="loginEmail" type="email" class="form-control-custom" placeholder=" " />
                             <label for="loginEmail">Correo Electrónico</label>
                         </div>
-                        <div class="input-group-text">
+                        <div class="input-group-text-custom">
                             <span class="bi bi-envelope"></span>
                         </div>
                     </div>
-                    <div class="input-group mb-4">
-                        <div class="form-floating flex-grow-1">
-                            <input name="Clave" required="true" id="loginPassword" type="password" class="form-control" placeholder=" " />
+
+                    <!-- Campo Contraseña -->
+                    <div class="input-group-custom">
+                        <div class="form-floating-custom">
+                            <input name="Clave" required id="loginPassword" type="password" class="form-control-custom" placeholder=" " />
                             <label for="loginPassword">Contraseña</label>
                         </div>
-                        <button type="button" class="input-group-text" id="togglePassword">
+                        <button type="button" class="input-group-text-custom" id="togglePassword">
                             <span class="bi bi-eye"></span>
                         </button>
                     </div>
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="d-grid">
-                                <button type="submit" class="btn btn-success">
-                                    <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+
+                    <!-- Botón de Ingreso -->
+                    <button type="submit" class="btn-login-custom mt-4">
+                        <i class="bi bi-box-arrow-in-right"></i>Iniciar Sesión
+                    </button>
+
                 </form>
+
             </div>
         </div>
+
     </div>
 
-    @section Scripts {
-        @{
-            await Html.RenderPartialAsync("_ValidationScriptsPartial");
-        }
-    }
-    <script src="~/js/overlayscrollbars.browser.es6.min.js" integrity="sha256-H2VM7BKda+v2Z4+DRy69uknwxjyDRhszjXFhsL4gD3w=" crossorigin="anonymous"></script> <!--end::Third Party Plugin(OverlayScrollbars)-->
-    <!--begin::Required Plugin(popperjs for Bootstrap 5)-->
-    <script src="~/js/popper.min.js" integrity="sha256-whL0tQWoY1Ku1iskqPFvmZ+CHsvmRWx/PIoEvIeWh4I=" crossorigin="anonymous"></script> <!--end::Required Plugin(popperjs for Bootstrap 5)-->
-    <!--begin::Required Plugin(Bootstrap 5)-->
-    <script src="~/js/bootstrap.min.js" integrity="sha256-YMa+wAM6QkVyz999odX7lPRxkoYAan8suedu4k2Zur8=" crossorigin="anonymous"></script> <!--end::Required Plugin(Bootstrap 5)-->
-    <!--begin::Required Plugin(AdminLTE)-->
-    <script src="~/js/adminlte.js"></script> <!--end::Required Plugin(AdminLTE)--><!--begin::OverlayScrollbars Configure-->
-
+    <!-- Scripts -->
+    <script src="~/js/bootstrap.min.js" crossorigin="anonymous"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const togglePassword = document.querySelector('#togglePassword');
@@ -261,11 +417,6 @@
                 icon.classList.toggle('bi-eye-slash');
             });
         });
-    </script> <!--end::OverlayScrollbars Configure--> <!-- OPTIONAL SCRIPTS --> <!-- sortablejs -->
-
-            <!-- jQuery ya está incluido en _Layout.cshtml -->
-    <script src="~/js/site.js" asp-append-version="true"></script>
-
-    
-    </body>
-    </html>
+    </script>
+</body>
+</html>

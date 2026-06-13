@@ -138,15 +138,41 @@
 @section Scripts {
     <style>
         .ui-autocomplete {
-            max-height: 250px;
+            max-height: 280px;
             overflow-y: auto;
             overflow-x: hidden;
             z-index: 9999 !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            background: #fff;
+            padding: 0;
+        }
+        .ui-menu-item {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .ui-menu-item .ui-menu-item-wrapper {
+            padding: 0 !important;
+            border: none !important;
+            background: none !important;
+            color: inherit !important;
+        }
+        .ui-menu-item .ui-menu-item-wrapper.ui-state-active {
+            background-color: #f8f9fa !important;
+            color: #1b5e20 !important;
+        }
+        .materia-info-preview {
+            border-left: 3px solid #2e7d32;
+            background-color: #f1f8e9;
+            padding: 6px 10px;
+            border-radius: 0 4px 4px 0;
         }
     </style>
     <script>
-        // Array de materias disponibles serializado desde C# para construir el selector en JS
-        const materiasDisponibles = @Html.Raw(Json.Serialize(Model.MateriasDisponibles.Select(m => new { id = m.MateriaId, nombre = m.NombreMateria + " (" + m.CodigoMateria + ")" })));
+        // Detalles precargados (por ejemplo, si el formulario falla y se vuelve a mostrar)
+        const detallesPrecargados = @Html.Raw(Model.DetallesJson);
         
         let rowCount = 0;
 
@@ -185,8 +211,15 @@
                 agregarFila();
             });
 
-            // Añadir la primera fila por defecto si la lista de la maqueta está vacía
-            agregarFila();
+            // Si hay detalles precargados, los dibujamos
+            if (detallesPrecargados && detallesPrecargados.length > 0) {
+                detallesPrecargados.forEach(function (det) {
+                    agregarFila(det);
+                });
+            } else {
+                // Añadir la primera fila por defecto
+                agregarFila();
+            }
 
             // Eliminar fila
             jQuery(document).on('click', '.btn-delete-row', function () {
@@ -197,35 +230,83 @@
                     alert("Debe haber al menos una fila.");
                 }
             });
+
+            // Limpieza al escribir a mano en el buscador de materia
+            jQuery(document).on('input', '.buscador-materia', function () {
+                const tr = jQuery(this).closest('tr');
+                tr.find('.materia-destino-id').val('');
+                tr.find('.materia-info-preview').addClass('d-none');
+                tr.find('.materia-info-text').html('');
+            });
         });
 
-        function agregarFila() {
+        function inicializarAutocompleteMateria(element) {
+            element.autocomplete({
+                source: function (request, response) {
+                    if (request.term.length < 2) {
+                        response([]);
+                        return;
+                    }
+                    jQuery.get('/historial/EstudiosEquivalencia/Crear?handler=BuscarMaterias&term=' + encodeURIComponent(request.term))
+                        .done(function (data) {
+                            response(data);
+                        })
+                        .fail(function () {
+                            response([]);
+                        });
+                },
+                minLength: 2,
+                delay: 300,
+                select: function (event, ui) {
+                    const tr = jQuery(this).closest('tr');
+                    tr.find('.materia-destino-id').val(ui.item.id);
+                    tr.find('.materia-info-text').html(`<strong>${ui.item.nombre} (${ui.item.codigo})</strong><br>Carrera: ${ui.item.carrera}<br>Pensum: ${ui.item.pensum}`);
+                    tr.find('.materia-info-preview').removeClass('d-none');
+                    jQuery(this).val(`${ui.item.nombre} (${ui.item.codigo})`);
+                    return false;
+                }
+            }).autocomplete("instance")._renderItem = function (ul, item) {
+                return jQuery("<li class='ui-menu-item'>")
+                    .append(`<div class="p-2 border-bottom ui-menu-item-wrapper" style="cursor: pointer;">
+                        <div class="d-flex justify-content-between px-2 pt-1">
+                            <strong style="color: #2e7d32;">${item.nombre}</strong>
+                            <span class="badge bg-secondary font-monospace" style="font-size: 0.75rem;">${item.codigo}</span>
+                        </div>
+                        <div class="small text-muted mt-1 px-2" style="font-size: 0.8rem;">
+                            <i class="bi bi-journal-bookmark me-1"></i> Carrera: ${item.carrera}
+                        </div>
+                        <div class="small text-muted d-flex justify-content-between mt-1 px-2 pb-1" style="font-size: 0.75rem;">
+                            <span><i class="bi bi-award me-1"></i> Pensum: ${item.pensum}</span>
+                            <span>Ciclo: ${item.ciclo} | UV: ${item.uv}</span>
+                        </div>
+                    </div>`)
+                    .appendTo(ul);
+            };
+        }
+
+        function agregarFila(initialData = null) {
             const index = rowCount++;
             
-            // Construir select de materias
-            let options = '<option value="">-- Seleccione una materia --</option>';
-            materiasDisponibles.forEach(function (m) {
-                options += `<option value="${m.id}">${m.nombre}</option>`;
-            });
-
             const trHtml = `
                 <tr class="materia-row" id="row-${index}">
                     <td>
-                        <input name="Detalles[${index}].MateriaOrigenCodigo" class="form-control form-control-sm" required placeholder="Cod: MAT101" />
+                        <input name="Detalles[${index}].MateriaOrigenCodigo" class="form-control form-control-sm" required placeholder="Cod: MAT101" value="${initialData ? initialData.materiaOrigenCodigo : ''}" />
                     </td>
                     <td>
-                        <input name="Detalles[${index}].MateriaOrigenNombre" class="form-control form-control-sm" required placeholder="Nombre de asignatura" />
+                        <input name="Detalles[${index}].MateriaOrigenNombre" class="form-control form-control-sm" required placeholder="Nombre de asignatura" value="${initialData ? initialData.materiaOrigenNombre : ''}" />
                     </td>
                     <td>
-                        <input name="Detalles[${index}].NotaOrigen" type="number" step="0.1" min="0" max="10" class="form-control form-control-sm" required placeholder="Nota: 8.5" />
+                        <input name="Detalles[${index}].NotaOrigen" type="number" step="0.1" min="0" max="10" class="form-control form-control-sm" required placeholder="Nota: 8.5" value="${initialData ? initialData.notaOrigen : ''}" />
                     </td>
                     <td>
-                        <select name="Detalles[${index}].MateriaDestinoId" class="form-select form-select-sm" required>
-                            ${options}
-                        </select>
+                        <input type="hidden" name="Detalles[${index}].MateriaDestinoId" class="materia-destino-id" required value="${initialData ? initialData.materiaDestinoId : ''}" />
+                        <input type="text" class="form-control form-control-sm buscador-materia" placeholder="Buscar código o nombre de materia..." required value="${initialData ? initialData.materiaDestinoNombre : ''}" />
+                        <div class="materia-info-preview small text-success mt-1 ${initialData ? '' : 'd-none'}" style="line-height: 1.2;">
+                            <i class="bi bi-check-circle-fill"></i> <span class="materia-info-text">${initialData ? initialData.materiaDestinoInfo : ''}</span>
+                        </div>
                     </td>
                     <td>
-                        <input name="Detalles[${index}].NotaEquivalencia" type="number" step="0.1" min="7" max="10" class="form-control form-control-sm" required placeholder="Nota >= 7.0" />
+                        <input name="Detalles[${index}].NotaEquivalencia" type="number" step="0.1" min="7" max="10" class="form-control form-control-sm" required placeholder="Nota >= 7.0" value="${initialData ? initialData.notaEquivalencia : ''}" />
                     </td>
                     <td class="text-center">
                         <button type="button" class="btn btn-outline-danger btn-sm btn-delete-row" title="Quitar fila">
@@ -235,7 +316,11 @@
                 </tr>
             `;
 
-            jQuery('#tbodyMaterias').append(trHtml);
+            const tr = jQuery(trHtml);
+            jQuery('#tbodyMaterias').append(tr);
+
+            // Inicializar el autocompletado en el input recién creado
+            inicializarAutocompleteMateria(tr.find('.buscador-materia'));
         }
 
         function renumerarFilas() {
