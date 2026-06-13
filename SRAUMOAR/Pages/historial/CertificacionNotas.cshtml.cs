@@ -42,6 +42,27 @@ namespace SRAUMOAR.Pages.historial
             {
                 InitializeFonts();
 
+                // Obtener configuraciones de reportes de manera segura
+                var configs = new Dictionary<string, string>();
+                try
+                {
+                    configs = _context.ConfiguracionesReportes
+                        .Where(c => c.Reporte == "CertificacionNotas")
+                        .ToDictionary(c => c.Clave, c => c.Valor);
+                }
+                catch
+                {
+                    // Fallback a diccionario vacío si la tabla aún no existe en la base de datos
+                }
+
+                string dir1 = configs.TryGetValue("DireccionLinea1", out var d1) ? d1 : "";
+                string dir2 = configs.TryGetValue("DireccionLinea2", out var d2) ? d2 : "";
+                string dir3 = configs.TryGetValue("DireccionLinea3", out var d3) ? d3 : "";
+                string intro = configs.TryGetValue("Introduccion", out var inText) ? inText : "";
+                string firmaNombre = configs.TryGetValue("FirmaNombre", out var fNom) ? fNom : "";
+                string firmaCargo = configs.TryGetValue("FirmaCargo", out var fCar) ? fCar : "";
+                string firmaSublinea = configs.TryGetValue("FirmaSublinea", out var fSub) ? fSub : "";
+
                 if (alumnoId == null)
                 {
                     return BadRequest("Debe especificar un alumno");
@@ -133,18 +154,18 @@ namespace SRAUMOAR.Pages.historial
                     .SetTextAlignment(TextAlignment.CENTER)
                     .SetMarginBottom(5));
                 
-                // 3 líneas de direcciones (reservar espacio - el usuario las completará)
-                textCell.Add(new Paragraph("")
+                // 3 líneas de direcciones obtenidas de la base de datos
+                textCell.Add(new Paragraph(dir1)
                     .SetFont(_fontNormal)
                     .SetFontSize(11)
                     .SetTextAlignment(TextAlignment.CENTER)
                     .SetMarginBottom(3));
-                textCell.Add(new Paragraph("")
+                textCell.Add(new Paragraph(dir2)
                     .SetFont(_fontNormal)
                     .SetFontSize(11)
                     .SetTextAlignment(TextAlignment.CENTER)
                     .SetMarginBottom(3));
-                textCell.Add(new Paragraph("")
+                textCell.Add(new Paragraph(dir3)
                     .SetFont(_fontNormal)
                     .SetFontSize(11)
                     .SetTextAlignment(TextAlignment.CENTER));
@@ -159,8 +180,8 @@ namespace SRAUMOAR.Pages.historial
                     .SetTextAlignment(TextAlignment.CENTER)
                     .SetMarginBottom(15));
 
-                // Párrafo de texto justificado en negrita (reservar espacio)
-                var parrafoTexto = new Paragraph("")
+                // Párrafo de texto justificado en negrita obtenido de la base de datos
+                var parrafoTexto = new Paragraph(intro)
                     .SetFont(_fontBold)
                     .SetFontSize(11)
                     .SetTextAlignment(TextAlignment.JUSTIFIED)
@@ -411,6 +432,53 @@ namespace SRAUMOAR.Pages.historial
                     document.Add(new Paragraph($"Carrera: {alumno.Carrera.NombreCarrera}")
                         .SetFont(_fontNormal)
                         .SetFontSize(10));
+                }
+
+                // Bloque de Firma si está configurado
+                if (!string.IsNullOrWhiteSpace(firmaNombre) || !string.IsNullOrWhiteSpace(firmaCargo))
+                {
+                    document.Add(new Paragraph(" ").SetMarginBottom(30)); // Espacio para la firma
+                    
+                    var firmaTable = new Table(1);
+                    firmaTable.SetWidth(UnitValue.CreatePercentValue(100));
+                    firmaTable.SetTextAlignment(TextAlignment.CENTER);
+                    
+                    var firmaCell = new Cell().SetBorder(Border.NO_BORDER).SetTextAlignment(TextAlignment.CENTER);
+                    
+                    if (!string.IsNullOrWhiteSpace(firmaNombre))
+                    {
+                        firmaCell.Add(new Paragraph("f. _________________________________________")
+                            .SetFont(_fontNormal)
+                            .SetFontSize(10)
+                            .SetTextAlignment(TextAlignment.CENTER)
+                            .SetMarginBottom(2));
+                        
+                        firmaCell.Add(new Paragraph(firmaNombre)
+                            .SetFont(_fontBold)
+                            .SetFontSize(10)
+                            .SetTextAlignment(TextAlignment.CENTER)
+                            .SetMarginBottom(2));
+                    }
+                    
+                    if (!string.IsNullOrWhiteSpace(firmaCargo))
+                    {
+                        firmaCell.Add(new Paragraph(firmaCargo)
+                            .SetFont(_fontNormal)
+                            .SetFontSize(10)
+                            .SetTextAlignment(TextAlignment.CENTER)
+                            .SetMarginBottom(2));
+                    }
+                    
+                    if (!string.IsNullOrWhiteSpace(firmaSublinea))
+                    {
+                        firmaCell.Add(new Paragraph(firmaSublinea)
+                            .SetFont(_fontNormal)
+                            .SetFontSize(10)
+                            .SetTextAlignment(TextAlignment.CENTER));
+                    }
+                    
+                    firmaTable.AddCell(firmaCell);
+                    document.Add(firmaTable);
                 }
 
                 document.Close();

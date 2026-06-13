@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using SRAUMOAR.Entidades.Alumnos;
 using SRAUMOAR.Entidades.Generales;
@@ -69,6 +69,7 @@ namespace SRAUMOAR.Modelos
         public DbSet<HistorialAcademico> HistorialAcademico { get; set; } = null!;
         public DbSet<HistorialCiclo> HistorialCiclo { get; set; } = null!;
         public DbSet<HistorialMateria> HistorialMateria { get; set; } = null!;
+        public DbSet<ConfiguracionReporte> ConfiguracionesReportes { get; set; } = null!;
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Arancel>()
@@ -170,6 +171,16 @@ namespace SRAUMOAR.Modelos
                 new CausaDesercion { CausaDesercionId = 1, Nombre = "Abandono", Activo = true },
                 new CausaDesercion { CausaDesercionId = 2, Nombre = "Deserción", Activo = true },
                 new CausaDesercion { CausaDesercionId = 3, Nombre = "Retiro de ciclo", Activo = true }
+            );
+
+            modelBuilder.Entity<ConfiguracionReporte>().HasData(
+                new ConfiguracionReporte { Id = 1, Reporte = "CertificacionNotas", Clave = "DireccionLinea1", Valor = "", Descripcion = "Primera línea de dirección de la universidad" },
+                new ConfiguracionReporte { Id = 2, Reporte = "CertificacionNotas", Clave = "DireccionLinea2", Valor = "", Descripcion = "Segunda línea de dirección de la universidad" },
+                new ConfiguracionReporte { Id = 3, Reporte = "CertificacionNotas", Clave = "DireccionLinea3", Valor = "", Descripcion = "Tercera línea de dirección de la universidad" },
+                new ConfiguracionReporte { Id = 4, Reporte = "CertificacionNotas", Clave = "Introduccion", Valor = "", Descripcion = "Párrafo de texto introductorio en negrita" },
+                new ConfiguracionReporte { Id = 5, Reporte = "CertificacionNotas", Clave = "FirmaNombre", Valor = "", Descripcion = "Nombre del firmante en el pie de página" },
+                new ConfiguracionReporte { Id = 6, Reporte = "CertificacionNotas", Clave = "FirmaCargo", Valor = "", Descripcion = "Cargo del firmante en el pie de página" },
+                new ConfiguracionReporte { Id = 7, Reporte = "CertificacionNotas", Clave = "FirmaSublinea", Valor = "", Descripcion = "Información adicional o segunda línea de firma (ej. Sello o Registro)" }
             );
 
         }

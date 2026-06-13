@@ -1,0 +1,136 @@
+@page
+@model SRAUMOAR.Pages.administracion.AjustesReportesModel
+@{
+    ViewData["Title"] = "Configuración de Reportes";
+}
+
+<div class="content-wrapper">
+    <!-- Header -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1><i class="bi bi-gear-wide-connected text-success me-2"></i>Ajustes de Reportes</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-end">
+                        <li class="breadcrumb-item"><a href="/Menu">Inicio</a></li>
+                        <li class="breadcrumb-item active">Ajustes de Reportes</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle me-2"></i>
+                    @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            <div class="row">
+                <div class="col-md-12">
+                    <form method="post">
+                        
+                        <!-- Agrupación por reporte -->
+                        @{
+                            var grupos = Model.Configuraciones.GroupBy(c => c.Reporte).ToList();
+                        }
+
+                        @if (!grupos.Any())
+                        {
+                            <div class="card card-outline card-warning shadow-sm">
+                                <div class="card-body text-center py-5">
+                                    <i class="bi bi-exclamation-triangle text-warning display-4 mb-3"></i>
+                                    <h5>No se encontraron configuraciones en la base de datos</h5>
+                                    <p class="text-muted">Por favor ejecuta las migraciones de Entity Framework para sembrar los datos iniciales.</p>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="card card-success card-tabs shadow-sm">
+                                <div class="card-header p-0 pt-1">
+                                    <ul class="nav nav-tabs" id="reportesTab" role="tablist">
+                                        @for (int i = 0; i < grupos.Count; i++)
+                                        {
+                                            var grupo = grupos[i];
+                                            var activeClass = i == 0 ? "active" : "";
+                                            var nombreGrupo = grupo.Key == "CertificacionNotas" ? "Certificación de Notas" : grupo.Key;
+                                            <li class="nav-item" role="presentation">
+                                                <button class="nav-link @activeClass" id="tab-@grupo.Key" data-bs-toggle="tab" data-bs-target="#panel-@grupo.Key" type="button" role="tab" aria-controls="panel-@grupo.Key" aria-selected="@(i == 0 ? "true" : "false")">
+                                                    @nombreGrupo
+                                                </button>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                                <div class="card-body">
+                                    <div class="tab-content" id="reportesTabContent">
+                                        @for (int i = 0; i < grupos.Count; i++)
+                                        {
+                                            var grupo = grupos[i];
+                                            var activeClass = i == 0 ? "show active" : "";
+                                            <div class="tab-pane fade @activeClass" id="panel-@grupo.Key" role="tabpanel" aria-labelledby="tab-@grupo.Key">
+                                                
+                                                <div class="p-3">
+                                                    <h5 class="mb-4 text-primary">
+                                                        <i class="bi bi-file-earmark-text me-2"></i>Campos Editables para @(grupo.Key == "CertificacionNotas" ? "Certificación de Notas (PDF)" : grupo.Key)
+                                                    </h5>
+                                                    
+                                                    @foreach (var config in grupo)
+                                                    {
+                                                        // Obtener el índice global en el Model.Configuraciones para el correcto Model Binding
+                                                        int index = Model.Configuraciones.FindIndex(c => c.Id == config.Id);
+                                                        
+                                                        <div class="mb-3 row align-items-center">
+                                                            <input type="hidden" name="Configuraciones[@index].Id" value="@config.Id" />
+                                                            <input type="hidden" name="Configuraciones[@index].Reporte" value="@config.Reporte" />
+                                                            <input type="hidden" name="Configuraciones[@index].Clave" value="@config.Clave" />
+                                                            <input type="hidden" name="Configuraciones[@index].Descripcion" value="@config.Descripcion" />
+
+                                                            <label class="col-sm-3 col-form-label font-weight-bold">
+                                                                @config.Descripcion
+                                                                <small class="d-block text-muted">Clave: @config.Clave</small>
+                                                            </label>
+                                                            
+                                                            <div class="col-sm-9">
+                                                                @if (config.Clave.Contains("Introduccion") || config.Clave.Contains("Cuerpo") || config.Clave.Contains("Texto"))
+                                                                {
+                                                                    <textarea name="Configuraciones[@index].Valor" class="form-control" rows="4" placeholder="Ingresa el texto aquí...">@config.Valor</textarea>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <input type="text" name="Configuraciones[@index].Valor" class="form-control" value="@config.Valor" placeholder="Ingresa el valor aquí..." />
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                </div>
+
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="card-footer bg-white text-end">
+                                    <button type="submit" class="btn btn-success px-4">
+                                        <i class="bi bi-save me-2"></i>Guardar Cambios
+                                    </button>
+                                </div>
+                            </div>
+                        }
+
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </section>
+</div>
