@@ -369,7 +369,9 @@ namespace SRAUMOAR.Pages.puntoventa
                                 : "37",
                         numDocumento = string.IsNullOrWhiteSpace(nitLimpio)
                         ? (string)null
-                        : nitLimpio,
+                        : nitLimpio.Length == 9
+                            ? nitLimpio.Insert(8, "-")
+                            : nitLimpio,
                         nrc = (string)null,
                         nombre = Factura.Receptor.Nombre,
                         codActividad = (string)null,

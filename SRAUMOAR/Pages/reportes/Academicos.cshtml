@@ -1,0 +1,469 @@
+@page
+@model SRAUMOAR.Pages.reportes.AcademicosModel
+@{
+    ViewData["Title"] = "Reportes Académicos del Alumno";
+}
+
+<style>
+    /* Estilos Premium y Micro-animaciones */
+    .dashboard-header {
+        background: linear-gradient(135deg, #1b4d3e 0%, #28a745 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
+        margin-bottom: 24px;
+    }
+
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(40, 167, 69, 0.15);
+        border-radius: 12px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }
+
+    .report-card {
+        border-radius: 12px;
+        border: none;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .report-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .report-card-header {
+        padding: 16px;
+        color: white;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .bg-gradient-profile {
+        background: linear-gradient(45deg, #17a2b8, #117a8b);
+    }
+
+    .bg-gradient-certification {
+        background: linear-gradient(45deg, #dc3545, #bd2130);
+    }
+
+    .bg-gradient-parciales {
+        background: linear-gradient(45deg, #ffc107, #d39e00);
+        color: #212529 !important;
+    }
+
+    .bg-gradient-parciales .report-icon {
+        color: #212529 !important;
+    }
+
+    .bg-gradient-finales {
+        background: linear-gradient(45deg, #6f42c1, #5a32a3);
+    }
+
+    .report-icon {
+        font-size: 1.8rem;
+    }
+
+    .report-body {
+        padding: 20px;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .report-description {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 20px;
+        line-height: 1.5;
+    }
+
+    .btn-generate {
+        width: 100%;
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+
+    .btn-generate:hover {
+        transform: scale(1.02);
+    }
+
+    /* Autocomplete custom dropdown list styling */
+    .ui-autocomplete {
+        max-height: 250px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        z-index: 9999 !important;
+        border: 1px solid #ced4da;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    .ui-menu-item {
+        padding: 0;
+    }
+
+    .ui-menu-item-wrapper {
+        padding: 10px 15px;
+        border-bottom: 1px solid #f1f3f5;
+        transition: background-color 0.2s ease;
+        cursor: pointer;
+    }
+
+    .ui-menu-item-wrapper:hover, .ui-state-active {
+        background-color: #e8f5e9 !important;
+        color: #1b4d3e !important;
+        border: none !important;
+        margin: 0 !important;
+    }
+
+    .search-input-group {
+        border-radius: 50px;
+        overflow: hidden;
+        border: 2px solid #28a745;
+        box-shadow: 0 4px 10px rgba(40, 167, 69, 0.1);
+    }
+
+    .search-input-group .form-control {
+        border: none;
+        padding-left: 20px;
+    }
+
+    .search-input-group .btn {
+        border: none;
+        padding-right: 20px;
+        padding-left: 20px;
+        background-color: #28a745;
+        color: white;
+    }
+
+    .search-input-group .btn:hover {
+        background-color: #218838;
+    }
+
+    #buscadorContainer {
+        position: relative;
+    }
+</style>
+
+<div class="container-fluid py-4">
+    <!-- Encabezado Principal -->
+    <div class="dashboard-header d-flex justify-content-between align-items-center flex-wrap">
+        <div>
+            <h1 class="h3 fw-bold mb-1">
+                <i class="bi bi-file-earmark-pdf-fill me-2"></i>Reportes Académicos
+            </h1>
+            <p class="mb-0 text-white-50">Generación y descarga de constancias, certificaciones e informes del estudiante.</p>
+        </div>
+        <div class="mt-2 mt-md-0">
+            <a href="/Menu" class="btn btn-outline-light btn-sm rounded-pill px-3">
+                <i class="bi bi-house-door me-1"></i>Menú Principal
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4 shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+        <!-- Panel de Búsqueda / Selección -->
+        <div class="col-12 mb-4">
+            <div class="card glass-card p-4">
+                <div class="row align-items-center">
+                    <div class="col-lg-8" id="buscadorContainer">
+                        <label for="buscadorAlumno" class="form-label fw-bold text-success mb-2">
+                            <i class="bi bi-search me-1"></i>Buscar Estudiante
+                        </label>
+                        <div class="input-group search-input-group">
+                            <span class="input-group-text bg-white border-0 text-muted"><i class="bi bi-person"></i></span>
+                            <input type="text" id="buscadorAlumno" class="form-control form-control-lg" 
+                                   placeholder="Escriba el carnet, nombres o apellidos del estudiante..." 
+                                   value="@(Model.AlumnoSelected != null ? $"{Model.AlumnoSelected.Apellidos}, {Model.AlumnoSelected.Nombres}" : "")">
+                            <button class="btn btn-lg" type="button" id="btnLimpiar">
+                                <i class="bi bi-x-circle"></i>
+                            </button>
+                        </div>
+                        <small class="form-text text-muted mt-1 d-block">
+                            Escriba al menos 3 letras para iniciar la búsqueda en tiempo real.
+                        </small>
+                    </div>
+
+                    @if (Model.AlumnoSelected != null)
+                    {
+                        <!-- Botón para limpiar e iniciar nueva búsqueda si ya hay un seleccionado -->
+                        <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                            <a href="/reportes/Academicos" class="btn btn-outline-danger btn-lg rounded-pill px-4 shadow-sm">
+                                <i class="bi bi-person-x me-2"></i>Cambiar Alumno
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        @if (Model.AlumnoSelected != null)
+        {
+            <!-- Información Detallada del Alumno Seleccionado -->
+            <div class="col-md-4 mb-4">
+                <div class="card glass-card h-100 overflow-hidden border-top border-success border-4">
+                    <div class="card-body p-4">
+                        <div class="text-center mb-3">
+                            <div class="bg-success-subtle text-success rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
+                                <i class="bi bi-person-badge fs-1"></i>
+                            </div>
+                            <h4 class="fw-bold mb-1 text-dark">@Model.AlumnoSelected.Nombres</h4>
+                            <h5 class="fw-bold mb-3 text-muted">@Model.AlumnoSelected.Apellidos</h5>
+                            <span class="badge bg-@(Model.AlumnoSelected.Estado == 1 ? "success" : "danger") rounded-pill px-3 py-2">
+                                @(Model.AlumnoSelected.Estado == 1 ? "ACTIVO" : "INACTIVO")
+                            </span>
+                        </div>
+                        
+                        <hr class="text-black-50 my-4">
+
+                        <div class="d-flex flex-column gap-3">
+                            <div>
+                                <small class="text-muted d-block uppercase fw-bold" style="font-size: 0.75rem;">Carnet / Email</small>
+                                <span class="fw-semibold text-dark">
+                                    <i class="bi bi-card-text me-2 text-success"></i>
+                                    @(string.IsNullOrWhiteSpace(Model.AlumnoSelected.Carnet) ? Model.AlumnoSelected.Email?.Split('@')[0] ?? "Sin carnet" : Model.AlumnoSelected.Carnet)
+                                </span>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block uppercase fw-bold" style="font-size: 0.75rem;">Carrera</small>
+                                <span class="fw-semibold text-dark">
+                                    <i class="bi bi-mortarboard me-2 text-success"></i>
+                                    @(Model.AlumnoSelected.Carrera?.NombreCarrera ?? "No asignada")
+                                </span>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block uppercase fw-bold" style="font-size: 0.75rem;">Facultad</small>
+                                <span class="fw-semibold text-dark">
+                                    <i class="bi bi-building me-2 text-success"></i>
+                                    @(Model.AlumnoSelected.Carrera?.Facultad?.NombreFacultad ?? "No asignada")
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Selector de Ciclo Académico -->
+                        <div class="mt-4 pt-3 border-top">
+                            <label for="SelectedCicloId" class="form-label fw-bold text-success">
+                                <i class="bi bi-calendar3 me-1"></i>Seleccionar Ciclo
+                            </label>
+                            <select id="SelectedCicloId" name="SelectedCicloId" class="form-select border-success rounded-3">
+                                @foreach (var ciclo in Model.CiclosList)
+                                {
+                                    if (ciclo.Id == Model.SelectedCicloId)
+                                    {
+                                        <option value="@ciclo.Id" selected>
+                                            Ciclo @ciclo.NCiclo - @ciclo.anio @(ciclo.Activo ? "(Activo)" : "")
+                                        </option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@ciclo.Id">
+                                            Ciclo @ciclo.NCiclo - @ciclo.anio @(ciclo.Activo ? "(Activo)" : "")
+                                        </option>
+                                    }
+                                }
+                            </select>
+                            <small class="text-muted mt-1 d-block">
+                                El ciclo seleccionado se utilizará para generar las boletas de notas parciales y finales.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Catálogo de Reportes Disponibles -->
+            <div class="col-md-8 mb-4">
+                <div class="row g-4">
+                    <!-- Ficha de Perfil -->
+                    <div class="col-sm-6">
+                        <div class="card report-card">
+                            <div class="report-card-header bg-gradient-profile">
+                                <i class="bi bi-person-badge-fill report-icon"></i>
+                                <span>Ficha de Información</span>
+                            </div>
+                            <div class="report-body">
+                                <p class="report-description">
+                                    Genera la Ficha de Información del Estudiante en PDF. Incluye datos personales, de contacto, dirección y el estado de la entrega de documentos obligatorios.
+                                </p>
+                                <a href="/reportes/alumno/perfil?id=@Model.AlumnoSelected.AlumnoId" target="_blank" class="btn btn-info btn-generate text-white">
+                                    <i class="bi bi-file-pdf me-1"></i>Generar Ficha
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Certificación de Notas -->
+                    <div class="col-sm-6">
+                        <div class="card report-card">
+                            <div class="report-card-header bg-gradient-certification">
+                                <i class="bi bi-file-earmark-check-fill report-icon"></i>
+                                <span>Certificación de Notas</span>
+                            </div>
+                            <div class="report-body">
+                                <p class="report-description">
+                                    Genera el reporte oficial en PDF de todas las materias cursadas, aprobadas y reprobadas organizadas por ciclo. Muestra el historial completo del alumno.
+                                </p>
+                                <a href="/historial/CertificacionNotas?alumnoId=@Model.AlumnoSelected.AlumnoId@(Model.AlumnoSelected.CarreraId.HasValue ? $"&carreraId={Model.AlumnoSelected.CarreraId.Value}" : "")" target="_blank" class="btn btn-danger btn-generate">
+                                    <i class="bi bi-file-pdf me-1"></i>Generar Certificación
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reporte de Notas Parciales -->
+                    <div class="col-sm-6">
+                        <div class="card report-card">
+                            <div class="report-card-header bg-gradient-parciales">
+                                <i class="bi bi-journal-text report-icon"></i>
+                                <span>Notas Parciales</span>
+                            </div>
+                            <div class="report-body">
+                                <p class="report-description">
+                                    Genera el informe detallado de notas acumuladas (Laboratorios y Exámenes Parciales) de todas las asignaturas inscritas por el alumno en el **ciclo seleccionado**.
+                                </p>
+                                <a id="linkParciales" href="/reportes/notas/reporteNotasParciales?alumnoId=@Model.AlumnoSelected.AlumnoId&cicloId=@Model.SelectedCicloId" target="_blank" class="btn btn-warning btn-generate text-dark">
+                                    <i class="bi bi-file-pdf me-1"></i>Imprimir Parciales
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reporte de Notas Finales (Histórico) -->
+                    <div class="col-sm-6">
+                        <div class="card report-card">
+                            <div class="report-card-header bg-gradient-finales">
+                                <i class="bi bi-award-fill report-icon"></i>
+                                <span>Boleta de Notas Finales</span>
+                            </div>
+                            <div class="report-body">
+                                <p class="report-description">
+                                    Genera la boleta oficial de calificaciones finales en el **ciclo seleccionado**. Muestra la nota final, recuperaciones, resultado (aprobada/reprobada) y firmas.
+                                </p>
+                                <a id="linkFinales" href="/reportes/notas/reporteNotasParcialesHistorico?alumnoId=@Model.AlumnoSelected.AlumnoId&cicloId=@Model.SelectedCicloId" target="_blank" class="btn btn-primary btn-generate" style="background: #6f42c1; border-color: #6f42c1;">
+                                    <i class="bi bi-file-pdf me-1"></i>Imprimir Notas Finales
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- Mensaje de bienvenida / ayuda cuando no hay alumno seleccionado -->
+            <div class="col-12">
+                <div class="card glass-card p-5 text-center my-4">
+                    <div class="text-success mb-3">
+                        <i class="bi bi-journal-check" style="font-size: 4rem;"></i>
+                    </div>
+                    <h3 class="fw-bold text-dark">Generación de Reportes Académicos</h3>
+                    <p class="text-muted mx-auto" style="max-width: 600px;">
+                        Para comenzar, busque un estudiante por su nombre, apellidos o carnet en el buscador superior. Al seleccionarlo, podrá visualizar y descargar su ficha de perfil, certificación académica, boletas de notas parciales y finales.
+                    </p>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        jQuery(document).ready(function() {
+            // Inicializar Autocompletado
+            jQuery('#buscadorAlumno').autocomplete({
+                source: function(request, response) {
+                    if (request.term.length < 3) {
+                        response([]);
+                        return;
+                    }
+                    jQuery.get('/reportes/Academicos?handler=BuscarAlumnos&term=' + encodeURIComponent(request.term))
+                        .done(function(data) {
+                            response(data);
+                        })
+                        .fail(function() {
+                            response([]);
+                        });
+                },
+                minLength: 3,
+                delay: 300,
+                position: {
+                    my: "left top",
+                    at: "left bottom",
+                    of: jQuery('#buscadorAlumno').closest('.search-input-group'),
+                    collision: "flipfit"
+                },
+                open: function() {
+                    var menu = jQuery(this).autocomplete("widget");
+                    var width = jQuery('#buscadorAlumno').closest('.search-input-group').outerWidth();
+                    menu.outerWidth(width);
+                },
+                select: function(event, ui) {
+                    // Redirigir a la misma página cargando el alumno seleccionado
+                    window.location.href = '/reportes/Academicos?alumnoId=' + ui.item.id;
+                    return false;
+                }
+            });
+
+            // Personalizar el renderizado del autocompletado para hacerlo estético
+            var autocompleteInstance = jQuery('#buscadorAlumno').autocomplete("instance");
+            if (autocompleteInstance) {
+                autocompleteInstance._renderItem = function(ul, item) {
+                    return jQuery("<li>")
+                        .append("<div><strong>" + item.value + "</strong><br><small class='text-muted'><i class='bi bi-card-text me-1'></i>Carnet: " + item.carnet + "</small></div>")
+                        .appendTo(ul);
+                };
+            }
+
+            // Botón limpiar buscador
+            jQuery('#btnLimpiar').click(function() {
+                jQuery('#buscadorAlumno').val('');
+                jQuery('#buscadorAlumno').focus();
+            });
+
+            // Actualizar enlaces dinámicamente o recargar la página cuando se cambia el ciclo
+            jQuery('#SelectedCicloId').change(function() {
+                var selectedCicloId = jQuery(this).val();
+                
+                // Opción robusta: Actualizar los enlaces dinámicamente en el cliente
+                var alumnoId = '@(Model.AlumnoSelected?.AlumnoId ?? 0)';
+                if (alumnoId > 0) {
+                    // Actualizar link notas parciales
+                    var urlParciales = '/reportes/notas/reporteNotasParciales?alumnoId=' + alumnoId + '&cicloId=' + selectedCicloId;
+                    jQuery('#linkParciales').attr('href', urlParciales);
+
+                    // Actualizar link notas finales
+                    var urlFinales = '/reportes/notas/reporteNotasParcialesHistorico?alumnoId=' + alumnoId + '&cicloId=' + selectedCicloId;
+                    jQuery('#linkFinales').attr('href', urlFinales);
+                    
+                    // También actualizar la URL del navegador sin recargar para mantener el estado
+                    var newUrl = new URL(window.location.href);
+                    newUrl.searchParams.set('SelectedCicloId', selectedCicloId);
+                    window.history.pushState({ path: newUrl.toString() }, '', newUrl.toString());
+                }
+            });
+        });
+    </script>
+}

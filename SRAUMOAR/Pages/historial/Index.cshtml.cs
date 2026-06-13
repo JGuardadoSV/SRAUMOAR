@@ -42,11 +42,22 @@ namespace SRAUMOAR.Pages.historial
             if (string.IsNullOrWhiteSpace(term))
                 return new JsonResult(new List<object>());
 
-            var alumnos = await _context.Alumno
-                .Where(a => a.Estado == 1 && 
-                           (a.Apellidos.Contains(term) || 
-                            a.Nombres.Contains(term) || 
-                            a.Email.Contains(term)))
+            // Dividir el término por espacios para obtener palabras individuales
+            var palabras = term.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            var query = _context.Alumno.Where(a => a.Estado == 1);
+
+            // Cada palabra debe coincidir en alguno de los campos clave
+            foreach (var palabra in palabras)
+            {
+                var p = palabra.Trim();
+                query = query.Where(a => a.Apellidos.Contains(p) || 
+                                         a.Nombres.Contains(p) || 
+                                         (a.Carnet != null && a.Carnet.Contains(p)) ||
+                                         a.Email.Contains(p));
+            }
+
+            var alumnos = await query
                 .OrderBy(a => a.Apellidos)
                 .ThenBy(a => a.Nombres)
                 .Select(a => new
