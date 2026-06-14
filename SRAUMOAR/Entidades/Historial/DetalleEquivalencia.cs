@@ -13,18 +13,8 @@ namespace SRAUMOAR.Entidades.Historial
         [Required]
         public int EstudioEquivalenciaId { get; set; }
 
-        // Asignatura de la Universidad de origen
-        [Required]
-        [StringLength(50)]
-        public string MateriaOrigenCodigo { get; set; } = string.Empty;
-
-        [Required]
-        [StringLength(200)]
-        public string MateriaOrigenNombre { get; set; } = string.Empty;
-
-        [Required]
-        [Column(TypeName = "decimal(5,2)")]
-        public decimal NotaOrigen { get; set; }
+        // Colección de asignaturas de la Universidad de origen (Relación 1 a N)
+        public virtual ICollection<DetalleEquivalenciaOrigen> MateriasOrigen { get; set; } = new List<DetalleEquivalenciaOrigen>();
 
         // Asignatura homóloga en UMOAR
         [Required]

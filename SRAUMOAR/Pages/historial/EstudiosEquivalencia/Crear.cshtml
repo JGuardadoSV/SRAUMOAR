@@ -93,29 +93,13 @@
                     <div class="col-md-12">
                         <div class="card shadow-sm border-0 mb-4">
                             <div class="card-header bg-white font-weight-bold text-muted py-3 d-flex justify-content-between align-items-center">
-                                <span><i class="bi bi-list-check text-primary me-2"></i>Materias Homologadas</span>
-                                <button type="button" id="btnAddRow" class="btn btn-outline-primary btn-sm">
-                                    <i class="bi bi-plus-lg me-1"></i>Agregar Fila
+                                <span><i class="bi bi-list-check text-primary me-2"></i>Materias Acreditadas UMOAR</span>
+                                <button type="button" id="btnAddUmoarBlock" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-plus-lg me-1"></i>Agregar Asignatura UMOAR
                                 </button>
                             </div>
-                            <div class="card-body p-0">
-                                <div class="table-responsive">
-                                    <table class="table table-hover align-middle mb-0" id="tablaMaterias">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th style="width: 15%;">Código Origen</th>
-                                                <th style="width: 30%;">Asignatura Externa</th>
-                                                <th style="width: 12%;">Nota Externa</th>
-                                                <th style="width: 30%;">Materia UMOAR Equivalente</th>
-                                                <th style="width: 12%;">Nota UMOAR</th>
-                                                <th style="width: 5%;" class="text-center"></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="tbodyMaterias">
-                                            <!-- Las filas se añadirán dinámicamente con Javascript -->
-                                        </tbody>
-                                    </table>
-                                </div>
+                            <div class="card-body bg-light p-4" id="umoarBlocksContainer">
+                                <!-- Las tarjetas se añadirán dinámicamente con Javascript -->
                             </div>
                         </div>
                     </div>
@@ -164,17 +148,26 @@
             color: #1b5e20 !important;
         }
         .materia-info-preview {
-            border-left: 3px solid #2e7d32;
+            border-left: 3.5px solid #2e7d32;
             background-color: #f1f8e9;
-            padding: 6px 10px;
-            border-radius: 0 4px 4px 0;
+            padding: 8px 12px;
+            border-radius: 0 6px 6px 0;
+        }
+        .umoar-block {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .umoar-block:hover {
+            border-color: #a5d6a7;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05) !important;
         }
     </style>
     <script>
         // Detalles precargados (por ejemplo, si el formulario falla y se vuelve a mostrar)
         const detallesPrecargados = @Html.Raw(Model.DetallesJson);
         
-        let rowCount = 0;
+        let blockCount = 0;
 
         jQuery(document).ready(function () {
             // Autocomplete para seleccionar alumno
@@ -206,37 +199,66 @@
                     .appendTo(ul);
             };
 
-            // Evento para añadir filas
-            jQuery('#btnAddRow').click(function () {
-                agregarFila();
+            // Evento para añadir bloques de materias UMOAR
+            jQuery('#btnAddUmoarBlock').click(function () {
+                agregarBloqueUmoar();
             });
 
             // Si hay detalles precargados, los dibujamos
             if (detallesPrecargados && detallesPrecargados.length > 0) {
                 detallesPrecargados.forEach(function (det) {
-                    agregarFila(det);
+                    agregarBloqueUmoar(det);
                 });
             } else {
                 // Añadir la primera fila por defecto
-                agregarFila();
+                agregarBloqueUmoar();
             }
 
-            // Eliminar fila
-            jQuery(document).on('click', '.btn-delete-row', function () {
-                if (jQuery('#tbodyMaterias tr').length > 1) {
-                    jQuery(this).closest('tr').remove();
-                    renumerarFilas();
+            // Quitar bloque UMOAR
+            jQuery(document).on('click', '.btn-delete-umoar-block', function () {
+                if (jQuery('.umoar-block').length > 1) {
+                    if (confirm("¿Está seguro de que desea eliminar este bloque de acreditación UMOAR con todas sus asignaturas externas?")) {
+                        jQuery(this).closest('.umoar-block').remove();
+                        renumerarTodo();
+                    }
                 } else {
-                    alert("Debe haber al menos una fila.");
+                    alert("Debe haber al menos un bloque de acreditación UMOAR.");
                 }
+            });
+
+            // Agregar asignatura externa
+            jQuery(document).on('click', '.btn-add-externa', function () {
+                const block = jQuery(this).closest('.umoar-block');
+                agregarFilaExterna(block);
+            });
+
+            // Quitar asignatura externa
+            jQuery(document).on('click', '.btn-delete-externa-row', function () {
+                const block = jQuery(this).closest('.umoar-block');
+                const tbody = block.find('.tbody-externas');
+                if (tbody.find('tr').length > 1) {
+                    jQuery(this).closest('tr').remove();
+                    renumerarTodo();
+                    actualizarSumaUvs(block);
+                } else {
+                    alert("Debe haber al menos una materia de origen.");
+                }
+            });
+
+            // Escuchar cambios en las UVs de materias externas
+            jQuery(document).on('input change', '.externa-uv-input', function () {
+                const block = jQuery(this).closest('.umoar-block');
+                actualizarSumaUvs(block);
             });
 
             // Limpieza al escribir a mano en el buscador de materia
             jQuery(document).on('input', '.buscador-materia', function () {
-                const tr = jQuery(this).closest('tr');
-                tr.find('.materia-destino-id').val('');
-                tr.find('.materia-info-preview').addClass('d-none');
-                tr.find('.materia-info-text').html('');
+                const block = jQuery(this).closest('.umoar-block');
+                block.find('.materia-destino-id').val('');
+                block.find('.materia-info-preview').addClass('d-none');
+                block.find('.materia-info-text').html('');
+                block.find('.materia-uvs-required').text('0');
+                actualizarSumaUvs(block);
             });
         });
 
@@ -258,11 +280,13 @@
                 minLength: 2,
                 delay: 300,
                 select: function (event, ui) {
-                    const tr = jQuery(this).closest('tr');
-                    tr.find('.materia-destino-id').val(ui.item.id);
-                    tr.find('.materia-info-text').html(`<strong>${ui.item.nombre} (${ui.item.codigo})</strong><br>Carrera: ${ui.item.carrera}<br>Pensum: ${ui.item.pensum}`);
-                    tr.find('.materia-info-preview').removeClass('d-none');
+                    const block = jQuery(this).closest('.umoar-block');
+                    block.find('.materia-destino-id').val(ui.item.id);
+                    block.find('.materia-info-text').html(`<strong>${ui.item.nombre} (${ui.item.codigo})</strong><br>Carrera: ${ui.item.carrera}<br>Pensum: ${ui.item.pensum}`);
+                    block.find('.materia-info-preview').removeClass('d-none');
+                    block.find('.materia-uvs-required').text(ui.item.uv);
                     jQuery(this).val(`${ui.item.nombre} (${ui.item.codigo})`);
+                    actualizarSumaUvs(block);
                     return false;
                 }
             }).autocomplete("instance")._renderItem = function (ul, item) {
@@ -284,67 +308,164 @@
             };
         }
 
-        function agregarFila(initialData = null) {
-            const index = rowCount++;
+        function agregarBloqueUmoar(initialData = null) {
+            const blockIndex = blockCount++;
             
-            const trHtml = `
-                <tr class="materia-row" id="row-${index}">
-                    <td>
-                        <input name="Detalles[${index}].MateriaOrigenCodigo" class="form-control form-control-sm" required placeholder="Cod: MAT101" value="${initialData ? initialData.materiaOrigenCodigo : ''}" />
-                    </td>
-                    <td>
-                        <input name="Detalles[${index}].MateriaOrigenNombre" class="form-control form-control-sm" required placeholder="Nombre de asignatura" value="${initialData ? initialData.materiaOrigenNombre : ''}" />
-                    </td>
-                    <td>
-                        <input name="Detalles[${index}].NotaOrigen" type="number" step="0.1" min="0" max="10" class="form-control form-control-sm" required placeholder="Nota: 8.5" value="${initialData ? initialData.notaOrigen : ''}" />
-                    </td>
-                    <td>
-                        <input type="hidden" name="Detalles[${index}].MateriaDestinoId" class="materia-destino-id" required value="${initialData ? initialData.materiaDestinoId : ''}" />
-                        <input type="text" class="form-control form-control-sm buscador-materia" placeholder="Buscar código o nombre de materia..." required value="${initialData ? initialData.materiaDestinoNombre : ''}" />
-                        <div class="materia-info-preview small text-success mt-1 ${initialData ? '' : 'd-none'}" style="line-height: 1.2;">
-                            <i class="bi bi-check-circle-fill"></i> <span class="materia-info-text">${initialData ? initialData.materiaDestinoInfo : ''}</span>
+            const blockHtml = `
+                <div class="card shadow-sm mb-4 umoar-block" id="umoar-block-${blockIndex}">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center py-2 border-bottom-0">
+                        <span class="text-success fw-bold"><i class="bi bi-mortarboard text-success me-2"></i>Asignatura UMOAR a Acreditar</span>
+                        <button type="button" class="btn btn-outline-danger btn-sm btn-delete-umoar-block py-0.5 px-2" title="Eliminar acreditación">
+                            <i class="bi bi-trash"></i> Eliminar Acreditación
+                        </button>
+                    </div>
+                    <div class="card-body pt-0">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-8">
+                                <label class="form-label fw-semibold small mb-1">Materia UMOAR Equivalente:</label>
+                                <input type="hidden" name="Detalles[${blockIndex}].MateriaDestinoId" class="materia-destino-id" required value="${initialData ? initialData.materiaDestinoId : ''}" />
+                                <input type="text" class="form-control form-control-sm buscador-materia" placeholder="Buscar código o nombre de materia..." required value="${initialData ? initialData.materiaDestinoNombre : ''}" />
+                                <div class="materia-info-preview small text-success mt-2 ${initialData ? '' : 'd-none'}" style="line-height: 1.3;">
+                                    <i class="bi bi-check-circle-fill text-success me-1"></i> <span class="materia-info-text">${initialData ? initialData.materiaDestinoInfo : ''}</span>
+                                    <span class="materia-uvs-required d-none">${initialData ? initialData.materiaDestinoUvs : '0'}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small mb-1">Nota Acreditada UMOAR:</label>
+                                <input name="Detalles[${blockIndex}].NotaEquivalencia" type="number" step="0.1" min="7" max="10" class="form-control form-control-sm" required placeholder="Nota (>= 7.0)" value="${initialData ? initialData.notaEquivalencia : ''}" />
+                            </div>
                         </div>
+
+                        <!-- Nested External Subjects -->
+                        <div class="border rounded p-3 bg-light bg-opacity-25">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-semibold text-muted small"><i class="bi bi-box-arrow-in-right me-1 text-info"></i>Asignaturas de Origen (Externas)</span>
+                                <span class="badge sum-uvs-badge bg-secondary font-weight-normal py-1 px-2.5">Total U.V. Origen: 0</span>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover align-middle mb-2 bg-white rounded border">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 20%;" class="small">Código Origen</th>
+                                            <th style="width: 45%;" class="small">Asignatura Externa</th>
+                                            <th style="width: 15%;" class="small">Nota</th>
+                                            <th style="width: 15%;" class="small">U.V.</th>
+                                            <th style="width: 5%;"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="tbody-externas">
+                                        <!-- Dynamic rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <button type="button" class="btn btn-outline-secondary btn-sm btn-add-externa py-0.5 px-2 mt-1">
+                                <i class="bi bi-plus-lg me-1"></i>Agregar Asignatura Externa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const block = jQuery(blockHtml);
+            jQuery('#umoarBlocksContainer').append(block);
+
+            // Inicializar autocomplete
+            inicializarAutocompleteMateria(block.find('.buscador-materia'));
+
+            // Dibujar materias origen
+            if (initialData && initialData.materiasOrigen && initialData.materiasOrigen.length > 0) {
+                initialData.materiasOrigen.forEach(function (mo) {
+                    agregarFilaExterna(block, mo);
+                });
+            } else {
+                agregarFilaExterna(block);
+            }
+
+            actualizarSumaUvs(block);
+            renumerarTodo();
+        }
+
+        function agregarFilaExterna(block, initialExternaData = null) {
+            const tbody = block.find('.tbody-externas');
+            const blockIdStr = block.attr('id');
+            const blockIndex = blockIdStr.split('-')[2];
+            const externaIndex = tbody.find('tr').length;
+
+            const trHtml = `
+                <tr class="externa-row">
+                    <td>
+                        <input name="Detalles[${blockIndex}].MateriasOrigen[${externaIndex}].MateriaOrigenCodigo" class="form-control form-control-sm form-monospace" required placeholder="Cod: MAT101" value="${initialExternaData ? initialExternaData.materiaOrigenCodigo : ''}" />
                     </td>
                     <td>
-                        <input name="Detalles[${index}].NotaEquivalencia" type="number" step="0.1" min="7" max="10" class="form-control form-control-sm" required placeholder="Nota >= 7.0" value="${initialData ? initialData.notaEquivalencia : ''}" />
+                        <input name="Detalles[${blockIndex}].MateriasOrigen[${externaIndex}].MateriaOrigenNombre" class="form-control form-control-sm" required placeholder="Nombre de asignatura" value="${initialExternaData ? initialExternaData.materiaOrigenNombre : ''}" />
+                    </td>
+                    <td>
+                        <input name="Detalles[${blockIndex}].MateriasOrigen[${externaIndex}].NotaOrigen" type="number" step="0.1" min="0" max="10" class="form-control form-control-sm" required placeholder="Nota: 8.0" value="${initialExternaData ? initialExternaData.notaOrigen : ''}" />
+                    </td>
+                    <td>
+                        <input name="Detalles[${blockIndex}].MateriasOrigen[${externaIndex}].uv" type="number" min="1" max="20" class="form-control form-control-sm externa-uv-input" required placeholder="U.V." value="${initialExternaData ? initialExternaData.uv : ''}" />
                     </td>
                     <td class="text-center">
-                        <button type="button" class="btn btn-outline-danger btn-sm btn-delete-row" title="Quitar fila">
+                        <button type="button" class="btn btn-outline-danger btn-sm btn-delete-externa-row" title="Quitar asignatura externa">
                             <i class="bi bi-trash"></i>
                         </button>
                     </td>
                 </tr>
             `;
 
-            const tr = jQuery(trHtml);
-            jQuery('#tbodyMaterias').append(tr);
-
-            // Inicializar el autocompletado en el input recién creado
-            inicializarAutocompleteMateria(tr.find('.buscador-materia'));
+            tbody.append(trHtml);
+            actualizarSumaUvs(block);
+            renumerarTodo();
         }
 
-        function renumerarFilas() {
-            rowCount = 0;
-            jQuery('#tbodyMaterias tr').each(function () {
-                const tr = jQuery(this);
-                const oldIndex = tr.attr('id').split('-')[1];
-                const newIndex = rowCount++;
-                
-                tr.attr('id', `row-${newIndex}`);
-                
-                // Renombrar inputs
-                tr.find('input, select').each(function () {
-                    const input = jQuery(this);
-                    const name = input.attr('name');
-                    if (name) {
-                        const newName = name.replace(/\[\d+\]/, `[${newNameIndex()}]`);
-                        input.attr('name', newName);
-                    }
-                });
-                
-                function newNameIndex() {
-                    return newIndex;
+        function actualizarSumaUvs(block) {
+            let sumUvs = 0;
+            block.find('.externa-uv-input').each(function () {
+                const val = parseInt(jQuery(this).val());
+                if (!isNaN(val) && val > 0) {
+                    sumUvs += val;
                 }
+            });
+
+            const reqUvs = parseInt(block.find('.materia-uvs-required').text()) || 0;
+            const badge = block.find('.sum-uvs-badge');
+
+            if (reqUvs > 0) {
+                if (sumUvs >= reqUvs) {
+                    badge.removeClass('bg-secondary bg-danger').addClass('bg-success');
+                    badge.html(`<i class="bi bi-check-circle-fill me-1"></i> U.V. Origen: ${sumUvs} / Requerido UMOAR: ${reqUvs} (Válido)`);
+                } else {
+                    badge.removeClass('bg-secondary bg-success').addClass('bg-danger');
+                    badge.html(`<i class="bi bi-exclamation-triangle-fill me-1"></i> U.V. Origen: ${sumUvs} / Requerido UMOAR: ${reqUvs} (U.V. Insuficientes)`);
+                }
+            } else {
+                badge.removeClass('bg-success bg-danger').addClass('bg-secondary');
+                badge.text(`Total U.V. Origen: ${sumUvs}`);
+            }
+        }
+
+        function renumerarTodo() {
+            blockCount = 0;
+            jQuery('#umoarBlocksContainer .umoar-block').each(function () {
+                const block = jQuery(this);
+                const currentBlockIndex = blockCount++;
+                block.attr('id', `umoar-block-${currentBlockIndex}`);
+
+                // Renombrar inputs del bloque principal UMOAR
+                block.find('.materia-destino-id').attr('name', `Detalles[${currentBlockIndex}].MateriaDestinoId`);
+                block.find('input[name*="NotaEquivalencia"]').attr('name', `Detalles[${currentBlockIndex}].NotaEquivalencia`);
+
+                // Renombrar inputs de las materias externas
+                let externaCount = 0;
+                block.find('.tbody-externas tr').each(function () {
+                    const row = jQuery(this);
+                    const currentExternaIndex = externaCount++;
+
+                    row.find('input[name*="MateriaOrigenCodigo"]').attr('name', `Detalles[${currentBlockIndex}].MateriasOrigen[${currentExternaIndex}].MateriaOrigenCodigo`);
+                    row.find('input[name*="MateriaOrigenNombre"]').attr('name', `Detalles[${currentBlockIndex}].MateriasOrigen[${currentExternaIndex}].MateriaOrigenNombre`);
+                    row.find('input[name*="NotaOrigen"]').attr('name', `Detalles[${currentBlockIndex}].MateriasOrigen[${currentExternaIndex}].NotaOrigen`);
+                    row.find('input[name*="uv"]').attr('name', `Detalles[${currentBlockIndex}].MateriasOrigen[${currentExternaIndex}].uv`);
+                });
             });
         }
     </script>

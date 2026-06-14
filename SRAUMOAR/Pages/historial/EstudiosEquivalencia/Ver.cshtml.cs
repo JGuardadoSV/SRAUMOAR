@@ -30,6 +30,8 @@ namespace SRAUMOAR.Pages.historial.EstudiosEquivalencia
                 .Include(e => e.Alumno)
                 .Include(e => e.Detalles!)
                     .ThenInclude(d => d.MateriaDestino)
+                .Include(e => e.Detalles!)
+                    .ThenInclude(d => d.MateriasOrigen)
                 .FirstOrDefaultAsync(e => e.EstudioEquivalenciaId == id.Value);
 
             if (estudio == null)

@@ -130,10 +130,10 @@
                                 <table class="table table-hover align-middle mb-0">
                                     <thead class="table-light">
                                         <tr>
-                                            <th>Materia Origen</th>
-                                            <th class="text-center">Nota Origen</th>
-                                            <th>Materia UMOAR Equivalente</th>
-                                            <th class="text-center">Nota Equivalente</th>
+                                            <th style="width: 45%;">Asignaturas de Origen (Externas)</th>
+                                            <th style="width: 15%;" class="text-center">U.V. Origen</th>
+                                            <th style="width: 30%;">Materia UMOAR Equivalente</th>
+                                            <th style="width: 10%;" class="text-center">Nota UMOAR</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -143,15 +143,43 @@
                                             {
                                                 <tr>
                                                     <td>
-                                                        <strong>@det.MateriaOrigenNombre</strong>
-                                                        <span class="d-block text-muted small">Cod: @det.MateriaOrigenCodigo</span>
+                                                        @if (det.MateriasOrigen != null && det.MateriasOrigen.Any())
+                                                        {
+                                                            <div class="d-flex flex-column gap-1">
+                                                                @foreach (var mo in det.MateriasOrigen)
+                                                                {
+                                                                    <div class="p-1 border-bottom last-border-none">
+                                                                        <strong class="text-dark">@mo.MateriaOrigenNombre</strong>
+                                                                        <div class="small text-muted mt-0.5">
+                                                                            Cod: <span class="font-monospace text-secondary">@mo.MateriaOrigenCodigo</span> | 
+                                                                            Nota: <span class="badge bg-light text-dark border">@mo.NotaOrigen.ToString("0.0")</span> | 
+                                                                            U.V.: <span class="badge bg-light text-dark border">@mo.uv</span>
+                                                                        </div>
+                                                                    </div>
+                                                                }
+                                                            </div>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="text-muted small italic">No registrado</span>
+                                                        }
                                                     </td>
                                                     <td class="text-center font-weight-bold">
-                                                        <span class="badge bg-light text-dark border">@det.NotaOrigen.ToString("0.0")</span>
+                                                        @{
+                                                            var sumUvs = det.MateriasOrigen?.Sum(mo => mo.uv) ?? 0;
+                                                            var reqUvs = det.MateriaDestino?.uv ?? 0;
+                                                            var badgeClass = sumUvs >= reqUvs ? "bg-success-soft text-success border-success-soft" : "bg-danger-soft text-danger border-danger-soft";
+                                                        }
+                                                        <span class="badge @badgeClass border px-2.5 py-1.5" style="font-size: 0.85rem;">
+                                                            @sumUvs / @reqUvs UV
+                                                        </span>
                                                     </td>
                                                     <td>
                                                         <strong>@(det.MateriaDestino != null ? det.MateriaDestino.NombreMateria : "N/A")</strong>
-                                                        <span class="d-block text-muted small">Cod: @(det.MateriaDestino != null ? det.MateriaDestino.CodigoMateria : "N/A")</span>
+                                                        <span class="d-block text-muted small mt-0.5">
+                                                            Cod: @(det.MateriaDestino != null ? det.MateriaDestino.CodigoMateria : "N/A") | 
+                                                            Requerido: @reqUvs UV
+                                                        </span>
                                                     </td>
                                                     <td class="text-center font-weight-bold text-success">
                                                         <span class="badge bg-success-soft text-success border border-success-soft fs-6 px-2.5">@det.NotaEquivalencia.ToString("0.0")</span>
@@ -193,5 +221,14 @@
     }
     .border-success-soft {
         border-color: rgba(40, 167, 69, 0.2) !important;
+    }
+    .bg-danger-soft {
+        background-color: rgba(220, 53, 69, 0.1) !important;
+    }
+    .border-danger-soft {
+        border-color: rgba(220, 53, 69, 0.2) !important;
+    }
+    .last-border-none:last-child {
+        border-bottom: none !important;
     }
 </style>

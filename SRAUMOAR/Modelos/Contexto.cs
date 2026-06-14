@@ -72,6 +72,7 @@ namespace SRAUMOAR.Modelos
         public DbSet<ConfiguracionReporte> ConfiguracionesReportes { get; set; } = null!;
         public DbSet<EstudioEquivalencia> EstudiosEquivalencia { get; set; } = null!;
         public DbSet<DetalleEquivalencia> DetallesEquivalencia { get; set; } = null!;
+        public DbSet<DetalleEquivalenciaOrigen> DetallesEquivalenciaOrigen { get; set; } = null!;
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Arancel>()

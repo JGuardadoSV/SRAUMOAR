@@ -46,6 +46,18 @@ namespace SRAUMOAR.Pages.historial.EstudiosEquivalencia
 
         public class DetalleEquivalenciaViewModel
         {
+            [Required(ErrorMessage = "Debe seleccionar una materia de destino")]
+            public int MateriaDestinoId { get; set; }
+
+            [Required]
+            [Range(7.0, 10.0, ErrorMessage = "La nota homologada en UMOAR debe ser aprobada (entre 7.0 y 10.0)")]
+            public decimal NotaEquivalencia { get; set; }
+
+            public List<MateriaOrigenViewModel> MateriasOrigen { get; set; } = new();
+        }
+
+        public class MateriaOrigenViewModel
+        {
             [Required(ErrorMessage = "El código de materia origen es requerido")]
             public string MateriaOrigenCodigo { get; set; } = string.Empty;
 
@@ -56,12 +68,9 @@ namespace SRAUMOAR.Pages.historial.EstudiosEquivalencia
             [Range(0, 10, ErrorMessage = "La nota origen debe estar entre 0 y 10")]
             public decimal NotaOrigen { get; set; }
 
-            [Required(ErrorMessage = "Debe seleccionar una materia de destino")]
-            public int MateriaDestinoId { get; set; }
-
             [Required]
-            [Range(7.0, 10.0, ErrorMessage = "La nota homologada en UMOAR debe ser aprobada (entre 7.0 y 10.0)")]
-            public decimal NotaEquivalencia { get; set; }
+            [Range(1, 20, ErrorMessage = "Las UV deben ser mayor a 0")]
+            public int uv { get; set; }
         }
 
         public async Task<IActionResult> OnGetAsync(int? alumnoId)
@@ -128,11 +137,15 @@ namespace SRAUMOAR.Pages.historial.EstudiosEquivalencia
                     var detalle = new DetalleEquivalencia
                     {
                         EstudioEquivalenciaId = estudio.EstudioEquivalenciaId,
-                        MateriaOrigenCodigo = det.MateriaOrigenCodigo,
-                        MateriaOrigenNombre = det.MateriaOrigenNombre,
-                        NotaOrigen = det.NotaOrigen,
                         MateriaDestinoId = det.MateriaDestinoId,
-                        NotaEquivalencia = det.NotaEquivalencia
+                        NotaEquivalencia = det.NotaEquivalencia,
+                        MateriasOrigen = det.MateriasOrigen.Select(mo => new DetalleEquivalenciaOrigen
+                        {
+                            MateriaOrigenCodigo = mo.MateriaOrigenCodigo,
+                            MateriaOrigenNombre = mo.MateriaOrigenNombre,
+                            NotaOrigen = mo.NotaOrigen,
+                            uv = mo.uv
+                        }).ToList()
                     };
                     _context.DetallesEquivalencia.Add(detalle);
                 }
@@ -195,13 +208,17 @@ namespace SRAUMOAR.Pages.historial.EstudiosEquivalencia
                 var listToSerialize = Detalles.Select(d => {
                     var mInfo = materiasInfo.TryGetValue(d.MateriaDestinoId, out var m) ? m : null;
                     return new {
-                        materiaOrigenCodigo = d.MateriaOrigenCodigo,
-                        materiaOrigenNombre = d.MateriaOrigenNombre,
-                        notaOrigen = d.NotaOrigen,
                         materiaDestinoId = d.MateriaDestinoId,
                         notaEquivalencia = d.NotaEquivalencia,
                         materiaDestinoNombre = mInfo != null ? $"{mInfo.NombreMateria} ({mInfo.CodigoMateria})" : "",
-                        materiaDestinoInfo = mInfo != null ? $"<strong>{mInfo.NombreMateria} ({mInfo.CodigoMateria})</strong><br>Carrera: {(mInfo.Pensum?.Carrera?.NombreCarrera ?? "Sin Carrera")}<br>Pensum: {(mInfo.Pensum?.NombrePensum ?? "Sin Pensum")}" : ""
+                        materiaDestinoInfo = mInfo != null ? $"<strong>{mInfo.NombreMateria} ({mInfo.CodigoMateria})</strong><br>Carrera: {(mInfo.Pensum?.Carrera?.NombreCarrera ?? "Sin Carrera")}<br>Pensum: {(mInfo.Pensum?.NombrePensum ?? "Sin Pensum")}" : "",
+                        materiaDestinoUvs = mInfo != null ? mInfo.uv : 0,
+                        materiasOrigen = d.MateriasOrigen.Select(mo => new {
+                            materiaOrigenCodigo = mo.MateriaOrigenCodigo,
+                            materiaOrigenNombre = mo.MateriaOrigenNombre,
+                            notaOrigen = mo.NotaOrigen,
+                            uv = mo.uv
+                        }).ToList()
                     };
                 }).ToList();
 
