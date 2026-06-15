@@ -13,6 +13,9 @@ using OfficeOpenXml;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configurar licencia de QuestPDF
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
 
 var culture = new CultureInfo("es-SV"); // El Salvador
 culture.NumberFormat.CurrencySymbol = "$";

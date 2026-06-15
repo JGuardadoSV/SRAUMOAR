@@ -5,43 +5,27 @@ using SRAUMOAR.Entidades.Alumnos;
 using SRAUMOAR.Entidades.Historial;
 using SRAUMOAR.Entidades.Generales;
 using SRAUMOAR.Modelos;
-using iText.Kernel.Pdf;
-using iText.Layout;
-using iText.Layout.Element;
-using iText.Layout.Properties;
-using iText.Kernel.Font;
-using iText.IO.Font.Constants;
-using iText.Kernel.Colors;
-using iText.Layout.Borders;
-using iText.IO.Image;
 using System.Globalization;
 using System.IO;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 
 namespace SRAUMOAR.Pages.historial
 {
     public class CertificacionNotasModel : PageModel
     {
         private readonly Contexto _context;
-        private PdfFont _fontNormal;
-        private PdfFont _fontBold;
 
         public CertificacionNotasModel(Contexto context)
         {
             _context = context;
         }
 
-        private void InitializeFonts()
-        {
-            _fontNormal = PdfFontFactory.CreateFont(StandardFonts.TIMES_ROMAN);
-            _fontBold = PdfFontFactory.CreateFont(StandardFonts.TIMES_BOLD);
-        }
-
         public IActionResult OnGet(int? alumnoId, int? carreraId = null)
         {
             try
             {
-                InitializeFonts();
-
                 // Obtener configuraciones de reportes de manera segura
                 var configs = new Dictionary<string, string>();
                 try
@@ -113,86 +97,11 @@ namespace SRAUMOAR.Pages.historial
                     return BadRequest("No se encontraron ciclos registrados para este alumno");
                 }
 
-                // Generar PDF
-                using var memoryStream = new MemoryStream();
-                using var writer = new PdfWriter(memoryStream);
-                using var pdf = new PdfDocument(writer);
-                using var document = new Document(pdf);
-
-                // Configurar márgenes
-                document.SetMargins(40, 40, 40, 40);
-
-                // ENCABEZADO
-                var headerTable = new Table(2);
-                headerTable.SetWidth(UnitValue.CreatePercentValue(100));
-
-                // Logo a la izquierda
-                try
-                {
-                    var logoPath = Path.Combine("wwwroot", "images", "logoUmoar.jpg");
-                    if (System.IO.File.Exists(logoPath))
-                    {
-                        var logo = new Image(ImageDataFactory.Create(logoPath));
-                        logo.SetWidth(80);
-                        headerTable.AddCell(new Cell().Add(logo).SetBorder(Border.NO_BORDER).SetVerticalAlignment(VerticalAlignment.TOP));
-                    }
-                    else
-                    {
-                        headerTable.AddCell(new Cell().SetBorder(Border.NO_BORDER));
-                    }
-                }
-                catch
-                {
-                    headerTable.AddCell(new Cell().SetBorder(Border.NO_BORDER));
-                }
-
-                // Texto centrado - Nombre de universidad y direcciones
-                var textCell = new Cell().SetBorder(Border.NO_BORDER).SetTextAlignment(TextAlignment.CENTER);
-                textCell.Add(new Paragraph("UNIVERSIDAD MONSEÑOR OSCAR ARNULFO ROMERO")
-                    .SetFont(_fontBold)
-                    .SetFontSize(14)
-                    .SetTextAlignment(TextAlignment.CENTER)
-                    .SetMarginBottom(5));
-                
-                // 3 líneas de direcciones obtenidas de la base de datos
-                textCell.Add(new Paragraph(dir1)
-                    .SetFont(_fontNormal)
-                    .SetFontSize(11)
-                    .SetTextAlignment(TextAlignment.CENTER)
-                    .SetMarginBottom(3));
-                textCell.Add(new Paragraph(dir2)
-                    .SetFont(_fontNormal)
-                    .SetFontSize(11)
-                    .SetTextAlignment(TextAlignment.CENTER)
-                    .SetMarginBottom(3));
-                textCell.Add(new Paragraph(dir3)
-                    .SetFont(_fontNormal)
-                    .SetFontSize(11)
-                    .SetTextAlignment(TextAlignment.CENTER));
-
-                headerTable.AddCell(textCell);
-                document.Add(headerTable);
-                document.Add(new Paragraph(" ").SetMarginBottom(10));
-
-                // Línea vertical (usando una línea horizontal como separador)
-                document.Add(new Paragraph("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-                    .SetFontSize(8)
-                    .SetTextAlignment(TextAlignment.CENTER)
-                    .SetMarginBottom(15));
-
-                // Párrafo de texto justificado en negrita obtenido de la base de datos
-                var parrafoTexto = new Paragraph(intro)
-                    .SetFont(_fontBold)
-                    .SetFontSize(11)
-                    .SetTextAlignment(TextAlignment.JUSTIFIED)
-                    .SetMarginBottom(15);
-                document.Add(parrafoTexto);
-
                 // ============================================
                 // CONFIGURACIÓN PERSONALIZABLE DE LA TABLA
                 // ============================================
                 // Tamaños de fuente
-                float tamanoFuenteHeader = 10f;
+                float tamanoFuenteHeader = 9f;    // Reducido a 9f
                 float tamanoFuenteCiclo = 9f;
                 float tamanoFuenteCodigo = 9f;
                 float tamanoFuenteNombre = 8.5f;  // Reducido para nombres largos
@@ -201,288 +110,233 @@ namespace SRAUMOAR.Pages.historial
                 float tamanoFuenteLetra = 7.5f;   // Reducido para texto largo
                 float tamanoFuenteResultado = 9f;
                 
-                // Anchos de columnas (valores relativos, suman aproximadamente 8.5)
-                float anchoCiclo = 1f;
-                float anchoEstatus = 0.8f;
-                float anchoCodigo = 1f;
-                float anchoNombre = 3.5f;  // Aumentado para nombres largos
-                float anchoUV = 0.7f;
-                float anchoNota = 0.8f;
-                float anchoLetra = 0.7f;
-                float anchoResultado = 1.2f;
+                // Anchos de columnas (valores relativos, suman 16.4f)
+                float anchoCiclo = 1.0f;
+                float anchoEstatus = 1.2f;
+                float anchoCodigo = 1.6f;
+                float anchoNombre = 5.5f;  // Aumentado para nombres largos
+                float anchoUV = 0.9f;
+                float anchoNota = 0.9f;
+                float anchoLetra = 3.5f;   // Aumentado significativamente para evitar saltos de línea en letras largas
+                float anchoResultado = 1.8f;
                 
                 // ============================================
-                
-                // TABLA DE MATERIAS
-                var tablaMaterias = new Table(new float[] { 
-                    anchoCiclo, anchoEstatus, anchoCodigo, anchoNombre, anchoUV, anchoNota, anchoLetra, anchoResultado 
+
+                // Generar PDF usando QuestPDF
+                var document = Document.Create(container =>
+                {
+                    container.Page(page =>
+                    {
+                        page.Size(PageSizes.Letter);
+                        page.Margin(40);
+                        page.PageColor(Colors.White);
+                        
+                        // Tipografía por defecto "Times New Roman"
+                        page.DefaultTextStyle(x => x.FontFamily("Times New Roman").FontSize(10));
+
+                        // CONTENIDO
+                        page.Content().Column(col =>
+                        {
+                            // MEMBRETE DE LA UNIVERSIDAD (Solo en la primera página)
+                            col.Item().Row(row =>
+                            {
+                                // Logo a la izquierda
+                                var logoPath = Path.Combine("wwwroot", "images", "logoUmoar.jpg");
+                                if (System.IO.File.Exists(logoPath))
+                                {
+                                    row.ConstantItem(80).Image(logoPath);
+                                }
+                                else
+                                {
+                                    row.ConstantItem(80).Text("");
+                                }
+
+                                // Texto centrado
+                                row.RelativeItem().AlignCenter().Column(textCol =>
+                                {
+                                    textCol.Item().AlignCenter().Text("UNIVERSIDAD MONSEÑOR OSCAR ARNULFO ROMERO")
+                                        .Bold()
+                                        .FontSize(14)
+                                        .AlignCenter();
+                                    
+                                    if (!string.IsNullOrWhiteSpace(dir1))
+                                        textCol.Item().AlignCenter().Text(dir1).FontSize(11).AlignCenter();
+                                    if (!string.IsNullOrWhiteSpace(dir2))
+                                        textCol.Item().AlignCenter().Text(dir2).FontSize(11).AlignCenter();
+                                    if (!string.IsNullOrWhiteSpace(dir3))
+                                        textCol.Item().AlignCenter().Text(dir3).FontSize(11).AlignCenter();
+                                });
+                            });
+
+                            // Párrafo introductorio
+                            if (!string.IsNullOrWhiteSpace(intro))
+                            {
+                                col.Item().PaddingTop(15).Text(intro)
+                                    .Bold()
+                                    .FontSize(11)
+                                    .Justify();
+                            }
+
+                            // Espacio antes de la tabla y la tabla misma (envuelta en un borde externo)
+                            col.Item().PaddingTop(15).Border(0.5f).BorderColor(Colors.Black).Table(table =>
+                            {
+                                // Definición de columnas
+                                table.ColumnsDefinition(columns =>
+                                {
+                                    columns.RelativeColumn(anchoCiclo);
+                                    columns.RelativeColumn(anchoEstatus);
+                                    columns.RelativeColumn(anchoCodigo);
+                                    columns.RelativeColumn(anchoNombre);
+                                    columns.RelativeColumn(anchoUV);
+                                    columns.RelativeColumn(anchoNota);
+                                    columns.RelativeColumn(anchoLetra);
+                                    columns.RelativeColumn(anchoResultado);
+                                });
+
+                                // Encabezado de la Tabla
+                                table.Header(header =>
+                                {
+                                    IContainer HeaderStyle(IContainer cellContainer, int columnIndex)
+                                    {
+                                        var styled = cellContainer.BorderBottom(0.5f).BorderColor(Colors.Black);
+                                        if (columnIndex < 7)
+                                        {
+                                            styled = styled.BorderRight(0.5f).BorderColor(Colors.Black);
+                                        }
+                                        return styled.PaddingVertical(3).PaddingHorizontal(2);
+                                    }
+
+                                    header.Cell().Element(c => HeaderStyle(c, 0)).Text("Ciclo").Bold().FontSize(tamanoFuenteHeader).AlignCenter();
+                                    header.Cell().Element(c => HeaderStyle(c, 1)).Text("Estatus").Bold().FontSize(tamanoFuenteHeader).AlignCenter();
+                                    header.Cell().Element(c => HeaderStyle(c, 2)).Text("CODIGO").Bold().FontSize(tamanoFuenteHeader).AlignCenter();
+                                    header.Cell().Element(c => HeaderStyle(c, 3)).Text("Nombre de la asignatura").Bold().FontSize(tamanoFuenteHeader).AlignCenter();
+                                    header.Cell().Element(c => HeaderStyle(c, 4)).Text("U.V.").Bold().FontSize(tamanoFuenteHeader).AlignCenter();
+                                    header.Cell().ColumnSpan(2).Element(c => HeaderStyle(c, 5)).Text("Calificación").Bold().FontSize(tamanoFuenteHeader).AlignCenter();
+                                    header.Cell().Element(c => HeaderStyle(c, 7)).Text("Resultado").Bold().FontSize(tamanoFuenteHeader).AlignCenter();
+                                });
+
+                                // Datos de la Tabla
+                                string cicloAnterior = "";
+                                int totalMaterias = historialCiclos.Sum(c => c.MateriasHistorial?.Count ?? 0);
+                                int contadorMaterias = 0;
+
+                                foreach (var ciclo in historialCiclos)
+                                {
+                                    var materias = ciclo.MateriasHistorial?
+                                        .OrderBy(m => m.Materia != null ? m.Materia.NombreMateria : m.MateriaNombreLibre ?? "")
+                                        .ToList() ?? new List<HistorialMateria>();
+
+                                    bool esPrimeraMateriaDelCiclo = ciclo.CicloTexto != cicloAnterior;
+
+                                    foreach (var materia in materias)
+                                    {
+                                        contadorMaterias++;
+
+                                        IContainer CellStyle(IContainer cellContainer, int columnIndex)
+                                        {
+                                            var styled = cellContainer;
+                                            if (columnIndex < 7)
+                                            {
+                                                styled = styled.BorderRight(0.5f).BorderColor(Colors.Black);
+                                            }
+                                            return styled.PaddingVertical(2).PaddingHorizontal(2);
+                                        }
+
+                                        // Ciclo
+                                        if (esPrimeraMateriaDelCiclo)
+                                        {
+                                            table.Cell().Element(c => CellStyle(c, 0)).Text(ciclo.CicloTexto).FontSize(tamanoFuenteCiclo).AlignCenter();
+                                            esPrimeraMateriaDelCiclo = false;
+                                        }
+                                        else
+                                        {
+                                            table.Cell().Element(c => CellStyle(c, 0)).Text("");
+                                        }
+
+                                        // Estatus (vacío)
+                                        table.Cell().Element(c => CellStyle(c, 1)).Text("");
+
+                                        // CODIGO
+                                        string codigo = materia.Materia != null 
+                                            ? materia.Materia.CodigoMateria 
+                                            : materia.MateriaCodigoLibre ?? "-";
+                                        table.Cell().Element(c => CellStyle(c, 2)).Text(codigo).FontSize(tamanoFuenteCodigo).AlignLeft();
+
+                                        // Nombre de la asignatura
+                                        string nombreMateria = materia.Materia != null 
+                                            ? materia.Materia.NombreMateria 
+                                            : materia.MateriaNombreLibre ?? "-";
+                                        table.Cell().Element(c => CellStyle(c, 3)).Text(nombreMateria).FontSize(tamanoFuenteNombre).AlignLeft();
+
+                                        // U.V.
+                                        int uv = materia.Materia != null 
+                                            ? materia.Materia.uv 
+                                            : materia.MateriaUnidadesValorativasLibre ?? 0;
+                                        table.Cell().Element(c => CellStyle(c, 4)).Text(uv.ToString()).FontSize(tamanoFuenteUV).AlignCenter();
+
+                                        // Calificación (Nota y Letra)
+                                        decimal promedio = materia.Promedio;
+                                        string notaNumerica = promedio.ToString("0.0");
+                                        string notaLetras = ConvertirNumeroALetras(promedio);
+
+                                        table.Cell().Element(c => CellStyle(c, 5)).Text(notaNumerica).FontSize(tamanoFuenteNota).AlignCenter();
+                                        table.Cell().Element(c => CellStyle(c, 6)).Text(notaLetras).FontSize(tamanoFuenteLetra).AlignLeft();
+
+                                        // Resultado
+                                        string resultado = promedio >= 7.0m && promedio <= 10.0m ? "APROBADA" : "REPROBADA";
+                                        table.Cell().Element(c => CellStyle(c, 7)).Text(resultado).FontSize(tamanoFuenteResultado).AlignCenter();
+                                    }
+
+                                    cicloAnterior = ciclo.CicloTexto;
+                                }
+                            });
+
+                            // Pie de página de datos del alumno
+                            col.Item().PaddingTop(15).Column(alumnoInfoCol =>
+                            {
+                                alumnoInfoCol.Item().Text($"Alumno: {alumno.Nombres} {alumno.Apellidos}")
+                                    .FontSize(10);
+                                
+                                if (alumno.Carrera != null)
+                                {
+                                    alumnoInfoCol.Item().Text($"Carrera: {alumno.Carrera.NombreCarrera}")
+                                        .FontSize(10);
+                                }
+                            });
+
+                            // Bloque de Firma si está configurado
+                            if (!string.IsNullOrWhiteSpace(firmaNombre) || !string.IsNullOrWhiteSpace(firmaCargo))
+                            {
+                                col.Item().PaddingTop(30).AlignCenter().Width(250).Column(firmaCol =>
+                                {
+                                    if (!string.IsNullOrWhiteSpace(firmaNombre))
+                                    {
+                                        firmaCol.Item().AlignCenter().Text("f. _________________________________________")
+                                            .FontSize(10);
+                                        
+                                        firmaCol.Item().PaddingTop(2).AlignCenter().Text(firmaNombre)
+                                            .Bold()
+                                            .FontSize(10);
+                                    }
+                                    
+                                    if (!string.IsNullOrWhiteSpace(firmaCargo))
+                                    {
+                                        firmaCol.Item().PaddingTop(2).AlignCenter().Text(firmaCargo)
+                                            .FontSize(10);
+                                    }
+                                    
+                                    if (!string.IsNullOrWhiteSpace(firmaSublinea))
+                                    {
+                                        firmaCol.Item().PaddingTop(2).AlignCenter().Text(firmaSublinea)
+                                            .FontSize(10);
+                                    }
+                                });
+                            }
+                        });
+                    });
                 });
-                tablaMaterias.SetWidth(UnitValue.CreatePercentValue(100));
 
-                // HEADER
-                tablaMaterias.AddHeaderCell(new Cell()
-                    .Add(new Paragraph("Ciclo")
-                        .SetFontSize(tamanoFuenteHeader)
-                        .SetTextAlignment(TextAlignment.CENTER))
-                    .SetFont(_fontBold)
-                    .SetBorderLeft(new SolidBorder(1))
-                    .SetBorderRight(new SolidBorder(1))
-                    .SetBorderTop(new SolidBorder(1))
-                    .SetBorderBottom(new SolidBorder(1)));
-
-                tablaMaterias.AddHeaderCell(new Cell()
-                    .Add(new Paragraph("Estatus")
-                        .SetFontSize(tamanoFuenteHeader)
-                        .SetTextAlignment(TextAlignment.CENTER))
-                    .SetFont(_fontBold)
-                    .SetBorderLeft(new SolidBorder(1))
-                    .SetBorderRight(new SolidBorder(1))
-                    .SetBorderTop(new SolidBorder(1))
-                    .SetBorderBottom(new SolidBorder(1)));
-
-                tablaMaterias.AddHeaderCell(new Cell()
-                    .Add(new Paragraph("CODIGO")
-                        .SetFontSize(tamanoFuenteHeader)
-                        .SetTextAlignment(TextAlignment.CENTER))
-                    .SetFont(_fontBold)
-                    .SetBorderLeft(new SolidBorder(1))
-                    .SetBorderRight(new SolidBorder(1))
-                    .SetBorderTop(new SolidBorder(1))
-                    .SetBorderBottom(new SolidBorder(1)));
-
-                tablaMaterias.AddHeaderCell(new Cell()
-                    .Add(new Paragraph("Nombre de la asignatura")
-                        .SetFontSize(tamanoFuenteHeader)
-                        .SetTextAlignment(TextAlignment.CENTER))
-                    .SetFont(_fontBold)
-                    .SetBorderLeft(new SolidBorder(1))
-                    .SetBorderRight(new SolidBorder(1))
-                    .SetBorderTop(new SolidBorder(1))
-                    .SetBorderBottom(new SolidBorder(1)));
-
-                tablaMaterias.AddHeaderCell(new Cell()
-                    .Add(new Paragraph("U.V.")
-                        .SetFontSize(tamanoFuenteHeader)
-                        .SetTextAlignment(TextAlignment.CENTER))
-                    .SetFont(_fontBold)
-                    .SetBorderLeft(new SolidBorder(1))
-                    .SetBorderRight(new SolidBorder(1))
-                    .SetBorderTop(new SolidBorder(1))
-                    .SetBorderBottom(new SolidBorder(1)));
-
-                // Header de Calificación (fusionada 2 columnas)
-                var calificacionHeader = new Cell(1, 2) // Fusiona 2 columnas
-                    .SetBorderLeft(new SolidBorder(1))
-                    .SetBorderRight(new SolidBorder(1))
-                    .SetBorderTop(new SolidBorder(1))
-                    .SetBorderBottom(new SolidBorder(1));
-                calificacionHeader.Add(new Paragraph("Calificación")
-                    .SetFontSize(tamanoFuenteHeader)
-                    .SetTextAlignment(TextAlignment.CENTER)
-                    .SetFont(_fontBold));
-                tablaMaterias.AddHeaderCell(calificacionHeader);
-
-                tablaMaterias.AddHeaderCell(new Cell()
-                    .Add(new Paragraph("Resultado")
-                        .SetFontSize(tamanoFuenteHeader)
-                        .SetTextAlignment(TextAlignment.CENTER))
-                    .SetFont(_fontBold)
-                    .SetBorderLeft(new SolidBorder(1))
-                    .SetBorderRight(new SolidBorder(1))
-                    .SetBorderTop(new SolidBorder(1))
-                    .SetBorderBottom(new SolidBorder(1)));
-
-                // DATOS
-                string cicloAnterior = "";
-                int totalMaterias = historialCiclos.Sum(c => c.MateriasHistorial?.Count ?? 0);
-                int contadorMaterias = 0;
-                
-                foreach (var ciclo in historialCiclos)
-                {
-                    var materias = ciclo.MateriasHistorial?
-                        .OrderBy(m => m.Materia != null ? m.Materia.NombreMateria : m.MateriaNombreLibre ?? "")
-                        .ToList() ?? new List<HistorialMateria>();
-
-                    bool esPrimeraMateriaDelCiclo = ciclo.CicloTexto != cicloAnterior;
-                    
-                    foreach (var materia in materias)
-                    {
-                        contadorMaterias++;
-                        bool esUltimaFila = contadorMaterias == totalMaterias;
-                        
-                        // Ciclo (solo en la primera fila de cada ciclo)
-                        if (esPrimeraMateriaDelCiclo)
-                        {
-                            tablaMaterias.AddCell(new Cell()
-                                .Add(new Paragraph(ciclo.CicloTexto)
-                                    .SetFontSize(tamanoFuenteCiclo))
-                                .SetTextAlignment(TextAlignment.CENTER)
-                                .SetBorderLeft(new SolidBorder(1))
-                                .SetBorderRight(new SolidBorder(1))
-                                .SetBorderTop(Border.NO_BORDER)
-                                .SetBorderBottom(esUltimaFila ? new SolidBorder(1) : Border.NO_BORDER));
-                            esPrimeraMateriaDelCiclo = false;
-                        }
-                        else
-                        {
-                            // Celda vacía para mantener la estructura
-                            tablaMaterias.AddCell(new Cell()
-                                .SetBorderLeft(new SolidBorder(1))
-                                .SetBorderRight(new SolidBorder(1))
-                                .SetBorderTop(Border.NO_BORDER)
-                                .SetBorderBottom(esUltimaFila ? new SolidBorder(1) : Border.NO_BORDER));
-                        }
-
-                        // Estatus (vacío)
-                        tablaMaterias.AddCell(new Cell()
-                            .SetBorderLeft(new SolidBorder(1))
-                            .SetBorderRight(new SolidBorder(1))
-                            .SetBorderTop(Border.NO_BORDER)
-                            .SetBorderBottom(esUltimaFila ? new SolidBorder(1) : Border.NO_BORDER));
-
-                        // CODIGO (alineado a la izquierda)
-                        string codigo = materia.Materia != null 
-                            ? materia.Materia.CodigoMateria 
-                            : materia.MateriaCodigoLibre ?? "-";
-                        tablaMaterias.AddCell(new Cell()
-                            .Add(new Paragraph(codigo)
-                                .SetFontSize(tamanoFuenteCodigo))
-                            .SetTextAlignment(TextAlignment.LEFT)
-                            .SetBorderLeft(new SolidBorder(1))
-                            .SetBorderRight(new SolidBorder(1))
-                            .SetBorderTop(Border.NO_BORDER)
-                            .SetBorderBottom(esUltimaFila ? new SolidBorder(1) : Border.NO_BORDER));
-
-                        // Nombre de la asignatura
-                        string nombreMateria = materia.Materia != null 
-                            ? materia.Materia.NombreMateria 
-                            : materia.MateriaNombreLibre ?? "-";
-                        tablaMaterias.AddCell(new Cell()
-                            .Add(new Paragraph(nombreMateria)
-                                .SetFontSize(tamanoFuenteNombre))
-                            .SetBorderLeft(new SolidBorder(1))
-                            .SetBorderRight(new SolidBorder(1))
-                            .SetBorderTop(Border.NO_BORDER)
-                            .SetBorderBottom(esUltimaFila ? new SolidBorder(1) : Border.NO_BORDER));
-
-                        // U.V.
-                        int uv = materia.Materia != null 
-                            ? materia.Materia.uv 
-                            : materia.MateriaUnidadesValorativasLibre ?? 0;
-                        tablaMaterias.AddCell(new Cell()
-                            .Add(new Paragraph(uv.ToString())
-                                .SetFontSize(tamanoFuenteUV))
-                            .SetTextAlignment(TextAlignment.CENTER)
-                            .SetBorderLeft(new SolidBorder(1))
-                            .SetBorderRight(new SolidBorder(1))
-                            .SetBorderTop(Border.NO_BORDER)
-                            .SetBorderBottom(esUltimaFila ? new SolidBorder(1) : Border.NO_BORDER));
-
-                        // Calificación (dividida en 2 columnas: NOTA y letra)
-                        decimal promedio = materia.Promedio;
-                        // Formato: 1 decimal máximo (7.8, 9.0, 10.0)
-                        string notaNumerica = promedio.ToString("0.0");
-                        string notaLetras = ConvertirNumeroALetras(promedio);
-                        
-                        // Columna NOTA (solo el número)
-                        tablaMaterias.AddCell(new Cell()
-                            .Add(new Paragraph(notaNumerica)
-                                .SetFontSize(tamanoFuenteNota))
-                            .SetTextAlignment(TextAlignment.CENTER)
-                            .SetBorderLeft(new SolidBorder(1))
-                            .SetBorderRight(new SolidBorder(1))
-                            .SetBorderTop(Border.NO_BORDER)
-                            .SetBorderBottom(esUltimaFila ? new SolidBorder(1) : Border.NO_BORDER));
-                        
-                        // Columna Letra (solo el texto)
-                        tablaMaterias.AddCell(new Cell()
-                            .Add(new Paragraph(notaLetras)
-                                .SetFontSize(tamanoFuenteLetra))
-                            .SetTextAlignment(TextAlignment.LEFT)
-                            .SetBorderLeft(new SolidBorder(1))
-                            .SetBorderRight(new SolidBorder(1))
-                            .SetBorderTop(Border.NO_BORDER)
-                            .SetBorderBottom(esUltimaFila ? new SolidBorder(1) : Border.NO_BORDER));
-
-                        // Resultado (APROBADA si 7.0-10.0, REPROBADA si no)
-                        string resultado = promedio >= 7.0m && promedio <= 10.0m ? "APROBADA" : "REPROBADA";
-                        tablaMaterias.AddCell(new Cell()
-                            .Add(new Paragraph(resultado)
-                                .SetFontSize(tamanoFuenteResultado))
-                            .SetTextAlignment(TextAlignment.CENTER)
-                            .SetBorderLeft(new SolidBorder(1))
-                            .SetBorderRight(new SolidBorder(1))
-                            .SetBorderTop(Border.NO_BORDER)
-                            .SetBorderBottom(esUltimaFila ? new SolidBorder(1) : Border.NO_BORDER));
-                    }
-                    
-                    cicloAnterior = ciclo.CicloTexto;
-                }
-
-                document.Add(tablaMaterias);
-                document.Add(new Paragraph(" ").SetMarginBottom(10));
-
-                // Pie de página con información del alumno
-                document.Add(new Paragraph($"Alumno: {alumno.Nombres} {alumno.Apellidos}")
-                    .SetFont(_fontNormal)
-                    .SetFontSize(10));
-                
-                if (alumno.Carrera != null)
-                {
-                    document.Add(new Paragraph($"Carrera: {alumno.Carrera.NombreCarrera}")
-                        .SetFont(_fontNormal)
-                        .SetFontSize(10));
-                }
-
-                // Bloque de Firma si está configurado
-                if (!string.IsNullOrWhiteSpace(firmaNombre) || !string.IsNullOrWhiteSpace(firmaCargo))
-                {
-                    document.Add(new Paragraph(" ").SetMarginBottom(30)); // Espacio para la firma
-                    
-                    var firmaTable = new Table(1);
-                    firmaTable.SetWidth(UnitValue.CreatePercentValue(100));
-                    firmaTable.SetTextAlignment(TextAlignment.CENTER);
-                    
-                    var firmaCell = new Cell().SetBorder(Border.NO_BORDER).SetTextAlignment(TextAlignment.CENTER);
-                    
-                    if (!string.IsNullOrWhiteSpace(firmaNombre))
-                    {
-                        firmaCell.Add(new Paragraph("f. _________________________________________")
-                            .SetFont(_fontNormal)
-                            .SetFontSize(10)
-                            .SetTextAlignment(TextAlignment.CENTER)
-                            .SetMarginBottom(2));
-                        
-                        firmaCell.Add(new Paragraph(firmaNombre)
-                            .SetFont(_fontBold)
-                            .SetFontSize(10)
-                            .SetTextAlignment(TextAlignment.CENTER)
-                            .SetMarginBottom(2));
-                    }
-                    
-                    if (!string.IsNullOrWhiteSpace(firmaCargo))
-                    {
-                        firmaCell.Add(new Paragraph(firmaCargo)
-                            .SetFont(_fontNormal)
-                            .SetFontSize(10)
-                            .SetTextAlignment(TextAlignment.CENTER)
-                            .SetMarginBottom(2));
-                    }
-                    
-                    if (!string.IsNullOrWhiteSpace(firmaSublinea))
-                    {
-                        firmaCell.Add(new Paragraph(firmaSublinea)
-                            .SetFont(_fontNormal)
-                            .SetFontSize(10)
-                            .SetTextAlignment(TextAlignment.CENTER));
-                    }
-                    
-                    firmaTable.AddCell(firmaCell);
-                    document.Add(firmaTable);
-                }
-
-                document.Close();
-                var pdfBytes = memoryStream.ToArray();
+                var pdfBytes = document.GeneratePdf();
                 return File(pdfBytes, "application/pdf");
             }
             catch (Exception ex)
