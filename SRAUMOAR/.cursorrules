@@ -1,0 +1,27 @@
+# Reglas del Proyecto para Asistentes de IA
+
+Este proyecto se desarrolla en un entorno Windows utilizando PowerShell. Todos los asistentes de IA deben seguir estrictamente estas directrices para evitar errores de sintaxis y desperdicio de tokens.
+
+## 💻 Entorno del Sistema
+- **Sistema Operativo:** Windows
+- **Shell:** PowerShell
+
+## 🛠️ Reglas de Ejecución de Comandos y Herramientas
+1. **Priorizar Herramientas Internas:**
+   - Antes de usar `run_command`, utiliza las herramientas integradas del asistente (`list_dir`, `grep_search`, `view_file`, etc.). Son multiplataforma, más rápidas y no consumen confirmación del usuario.
+
+2. **Evitar Sintaxis de Linux/Bash:**
+   - **NO** uses comandos como `ls`, `cat`, `grep`, `find`, `rm -rf`, `cp`, `mv`, etc.
+   - **NO** uses el operador de encadenamiento `&&` (no es compatible en Windows PowerShell por defecto). Usa `;` o ejecuta los comandos en pasos separados.
+
+3. **Sintaxis de PowerShell Obligatoria:**
+   - Si es imprescindible ejecutar un comando, usa comandos nativos de PowerShell:
+     - Listar: `Get-ChildItem` o `dir`
+     - Buscar texto: `Select-String`
+     - Leer archivo: `Get-Content`
+     - Copiar/Mover: `Copy-Item` / `Move-Item`
+     - Eliminar: `Remove-Item`
+
+4. **Concatenación y Rutas:**
+   - Usa `\` (barra invertida) para rutas de archivos cuando sea requerido por comandos nativos de Windows.
+   - Para concatenar strings o variables en PowerShell, usa el operador `+` o interpolación dentro de comillas dobles `"$(...)"`.
