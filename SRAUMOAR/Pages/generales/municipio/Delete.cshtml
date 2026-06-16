@@ -39,6 +39,22 @@
                 <div class="bg-light p-4 rounded mb-4">
                     <div class="row mb-3">
                         <div class="col-sm-5 fw-bold text-muted d-flex align-items-center">
+                            <i class="bi bi-hash me-2 text-primary"></i> @Html.DisplayNameFor(model => model.Municipio.Codigo)
+                        </div>
+                        <div class="col-sm-7 fs-5 fw-semibold text-dark">
+                            @if (string.IsNullOrWhiteSpace(Model.Municipio.Codigo))
+                            {
+                                <span class="text-muted">No asignado</span>
+                            }
+                            else
+                            {
+                                @Model.Municipio.Codigo
+                            }
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-sm-5 fw-bold text-muted d-flex align-items-center">
                             <i class="bi bi-building me-2 text-primary"></i> @Html.DisplayNameFor(model => model.Municipio.NombreMunicipio)
                         </div>
                         <div class="col-sm-7 fs-5 fw-semibold text-dark">

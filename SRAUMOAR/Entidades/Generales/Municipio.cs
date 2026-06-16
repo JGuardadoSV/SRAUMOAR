@@ -7,6 +7,9 @@ namespace SRAUMOAR.Entidades.Generales
     {
         public int MunicipioId { get; set; }
 
+        [Display(Name = "Código")]
+        public string? Codigo { get; set; }
+
         [Required(ErrorMessage = "El campo municipio es obligatorio")]
         [Display(Name = "Municipio")]
         public string? NombreMunicipio { get; set; }

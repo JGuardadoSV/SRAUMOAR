@@ -304,6 +304,57 @@
             box-shadow: 0 0 0 2px rgba(56, 171, 87, 0.1);
         }
 
+    .copy-panel {
+        border: 1px solid #d1fae5;
+        border-radius: 8px;
+        background: #ffffff;
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+
+    .copy-panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1rem;
+        background: #f0fdf4;
+        border-bottom: 1px solid #d1fae5;
+    }
+
+    .copy-panel-title {
+        margin: 0;
+        color: #166534;
+        font-size: 1rem;
+        font-weight: 700;
+    }
+
+    .copy-panel-body {
+        padding: 1rem;
+    }
+
+    .copy-form-grid {
+        display: grid;
+        grid-template-columns: minmax(240px, 1fr) auto;
+        gap: 1rem;
+        align-items: end;
+    }
+
+    .copy-table-wrap {
+        margin-top: 1rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        overflow-x: auto;
+    }
+
+    .copy-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
     @@media (max-width: 768px) {
         .index-container {
             margin: 0.5rem;
@@ -340,6 +391,13 @@
             flex-direction: column;
         }
 
+        .copy-form-grid,
+        .copy-actions {
+            grid-template-columns: 1fr;
+            flex-direction: column;
+            align-items: stretch;
+        }
+
         .tab-button {
             border-bottom: none;
             border-left: 3px solid transparent;
@@ -356,12 +414,145 @@
 <div class="index-container">
     <div class="index-card">
         <div class="page-header">
-            <h1 class="page-title">Administración de Aranceles del Ciclo Actual</h1>
+            <h1 class="page-title">Administración de Aranceles por Ciclo</h1>
 
             <div class="info-alert">
-                <strong>Información:</strong> Solo se muestran aranceles vinculados al ciclo actual.
+                <strong>Información:</strong> Se muestran los aranceles vinculados al ciclo seleccionado y los aranceles generales sin ciclo.
             </div>
         </div>
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success">@TempData["Success"]</div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger">@TempData["Error"]</div>
+        }
+
+        <form method="get" class="actions-bar">
+            <div class="search-box">
+                <label for="cicloId" class="control-label">Ciclo a consultar</label>
+                <select id="cicloId" name="cicloId" class="search-input" asp-items="Model.CiclosDisponibles" onchange="this.form.submit()">
+                    <option value="">-- Seleccione un ciclo --</option>
+                </select>
+            </div>
+            @if (Model.CicloSeleccionado != null)
+            {
+                <span class="status-badge @(Model.CicloSeleccionado.Activo ? "status-active" : "status-inactive")">
+                    @(Model.CicloSeleccionado.Activo ? "Ciclo activo" : "Ciclo en preparacion/inactivo")
+                </span>
+            }
+        </form>
+
+        @if (Model.CicloSeleccionado != null)
+        {
+            <section class="copy-panel">
+                <div class="copy-panel-header">
+                    <h2 class="copy-panel-title">
+                        <i class="bi bi-files me-1"></i> Copiar aranceles desde otro ciclo
+                    </h2>
+                    <span class="status-badge @(Model.CicloSeleccionado.Activo ? "status-active" : "status-inactive")">
+                        Destino: @Model.CicloSeleccionado.NCiclo - @Model.CicloSeleccionado.anio
+                    </span>
+                </div>
+                <div class="copy-panel-body">
+                    <form method="get" class="copy-form-grid">
+                        <input type="hidden" name="cicloId" value="@Model.CicloIdSeleccionado" />
+                        <div>
+                            <label for="cicloOrigenId" class="control-label">Ciclo origen</label>
+                            <select id="cicloOrigenId" name="cicloOrigenId" class="search-input" asp-items="Model.CiclosOrigenDisponibles">
+                                <option value="">-- Seleccione ciclo origen --</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-secondary">
+                            <i class="bi bi-search"></i> Ver aranceles
+                        </button>
+                    </form>
+
+                    @if (Model.CicloOrigenSeleccionado != null)
+                    {
+                        @if (Model.ArancelesOrigen.Any())
+                        {
+                            <form method="post" asp-page-handler="CopiarAranceles">
+                                <input type="hidden" name="cicloDestinoId" value="@Model.CicloIdSeleccionado" />
+                                <input type="hidden" name="cicloOrigenId" value="@Model.CicloOrigenSeleccionado.Id" />
+
+                                <div class="copy-table-wrap">
+                                    <table class="table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 56px;">
+                                                    <input type="checkbox" id="selectAllCopy" />
+                                                </th>
+                                                <th>Nombre</th>
+                                                <th>Costo</th>
+                                                <th>Tipo</th>
+                                                <th>Estado</th>
+                                                <th>Fechas</th>
+                                                <th>Mora</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var item in Model.ArancelesOrigen)
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        <input type="checkbox" class="copy-checkbox" name="arancelIds" value="@item.ArancelId" />
+                                                    </td>
+                                                    <td><strong>@item.Nombre</strong></td>
+                                                    <td class="cost-cell">$@item.Costo.ToString("N2")</td>
+                                                    <td>
+                                                        @if (item.EsEspecializacion)
+                                                        {
+                                                            <span class="status-badge status-active">Especialización</span>
+                                                        }
+                                                        else if (item.Obligatorio)
+                                                        {
+                                                            <span class="status-badge status-active">Obligatorio</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="status-badge status-inactive">No obligatorio</span>
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        <span class="status-badge @(item.Activo ? "status-active" : "status-inactive")">
+                                                            @(item.Activo ? "Activo" : "Inactivo")
+                                                        </span>
+                                                    </td>
+                                                    <td class="date-cell">
+                                                        @(item.FechaInicio?.ToString("dd/MM/yyyy") ?? "Sin inicio") - @(item.FechaFin?.ToString("dd/MM/yyyy") ?? "Sin fin")
+                                                    </td>
+                                                    <td class="cost-cell">$@item.ValorMora.ToString("N2")</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="copy-actions">
+                                    <span class="text-muted">
+                                        Origen: ciclo @Model.CicloOrigenSeleccionado.NCiclo - @Model.CicloOrigenSeleccionado.anio
+                                    </span>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-clipboard-plus"></i> Copiar seleccionados
+                                    </button>
+                                </div>
+                            </form>
+                        }
+                        else
+                        {
+                            <div class="empty-state">
+                                <div class="empty-icon"><i class="bi bi-file-earmark-text"></i></div>
+                                <h3>No hay aranceles para copiar</h3>
+                                <p>El ciclo origen seleccionado no tiene aranceles propios registrados.</p>
+                            </div>
+                        }
+                    }
+                </div>
+            </section>
+        }
 
         <div class="stats-row">
             <div class="stat-card">
@@ -394,8 +585,8 @@
             <div class="search-box">
                 <input type="text" class="search-input" placeholder="Buscar aranceles..." id="searchInput">
             </div>
-            <a asp-page="Create" class="btn btn-primary">
-                ➕ Registrar Nuevo
+            <a asp-page="Create" asp-route-cicloId="@Model.CicloIdSeleccionado" class="btn btn-primary">
+                Registrar Nuevo
             </a>
         </div>
 
@@ -477,7 +668,7 @@
                                         </td>
                                         <td>
                                             <a asp-page="./Edit" asp-route-id="@item.ArancelId" class="btn btn-primary btn-sm">
-                                                ✏️ Editar
+                                                Editar
                                             </a>
                                         </td>
                                     </tr>
@@ -488,10 +679,10 @@
                     else
                     {
                         <div class="empty-state">
-                            <div class="empty-icon">📄</div>
+                            <div class="empty-icon"><i class="bi bi-file-earmark-text"></i></div>
                             <h3>No hay aranceles obligatorios registrados</h3>
                             <p>Comienza registrando tu primer arancel obligatorio para este ciclo.</p>
-                            <a asp-page="Create" class="btn btn-primary">➕ Registrar Primer Arancel</a>
+                            <a asp-page="Create" asp-route-cicloId="@Model.CicloIdSeleccionado" class="btn btn-primary">Registrar Primer Arancel</a>
                         </div>
                     }
                 </div>
@@ -558,7 +749,7 @@
                                         </td>
                                         <td>
                                             <a asp-page="./Edit" asp-route-id="@item.ArancelId" class="btn btn-primary btn-sm">
-                                                ✏️ Editar
+                                                Editar
                                             </a>
                                         </td>
                                     </tr>
@@ -569,10 +760,10 @@
                     else
                     {
                         <div class="empty-state">
-                            <div class="empty-icon">📄</div>
+                            <div class="empty-icon"><i class="bi bi-file-earmark-text"></i></div>
                             <h3>No hay aranceles no obligatorios registrados</h3>
                             <p>Comienza registrando tu primer arancel no obligatorio para este ciclo.</p>
-                            <a asp-page="Create" class="btn btn-primary">➕ Registrar Primer Arancel</a>
+                            <a asp-page="Create" asp-route-cicloId="@Model.CicloIdSeleccionado" class="btn btn-primary">Registrar Primer Arancel</a>
                         </div>
                     }
                 </div>
@@ -650,7 +841,7 @@
                                         </td>
                                         <td>
                                             <a asp-page="./Edit" asp-route-id="@item.ArancelId" class="btn btn-primary btn-sm">
-                                                ✏️ Editar
+                                                Editar
                                             </a>
                                         </td>
                                     </tr>
@@ -661,10 +852,10 @@
                     else
                     {
                         <div class="empty-state">
-                            <div class="empty-icon">📄</div>
+                            <div class="empty-icon"><i class="bi bi-file-earmark-text"></i></div>
                             <h3>No hay aranceles de especialización registrados</h3>
                             <p>Comienza registrando tu primer arancel de especialización para este ciclo.</p>
-                            <a asp-page="Create" class="btn btn-primary">➕ Registrar Primer Arancel</a>
+                            <a asp-page="Create" asp-route-cicloId="@Model.CicloIdSeleccionado" class="btn btn-primary">Registrar Primer Arancel</a>
                         </div>
                     }
                 </div>
@@ -678,6 +869,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         const tabButtons = document.querySelectorAll('.tab-button');
         const tabContents = document.querySelectorAll('.tab-content');
+        const selectAllCopy = document.getElementById('selectAllCopy');
 
         tabButtons.forEach(button => {
             button.addEventListener('click', function() {
@@ -692,6 +884,14 @@
                 document.getElementById(targetTab).classList.add('active');
             });
         });
+
+        if (selectAllCopy) {
+            selectAllCopy.addEventListener('change', function() {
+                document.querySelectorAll('.copy-checkbox').forEach(checkbox => {
+                    checkbox.checked = selectAllCopy.checked;
+                });
+            });
+        }
     });
 
     // Funcionalidad de búsqueda

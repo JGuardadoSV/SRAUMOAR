@@ -5,43 +5,116 @@
     ViewData["Title"] = "Registrar ciclo";
 }
 
-<div class="row mb-4 align-items-center">
-    <div class="col-sm-6">
-        <h4 class="mb-0">Registro de nuevo ciclo</h4>
-    </div>
-    <div class="col-sm-6">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb breadcrumb-dark breadcrumb-transparent justify-content-sm-end mb-0">
-                <li class="breadcrumb-item"><a asp-page="/Index"><i class="bi bi-house-door-fill"></i></a></li>
-                <li class="breadcrumb-item"><a asp-page="./Index">Administración de ciclos</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Registrar ciclo</li>
-            </ol>
-        </nav>
-    </div>
-</div>
+<style>
+    .cycle-form-page {
+        max-width: 980px;
+        margin: 0 auto;
+    }
 
-@if (Model.sePuedeRegistrar)
-{
-    <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="bi bi-calendar-plus me-2"></i>Datos del nuevo ciclo</h5>
+    .page-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .page-title {
+        margin: 0;
+        color: #1f2937;
+        font-weight: 700;
+    }
+
+    .page-subtitle {
+        margin: .25rem 0 0;
+        color: #6b7280;
+    }
+
+    .form-shell {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 300px;
+        gap: 1rem;
+        align-items: start;
+    }
+
+    .summary-panel {
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1rem;
+    }
+
+    .summary-panel h6 {
+        color: #1f2937;
+        font-weight: 700;
+    }
+
+    .summary-panel p {
+        color: #6b7280;
+        margin-bottom: .75rem;
+    }
+
+    .field-hint {
+        color: #6b7280;
+        font-size: .85rem;
+        margin-top: .25rem;
+    }
+
+    @@media (max-width: 900px) {
+        .form-shell {
+            grid-template-columns: 1fr;
+        }
+
+        .page-toolbar {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<div class="cycle-form-page">
+    <div class="page-toolbar">
+        <div>
+            <h4 class="page-title">Registrar ciclo lectivo</h4>
+            <p class="page-subtitle">Cree el ciclo operativo o deje preparado el siguiente ciclo para aranceles.</p>
+        </div>
+        <a asp-page="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left-circle me-1"></i> Volver
+        </a>
+    </div>
+
+    <div class="form-shell">
+        <div>
+        @if (Model.HayCicloActivo)
+        {
+            <div class="alert alert-info shadow-sm d-flex align-items-start" role="alert">
+                <i class="bi bi-info-circle-fill fs-4 me-3"></i>
+                <div>
+                    <strong>Ciclo en preparación</strong><br>
+                    Ya existe un ciclo activo. El nuevo ciclo se registrará como inactivo para preparar aranceles sin afectar el ciclo vigente.
                 </div>
-                <div class="card-body">
-                    <form method="post">
-                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            </div>
+        }
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white">
+                <h5 class="mb-0 text-primary"><i class="bi bi-calendar-plus me-2"></i>Datos del ciclo</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
                         
                         <div class="row g-3">
                             <div class="col-md-6 form-group">
                                 <label asp-for="Ciclo.NCiclo" class="form-label fw-bold"></label>
                                 <input asp-for="Ciclo.NCiclo" class="form-control" placeholder="Ej: 01" />
+                                <div class="field-hint">Número académico del ciclo.</div>
                                 <span asp-validation-for="Ciclo.NCiclo" class="text-danger"></span>
                             </div>
                             
                             <div class="col-md-6 form-group">
                                 <label asp-for="Ciclo.anio" class="form-label fw-bold"></label>
                                 <input asp-for="Ciclo.anio" class="form-control" placeholder="Ej: 2024" />
+                                <div class="field-hint">Año calendario del ciclo.</div>
                                 <span asp-validation-for="Ciclo.anio" class="text-danger"></span>
                             </div>
                             
@@ -60,44 +133,32 @@
                             <div class="col-12 form-group">
                                 <label asp-for="Ciclo.CorrelativoCarnet" class="form-label fw-bold"></label>
                                 <input asp-for="Ciclo.CorrelativoCarnet" class="form-control" />
+                                <div class="field-hint">Siguiente correlativo para generación de carnet.</div>
                                 <span asp-validation-for="Ciclo.CorrelativoCarnet" class="text-danger"></span>
                             </div>
                         </div>
 
-                        <div class="d-flex justify-content-end mt-4 gap-2">
-                            <a asp-page="Index" class="btn btn-outline-secondary">
-                                <i class="bi bi-arrow-left-circle me-1"></i> Volver
-                            </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-save me-1"></i> Registrar nuevo ciclo
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                    <div class="d-flex justify-content-end mt-4 gap-2">
+                        <a asp-page="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left-circle me-1"></i> Volver
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-1"></i> Registrar nuevo ciclo
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
-    </div>
-}
-else
-{
-    <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            <div class="alert alert-danger shadow-sm d-flex align-items-center" role="alert">
-                <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
-                <div>
-                    <strong>No se puede proceder</strong><br>
-                    Existe un ciclo activo, no se puede registrar otro hasta que el actual sea finalizado.
-                </div>
-            </div>
+        </div>
 
-            <div class="text-center mt-3">
-                <a asp-page="Index" class="btn btn-secondary">
-                    <i class="bi bi-arrow-left-circle me-1"></i> Volver al listado
-                </a>
-            </div>
-        </div>
+        <aside class="summary-panel">
+            <h6><i class="bi bi-shield-check me-1"></i>Regla del sistema</h6>
+            <p>Solo puede existir un ciclo activo. Si ya hay uno, este registro quedará en preparación.</p>
+            <h6><i class="bi bi-coin me-1"></i>Aranceles futuros</h6>
+            <p class="mb-0">Después de guardar, podrá seleccionar este ciclo desde aranceles y registrar sus cargos sin publicarlos al portal del ciclo vigente.</p>
+        </aside>
     </div>
-}
+</div>
 
 
 @section Scripts {

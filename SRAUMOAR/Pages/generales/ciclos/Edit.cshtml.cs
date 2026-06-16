@@ -49,6 +49,12 @@ namespace SRAUMOAR.Pages.generales.ciclos
             {
                 return Page();
             }
+
+            if (Ciclo.Activo && await _context.Ciclos.AnyAsync(x => x.Activo && x.Id != Ciclo.Id))
+            {
+                ModelState.AddModelError(string.Empty, "No se puede activar este ciclo porque ya existe un ciclo activo.");
+                return Page();
+            }
           
 
             _context.Attach(Ciclo).State = EntityState.Modified;

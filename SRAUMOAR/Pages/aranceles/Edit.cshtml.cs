@@ -32,35 +32,25 @@ namespace SRAUMOAR.Pages.aranceles
                 return NotFound();
             }
 
-            var arancel =  await _context.Aranceles.FirstOrDefaultAsync(m => m.ArancelId == id);
+            var arancel = await _context.Aranceles.FirstOrDefaultAsync(m => m.ArancelId == id);
             if (arancel == null)
             {
                 return NotFound();
             }
+
             Arancel = arancel;
-           ViewData["CicloId"] = new SelectList(
-    _context.Ciclos
-        .Where(x => x.Activo == true)
-        .Select(x => new { x.Id, NombreCiclo = x.NCiclo + " - " + x.anio }),
-    "Id",
-    "NombreCiclo"
-);
+            CargarCiclos(Arancel.CicloId);
             return Page();
         }
 
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see https://aka.ms/RazorPagesCRUD.
         public async Task<IActionResult> OnPostAsync()
         {
-            // Validación condicional: si no es obligatorio NI especialización, los campos de ciclo y fechas son opcionales
             if (!Arancel.Obligatorio && !Arancel.EsEspecializacion)
             {
-                // Remover errores de validación para campos opcionales cuando no es obligatorio ni especialización
                 ModelState.Remove("Arancel.CicloId");
                 ModelState.Remove("Arancel.FechaInicio");
                 ModelState.Remove("Arancel.FechaFin");
                 ModelState.Remove("Arancel.ValorMora");
-                // Establecer valores null para campos opcionales
                 Arancel.CicloId = null;
                 Arancel.FechaInicio = null;
                 Arancel.FechaFin = null;
@@ -69,24 +59,16 @@ namespace SRAUMOAR.Pages.aranceles
 
             if (!ModelState.IsValid)
             {
-                ViewData["CicloId"] = new SelectList(
-                    _context.Ciclos
-                        .Where(x => x.Activo == true)
-                        .Select(x => new { x.Id, NombreCiclo = x.NCiclo + " - " + x.anio }),
-                    "Id",
-                    "NombreCiclo"
-                );
+                CargarCiclos(Arancel.CicloId);
                 return Page();
             }
 
-            // Obtener el arancel existente de la base de datos
             var arancelExistente = await _context.Aranceles.FindAsync(Arancel.ArancelId);
             if (arancelExistente == null)
             {
                 return NotFound();
             }
 
-            // Actualizar solo las propiedades que se pueden editar
             arancelExistente.Nombre = Arancel.Nombre;
             arancelExistente.Costo = Arancel.Costo;
             arancelExistente.Exento = Arancel.Exento;
@@ -110,19 +92,34 @@ namespace SRAUMOAR.Pages.aranceles
                 {
                     return NotFound();
                 }
-                else
-                {
-                    throw;
-                }
+
+                throw;
             }
 
-            return RedirectToPage("./Index");
+            return RedirectToPage("./Index", new { cicloId = Arancel.CicloId });
         }
 
         private bool ArancelExists(int id)
         {
             return _context.Aranceles.Any(e => e.ArancelId == id);
         }
+
+        private void CargarCiclos(int? selectedValue = null)
+        {
+            ViewData["CicloId"] = new SelectList(
+                _context.Ciclos
+                    .OrderByDescending(x => x.Activo)
+                    .ThenByDescending(x => x.anio)
+                    .ThenByDescending(x => x.NCiclo)
+                    .Select(x => new
+                    {
+                        x.Id,
+                        NombreCiclo = x.NCiclo + " - " + x.anio + (x.Activo ? " (Activo)" : " (En preparacion/Inactivo)")
+                    }),
+                "Id",
+                "NombreCiclo",
+                selectedValue
+            );
+        }
     }
 }
-

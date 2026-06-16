@@ -25,5 +25,27 @@ namespace SRAUMOAR.Pages.generales.ciclos
         {
             Ciclo = await _context.Ciclos.OrderByDescending(x=>x.Id).ToListAsync();
         }
+
+        public async Task<IActionResult> OnPostActivarAsync(int id)
+        {
+            var ciclo = await _context.Ciclos.FirstOrDefaultAsync(x => x.Id == id);
+            if (ciclo == null)
+            {
+                return NotFound();
+            }
+
+            var existeOtroActivo = await _context.Ciclos.AnyAsync(x => x.Activo && x.Id != id);
+            if (existeOtroActivo)
+            {
+                TempData["Error"] = "No se puede activar este ciclo porque ya existe un ciclo activo. Finalice el ciclo actual antes de activar uno nuevo.";
+                return RedirectToPage();
+            }
+
+            ciclo.Activo = true;
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Ciclo activado correctamente.";
+            return RedirectToPage();
+        }
     }
 }
