@@ -28,43 +28,77 @@ namespace SRAUMOAR.Entidades
     }
         public class Direccion
         {
+            [Required(ErrorMessage = "El departamento es obligatorio.")]
             public string Departamento { get; set; } = string.Empty;
+
+            [Required(ErrorMessage = "El municipio es obligatorio.")]
             public string Municipio { get; set; } = string.Empty;
+
+            [Required(ErrorMessage = "La direccion es obligatoria.")]
             public string Complemento { get; set; } = string.Empty;
         }
 
         public class Emisor
         {
+            [Required(ErrorMessage = "El NIT del emisor es obligatorio.")]
             public string Nit { get; set; } = string.Empty;
+
+            [Required(ErrorMessage = "El NRC del emisor es obligatorio.")]
             public string Nrc { get; set; } = string.Empty;
+
+            [Required(ErrorMessage = "El nombre del emisor es obligatorio.")]
             public string Nombre { get; set; } = string.Empty;
+
+            [Required(ErrorMessage = "El codigo de actividad del emisor es obligatorio.")]
             public string CodActividad { get; set; } = string.Empty;
+
+            [Required(ErrorMessage = "El giro del emisor es obligatorio.")]
             public string DescActividad { get; set; } = string.Empty;
+
+            [Required(ErrorMessage = "El nombre comercial del emisor es obligatorio.")]
             public string NombreComercial { get; set; } = string.Empty;
+
+            [Required(ErrorMessage = "El tipo de establecimiento es obligatorio.")]
             public string TipoEstablecimiento { get; set; } = string.Empty;
+
             public Direccion Direccion { get; set; } = new Direccion();
+
+            [Required(ErrorMessage = "El telefono del emisor es obligatorio.")]
             public string Telefono { get; set; } = string.Empty;
+
             public string? CodEstableMH { get; set; }
             public string? CodEstable { get; set; }
             public string? CodPuntoVentaMH { get; set; }
             public string? CodPuntoVenta { get; set; }
+
+            [Required(ErrorMessage = "El correo del emisor es obligatorio.")]
             public string Correo { get; set; } = string.Empty;
         }
 
         public class Receptor
         {
+            [Required(ErrorMessage = "El documento del receptor es obligatorio.")]
             public string Nit { get; set; } = string.Empty;
             public string? Nrc { get; set; } = string.Empty;
+
+            [Required(ErrorMessage = "El nombre es obligatorio.")]
             public string Nombre { get; set; } = string.Empty;
             public string? CodActividad { get; set; } = string.Empty;
             public string? DescActividad { get; set; } = string.Empty;
             public string? NombreComercial { get; set; } = string.Empty;
             public Direccion Direccion { get; set; } = new Direccion();
+
+            [Required(ErrorMessage = "El telefono es obligatorio.")]
             public string Telefono { get; set; } = string.Empty;
+
+            [Required(ErrorMessage = "El correo es obligatorio.")]
             public string Correo { get; set; } = string.Empty;
             
             // Campos para departamento y municipio
+            [Required(ErrorMessage = "El departamento es obligatorio.")]
             public string CodigoDepartamento { get; set; } = string.Empty;
+
+            [Required(ErrorMessage = "El municipio es obligatorio.")]
             public string CodigoMunicipio { get; set; } = string.Empty;
             public bool Retencion { get; set; } = false;
         }
@@ -72,7 +106,11 @@ namespace SRAUMOAR.Entidades
         public class ProductoVenta
         {
             public int Id { get; set; }
+
+            [Required(ErrorMessage = "El codigo del producto es obligatorio.")]
             public string Codigo { get; set; } = string.Empty;
+
+            [Required(ErrorMessage = "La descripcion del producto es obligatoria.")]
             public string Descripcion { get; set; } = string.Empty;
 
             [Range(0.01, double.MaxValue, ErrorMessage = "La cantidad debe ser mayor a 0")]
@@ -95,15 +133,20 @@ namespace SRAUMOAR.Entidades
             public string TipoDocumento { get; set; } = string.Empty;
 
             // Campo para código de país (solo para donaciones)
+            [Required(ErrorMessage = "El codigo de pais es obligatorio.")]
             public string CodigoPais { get; set; } = string.Empty;
 
             // Campo para tipo de donación (solo para donaciones)
+            [Required(ErrorMessage = "El tipo de donacion es obligatorio.")]
             public string TipoDonacion { get; set; } = string.Empty;
 
             public List<ProductoVenta> Productos { get; set; } = new List<ProductoVenta>();
 
             // Propiedades para el formulario de productos
+            [Required(ErrorMessage = "El codigo del producto es obligatorio.")]
             public string CodigoProducto { get; set; } = string.Empty;
+
+            [Required(ErrorMessage = "La descripcion del producto es obligatoria.")]
             public string DescripcionProducto { get; set; } = string.Empty;
             public decimal CantidadProducto { get; set; }
             public decimal PrecioProducto { get; set; }
@@ -132,6 +175,8 @@ namespace SRAUMOAR.Entidades
             public decimal TotalGeneral => TotalExento + TotalGravado + IVA;
 
             public bool Retencion { get; set; } = false;
+
+            [Required(ErrorMessage = "El tipo de operacion es obligatorio.")]
             public string TipoOperacion { get; set; } = string.Empty;
 
             public decimal TotalGeneralConRetencion

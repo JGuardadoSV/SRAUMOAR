@@ -7,7 +7,7 @@
 }
 
 <section class="pv-shell">
-    <form method="post" id="puntoVentaForm">
+    <form method="post" id="puntoVentaForm" novalidate>
         <div class="pv-header">
             <div>
                 <div class="pv-eyebrow">Punto de venta</div>
@@ -43,6 +43,40 @@
         <div id="alertaTipoDocumento" class="pv-inline-warning" style="display: none;">
             <i class="bi bi-exclamation-triangle"></i>
             <span>Debe seleccionar un tipo de documento antes de continuar con la facturacion.</span>
+        </div>
+
+        <div class="modal fade pv-document-modal" id="tipoDocumentoModal" tabindex="-1" aria-labelledby="tipoDocumentoModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div>
+                            <span class="pv-modal-eyebrow">Antes de iniciar</span>
+                            <h5 class="modal-title" id="tipoDocumentoModalLabel">Seleccione el tipo de factura</h5>
+                        </div>
+                    </div>
+                    <div class="modal-body">
+                        <p class="pv-modal-copy">Esta seleccion define los campos requeridos, el calculo de IVA y las reglas de la factura.</p>
+                        <label for="modalTipoDocumentoSelect" class="form-label">Tipo de documento</label>
+                        <select class="form-control form-control-lg" id="modalTipoDocumentoSelect">
+                            <option value="">Seleccione...</option>
+                            <option value="01">01 - Consumidor Final</option>
+                            <option value="02">02 - Credito Fiscal</option>
+                            <option value="14">14 - Sujeto Excluido</option>
+                            <option value="15">15 - Donacion</option>
+                        </select>
+                        <div class="pv-modal-error" id="modalTipoDocumentoError" style="display: none;">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            Seleccione un tipo de documento para continuar.
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" id="confirmarTipoDocumento">
+                            <i class="bi bi-check2-circle"></i>
+                            Continuar
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="pv-layout">
@@ -835,6 +869,50 @@
             display: none;
         }
 
+        .pv-document-modal .modal-content {
+            border: 0;
+            border-radius: 8px;
+            box-shadow: 0 22px 55px rgba(15, 23, 42, 0.28);
+        }
+
+        .pv-document-modal .modal-header,
+        .pv-document-modal .modal-footer {
+            border-color: #e2e8f0;
+        }
+
+        .pv-document-modal .modal-title {
+            margin-top: 0.15rem;
+            font-weight: 800;
+        }
+
+        .pv-modal-eyebrow {
+            color: var(--pv-accent);
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .pv-modal-copy {
+            color: var(--pv-muted);
+            margin-bottom: 1rem;
+        }
+
+        .pv-modal-error {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            margin-top: 0.75rem;
+            color: var(--pv-danger);
+            font-weight: 700;
+        }
+
+        #confirmarTipoDocumento {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-weight: 800;
+        }
+
         .select2-container--default .select2-selection--single {
             min-height: 40px;
             border: 1px solid #ccd6df;
@@ -954,9 +1032,12 @@
         jQuery(function () {
             var form = jQuery('#puntoVentaForm');
             var tipoDocumento = jQuery('#tipoDocumentoSelect');
+            var modalTipoDocumento = jQuery('#modalTipoDocumentoSelect');
             var municipioGuardado = null;
+            var documentoModal = null;
 
             inicializarSelectorCodigoActividad();
+            inicializarModalTipoDocumento();
             restaurarMunicipioSeleccionado();
             actualizarEstadoDocumento();
             restaurarScroll();
@@ -967,6 +1048,13 @@
             });
 
             tipoDocumento.on('change', actualizarEstadoDocumento);
+            tipoDocumento.on('change', function () {
+                modalTipoDocumento.val(jQuery(this).val());
+            });
+            modalTipoDocumento.on('change', function () {
+                jQuery('#modalTipoDocumentoError').hide();
+            });
+            jQuery('#confirmarTipoDocumento').on('click', confirmarTipoDocumento);
             jQuery('#retencionRentaCheck').on('change', actualizarTotalesVisuales);
 
             jQuery('#Factura_Receptor_CodigoDepartamento').on('change', function () {
@@ -992,6 +1080,43 @@
                     bloquearProcesamiento(jQuery(submitter));
                 }
             });
+
+            function inicializarModalTipoDocumento() {
+                modalTipoDocumento.val(tipoDocumento.val());
+
+                var modalElement = document.getElementById('tipoDocumentoModal');
+                if (!modalElement || typeof bootstrap === 'undefined' || !bootstrap.Modal) return;
+
+                documentoModal = new bootstrap.Modal(modalElement, {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+
+                if (!tipoDocumento.val()) {
+                    setTimeout(function () {
+                        documentoModal.show();
+                        modalTipoDocumento.trigger('focus');
+                    }, 180);
+                }
+            }
+
+            function confirmarTipoDocumento() {
+                var valor = modalTipoDocumento.val();
+
+                if (!valor) {
+                    jQuery('#modalTipoDocumentoError').show();
+                    modalTipoDocumento.trigger('focus');
+                    return;
+                }
+
+                tipoDocumento.val(valor).trigger('change');
+
+                if (documentoModal) {
+                    documentoModal.hide();
+                }
+
+                jQuery('#Factura_CodigoProducto').trigger('focus');
+            }
 
             function actualizarEstadoDocumento() {
                 var tipoDoc = tipoDocumento.val();
