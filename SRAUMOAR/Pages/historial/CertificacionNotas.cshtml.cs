@@ -111,15 +111,53 @@ namespace SRAUMOAR.Pages.historial
                 float tamanoFuenteResultado = 9f;
                 
                 // Anchos de columnas (valores relativos, suman 16.4f)
-                float anchoCiclo = 1.0f;
+                float anchoCiclo = 1.3f;
                 float anchoEstatus = 1.2f;
-                float anchoCodigo = 1.6f;
-                float anchoNombre = 5.5f;  // Aumentado para nombres largos
-                float anchoUV = 0.9f;
-                float anchoNota = 0.9f;
-                float anchoLetra = 3.5f;   // Aumentado significativamente para evitar saltos de línea en letras largas
-                float anchoResultado = 1.8f;
+                float anchoCodigo = 1.5f;
+                float anchoNombre = 5.8f;  // Aumentado para dar más espacio a nombres de asignaturas
+                float anchoUV = 0.8f;
+                float anchoNota = 0.8f;
+                float anchoLetra = 3.0f;   // Ajustado para dar espacio a otras columnas
+                float anchoResultado = 2.0f; // Aumentado para que "RESULTADO" no se corte
                 
+                // ============================================
+                // CÁLCULOS ESTADÍSTICOS Y DATOS DINÁMICOS
+                // ============================================
+                decimal totalUV = historialCiclos.Sum(hc => hc.MateriasHistorial?.Sum(hm => 
+                    hm.Materia != null ? hm.Materia.uv : (hm.MateriaUnidadesValorativasLibre ?? 0)) ?? 0);
+                
+                decimal sumaPromedioPorUV = historialCiclos.Sum(hc => 
+                    hc.MateriasHistorial?.Sum(hm => 
+                    {
+                        decimal uv = hm.Materia != null ? hm.Materia.uv : (hm.MateriaUnidadesValorativasLibre ?? 0);
+                        return hm.Promedio * uv;
+                    }) ?? 0);
+                
+                decimal cumVal = 0;
+                if (totalUV > 0)
+                {
+                    cumVal = Math.Round(sumaPromedioPorUV / totalUV, 1);
+                }
+
+                // Cantidad de materias cursadas y aprobadas (Promedio >= 7.0 o Aprobada == true)
+                int totalMateriasAprobadas = historialCiclos
+                    .SelectMany(hc => hc.MateriasHistorial ?? new List<HistorialMateria>())
+                    .Count(m => m.Promedio >= 7.0m || m.Aprobada);
+
+                string totalMateriasAprobadasLetras = ConvertirEnteroALetras(totalMateriasAprobadas).ToLower();
+
+                // Género del alumno
+                string interesadaTexto = alumno.Genero == 1 ? "la interesada" : "el interesado";
+
+                // Nuevos parámetros con fallbacks seguros
+                string rectoraNombre = configs.TryGetValue("RectoraNombre", out var rNom) ? rNom : "LICDA. CARMEN NAVAS ESCOBAR DE MEJÍA";
+                string rectoraCargo = configs.TryGetValue("RectoraCargo", out var rCar) ? rCar : "RECTORA";
+                string confrontadoPor = configs.TryGetValue("ConfrontadoPor", out var conf) ? conf : "LIC. JOSE AUGUSTO HERNANDEZ GONZALEZ";
+                string lugarExpedicion = configs.TryGetValue("LugarExpedicion", out var lug) ? lug : "el distrito de Tejutla, municipio de Chalatenango Centro, departamento de Chalatenango";
+                string rectoraCertificacionTemplate = configs.TryGetValue("RectoraCertificacion", out var rCert) ? rCert : "La infrascrita, Rectora de la Universidad Monseñor Oscar Arnulfo Romero, certifica que la firma que aparece al pie de la certificación global de notas es auténtica y es la misma que usa el {SecretarioNombre}, {SecretarioCargo} de esta universidad.";
+
+                // Fecha actual en letras
+                string fechaTexto = ConvertirFechaALetras(DateTime.Now);
                 // ============================================
 
                 // Generar PDF usando QuestPDF
@@ -128,11 +166,20 @@ namespace SRAUMOAR.Pages.historial
                     container.Page(page =>
                     {
                         page.Size(PageSizes.Letter);
-                        page.Margin(40);
+                        page.Margin(30);
                         page.PageColor(Colors.White);
                         
-                        // Tipografía por defecto "Times New Roman"
-                        page.DefaultTextStyle(x => x.FontFamily("Times New Roman").FontSize(10));
+                        // Tipografía por defecto "Arial"
+                        page.DefaultTextStyle(x => x.FontFamily("Arial").FontSize(10));
+
+                        // FOOTER
+                        page.Footer().AlignCenter().PaddingBottom(10).Text(x =>
+                        {
+                            x.Span("Página ").FontSize(9);
+                            x.CurrentPageNumber().FontSize(9);
+                            x.Span(" de ").FontSize(9);
+                            x.TotalPages().FontSize(9);
+                        });
 
                         // CONTENIDO
                         page.Content().Column(col =>
@@ -206,13 +253,13 @@ namespace SRAUMOAR.Pages.historial
                                         return styled.PaddingVertical(3).PaddingHorizontal(2);
                                     }
 
-                                    header.Cell().Element(c => HeaderStyle(c, 0)).Text("Ciclo").Bold().FontSize(tamanoFuenteHeader).AlignCenter();
-                                    header.Cell().Element(c => HeaderStyle(c, 1)).Text("Estatus").Bold().FontSize(tamanoFuenteHeader).AlignCenter();
+                                    header.Cell().Element(c => HeaderStyle(c, 0)).Text("CICLO").Bold().FontSize(tamanoFuenteHeader).AlignCenter();
+                                    header.Cell().Element(c => HeaderStyle(c, 1)).Text("ESTATUS").Bold().FontSize(tamanoFuenteHeader).AlignCenter();
                                     header.Cell().Element(c => HeaderStyle(c, 2)).Text("CODIGO").Bold().FontSize(tamanoFuenteHeader).AlignCenter();
-                                    header.Cell().Element(c => HeaderStyle(c, 3)).Text("Nombre de la asignatura").Bold().FontSize(tamanoFuenteHeader).AlignCenter();
+                                    header.Cell().Element(c => HeaderStyle(c, 3)).Text("NOMBRE DE LA ASIGNATURA").Bold().FontSize(tamanoFuenteHeader).AlignCenter();
                                     header.Cell().Element(c => HeaderStyle(c, 4)).Text("U.V.").Bold().FontSize(tamanoFuenteHeader).AlignCenter();
-                                    header.Cell().ColumnSpan(2).Element(c => HeaderStyle(c, 5)).Text("Calificación").Bold().FontSize(tamanoFuenteHeader).AlignCenter();
-                                    header.Cell().Element(c => HeaderStyle(c, 7)).Text("Resultado").Bold().FontSize(tamanoFuenteHeader).AlignCenter();
+                                    header.Cell().ColumnSpan(2).Element(c => HeaderStyle(c, 5)).Text("CALIFICACIÓN").Bold().FontSize(tamanoFuenteHeader).AlignCenter();
+                                    header.Cell().Element(c => HeaderStyle(c, 7)).Text("RESULTADO").Bold().FontSize(tamanoFuenteHeader).AlignCenter();
                                 });
 
                                 // Datos de la Tabla
@@ -245,7 +292,12 @@ namespace SRAUMOAR.Pages.historial
                                         // Ciclo
                                         if (esPrimeraMateriaDelCiclo)
                                         {
-                                            table.Cell().Element(c => CellStyle(c, 0)).Text(ciclo.CicloTexto).FontSize(tamanoFuenteCiclo).AlignCenter();
+                                            string cicloFormateado = ciclo.CicloTexto;
+                                            if (cicloFormateado.Length == 7 && cicloFormateado[2] == '-')
+                                            {
+                                                cicloFormateado = $"{cicloFormateado.Substring(3)}-{cicloFormateado.Substring(0, 2)}";
+                                            }
+                                            table.Cell().Element(c => CellStyle(c, 0)).Text(cicloFormateado).FontSize(tamanoFuenteCiclo).AlignCenter();
                                             esPrimeraMateriaDelCiclo = false;
                                         }
                                         else
@@ -289,49 +341,143 @@ namespace SRAUMOAR.Pages.historial
 
                                     cicloAnterior = ciclo.CicloTexto;
                                 }
+
+                                // Fila de CUM
+                                table.Cell().ColumnSpan(5)
+                                    .BorderTop(0.5f).BorderColor(Colors.Black)
+                                    .BorderRight(0.5f).BorderColor(Colors.Black)
+                                    .PaddingVertical(3).PaddingHorizontal(2)
+                                    .AlignCenter()
+                                    .Text("COEFICIENTE DE UNIDADES MÉRITO (CUM) :").Bold().FontSize(9);
+
+                                string cumNumerico = cumVal.ToString("0.0");
+                                string cumLetras = ConvertirNumeroALetras(cumVal);
+
+                                table.Cell()
+                                    .BorderTop(0.5f).BorderColor(Colors.Black)
+                                    .BorderRight(0.5f).BorderColor(Colors.Black)
+                                    .PaddingVertical(3).PaddingHorizontal(2)
+                                    .AlignCenter()
+                                    .Text(cumNumerico).Bold().FontSize(9);
+
+                                table.Cell()
+                                    .BorderTop(0.5f).BorderColor(Colors.Black)
+                                    .BorderRight(0.5f).BorderColor(Colors.Black)
+                                    .PaddingVertical(3).PaddingHorizontal(2)
+                                    .AlignCenter()
+                                    .Text(cumLetras).Bold().FontSize(9);
+
+                                table.Cell()
+                                    .BorderTop(0.5f).BorderColor(Colors.Black)
+                                    .PaddingVertical(3).PaddingHorizontal(2)
+                                    .Text("");
                             });
 
-                            // Pie de página de datos del alumno
-                            col.Item().PaddingTop(15).Column(alumnoInfoCol =>
+                            // 1. Cuadros de Leyendas (Lado a Lado)
+                            col.Item().PaddingTop(15).Row(row =>
                             {
-                                alumnoInfoCol.Item().Text($"Alumno: {alumno.Nombres} {alumno.Apellidos}")
-                                    .FontSize(10);
-                                
-                                if (alumno.Carrera != null)
+                                // Caja izquierda: Ciclo y Estatus
+                                row.RelativeItem().Border(0.5f).BorderColor(Colors.Black).Padding(5).Column(boxCol =>
                                 {
-                                    alumnoInfoCol.Item().Text($"Carrera: {alumno.Carrera.NombreCarrera}")
-                                        .FontSize(10);
-                                }
+                                    boxCol.Item().Row(r =>
+                                    {
+                                        r.RelativeItem(1.2f).Text(t => t.Span("CICLO:").Bold().FontSize(7.5f));
+                                        r.RelativeItem(2.8f).Text(t => { t.Span("ESTATUS: ").Bold().FontSize(7.5f); t.Span("1-EQUIVALENCIAS EXTERNA").FontSize(7.5f); });
+                                    });
+                                    boxCol.Item().Row(r =>
+                                    {
+                                        r.RelativeItem(1.2f).Text(t => t.Span(" 1- PRIMERO").FontSize(7.5f));
+                                        r.RelativeItem(2.8f).Text(t => t.Span("         2-EQUIVALENCIAS INTERNAS").FontSize(7.5f));
+                                    });
+                                    boxCol.Item().Row(r =>
+                                    {
+                                        r.RelativeItem(1.2f).Text(t => t.Span(" 2- SEGUNDO").FontSize(7.5f));
+                                        r.RelativeItem(2.8f).Text(t => t.Span("         3-PLAN DE ABSORCIÓN").FontSize(7.5f));
+                                    });
+                                    boxCol.Item().Row(r =>
+                                    {
+                                        r.RelativeItem(1.2f).Text(t => t.Span(" 3- TERCERO").FontSize(7.5f));
+                                        r.RelativeItem(2.8f).Text(t => t.Span("         4-SUFICIENCIA").FontSize(7.5f));
+                                    });
+                                });
+
+                                // Espaciador
+                                row.ConstantItem(15);
+
+                                // Caja derecha: U.V.
+                                row.RelativeItem().Border(0.5f).BorderColor(Colors.Black).Padding(5).Text(t =>
+                                {
+                                    t.Span("U.V. ").Bold().FontSize(7.5f);
+                                    t.Span("Sistema de Unidades Valorativas que cuantifica los créditos académicos acumulados por cada estudiante, en base al esfuerzo realizado durante el estudio de la carrera.").FontSize(7.5f);
+                                });
                             });
 
-                            // Bloque de Firma si está configurado
+                            // 2. Escala de Calificación (Ancho Completo)
+                            col.Item().PaddingTop(10).Border(0.5f).BorderColor(Colors.Black).Padding(5).Text(t =>
+                            {
+                                t.AlignCenter();
+                                t.Span("LA ESCALA DE CALIFICACIÓN ES DE CERO PUNTO CERO (0.0) A DIEZ PUNTO CERO (10.0); LA NOTA MÍNIMA DE APROBACIÓN ES DE SIETE PUNTO CERO (7.0)").Bold().FontSize(8f);
+                            });
+
+                            // 3. Párrafo de Cierre 1: Asignaturas amparadas
+                            col.Item().PaddingTop(15).Text(t =>
+                            {
+                                t.Justify();
+                                t.Span("Esta certificación global de notas ampara ").FontSize(9.5f);
+                                t.Span($"{totalMateriasAprobadasLetras} ({totalMateriasAprobadas})").Bold().FontSize(9.5f);
+                                t.Span(" asignaturas cursadas y aprobadas.").FontSize(9.5f);
+                            });
+
+                            // 4. Párrafo de Cierre 2: Extensión del documento
+                            col.Item().PaddingTop(15).Text(t =>
+                            {
+                                t.Justify();
+                                t.Span("Y para los usos que ").FontSize(9.5f);
+                                t.Span(interesadaTexto).FontSize(9.5f);
+                                t.Span(" estime conveniente, se le extiende la presente en ").FontSize(9.5f);
+                                t.Span(lugarExpedicion).FontSize(9.5f);
+                                t.Span($", {fechaTexto}.").FontSize(9.5f);
+                            });
+
+                            // 5. Bloque de Firma del Secretario General
                             if (!string.IsNullOrWhiteSpace(firmaNombre) || !string.IsNullOrWhiteSpace(firmaCargo))
                             {
-                                col.Item().PaddingTop(30).AlignCenter().Width(250).Column(firmaCol =>
+                                col.Item().PaddingTop(25).ShowEntire().Border(0.5f).BorderColor(Colors.Black).MinHeight(90).Padding(10).Column(sgCol =>
                                 {
-                                    if (!string.IsNullOrWhiteSpace(firmaNombre))
-                                    {
-                                        firmaCol.Item().AlignCenter().Text("f. _________________________________________")
-                                            .FontSize(10);
-                                        
-                                        firmaCol.Item().PaddingTop(2).AlignCenter().Text(firmaNombre)
-                                            .Bold()
-                                            .FontSize(10);
-                                    }
-                                    
-                                    if (!string.IsNullOrWhiteSpace(firmaCargo))
-                                    {
-                                        firmaCol.Item().PaddingTop(2).AlignCenter().Text(firmaCargo)
-                                            .FontSize(10);
-                                    }
-                                    
+                                    sgCol.Item().Height(30); // Espacio en blanco para firma física y sello
+                                    sgCol.Item().AlignCenter().Text(t => t.Span(firmaNombre).Bold().FontSize(9f));
+                                    sgCol.Item().AlignCenter().Text(t => t.Span(firmaCargo).FontSize(9f));
                                     if (!string.IsNullOrWhiteSpace(firmaSublinea))
                                     {
-                                        firmaCol.Item().PaddingTop(2).AlignCenter().Text(firmaSublinea)
-                                            .FontSize(10);
+                                        sgCol.Item().AlignCenter().Text(t => t.Span(firmaSublinea).FontSize(9f));
                                     }
                                 });
                             }
+
+                            // 6. Bloque de Certificación y Firma de la Rectora
+                            col.Item().PaddingTop(15).ShowEntire().Border(0.5f).BorderColor(Colors.Black).Padding(10).Column(rCol =>
+                            {
+                                // Texto de certificación dinámico
+                                string certText = rectoraCertificacionTemplate
+                                    .Replace("{SecretarioNombre}", firmaNombre)
+                                    .Replace("{SecretarioCargo}", firmaCargo);
+
+                                rCol.Item().Text(t => { t.Justify(); t.Span(certText).FontSize(9.5f); });
+                                
+                                // Espacio para la firma de la Rectora
+                                rCol.Item().Height(60);
+
+                                // Nombre y cargo de la Rectora
+                                rCol.Item().AlignCenter().Text(t => t.Span(rectoraNombre).Bold().FontSize(9f));
+                                rCol.Item().AlignCenter().Text(t => t.Span(rectoraCargo).FontSize(9f));
+
+                                // Espacio antes de confrontado
+                                rCol.Item().Height(15);
+
+                                // Leyendas de confrontado y validez
+                                rCol.Item().Text(t => t.Span($"CONFRONTADO POR: {confrontadoPor}").Bold().FontSize(8.5f));
+                                rCol.Item().Text(t => t.Span("ESTA CERTIFICACIÓN ES VALIDA SÓLO CON LA FIRMA Y EL SELLO AUTORIZADOS").Bold().FontSize(8.5f));
+                            });
                         });
                     });
                 });
@@ -355,25 +501,25 @@ namespace SRAUMOAR.Pages.historial
 
             string resultado = ConvertirEnteroALetras(parteEntera);
 
-            // Agregar parte decimal si existe
-            if (parteDecimal > 0)
-            {
-                // Convertir la parte decimal correctamente
-                // Ejemplo: 7.4 -> parte decimal = 0.4 -> convertir 4
-                // Ejemplo: 5.8 -> parte decimal = 0.8 -> convertir 8
-                // Ejemplo: 9.0 -> no hay decimal
-                
-                // Multiplicar por 10 para obtener el décimo
-                int decimales = (int)Math.Round(parteDecimal * 10);
-                
-                // Solo puede ser un dígito (0-9) porque redondeamos a 1 decimal
-                if (decimales > 0)
-                {
-                    resultado += " PUNTO " + ConvertirEnteroALetras(decimales);
-                }
-            }
+            // Multiplicar por 10 para obtener el décimo
+            int decimales = (int)Math.Round(parteDecimal * 10);
+            resultado += " PUNTO " + ConvertirEnteroALetras(decimales);
 
             return resultado;
+        }
+
+        private string ConvertirFechaALetras(DateTime fecha)
+        {
+            int dia = fecha.Day;
+            string mes = fecha.ToString("MMMM", new CultureInfo("es-SV")).ToLower();
+            int anio = fecha.Year;
+
+            string diaLetras = dia == 1 ? "primer" : ConvertirEnteroALetras(dia).ToLower();
+            string diaTexto = dia == 1 ? "al primer día" : $"a los {diaLetras} días";
+
+            string anioLetras = ConvertirEnteroALetras(anio).ToLower();
+
+            return $"{diaTexto} del mes de {mes} del año {anioLetras}";
         }
 
         private string ConvertirEnteroALetras(int numero)
