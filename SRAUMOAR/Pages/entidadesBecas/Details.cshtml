@@ -1,61 +1,88 @@
-﻿@page
+@page
 @model SRAUMOAR.Pages.entidadesBecas.DetailsModel
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Detalles";
 }
 
-<h1>Details</h1>
-
-<div>
-    <h4>EntidadBeca</h4>
-    <hr />
-    <dl class="row">
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.EntidadBeca.Nombre)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.EntidadBeca.Nombre)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.EntidadBeca.Siglas)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.EntidadBeca.Siglas)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.EntidadBeca.Direccion)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.EntidadBeca.Direccion)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.EntidadBeca.NombreRepresente)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.EntidadBeca.NombreRepresente)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.EntidadBeca.Telefono)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.EntidadBeca.Telefono)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.EntidadBeca.FechaDeRegistro)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.EntidadBeca.FechaDeRegistro)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.EntidadBeca.Email)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.EntidadBeca.Email)
-        </dd>
-    </dl>
+<div class="row mb-4 align-items-center">
+    <div class="col-sm-6">
+        <h4 class="mb-0">Detalles de la Entidad de Becas</h4>
+    </div>
+    <div class="col-sm-6">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-dark breadcrumb-transparent justify-content-sm-end mb-0">
+                <li class="breadcrumb-item"><a asp-page="/Index"><i class="bi bi-house-door-fill"></i></a></li>
+                <li class="breadcrumb-item"><a asp-page="./Index">Entidades de Becas</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Detalles</li>
+            </ol>
+        </nav>
+    </div>
 </div>
-<div>
-    <a asp-page="./Edit" asp-route-id="@Model.EntidadBeca.EntidadBecaId">Edit</a> |
-    <a asp-page="./Index">Back to List</a>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Información de la Entidad</h5>
+                <span class="badge bg-light text-primary rounded-pill px-3 py-2">ID: @Model.EntidadBeca.EntidadBecaId</span>
+            </div>
+            <div class="card-body p-4">
+                <div class="row mb-3 align-items-center border-bottom pb-3">
+                    <div class="col-sm-4 text-muted fw-bold"><i class="bi bi-building text-primary me-2"></i>@Html.DisplayNameFor(model => model.EntidadBeca.Nombre)</div>
+                    <div class="col-sm-8 fs-5 fw-semibold">@Html.DisplayFor(model => model.EntidadBeca.Nombre)</div>
+                </div>
+                <div class="row mb-3 align-items-center border-bottom pb-3">
+                    <div class="col-sm-4 text-muted fw-bold"><i class="bi bi-alphabet text-primary me-2"></i>@Html.DisplayNameFor(model => model.EntidadBeca.Siglas)</div>
+                    <div class="col-sm-8">@Html.DisplayFor(model => model.EntidadBeca.Siglas)</div>
+                </div>
+                <div class="row mb-3 align-items-center border-bottom pb-3">
+                    <div class="col-sm-4 text-muted fw-bold"><i class="bi bi-person text-primary me-2"></i>@Html.DisplayNameFor(model => model.EntidadBeca.NombreRepresente)</div>
+                    <div class="col-sm-8">@Html.DisplayFor(model => model.EntidadBeca.NombreRepresente)</div>
+                </div>
+                <div class="row mb-3 align-items-center border-bottom pb-3">
+                    <div class="col-sm-4 text-muted fw-bold"><i class="bi bi-geo-alt text-primary me-2"></i>@Html.DisplayNameFor(model => model.EntidadBeca.Direccion)</div>
+                    <div class="col-sm-8">
+                        @if (string.IsNullOrWhiteSpace(Model.EntidadBeca.Direccion))
+                        {
+                            <span class="text-muted">No registrada</span>
+                        }
+                        else
+                        {
+                            @Model.EntidadBeca.Direccion
+                        }
+                    </div>
+                </div>
+                <div class="row mb-3 align-items-center border-bottom pb-3">
+                    <div class="col-sm-4 text-muted fw-bold"><i class="bi bi-telephone text-primary me-2"></i>@Html.DisplayNameFor(model => model.EntidadBeca.Telefono)</div>
+                    <div class="col-sm-8">
+                        @if (string.IsNullOrWhiteSpace(Model.EntidadBeca.Telefono))
+                        {
+                            <span class="text-muted">No registrado</span>
+                        }
+                        else
+                        {
+                            @Model.EntidadBeca.Telefono
+                        }
+                    </div>
+                </div>
+                <div class="row mb-3 align-items-center border-bottom pb-3">
+                    <div class="col-sm-4 text-muted fw-bold"><i class="bi bi-envelope text-primary me-2"></i>@Html.DisplayNameFor(model => model.EntidadBeca.Email)</div>
+                    <div class="col-sm-8">@Html.DisplayFor(model => model.EntidadBeca.Email)</div>
+                </div>
+                <div class="row mb-0 align-items-center">
+                    <div class="col-sm-4 text-muted fw-bold"><i class="bi bi-calendar-event text-primary me-2"></i>@Html.DisplayNameFor(model => model.EntidadBeca.FechaDeRegistro)</div>
+                    <div class="col-sm-8">@Model.EntidadBeca.FechaDeRegistro.ToString("dd/MM/yyyy")</div>
+                </div>
+            </div>
+            <div class="card-footer bg-light d-flex justify-content-end gap-2 p-3">
+                <a asp-page="./Index" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left-circle me-1"></i> Volver al listado
+                </a>
+                <a asp-page="./Edit" asp-route-id="@Model.EntidadBeca.EntidadBecaId" class="btn btn-primary">
+                    <i class="bi bi-pencil-fill me-1"></i> Modificar datos
+                </a>
+            </div>
+        </div>
+    </div>
 </div>

@@ -1,78 +1,132 @@
-﻿@page
+@page
 @model SRAUMOAR.Pages.entidadesBecas.IndexModel
 
 @{
-    ViewData["Title"] = "Entidades Becas";
+    ViewData["Title"] = "Entidades de Becas";
+    var hasSearch = !string.IsNullOrWhiteSpace(Model.SearchString);
 }
 
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0">
-            <i class="bi bi-mortarboard-fill text-primary me-2"></i>
-            Entidades Becas
-        </h1>
-        <a asp-page="Create" class="btn btn-primary">
-            <i class="bi bi-plus-circle me-2"></i>Nuevo registro
+<div class="row mb-4 align-items-center">
+    <div class="col-sm-6">
+        <h4 class="mb-0">Administración de Entidades de Becas</h4>
+    </div>
+    <div class="col-sm-6">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-dark breadcrumb-transparent justify-content-sm-end mb-0">
+                <li class="breadcrumb-item"><a asp-page="/Index"><i class="bi bi-house-door-fill"></i></a></li>
+                <li class="breadcrumb-item active" aria-current="page">Entidades de Becas</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-4 bg-light">
+    <div class="card-body py-3">
+        <form method="get" class="row align-items-end g-3">
+            <div class="col-md-8 col-lg-6">
+                <label asp-for="SearchString" class="form-label fw-bold text-muted mb-1">
+                    <i class="bi bi-search me-1"></i>Buscar entidad
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-building text-primary"></i></span>
+                    <input asp-for="SearchString" class="form-control" placeholder="Nombre, siglas, representante, teléfono o correo" />
+                </div>
+            </div>
+            <div class="col-md-auto">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search me-1"></i> Buscar
+                </button>
+            </div>
+            @if (hasSearch)
+            {
+                <div class="col-md-auto">
+                    <a asp-page="./Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle me-1"></i> Limpiar
+                    </a>
+                </div>
+            }
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-mortarboard-fill me-2"></i>Listado de Entidades</h5>
+        <a asp-page="./Create" class="btn btn-light btn-sm text-primary">
+            <i class="bi bi-plus-circle me-1"></i> Registrar nuevo
         </a>
     </div>
-
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="table-light">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>@Html.DisplayNameFor(model => model.EntidadBeca[0].Nombre)</th>
+                        <th>@Html.DisplayNameFor(model => model.EntidadBeca[0].Siglas)</th>
+                        <th>@Html.DisplayNameFor(model => model.EntidadBeca[0].NombreRepresente)</th>
+                        <th>@Html.DisplayNameFor(model => model.EntidadBeca[0].Telefono)</th>
+                        <th>@Html.DisplayNameFor(model => model.EntidadBeca[0].Email)</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.EntidadBeca)
+                    {
                         <tr>
-                            <th>@Html.DisplayNameFor(model => model.EntidadBeca[0].Nombre)</th>
-                           @*  <th>@Html.DisplayNameFor(model => model.EntidadBeca[0].Siglas)</th> *@
-                            <th>@Html.DisplayNameFor(model => model.EntidadBeca[0].Direccion)</th>
-                            <th>@Html.DisplayNameFor(model => model.EntidadBeca[0].NombreRepresente)</th>
-                            <th>@Html.DisplayNameFor(model => model.EntidadBeca[0].Telefono)</th>
-                         @*    <th>@Html.DisplayNameFor(model => model.EntidadBeca[0].FechaDeRegistro)</th> *@
-                            <th>@Html.DisplayNameFor(model => model.EntidadBeca[0].Email)</th>
-                            <th class="text-center">Acciones</th>
+                            <td class="fw-semibold">@Html.DisplayFor(modelItem => item.Nombre)</td>
+                            <td>
+                                @if (string.IsNullOrWhiteSpace(item.Siglas))
+                                {
+                                    <span class="text-muted">No asignado</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-light text-dark border rounded-pill px-2 py-1">@item.Siglas</span>
+                                }
+                            </td>
+                            <td>@Html.DisplayFor(modelItem => item.NombreRepresente)</td>
+                            <td>
+                                @if (string.IsNullOrWhiteSpace(item.Telefono))
+                                {
+                                    <span class="text-muted">No registrado</span>
+                                }
+                                else
+                                {
+                                    @item.Telefono
+                                }
+                            </td>
+                            <td>@Html.DisplayFor(modelItem => item.Email)</td>
+                            <td class="text-center">
+                                <a asp-page="./Details" asp-route-id="@item.EntidadBecaId" class="btn btn-info btn-sm text-white me-1 mb-1" title="Detalles">
+                                    <i class="bi bi-info-circle"></i> Detalles
+                                </a>
+                                <a asp-page="./Edit" asp-route-id="@item.EntidadBecaId" class="btn btn-success btn-sm me-1 mb-1" title="Editar">
+                                    <i class="bi bi-pencil-square"></i> Editar
+                                </a>
+                                <a asp-page="./Delete" asp-route-id="@item.EntidadBecaId" class="btn btn-danger btn-sm mb-1" title="Eliminar">
+                                    <i class="bi bi-trash"></i> Eliminar
+                                </a>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var item in Model.EntidadBeca)
-                        {
-                            <tr>
-                                <td>@Html.DisplayFor(modelItem => item.Nombre)</td>
-                                @* <td>@Html.DisplayFor(modelItem => item.Siglas)</td> *@
-                                <td>@Html.DisplayFor(modelItem => item.Direccion)</td>
-                                <td>@Html.DisplayFor(modelItem => item.NombreRepresente)</td>
-                                <td>@Html.DisplayFor(modelItem => item.Telefono)</td>
-                               @*  <td>@Html.DisplayFor(modelItem => item.FechaDeRegistro)</td> *@
-                                <td>@Html.DisplayFor(modelItem => item.Email)</td>
-                                <td>
-                                    <div class="d-flex justify-content-center gap-2">
-                                        <a asp-page="./Edit" asp-route-id="@item.EntidadBecaId"
-                                           class="btn btn-sm btn-outline-primary" title="Editar">
-                                            <i class="bi bi-pencil-square"></i>
-                                        </a>
-                                       @*  <a asp-page="./Details" asp-route-id="@item.EntidadBecaId"
-                                           class="btn btn-sm btn-outline-info" title="Detalles">
-                                            <i class="bi bi-info-circle"></i>
-                                        </a>
-                                        <a asp-page="./Delete" asp-route-id="@item.EntidadBecaId"
-                                           class="btn btn-sm btn-outline-danger" title="Eliminar">
-                                            <i class="bi bi-trash"></i>
-                                        </a> *@
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                    @* Total de registros mostrados *@
-                    <tfoot>
+                    }
+                    @if (!Model.EntidadBeca.Any())
+                    {
                         <tr>
-                            <td colspan="6" class="">
-                                <small class="text-muted
-                                    ">Mostrando Total de @Model.EntidadBeca.Count registros</small>
-                                </td>
-                                </tr>
-                    </tfoot>
-                </table>
-            </div>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                No se encontraron entidades de becas registradas.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="6">
+                            <small class="text-muted">Mostrando @Model.EntidadBeca.Count registro(s)</small>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
         </div>
     </div>
 </div>

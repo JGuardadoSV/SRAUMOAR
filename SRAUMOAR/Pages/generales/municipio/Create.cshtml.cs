@@ -21,7 +21,7 @@ namespace SRAUMOAR.Pages.generales.municipio
 
         public IActionResult OnGet()
         {
-        ViewData["DistritoId"] = new SelectList(_context.Distritos, "DistritoId", "NombreDistrito");
+            CargarDistritos();
             return Page();
         }
 
@@ -33,6 +33,7 @@ namespace SRAUMOAR.Pages.generales.municipio
         {
             if (!ModelState.IsValid)
             {
+                CargarDistritos();
                 return Page();
             }
 
@@ -40,6 +41,15 @@ namespace SRAUMOAR.Pages.generales.municipio
             await _context.SaveChangesAsync();
 
             return RedirectToPage("./Index");
+        }
+
+        private void CargarDistritos()
+        {
+            ViewData["DistritoId"] = new SelectList(
+                _context.Distritos.OrderBy(d => d.NombreDistrito),
+                "DistritoId",
+                "NombreDistrito",
+                Municipio?.DistritoId);
         }
     }
 }

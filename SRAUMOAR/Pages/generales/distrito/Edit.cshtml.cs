@@ -36,7 +36,7 @@ namespace SRAUMOAR.Pages.generales.distrito
                 return NotFound();
             }
             Distrito = distrito;
-           ViewData["DepartamentoId"] = new SelectList(_context.Departamentos, "DepartamentoId", "NombreDepartamento");
+            CargarDepartamentos();
             return Page();
         }
 
@@ -46,6 +46,7 @@ namespace SRAUMOAR.Pages.generales.distrito
         {
             if (!ModelState.IsValid)
             {
+                CargarDepartamentos();
                 return Page();
             }
 
@@ -73,6 +74,15 @@ namespace SRAUMOAR.Pages.generales.distrito
         private bool DistritoExists(int id)
         {
             return _context.Distritos.Any(e => e.DistritoId == id);
+        }
+
+        private void CargarDepartamentos()
+        {
+            ViewData["DepartamentoId"] = new SelectList(
+                _context.Departamentos.OrderBy(d => d.NombreDepartamento),
+                "DepartamentoId",
+                "NombreDepartamento",
+                Distrito?.DepartamentoId);
         }
     }
 }

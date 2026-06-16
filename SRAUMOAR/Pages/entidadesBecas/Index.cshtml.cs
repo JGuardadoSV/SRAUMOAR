@@ -23,9 +23,27 @@ namespace SRAUMOAR.Pages.entidadesBecas
 
         public IList<EntidadBeca> EntidadBeca { get;set; } = default!;
 
+        [BindProperty(SupportsGet = true)]
+        public string? SearchString { get; set; }
+
         public async Task OnGetAsync()
         {
-            EntidadBeca = await _context.InstitucionesBeca.ToListAsync();
+            var query = _context.InstitucionesBeca.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(SearchString))
+            {
+                var search = SearchString.Trim();
+                query = query.Where(e =>
+                    (e.Nombre != null && e.Nombre.Contains(search)) ||
+                    (e.Siglas != null && e.Siglas.Contains(search)) ||
+                    (e.NombreRepresente != null && e.NombreRepresente.Contains(search)) ||
+                    (e.Telefono != null && e.Telefono.Contains(search)) ||
+                    (e.Email != null && e.Email.Contains(search)));
+            }
+
+            EntidadBeca = await query
+                .OrderBy(e => e.Nombre)
+                .ToListAsync();
         }
     }
 }

@@ -21,9 +21,22 @@ namespace SRAUMOAR.Pages.generales.departamento
 
         public IList<Departamento> Departamento { get;set; } = default!;
 
+        [BindProperty(SupportsGet = true)]
+        public string? SearchString { get; set; }
+
         public async Task OnGetAsync()
         {
-            Departamento = await _context.Departamentos.ToListAsync();
+            var query = _context.Departamentos.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(SearchString))
+            {
+                var search = SearchString.Trim();
+                query = query.Where(d => d.NombreDepartamento != null && d.NombreDepartamento.Contains(search));
+            }
+
+            Departamento = await query
+                .OrderBy(d => d.NombreDepartamento)
+                .ToListAsync();
         }
     }
 }

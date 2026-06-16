@@ -1,8 +1,9 @@
-﻿@page
+@page
 @model SRAUMOAR.Pages.generales.distrito.IndexModel
 
 @{
     ViewData["Title"] = "Distritos";
+    var hasFilters = !string.IsNullOrWhiteSpace(Model.SearchString) || Model.DepartamentoFiltradoId.HasValue;
 }
 
 <div class="row mb-4 align-items-center">
@@ -16,6 +17,46 @@
                 <li class="breadcrumb-item active" aria-current="page">Distritos</li>
             </ol>
         </nav>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-4 bg-light">
+    <div class="card-body py-3">
+        <form method="get" class="row align-items-end g-3">
+            <div class="col-md-5 col-lg-4">
+                <label asp-for="SearchString" class="form-label fw-bold text-muted mb-1">
+                    <i class="bi bi-search me-1"></i>Buscar distrito
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-map-fill text-primary"></i></span>
+                    <input asp-for="SearchString" class="form-control" placeholder="Distrito o departamento" />
+                </div>
+            </div>
+            <div class="col-md-5 col-lg-4">
+                <label asp-for="DepartamentoFiltradoId" class="form-label fw-bold text-muted mb-1">
+                    <i class="bi bi-funnel-fill me-1"></i>Filtrar por departamento
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-map text-primary"></i></span>
+                    <select asp-for="DepartamentoFiltradoId" class="form-select" asp-items="ViewBag.DepartamentoId">
+                        <option value="">-- Todos los departamentos --</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-auto">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search me-1"></i> Aplicar
+                </button>
+            </div>
+            @if (hasFilters)
+            {
+                <div class="col-md-auto">
+                    <a asp-page="./Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle me-1"></i> Limpiar
+                    </a>
+                </div>
+            }
+        </form>
     </div>
 </div>
 
@@ -41,9 +82,14 @@
                     {
                         <tr>
                             <td class="fw-semibold">@Html.DisplayFor(modelItem => item.NombreDistrito)</td>
-                            <td>@Html.DisplayFor(modelItem => item.Departamento.NombreDepartamento)</td>
+                            <td>
+                                <span class="badge bg-secondary rounded-pill fw-normal px-2 py-1">
+                                    <i class="bi bi-map me-1"></i>
+                                    @Html.DisplayFor(modelItem => item.Departamento.NombreDepartamento)
+                                </span>
+                            </td>
                             <td class="text-center">
-                                <a asp-page="/generales/municipio/Index" asp-route-id="@item.DistritoId" class="btn btn-outline-primary btn-sm me-1 mb-1" title="Ver Municipios">
+                                <a asp-page="/generales/municipio/Index" asp-route-id="@item.DistritoId" class="btn btn-outline-primary btn-sm me-1 mb-1" title="Ver municipios">
                                     <i class="bi bi-geo-alt-fill"></i> Municipios
                                 </a>
                                 <a asp-page="./Details" asp-route-id="@item.DistritoId" class="btn btn-info btn-sm text-white me-1 mb-1" title="Detalles">
@@ -52,15 +98,29 @@
                                 <a asp-page="./Edit" asp-route-id="@item.DistritoId" class="btn btn-success btn-sm me-1 mb-1" title="Editar">
                                     <i class="bi bi-pencil-square"></i> Editar
                                 </a>
-                                <!-- 
                                 <a asp-page="./Delete" asp-route-id="@item.DistritoId" class="btn btn-danger btn-sm mb-1" title="Eliminar">
                                     <i class="bi bi-trash"></i> Eliminar
-                                </a> 
-                                -->
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.Distrito.Any())
+                    {
+                        <tr>
+                            <td colspan="3" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                No se encontraron distritos registrados.
                             </td>
                         </tr>
                     }
                 </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3">
+                            <small class="text-muted">Mostrando @Model.Distrito.Count registro(s)</small>
+                        </td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
     </div>

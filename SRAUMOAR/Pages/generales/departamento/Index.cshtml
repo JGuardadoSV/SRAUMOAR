@@ -1,8 +1,9 @@
-﻿@page
+@page
 @model SRAUMOAR.Pages.generales.departamento.IndexModel
 
 @{
     ViewData["Title"] = "Departamentos";
+    var hasSearch = !string.IsNullOrWhiteSpace(Model.SearchString);
 }
 
 <div class="row mb-4 align-items-center">
@@ -16,6 +17,35 @@
                 <li class="breadcrumb-item active" aria-current="page">Departamentos</li>
             </ol>
         </nav>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-4 bg-light">
+    <div class="card-body py-3">
+        <form method="get" class="row align-items-end g-3">
+            <div class="col-md-8 col-lg-5">
+                <label asp-for="SearchString" class="form-label fw-bold text-muted mb-1">
+                    <i class="bi bi-search me-1"></i>Buscar departamento
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-map text-primary"></i></span>
+                    <input asp-for="SearchString" class="form-control" placeholder="Nombre del departamento" />
+                </div>
+            </div>
+            <div class="col-md-auto">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search me-1"></i> Buscar
+                </button>
+            </div>
+            @if (hasSearch)
+            {
+                <div class="col-md-auto">
+                    <a asp-page="./Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle me-1"></i> Limpiar
+                    </a>
+                </div>
+            }
+        </form>
     </div>
 </div>
 
@@ -41,21 +71,38 @@
                         <tr>
                             <td class="fw-semibold">@Html.DisplayFor(modelItem => item.NombreDepartamento)</td>
                             <td class="text-center">
+                                <a asp-page="/generales/distrito/Index" asp-route-id="@item.DepartamentoId" class="btn btn-outline-primary btn-sm me-1 mb-1" title="Ver distritos">
+                                    <i class="bi bi-geo-alt-fill"></i> Distritos
+                                </a>
                                 <a asp-page="./Details" asp-route-id="@item.DepartamentoId" class="btn btn-info btn-sm text-white me-1 mb-1" title="Detalles">
                                     <i class="bi bi-info-circle"></i> Detalles
                                 </a>
                                 <a asp-page="./Edit" asp-route-id="@item.DepartamentoId" class="btn btn-success btn-sm me-1 mb-1" title="Editar">
                                     <i class="bi bi-pencil-square"></i> Editar
                                 </a>
-                                <!-- 
                                 <a asp-page="./Delete" asp-route-id="@item.DepartamentoId" class="btn btn-danger btn-sm mb-1" title="Eliminar">
                                     <i class="bi bi-trash"></i> Eliminar
-                                </a> 
-                                -->
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.Departamento.Any())
+                    {
+                        <tr>
+                            <td colspan="2" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                No se encontraron departamentos registrados.
                             </td>
                         </tr>
                     }
                 </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="2">
+                            <small class="text-muted">Mostrando @Model.Departamento.Count registro(s)</small>
+                        </td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
     </div>
