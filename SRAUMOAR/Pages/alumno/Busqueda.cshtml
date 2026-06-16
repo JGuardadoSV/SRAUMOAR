@@ -72,7 +72,7 @@
         }
 
         .table-responsive {
-            overflow-x: auto !important;
+            overflow-x: visible !important;
             overflow-y: visible !important;
         }
 
@@ -82,7 +82,8 @@
         }
 
         .actions-dropdown .dropdown-menu {
-            z-index: 5000;
+            z-index: 7000;
+            min-width: 220px;
         }
 
         .table-header {
@@ -328,6 +329,11 @@
         }
 
         @@media (max-width: 768px) {
+            .table-responsive {
+                overflow-x: auto !important;
+                overflow-y: visible !important;
+            }
+
             .pagination-professional {
                 justify-content: center;
             }

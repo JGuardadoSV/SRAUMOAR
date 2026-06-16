@@ -39,12 +39,28 @@ namespace SRAUMOAR.Pages.alumno
         {
             this.busqueda = Request.Query["buscar"].ToString();
             PageNumber = Math.Max(1, PageNumber);
-            
+
             var query = _context.Alumno
                 .Include(a => a.Usuario)
-                .Where(a => a.Nombres.Contains(busqueda) || 
-                           a.Apellidos.Contains(busqueda) || 
-                           a.TelefonoPrimario.Contains(busqueda));
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(busqueda))
+            {
+                var terminos = busqueda
+                    .Trim()
+                    .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+                foreach (var termino in terminos)
+                {
+                    var texto = termino;
+                    query = query.Where(a =>
+                        (a.Nombres != null && a.Nombres.Contains(texto)) ||
+                        (a.Apellidos != null && a.Apellidos.Contains(texto)) ||
+                        (a.Carnet != null && a.Carnet.Contains(texto)) ||
+                        (a.Email != null && a.Email.Contains(texto)) ||
+                        (a.TelefonoPrimario != null && a.TelefonoPrimario.Contains(texto)));
+                }
+            }
 
             TotalItems = await query.CountAsync();
             TotalPages = (int)Math.Ceiling(TotalItems / (double)PageSize);
