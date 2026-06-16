@@ -2,1417 +2,1262 @@
 
 @model SRAUMOAR.Pages.puntoventa.puntoVentaModel
 @{
-    ViewData["Title"] = "Facturación";
+    ViewData["Title"] = "Facturacion";
+    var tieneProductos = Model.Factura.Productos.Any();
 }
 
-<div class="content-header">
-    <div class="container-fluid">
-        <div class="row mb-2">
-            <div class="col-sm-6">
-                <h1 class="m-0">Facturación</h1>
+<section class="pv-shell">
+    <form method="post" id="puntoVentaForm">
+        <div class="pv-header">
+            <div>
+                <div class="pv-eyebrow">Punto de venta</div>
+                <h1>Facturacion</h1>
+                <p>Emision de documentos tributarios electronicos para colecturia.</p>
             </div>
-            <div class="col-sm-6">
-                <ol class="breadcrumb float-sm-right">
-                    <li class="breadcrumb-item"><a href="#">Inicio</a></li>
-                    <li class="breadcrumb-item active">Facturación</li>
-                </ol>
+            <div class="pv-status" id="estadoDocumento">
+                <i class="bi bi-exclamation-circle"></i>
+                <span>Seleccione documento</span>
             </div>
         </div>
-    </div>
-</div>
 
-<section class="content">
-    <div class="container-fluid">
-        <form method="post">
-            <!-- Tipo de Documento - Barra compacta -->
-            <div class="row mb-3">
-                <div class="col-md-12">
-                    <div class="card card-warning card-outline">
-                        <div class="card-body py-2">
-                            <div class="row align-items-center">
-                                <div class="col-md-3">
-                                    <label class="mb-0"><strong>Tipo de Documento:</strong></label>
-                                </div>
-                                <div class="col-md-6">
-                                    <select class="form-control" asp-for="Factura.TipoDocumento" id="tipoDocumentoSelect">
-                                        <option value="">Seleccione...</option>
-                                        <option value="01">01 - Consumidor Final</option>
-                                        <option value="02">02 - Crédito Fiscal</option>
-                                        <option value="14">11 - Sujeto Excluido</option>
-                                        <option value="15">15 - Donación</option>
-                                    </select>
-                                    <small class="text-muted">* Seleccione el tipo de documento antes de agregar productos. El IVA solo se aplica para Crédito Fiscal.</small>
-                                </div>
-                                <div class="col-md-3">
-                                    <span asp-validation-for="Factura.TipoDocumento" class="text-danger"></span>
-                                </div>
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger pv-validation"></div>
+
+        <div class="pv-docbar">
+            <div class="pv-docbar-main">
+                <label asp-for="Factura.TipoDocumento">Tipo de documento</label>
+                <select class="form-control form-control-lg" asp-for="Factura.TipoDocumento" id="tipoDocumentoSelect">
+                    <option value="">Seleccione...</option>
+                    <option value="01">01 - Consumidor Final</option>
+                    <option value="02">02 - Credito Fiscal</option>
+                    <option value="14">14 - Sujeto Excluido</option>
+                    <option value="15">15 - Donacion</option>
+                </select>
+                <span asp-validation-for="Factura.TipoDocumento" class="text-danger"></span>
+            </div>
+            <div class="pv-docbar-help">
+                <i class="bi bi-info-circle"></i>
+                <span>El IVA se aplica solo para Credito Fiscal. Primero seleccione el documento para habilitar el registro de productos.</span>
+            </div>
+        </div>
+
+        <div id="alertaTipoDocumento" class="pv-inline-warning" style="display: none;">
+            <i class="bi bi-exclamation-triangle"></i>
+            <span>Debe seleccionar un tipo de documento antes de continuar con la facturacion.</span>
+        </div>
+
+        <div class="pv-layout">
+            <div class="pv-workspace">
+                <div class="pv-panel">
+                    <div class="pv-panel-header">
+                        <div>
+                            <span class="pv-step">01</span>
+                            <h2>Datos del receptor</h2>
+                        </div>
+                        <i class="bi bi-person-vcard"></i>
+                    </div>
+
+                    <div class="pv-grid pv-grid-2">
+                        <div class="form-group">
+                            <label>NIT / DUI / Documento</label>
+                            <input type="text" class="form-control" asp-for="Factura.Receptor.Nit" autocomplete="off" />
+                        </div>
+                        <div class="form-group campos-credito-fiscal" style="display: none;">
+                            <label>NRC</label>
+                            <input type="text" class="form-control" asp-for="Factura.Receptor.Nrc" autocomplete="off" />
+                            <span asp-validation-for="Factura.Receptor.Nrc" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="pv-grid pv-grid-2">
+                        <div class="form-group">
+                            <label>Nombre</label>
+                            <input type="text" class="form-control" asp-for="Factura.Receptor.Nombre" autocomplete="off" />
+                            <span asp-validation-for="Factura.Receptor.Nombre" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label>Nombre comercial</label>
+                            <input type="text" class="form-control" asp-for="Factura.Receptor.NombreComercial" autocomplete="off" />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Direccion</label>
+                        <input type="text" class="form-control" asp-for="Factura.Receptor.Direccion.Complemento" autocomplete="off" />
+                    </div>
+
+                    <div class="pv-grid pv-grid-3">
+                        <div class="form-group">
+                            <label>Departamento</label>
+                            <select class="form-control" asp-for="Factura.Receptor.CodigoDepartamento">
+                                <option value="">Seleccione...</option>
+                                <option value="00">00 - Otro (Para extranjeros)</option>
+                                <option value="01">01 - Ahuachapan</option>
+                                <option value="02">02 - Santa Ana</option>
+                                <option value="03">03 - Sonsonate</option>
+                                <option value="04">04 - Chalatenango</option>
+                                <option value="05">05 - La Libertad</option>
+                                <option value="06">06 - San Salvador</option>
+                                <option value="07">07 - Cuscatlan</option>
+                                <option value="08">08 - La Paz</option>
+                                <option value="09">09 - Cabanas</option>
+                                <option value="10">10 - San Vicente</option>
+                                <option value="11">11 - Usulutan</option>
+                                <option value="12">12 - San Miguel</option>
+                                <option value="13">13 - Morazan</option>
+                                <option value="14">14 - La Union</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Municipio</label>
+                            <select class="form-control" asp-for="Factura.Receptor.CodigoMunicipio">
+                                <option value="">Seleccione departamento primero...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Telefono</label>
+                            <input type="text" class="form-control" asp-for="Factura.Receptor.Telefono" autocomplete="off" />
+                        </div>
+                    </div>
+
+                    <div class="pv-grid pv-grid-2">
+                        <div class="form-group">
+                            <label>Correo</label>
+                            <input type="email" class="form-control" asp-for="Factura.Receptor.Correo" autocomplete="off" />
+                        </div>
+                        <div class="form-group campo-pais" style="display: none;">
+                            <label>Codigo de pais</label>
+                            <select class="form-control" asp-for="Factura.CodigoPais">
+                                <option value="">Seleccione pais...</option>
+                                <optgroup label="Centro America">
+                                    <option value="BZ">BZ - Belice</option>
+                                    <option value="CR">CR - Costa Rica</option>
+                                    <option value="SV">SV - El Salvador</option>
+                                    <option value="GT">GT - Guatemala</option>
+                                    <option value="HN">HN - Honduras</option>
+                                    <option value="NI">NI - Nicaragua</option>
+                                    <option value="PA">PA - Panama</option>
+                                </optgroup>
+                                <optgroup label="Norte America">
+                                    <option value="CA">CA - Canada</option>
+                                    <option value="US">US - Estados Unidos</option>
+                                    <option value="MX">MX - Mexico</option>
+                                </optgroup>
+                                <optgroup label="Europa">
+                                    <option value="ES">ES - Espana</option>
+                                </optgroup>
+                            </select>
+                            <span asp-validation-for="Factura.CodigoPais" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="pv-conditional campos-credito-fiscal" style="display: none;">
+                        <div class="pv-conditional-title">
+                            <i class="bi bi-briefcase"></i>
+                            <span>Actividad economica</span>
+                        </div>
+                        <div class="pv-grid pv-grid-2">
+                            <div class="form-group">
+                                <label>Giro</label>
+                                <input type="text" class="form-control" asp-for="Factura.Receptor.DescActividad" placeholder="Se llenara al seleccionar codigo" readonly />
+                                <span asp-validation-for="Factura.Receptor.DescActividad" class="text-danger"></span>
                             </div>
-                            
-                            <!-- Mensaje de alerta cuando no hay tipo seleccionado -->
-                            <div class="row mt-2" id="alertaTipoDocumento" style="display: none;">
-                                <div class="col-md-12">
-                                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                                        <i class="fas fa-exclamation-triangle"></i>
-                                        <strong>¡Atención!</strong> Debe seleccionar un tipo de documento antes de continuar con la facturación.
-                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                            <span aria-hidden="true">&times;</span>
+                            <div class="form-group">
+                                <label>Codigo de actividad economica</label>
+                                <select class="form-control select2" id="codigoActividadSelect" asp-for="Factura.Receptor.CodActividad">
+                                    <option value="">Seleccione un codigo...</option>
+                                </select>
+                                <span asp-validation-for="Factura.Receptor.CodActividad" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pv-grid pv-grid-2">
+                        <div class="form-group campo-tipo-donacion" style="display: none;">
+                            <label>Tipo de donacion</label>
+                            <select class="form-control" asp-for="Factura.TipoDonacion" id="tipoDonacionSelect">
+                                <option value="">Seleccione tipo de donacion...</option>
+                                <option value="1">1 - Efectivo</option>
+                                <option value="2">2 - Bien</option>
+                                <option value="3">3 - Servicios</option>
+                            </select>
+                            <span asp-validation-for="Factura.TipoDonacion" class="text-danger"></span>
+                        </div>
+                        <div class="form-group campo-sujeto-excluido" style="display: none;">
+                            <label>Tipo de operacion</label>
+                            <select class="form-control" asp-for="Factura.TipoOperacion" id="tipoOperacionSelect">
+                                <option value="">Seleccione...</option>
+                                <option value="Bien">Bien</option>
+                                <option value="Servicio">Servicio</option>
+                            </select>
+                            <span asp-validation-for="Factura.TipoOperacion" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="campo-sujeto-excluido pv-switch" style="display: none;">
+                        <input type="checkbox" class="form-check-input" asp-for="Factura.Retencion" id="retencionRentaCheck" />
+                        <label class="form-check-label" for="retencionRentaCheck">
+                            Aplicar retencion de renta del 10%
+                        </label>
+                    </div>
+                </div>
+
+                <div class="pv-panel">
+                    <div class="pv-panel-header">
+                        <div>
+                            <span class="pv-step">02</span>
+                            <h2>Agregar producto</h2>
+                        </div>
+                        <i class="bi bi-plus-square"></i>
+                    </div>
+
+                    <div class="pv-product-grid">
+                        <div class="form-group">
+                            <label>Codigo</label>
+                            <input type="text" class="form-control" asp-for="Factura.CodigoProducto" autocomplete="off" />
+                        </div>
+                        <div class="form-group pv-product-description">
+                            <label>Descripcion</label>
+                            <input type="text" class="form-control" asp-for="Factura.DescripcionProducto" autocomplete="off" />
+                        </div>
+                        <div class="form-group">
+                            <label>Cantidad</label>
+                            <input type="number" step="0.01" class="form-control" asp-for="Factura.CantidadProducto" />
+                        </div>
+                        <div class="form-group">
+                            <label>Precio unit.</label>
+                            <input type="number" step="0.01" class="form-control" asp-for="Factura.PrecioProducto" />
+                        </div>
+                        <div class="pv-product-actions">
+                            <div class="pv-switch pv-switch-compact">
+                                <input type="checkbox" class="form-check-input" asp-for="Factura.ProductoExento" />
+                                <label class="form-check-label" asp-for="Factura.ProductoExento">Exento</label>
+                            </div>
+                            <button type="submit" asp-page-handler="AgregarProducto" class="btn btn-success btn-agregar-producto" disabled>
+                                <i class="bi bi-plus-lg"></i>
+                                <span>Agregar</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pv-panel pv-emisor">
+                    <button class="pv-collapse-button" type="button" data-bs-toggle="collapse" data-bs-target="#datosEmisor" aria-expanded="false" aria-controls="datosEmisor">
+                        <span>
+                            <i class="bi bi-building"></i>
+                            Datos del emisor
+                        </span>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div class="collapse" id="datosEmisor">
+                        <div class="pv-emisor-grid">
+                            <div><span>NIT</span><strong>@Model.Factura.Emisor.Nit</strong></div>
+                            <div><span>NRC</span><strong>@Model.Factura.Emisor.Nrc</strong></div>
+                            <div><span>Nombre</span><strong>@Model.Factura.Emisor.Nombre</strong></div>
+                            <div><span>Nombre comercial</span><strong>@Model.Factura.Emisor.NombreComercial</strong></div>
+                            <div><span>Telefono</span><strong>@Model.Factura.Emisor.Telefono</strong></div>
+                            <div><span>Correo</span><strong>@Model.Factura.Emisor.Correo</strong></div>
+                            <div class="pv-emisor-address"><span>Direccion</span><strong>@Model.Factura.Emisor.Direccion.Complemento</strong></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <aside class="pv-summary">
+                <div class="pv-summary-card">
+                    <div class="pv-summary-header">
+                        <div>
+                            <span class="pv-step">03</span>
+                            <h2>Carrito y totales</h2>
+                        </div>
+                        <span class="pv-item-count">@Model.Factura.Productos.Count item(s)</span>
+                    </div>
+
+                    @if (tieneProductos)
+                    {
+                        <div class="pv-cart">
+                            @for (int i = 0; i < Model.Factura.Productos.Count; i++)
+                            {
+                                <div class="pv-cart-item"
+                                     data-subtotal="@Model.Factura.Productos[i].SubTotal.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                     data-exento="@(Model.Factura.Productos[i].EsExento ? "true" : "false")">
+                                    <div class="pv-cart-main">
+                                        <span class="pv-cart-code">@Model.Factura.Productos[i].Codigo</span>
+                                        <strong>@Model.Factura.Productos[i].Descripcion</strong>
+                                        <small>@Model.Factura.Productos[i].Cantidad.ToString("N2") x $@Model.Factura.Productos[i].PrecioUnitario.ToString("N2")</small>
+                                    </div>
+                                    <div class="pv-cart-side">
+                                        <span class="pv-badge @(Model.Factura.Productos[i].EsExento ? "pv-badge-exento" : "pv-badge-gravado")">
+                                            @(Model.Factura.Productos[i].EsExento ? "Exento" : "Gravado")
+                                        </span>
+                                        <strong>$@Model.Factura.Productos[i].SubTotal.ToString("N2")</strong>
+                                        <button type="submit" asp-page-handler="EliminarProducto" asp-route-id="@Model.Factura.Productos[i].Id" class="btn btn-outline-danger btn-sm" title="Eliminar producto">
+                                            <i class="bi bi-trash"></i>
                                         </button>
                                     </div>
                                 </div>
-                            </div>
-                            
-                            <!-- Campo de País (solo para Donación) -->
-                            <div class="row mt-2 campo-pais" style="display: none;">
-                                <div class="col-md-3">
-                                    <label class="mb-0"><strong>Código de País:</strong></label>
-                                </div>
-                                <div class="col-md-6">
-                                    <select class="form-control" asp-for="Factura.CodigoPais">
-                                        <option value="">Seleccione país...</option>
-                                        <optgroup label="Centro América">
-                                            <option value="BZ">BZ - Belice</option>
-                                            <option value="CR">CR - Costa Rica</option>
-                                            <option value="SV">SV - El Salvador</option>
-                                            <option value="GT">GT - Guatemala</option>
-                                            <option value="HN">HN - Honduras</option>
-                                            <option value="NI">NI - Nicaragua</option>
-                                            <option value="PA">PA - Panamá</option>
-                                        </optgroup>
-                                        <optgroup label="Norte América">
-                                            <option value="CA">CA - Canadá</option>
-                                            <option value="US">US - Estados Unidos</option>
-                                            <option value="MX">MX - México</option>
-                                        </optgroup>
-                                        <optgroup label="Europa">
-                                            <option value="ES">ES - España</option>
-                                        </optgroup>
-                                    </select>
-                                    <small class="text-muted">* Requerido para documentos de donación</small>
-                                </div>
-                                <div class="col-md-3">
-                                    <span asp-validation-for="Factura.CodigoPais" class="text-danger"></span>
-                                </div>
-                            </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="pv-empty">
+                            <i class="bi bi-cart"></i>
+                            <strong>Sin productos</strong>
+                            <span>Agregue productos para habilitar el resumen y el procesamiento.</span>
+                        </div>
+                    }
 
-                            <!-- Campo de Tipo de Donación (solo para Donación) -->
-                            <div class="row mt-2 campo-tipo-donacion" style="display: none;">
-                                <div class="col-md-3">
-                                    <label class="mb-0"><strong>Tipo de Donación:</strong></label>
-                                </div>
-                                <div class="col-md-6">
-                                    <select class="form-control" asp-for="Factura.TipoDonacion" id="tipoDonacionSelect">
-                                        <option value="">Seleccione tipo de donación...</option>
-                                        <option value="1">1 - Efectivo</option>
-                                        <option value="2">2 - Bien</option>
-                                        <option value="3">3 - Servicios</option>
-                                    </select>
-                                    <small class="text-muted">* Indique el tipo de donación que se está realizando</small>
-                                </div>
-                                <div class="col-md-3">
-                                    <span asp-validation-for="Factura.TipoDonacion" class="text-danger"></span>
-                                </div>
-                            </div>
-
-                            <!-- Campos para Sujeto Excluido (Bien/Servicio y Retención) -->
-                            <div class="row mt-2 campo-sujeto-excluido" style="display: none;">
-                                <div class="col-md-3">
-                                    <label class="mb-0"><strong>Tipo de Operación:</strong></label>
-                                </div>
-                                <div class="col-md-6">
-                                    <select class="form-control" asp-for="Factura.TipoOperacion" id="tipoOperacionSelect">
-                                        <option value="">Seleccione...</option>
-                                        <option value="Bien">Bien</option>
-                                        <option value="Servicio">Servicio</option>
-                                    </select>
-                                    <small class="text-muted">* Indique si el pago es por un bien o un servicio.</small>
-                                </div>
-                            </div>
-                            <div class="row mt-2 campo-sujeto-excluido" style="display: none;">
-                                <div class="col-md-3">
-                                    <label class="mb-0"><strong>Retención de Renta (10%):</strong></label>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-check">
-                                        <input type="checkbox" class="form-check-input" asp-for="Factura.Retencion" id="retencionRentaCheck" />
-                                        <label class="form-check-label" for="retencionRentaCheck">Aplicar retención de renta</label>
-                                    </div>
-                                    <small class="text-muted">* Si se activa, se retendrá el 10% del monto total.</small>
-                                </div>
-                            </div>
+                    <div class="pv-totals @(tieneProductos ? "" : "pv-totals-muted")">
+                        <div class="pv-total-row">
+                            <span>Subtotal exento</span>
+                            <strong id="totalExentoValue">$@Model.Factura.TotalExento.ToString("N2")</strong>
+                        </div>
+                        <div class="pv-total-row">
+                            <span>Subtotal gravado</span>
+                            <strong id="totalGravadoValue">$@Model.Factura.TotalGravado.ToString("N2")</strong>
+                        </div>
+                        <div class="pv-total-row iva-row">
+                            <span>IVA (13%)</span>
+                            <strong id="ivaValue">$@Model.Factura.IVA.ToString("N2")</strong>
+                        </div>
+                        <div class="pv-total-row retencion-row" style="@(Model.Factura.TipoDocumento == "14" && Model.Factura.Retencion ? "" : "display: none;")">
+                            <span>Retencion renta (10%)</span>
+                            <strong class="text-danger" id="retencionValue">-$@((Model.Factura.Productos.Sum(p => p.Cantidad * p.PrecioUnitario) * 0.10M).ToString("N2"))</strong>
+                        </div>
+                        <div class="pv-total-row pv-grand-total">
+                            <span>Total general</span>
+                            <strong id="totalGeneralValue">$@Model.Factura.TotalGeneralConRetencion.ToString("N2")</strong>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <div class="row">
-                <!-- Datos del Emisor -->
-                <div class="col-md-6">
-                    <div class="card card-primary">
-                        <div class="card-header" data-toggle="collapse" data-target="#datosEmisor" style="cursor: pointer;">
-                            <h3 class="card-title">
-                                <i class="fas fa-building"></i> Datos del Emisor
-                                <i class="fas fa-chevron-down float-right"></i>
-                            </h3>
-                        </div>
-                        <div class="collapse show" id="datosEmisor">
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label>NIT</label>
-                                            <input type="text" class="form-control" asp-for="Factura.Emisor.Nit" readonly />
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label>NRC</label>
-                                            <input type="text" class="form-control" asp-for="Factura.Emisor.Nrc" readonly />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label>Nombre</label>
-                                    <input type="text" class="form-control" asp-for="Factura.Emisor.Nombre" readonly />
-                                </div>
-                                <div class="form-group">
-                                    <label>Nombre Comercial</label>
-                                    <input type="text" class="form-control" asp-for="Factura.Emisor.NombreComercial" readonly />
-                                </div>
-                                <div class="form-group">
-                                    <label>Dirección</label>
-                                    <input type="text" class="form-control" asp-for="Factura.Emisor.Direccion.Complemento" readonly />
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label>Teléfono</label>
-                                            <input type="text" class="form-control" asp-for="Factura.Emisor.Telefono" readonly />
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label>Correo</label>
-                                            <input type="email" class="form-control" asp-for="Factura.Emisor.Correo" readonly />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Datos del Receptor -->
-                <div class="col-md-6">
-                    <div class="card card-info">
-                        <div class="card-header" data-toggle="collapse" data-target="#datosReceptor" style="cursor: pointer;">
-                            <h3 class="card-title">
-                                <i class="fas fa-user"></i> Datos del Receptor
-                                <i class="fas fa-chevron-down float-right"></i>
-                            </h3>
-                        </div>
-                        <div class="collapse show" id="datosReceptor">
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label>NIT</label>
-                                            <input type="text" class="form-control" asp-for="Factura.Receptor.Nit" />
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6 campos-credito-fiscal" style="display: none;">
-                                        <div class="form-group">
-                                            <label>NRC</label>
-                                            <input type="text" class="form-control" asp-for="Factura.Receptor.Nrc" />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label>Nombre</label>
-                                    <input type="text" class="form-control" asp-for="Factura.Receptor.Nombre" />
-                                </div>
-                                <div class="form-group">
-                                    <label>Nombre Comercial</label>
-                                    <input type="text" class="form-control" asp-for="Factura.Receptor.NombreComercial" />
-                                </div>
-                                <div class="form-group">
-                                    <label>Dirección</label>
-                                    <input type="text" class="form-control" asp-for="Factura.Receptor.Direccion.Complemento" />
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <div class="form-group">
-                                            <label>Departamento</label>
-                                            <select class="form-control" asp-for="Factura.Receptor.CodigoDepartamento">
-                                                <option value="">Seleccione...</option>
-                                                <option value="00">00 - Otro (Para extranjeros)</option>
-                                                <option value="01">01 - Ahuachapán</option>
-                                                <option value="02">02 - Santa Ana</option>
-                                                <option value="03">03 - Sonsonate</option>
-                                                <option value="04">04 - Chalatenango</option>
-                                                <option value="05">05 - La Libertad</option>
-                                                <option value="06">06 - San Salvador</option>
-                                                <option value="07">07 - Cuscatlán</option>
-                                                <option value="08">08 - La Paz</option>
-                                                <option value="09">09 - Cabañas</option>
-                                                <option value="10">10 - San Vicente</option>
-                                                <option value="11">11 - Usulután</option>
-                                                <option value="12">12 - San Miguel</option>
-                                                <option value="13">13 - Morazán</option>
-                                                <option value="14">14 - La Unión</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="form-group">
-                                            <label>Municipio</label>
-                                            <select class="form-control" asp-for="Factura.Receptor.CodigoMunicipio">
-                                                <option value="">Seleccione departamento primero...</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="form-group">
-                                            <label>Teléfono</label>
-                                            <input type="text" class="form-control" asp-for="Factura.Receptor.Telefono" />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label>Correo</label>
-                                            <input type="email" class="form-control" asp-for="Factura.Receptor.Correo" />
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Campos adicionales para Crédito Fiscal -->
-                                <div class="campos-credito-fiscal" style="display: none;">
-                                    <hr class="my-3">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label>Giro</label>
-                                                <input type="text" class="form-control" asp-for="Factura.Receptor.DescActividad" placeholder="Se llenará automáticamente al seleccionar código" readonly />
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label>Código de Actividad Económica</label>
-                                                <select class="form-control select2" id="codigoActividadSelect" asp-for="Factura.Receptor.CodActividad">
-                                                    <option value="">Seleccione un código...</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                       
-                                    </div>
-                                    
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Formulario de Productos -->
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="card card-success">
-                        <div class="card-header">
-                            <h3 class="card-title">Agregar Producto</h3>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-2">
-                                    <div class="form-group">
-                                        <label>Código</label>
-                                        <input type="text" class="form-control" asp-for="Factura.CodigoProducto" />
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>Descripción</label>
-                                        <input type="text" class="form-control" asp-for="Factura.DescripcionProducto" />
-                                    </div>
-                                </div>
-                                <div class="col-md-2">
-                                    <div class="form-group">
-                                        <label>Cantidad</label>
-                                        <input type="number" step="0.01" class="form-control" asp-for="Factura.CantidadProducto" />
-                                    </div>
-                                </div>
-                                <div class="col-md-2">
-                                    <div class="form-group">
-                                        <label>Precio Unit.</label>
-                                        <input type="number" step="0.01" class="form-control" asp-for="Factura.PrecioProducto" />
-                                    </div>
-                                </div>
-                                <div class="col-md-1">
-                                    <div class="form-group">
-                                        <label>Exento</label>
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" asp-for="Factura.ProductoExento" />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-1">
-                                    <div class="form-group">
-                                        <label>&nbsp;</label>
-                                        <button type="submit" asp-page-handler="AgregarProducto" class="btn btn-secondary btn-block btn-agregar-producto" disabled>
-                                            <i class="fas fa-plus"></i> Agregar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tabla de Productos -->
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Productos Agregados</h3>
-                        </div>
-                        <div class="card-body table-responsive p-0">
-                            <table class="table table-hover text-nowrap">
-                                <thead>
-                                    <tr>
-                                        <th>Código</th>
-                                        <th>Descripción</th>
-                                        <th>Cantidad</th>
-                                        <th>Precio Unit.</th>
-                                        <th>Tipo</th>
-                                        <th>Subtotal</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @if (Model.Factura.Productos.Any())
-                                    {
-                                        @for (int i = 0; i < Model.Factura.Productos.Count; i++)
-                                        {
-                                            <tr>
-                                                <td>@Model.Factura.Productos[i].Codigo</td>
-                                                <td>@Model.Factura.Productos[i].Descripcion</td>
-                                                <td>@Model.Factura.Productos[i].Cantidad.ToString("N2")</td>
-                                                <td>$@Model.Factura.Productos[i].PrecioUnitario.ToString("N2")</td>
-                                                <td>
-                                                    <span class="badge @(Model.Factura.Productos[i].EsExento ? "badge-exento" : "badge-gravado")">
-                                                        @(Model.Factura.Productos[i].EsExento ? "Exento" : "Gravado")
-                                                    </span>
-                                                </td>
-                                                <td>$@Model.Factura.Productos[i].SubTotal.ToString("N2")</td>
-                                                <td>
-                                                    <button type="submit" asp-page-handler="EliminarProducto" asp-route-id="@Model.Factura.Productos[i].Id" 
-                                                            class="btn btn-danger btn-sm">
-                                                        <i class="fas fa-trash-alt"></i> Eliminar
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            <input type="hidden" asp-for="Factura.Productos[i].Id" />
-                                            <input type="hidden" asp-for="Factura.Productos[i].Codigo" />
-                                            <input type="hidden" asp-for="Factura.Productos[i].Descripcion" />
-                                            <input type="hidden" asp-for="Factura.Productos[i].Cantidad" />
-                                            <input type="hidden" asp-for="Factura.Productos[i].PrecioUnitario" />
-                                            <input type="hidden" asp-for="Factura.Productos[i].EsExento" />
-                                        }
-                                    }
-                                    else
-                                    {
-                                        <tr>
-                                            <td colspan="7" class="text-center text-muted">No hay productos agregados</td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-@*             <!-- Debug de valores del modelo -->
-            <div class="row">
-                <div class="col-12">
-                    <p>DEBUG: TipoDocumento: @Model.Factura.TipoDocumento</p>
-                    <p>DEBUG: Retencion: @Model.Factura.Retencion</p>
-                    <p>DEBUG: TotalGeneral: @Model.Factura.TotalGeneral</p>
-                    <p>DEBUG: TotalGeneralConRetencion: @Model.Factura.TotalGeneralConRetencion</p>
-                </div>
-            </div> *@
-
-            <!-- Totales -->
-            @if (Model.Factura.Productos.Any())
-            {
-                <div class="row">
-                    <div class="col-md-8"></div>
-                    <div class="col-md-4">
-                        <div class="card card-outline card-primary">
-                            <div class="card-header">
-                                <h3 class="card-title">Totales</h3>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-6"><strong>Subtotal Exento:</strong></div>
-                                    <div class="col-6 text-right">$@Model.Factura.TotalExento.ToString("N2")</div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-6"><strong>Subtotal Gravado:</strong></div>
-                                    <div class="col-6 text-right">$@Model.Factura.TotalGravado.ToString("N2")</div>
-                                </div>
-                                <div class="row iva-row">
-                                    <div class="col-6"><strong>IVA (13%):</strong></div>
-                                    <div class="col-6 text-right">$@Model.Factura.IVA.ToString("N2")</div>
-                                </div>
-                                @* Mostrar retención solo si es Sujeto Excluido y está activada *@
-                                @if (Model.Factura.TipoDocumento == "14" && Model.Factura.Retencion == true)
-                                {
-                                    <div class="row">
-                                        <div class="col-6"><strong>Retención de Renta (10%):</strong></div>
-                                        <div class="col-6 text-right text-danger">-$@((Model.Factura.Productos.Sum(p => p.Cantidad * p.PrecioUnitario) * 0.10M).ToString("N2"))</div>
-                                    </div>
-                                }
-                                <hr>
-                                <div class="row">
-                                    <div class="col-6"><strong>Total General:</strong></div>
-                                    <div class="col-6 text-right"><strong>$@Model.Factura.TotalGeneralConRetencion.ToString("N2")</strong></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Botón de Procesar -->
-                <div class="row">
-                    <div class="col-md-12 text-center">
-                        <button type="submit" asp-page-handler="ProcesarFactura" class="btn btn-primary btn-lg">
-                            <i class="fas fa-file-invoice-dollar"></i> Procesar Factura
+                    @if (tieneProductos)
+                    {
+                        <button type="submit" asp-page-handler="ProcesarFactura" class="btn btn-primary btn-lg pv-process-button">
+                            <i class="bi bi-receipt-cutoff"></i>
+                            <span>Procesar factura</span>
                         </button>
-                    </div>
+                    }
                 </div>
-            }
+            </aside>
+        </div>
 
-            <!-- Hidden fields para mantener datos del emisor -->
-            <input type="hidden" asp-for="Factura.Emisor.Nit" />
-            <input type="hidden" asp-for="Factura.Emisor.Nrc" />
-            <input type="hidden" asp-for="Factura.Emisor.Nombre" />
-            <input type="hidden" asp-for="Factura.Emisor.NombreComercial" />
-            <input type="hidden" asp-for="Factura.Emisor.Direccion.Complemento" />
-            <input type="hidden" asp-for="Factura.Emisor.Telefono" />
-            <input type="hidden" asp-for="Factura.Emisor.Correo" />
-            <input type="hidden" asp-for="Factura.Receptor.CodigoDepartamento" />
-            <input type="hidden" asp-for="Factura.Receptor.CodigoMunicipio" />
-            <input type="hidden" asp-for="Factura.Receptor.CodActividad" />
-            <input type="hidden" asp-for="Factura.Receptor.DescActividad" />
-            <input type="hidden" asp-for="Factura.CodigoPais" />
-            <input type="hidden" asp-for="Factura.TipoDonacion" />
-        </form>
-    </div>
+        @for (int i = 0; i < Model.Factura.Productos.Count; i++)
+        {
+            <input type="hidden" asp-for="Factura.Productos[i].Id" />
+            <input type="hidden" asp-for="Factura.Productos[i].Codigo" />
+            <input type="hidden" asp-for="Factura.Productos[i].Descripcion" />
+            <input type="hidden" asp-for="Factura.Productos[i].Cantidad" />
+            <input type="hidden" asp-for="Factura.Productos[i].PrecioUnitario" />
+            <input type="hidden" asp-for="Factura.Productos[i].EsExento" />
+        }
+
+        <input type="hidden" asp-for="Factura.Emisor.Nit" />
+        <input type="hidden" asp-for="Factura.Emisor.Nrc" />
+        <input type="hidden" asp-for="Factura.Emisor.Nombre" />
+        <input type="hidden" asp-for="Factura.Emisor.NombreComercial" />
+        <input type="hidden" asp-for="Factura.Emisor.Direccion.Complemento" />
+        <input type="hidden" asp-for="Factura.Emisor.Telefono" />
+        <input type="hidden" asp-for="Factura.Emisor.Correo" />
+    </form>
 </section>
 
-@section Scripts {
-    <!-- Select2 CSS -->
+@section Styles {
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <!-- Select2 JS -->
+    <style>
+        .pv-shell {
+            --pv-ink: #18212f;
+            --pv-muted: #64748b;
+            --pv-line: #dbe3ea;
+            --pv-surface: #ffffff;
+            --pv-soft: #f6f8fb;
+            --pv-accent: #0f766e;
+            --pv-accent-dark: #115e59;
+            --pv-warning: #b7791f;
+            --pv-danger: #b42318;
+            padding: 1rem 0 1.5rem;
+            color: var(--pv-ink);
+        }
+
+        .pv-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding: 1rem 1.1rem;
+            background: var(--pv-surface);
+            border: 1px solid var(--pv-line);
+            border-radius: 8px;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+        }
+
+        .pv-eyebrow {
+            color: var(--pv-accent);
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .pv-header h1 {
+            margin: 0.1rem 0;
+            font-size: 1.65rem;
+            font-weight: 700;
+        }
+
+        .pv-header p {
+            margin: 0;
+            color: var(--pv-muted);
+        }
+
+        .pv-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            min-height: 42px;
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            background: #fff8e6;
+            color: var(--pv-warning);
+            border: 1px solid #f3d79b;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .pv-status.is-ready {
+            background: #eaf8f4;
+            color: var(--pv-accent-dark);
+            border-color: #b8e3d8;
+        }
+
+        .pv-docbar,
+        .pv-panel,
+        .pv-summary-card {
+            background: var(--pv-surface);
+            border: 1px solid var(--pv-line);
+            border-radius: 8px;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+        }
+
+        .pv-docbar {
+            display: grid;
+            grid-template-columns: minmax(280px, 420px) 1fr;
+            gap: 1rem;
+            align-items: end;
+            padding: 1rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .pv-docbar label,
+        .pv-panel label {
+            margin-bottom: 0.35rem;
+            color: #334155;
+            font-size: 0.88rem;
+            font-weight: 700;
+        }
+
+        .pv-docbar-help {
+            display: flex;
+            gap: 0.5rem;
+            align-items: flex-start;
+            color: var(--pv-muted);
+            line-height: 1.35;
+        }
+
+        .pv-inline-warning {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            margin-bottom: 0.8rem;
+            padding: 0.7rem 0.85rem;
+            border: 1px solid #f3d79b;
+            border-left: 4px solid #f2b63f;
+            border-radius: 8px;
+            background: #fff8e6;
+            color: #7a4f00;
+            font-weight: 600;
+        }
+
+        .pv-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(320px, 390px);
+            gap: 1rem;
+            align-items: start;
+        }
+
+        .pv-workspace {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .pv-panel {
+            padding: 1rem;
+        }
+
+        .pv-panel-header,
+        .pv-summary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .pv-panel-header > div,
+        .pv-summary-header > div {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+        }
+
+        .pv-panel-header h2,
+        .pv-summary-header h2 {
+            margin: 0;
+            font-size: 1.08rem;
+            font-weight: 700;
+        }
+
+        .pv-panel-header > i,
+        .pv-summary-header > i {
+            color: var(--pv-muted);
+            font-size: 1.2rem;
+        }
+
+        .pv-step {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: #eaf8f4;
+            color: var(--pv-accent-dark);
+            font-weight: 800;
+            font-size: 0.78rem;
+        }
+
+        .pv-grid {
+            display: grid;
+            gap: 0.85rem;
+        }
+
+        .pv-grid-2 {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .pv-grid-3 {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .pv-panel .form-control {
+            min-height: 40px;
+            border-color: #ccd6df;
+            border-radius: 6px;
+        }
+
+        .pv-panel .form-control:focus,
+        .pv-docbar .form-control:focus {
+            border-color: var(--pv-accent);
+            box-shadow: 0 0 0 0.2rem rgba(15, 118, 110, 0.16);
+        }
+
+        .pv-conditional {
+            margin: 0.4rem 0 0.9rem;
+            padding: 0.85rem;
+            background: #f8fbfc;
+            border: 1px solid #dce8ea;
+            border-left: 4px solid #0ea5a4;
+            border-radius: 8px;
+        }
+
+        .pv-conditional-title {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            margin-bottom: 0.75rem;
+            color: #155e75;
+            font-weight: 700;
+        }
+
+        .pv-switch {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            min-height: 40px;
+            padding: 0.55rem 0.7rem;
+            border: 1px solid var(--pv-line);
+            border-radius: 8px;
+            background: var(--pv-soft);
+        }
+
+        .pv-switch .form-check-input {
+            margin: 0;
+        }
+
+        .pv-switch label {
+            margin: 0;
+        }
+
+        .pv-product-grid {
+            display: grid;
+            grid-template-columns: minmax(100px, 0.8fr) minmax(220px, 2fr) minmax(110px, 0.8fr) minmax(120px, 0.9fr) minmax(160px, auto);
+            gap: 0.85rem;
+            align-items: end;
+        }
+
+        .pv-product-actions {
+            display: grid;
+            gap: 0.55rem;
+        }
+
+        .pv-product-actions .btn {
+            min-height: 40px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.4rem;
+            border-radius: 6px;
+            font-weight: 700;
+        }
+
+        .pv-switch-compact {
+            justify-content: center;
+            min-height: 40px;
+            padding: 0.45rem;
+        }
+
+        .pv-emisor {
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .pv-collapse-button {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.85rem 1rem;
+            border: 0;
+            background: #f8fafc;
+            color: var(--pv-ink);
+            font-weight: 700;
+        }
+
+        .pv-collapse-button span {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .pv-emisor-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.75rem;
+            padding: 1rem;
+        }
+
+        .pv-emisor-grid div {
+            padding: 0.65rem;
+            border: 1px solid var(--pv-line);
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        .pv-emisor-grid span {
+            display: block;
+            color: var(--pv-muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .pv-emisor-grid strong {
+            display: block;
+            margin-top: 0.2rem;
+            overflow-wrap: anywhere;
+        }
+
+        .pv-emisor-address {
+            grid-column: 1 / -1;
+        }
+
+        .pv-summary {
+            position: sticky;
+            top: 1rem;
+        }
+
+        .pv-summary-card {
+            padding: 1rem;
+        }
+
+        .pv-item-count {
+            color: var(--pv-muted);
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .pv-cart {
+            display: grid;
+            gap: 0.65rem;
+            max-height: 430px;
+            overflow: auto;
+            padding-right: 0.15rem;
+        }
+
+        .pv-cart-item {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 0.75rem;
+            align-items: center;
+            padding: 0.75rem;
+            border: 1px solid var(--pv-line);
+            border-radius: 8px;
+            background: #fbfdff;
+        }
+
+        .pv-cart-main {
+            min-width: 0;
+        }
+
+        .pv-cart-code {
+            display: inline-block;
+            margin-bottom: 0.25rem;
+            color: var(--pv-muted);
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .pv-cart-main strong {
+            display: block;
+            overflow-wrap: anywhere;
+        }
+
+        .pv-cart-main small {
+            color: var(--pv-muted);
+        }
+
+        .pv-cart-side {
+            display: grid;
+            gap: 0.35rem;
+            justify-items: end;
+        }
+
+        .pv-badge {
+            display: inline-flex;
+            align-items: center;
+            min-height: 24px;
+            padding: 0.2rem 0.55rem;
+            border-radius: 999px;
+            color: #fff;
+            font-size: 0.76rem;
+            font-weight: 800;
+        }
+
+        .pv-badge-exento {
+            background: #15803d;
+        }
+
+        .pv-badge-gravado {
+            background: #b42318;
+        }
+
+        .pv-empty {
+            display: grid;
+            justify-items: center;
+            gap: 0.3rem;
+            padding: 1.4rem 0.75rem;
+            text-align: center;
+            color: var(--pv-muted);
+            border: 1px dashed #cbd5e1;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+
+        .pv-empty i {
+            font-size: 1.8rem;
+            color: #94a3b8;
+        }
+
+        .pv-empty strong {
+            color: var(--pv-ink);
+        }
+
+        .pv-totals {
+            display: grid;
+            gap: 0.55rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--pv-line);
+        }
+
+        .pv-totals-muted {
+            opacity: 0.65;
+        }
+
+        .pv-total-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            color: #334155;
+        }
+
+        .pv-total-row strong {
+            color: var(--pv-ink);
+            white-space: nowrap;
+        }
+
+        .pv-grand-total {
+            margin-top: 0.35rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--pv-line);
+            font-size: 1.1rem;
+        }
+
+        .pv-grand-total strong {
+            color: var(--pv-accent-dark);
+            font-size: 1.35rem;
+        }
+
+        .pv-process-button {
+            width: 100%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            min-height: 48px;
+            border-radius: 8px;
+            font-weight: 800;
+        }
+
+        .pv-validation:empty {
+            display: none;
+        }
+
+        .select2-container--default .select2-selection--single {
+            min-height: 40px;
+            border: 1px solid #ccd6df;
+            border-radius: 6px;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 38px;
+            padding-left: 12px;
+            color: #334155;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            min-height: 38px;
+            right: 8px;
+        }
+
+        .select2-dropdown {
+            border-color: #ccd6df;
+        }
+
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: var(--pv-accent);
+        }
+
+        #loadingOverlay .pv-loading-box {
+            width: min(92vw, 420px);
+            padding: 2rem;
+            border-radius: 8px;
+            background: white;
+            text-align: center;
+            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.28);
+        }
+
+        #loadingOverlay .pv-spinner {
+            width: 58px;
+            height: 58px;
+            margin: 0 auto 1rem;
+            border: 4px solid #e2e8f0;
+            border-top-color: var(--pv-accent);
+            border-radius: 50%;
+            animation: pvSpin 1s linear infinite;
+        }
+
+        @@keyframes pvSpin {
+            to { transform: rotate(360deg); }
+        }
+
+        @@media (max-width: 1199.98px) {
+            .pv-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .pv-summary {
+                position: static;
+            }
+
+            .pv-product-grid {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+
+            .pv-product-description {
+                grid-column: span 2;
+            }
+
+            .pv-product-actions {
+                grid-column: span 2;
+                grid-template-columns: 1fr 1fr;
+                align-items: end;
+            }
+        }
+
+        @@media (max-width: 767.98px) {
+            .pv-header,
+            .pv-docbar {
+                grid-template-columns: 1fr;
+                display: grid;
+            }
+
+            .pv-status {
+                justify-content: center;
+                white-space: normal;
+            }
+
+            .pv-grid-2,
+            .pv-grid-3,
+            .pv-product-grid,
+            .pv-emisor-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .pv-product-description,
+            .pv-product-actions {
+                grid-column: auto;
+            }
+
+            .pv-product-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .pv-cart-item {
+                grid-template-columns: 1fr;
+            }
+
+            .pv-cart-side {
+                grid-template-columns: auto 1fr auto;
+                justify-items: start;
+                align-items: center;
+            }
+        }
+    </style>
+}
+
+@section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    
     <script>
-        // Auto-focus en el campo de código después de agregar producto
-        jQuery(document).ready(function() {
-            jQuery('#Factura_CodigoProducto').focus();
-            
-            // Inicializar Select2 para el selector de códigos de actividad económica
+        jQuery(function () {
+            var form = jQuery('#puntoVentaForm');
+            var tipoDocumento = jQuery('#tipoDocumentoSelect');
+            var municipioGuardado = null;
+
             inicializarSelectorCodigoActividad();
-            
-            // Guardar posición del scroll antes de enviar el formulario
-            var scrollPosition = 0;
-            
-            // Seleccionar contenido al hacer clic en Cantidad y Precio Unitario
-            jQuery('#Factura_CantidadProducto, #Factura_PrecioProducto').on('click', function() {
+            restaurarMunicipioSeleccionado();
+            actualizarEstadoDocumento();
+            restaurarScroll();
+            jQuery('#Factura_CodigoProducto').trigger('focus');
+
+            jQuery('#Factura_CantidadProducto, #Factura_PrecioProducto').on('click', function () {
                 jQuery(this).select();
             });
-            
-            // Capturar posición del scroll antes de enviar formulario
-            jQuery('form').on('submit', function() {
-                scrollPosition = jQuery(window).scrollTop();
-                sessionStorage.setItem('scrollPosition', scrollPosition);
-                
-                // Guardar el municipio seleccionado antes de enviar
-                var municipioSeleccionado = jQuery('#Factura_Receptor_CodigoMunicipio').val();
-                if (municipioSeleccionado) {
-                    sessionStorage.setItem('municipioSeleccionado', municipioSeleccionado);
-                }
+
+            tipoDocumento.on('change', actualizarEstadoDocumento);
+            jQuery('#retencionRentaCheck').on('change', actualizarTotalesVisuales);
+
+            jQuery('#Factura_Receptor_CodigoDepartamento').on('change', function () {
+                cargarMunicipios(jQuery(this).val(), '');
             });
-            
-            // Restaurar posición del scroll después de cargar la página
-            jQuery(window).on('load', function() {
-                var savedPosition = sessionStorage.getItem('scrollPosition');
-                if (savedPosition) {
-                    setTimeout(function() {
-                        // Scroll suave a la posición guardada
-                        jQuery('html, body').animate({
-                            scrollTop: savedPosition
-                        }, 300);
-                        sessionStorage.removeItem('scrollPosition');
-                        
-                        // Enfocar en el campo de código después de restaurar posición
-                        jQuery('#Factura_CodigoProducto').focus();
-                    }, 100);
-                }
-            });
-            
-            // Restaurar municipio seleccionado si existe
-            setTimeout(function() {
-                restaurarMunicipioSeleccionado();
-            }, 200);
-            
-            // Restaurar posición del scroll si existe
-            var savedPosition = sessionStorage.getItem('scrollPosition');
-            if (savedPosition) {
-                setTimeout(function() {
-                    // Scroll suave a la posición guardada
-                    jQuery('html, body').animate({
-                        scrollTop: savedPosition
-                    }, 300);
-                    sessionStorage.removeItem('scrollPosition');
-                    
-                    // Enfocar en el campo de código después de restaurar posición
-                    jQuery('#Factura_CodigoProducto').focus();
-                }, 100);
-            }
-            
-            // Inicializar estado del IVA según el tipo de documento
-            function actualizarEstado() {
-                var tipoDoc = jQuery('#tipoDocumentoSelect').val();
-                var ivaRow = jQuery('.iva-row');
-                var btnAgregar = jQuery('.btn-agregar-producto');
-                var campoPais = jQuery('.campo-pais');
-                var campoTipoDonacion = jQuery('.campo-tipo-donacion');
-                var camposCreditoFiscal = jQuery('.campos-credito-fiscal');
-                var alertaTipoDocumento = jQuery('#alertaTipoDocumento');
-                var campoSujetoExcluido = jQuery('.campo-sujeto-excluido');
-                
-                console.log('Tipo documento:', tipoDoc); // Debug
-                console.log('Botón encontrado:', btnAgregar.length); // Debug
-                
-                // Mostrar/ocultar alerta de tipo de documento
-                if (!tipoDoc) {
-                    alertaTipoDocumento.show();
-                } else {
-                    alertaTipoDocumento.hide();
-                }
-                
-                if (tipoDoc === '02') {
-                    // Mostrar IVA solo para Crédito Fiscal
-                    ivaRow.show();
-                    // Mostrar campos adicionales para Crédito Fiscal
-                    camposCreditoFiscal.show();
-                    recalcularTotales(true); // Con IVA
-                } else if (tipoDoc === '15') {
-                    // Para Donación: mostrar campos de actividad económica pero sin IVA
-                    ivaRow.hide();
-                    camposCreditoFiscal.show();
-                    recalcularTotales(false); // Sin IVA
-                } else {
-                    // Ocultar IVA para todos los demás tipos de documento
-                    ivaRow.hide();
-                    // Ocultar campos adicionales para otros tipos
-                    camposCreditoFiscal.hide();
-                    recalcularTotales(false); // Sin IVA
-                }
-                
-                // Mostrar/ocultar campo de país según tipo de documento
-                if (tipoDoc === '15') {
-                    // Mostrar campo de país solo para Donación
-                    campoPais.show();
-                    // Mostrar campo de tipo de donación solo para Donación
-                    campoTipoDonacion.show();
-                } else {
-                    // Ocultar campo de país para otros tipos
-                    campoPais.hide();
-                    jQuery('#Factura_CodigoPais').val(''); // Limpiar valor
-                    // Ocultar campo de tipo de donación para otros tipos
-                    campoTipoDonacion.hide();
-                    jQuery('#Factura_TipoDonacion').val(''); // Limpiar valor
-                }
-                
-                // Habilitar/deshabilitar botón de agregar según tipo de documento
-                if (tipoDoc) {
-                    btnAgregar.prop('disabled', false).removeClass('btn-secondary').addClass('btn-success');
-                    console.log('Botón habilitado'); // Debug
-                } else {
-                    btnAgregar.prop('disabled', true).removeClass('btn-success').addClass('btn-secondary');
-                    console.log('Botón deshabilitado'); // Debug
+
+            form.on('submit', function (e) {
+                var submitter = e.originalEvent && e.originalEvent.submitter ? e.originalEvent.submitter : document.activeElement;
+                var handler = submitter ? (submitter.getAttribute('formaction') || '') : '';
+
+                guardarScrollYMunicipio();
+
+                if (handler.indexOf('AgregarProducto') !== -1 && !validarAgregarProducto()) {
+                    e.preventDefault();
+                    return false;
                 }
 
-                // Mostrar/ocultar campos para Sujeto Excluido
-                if (tipoDoc === '14') {
-                    campoSujetoExcluido.show();
-                } else {
-                    campoSujetoExcluido.hide();
+                if (handler.indexOf('ProcesarFactura') !== -1) {
+                    if (!validarProcesarFactura()) {
+                        e.preventDefault();
+                        return false;
+                    }
+                    bloquearProcesamiento(jQuery(submitter));
+                }
+            });
+
+            function actualizarEstadoDocumento() {
+                var tipoDoc = tipoDocumento.val();
+                var estado = jQuery('#estadoDocumento');
+                var hayTipo = !!tipoDoc;
+
+                jQuery('#alertaTipoDocumento').toggle(!hayTipo);
+                jQuery('.btn-agregar-producto').prop('disabled', !hayTipo);
+                jQuery('.iva-row').toggle(tipoDoc === '02');
+                jQuery('.campos-credito-fiscal').toggle(tipoDoc === '02' || tipoDoc === '15');
+                jQuery('.campo-pais, .campo-tipo-donacion').toggle(tipoDoc === '15');
+                jQuery('.campo-sujeto-excluido').toggle(tipoDoc === '14');
+
+                if (tipoDoc !== '15') {
+                    jQuery('#Factura_CodigoPais').val('');
+                    jQuery('#Factura_TipoDonacion').val('');
+                }
+
+                if (tipoDoc !== '14') {
                     jQuery('#tipoOperacionSelect').val('');
                     jQuery('#retencionRentaCheck').prop('checked', false);
                 }
+
+                estado.toggleClass('is-ready', hayTipo);
+                estado.find('i').attr('class', hayTipo ? 'bi bi-check-circle' : 'bi bi-exclamation-circle');
+                estado.find('span').text(hayTipo ? textoTipoDocumento(tipoDoc) : 'Seleccione documento');
+
+                actualizarTotalesVisuales();
             }
-            
-            // Función para recalcular totales dinámicamente
-            function recalcularTotales(conIVA) {
+
+            function textoTipoDocumento(tipoDoc) {
+                switch (tipoDoc) {
+                    case '01': return 'Consumidor Final';
+                    case '02': return 'Credito Fiscal';
+                    case '14': return 'Sujeto Excluido';
+                    case '15': return 'Donacion';
+                    default: return 'Documento seleccionado';
+                }
+            }
+
+            function validarAgregarProducto() {
+                var tipoDoc = tipoDocumento.val();
+                if (!tipoDoc) {
+                    enfocarConMensaje('#tipoDocumentoSelect', 'Seleccione un tipo de documento antes de agregar productos.');
+                    return false;
+                }
+
+                if (tipoDoc === '15') {
+                    if (!jQuery('#Factura_CodigoPais').val()) {
+                        enfocarConMensaje('#Factura_CodigoPais', 'Seleccione un codigo de pais para documentos de donacion.');
+                        return false;
+                    }
+                    if (!jQuery('#Factura_TipoDonacion').val()) {
+                        enfocarConMensaje('#Factura_TipoDonacion', 'Seleccione un tipo de donacion.');
+                        return false;
+                    }
+                }
+
+                var codigo = jQuery.trim(jQuery('#Factura_CodigoProducto').val());
+                var descripcion = jQuery.trim(jQuery('#Factura_DescripcionProducto').val());
+                var cantidad = parseFloat(jQuery('#Factura_CantidadProducto').val());
+                var precio = parseFloat(jQuery('#Factura_PrecioProducto').val());
+
+                if (!codigo || !descripcion || !cantidad || cantidad <= 0 || !precio || precio <= 0) {
+                    enfocarConMensaje('#Factura_CodigoProducto', 'Complete codigo, descripcion, cantidad y precio con valores validos.');
+                    return false;
+                }
+
+                return true;
+            }
+
+            function validarProcesarFactura() {
+                if (!tipoDocumento.val()) {
+                    enfocarConMensaje('#tipoDocumentoSelect', 'Seleccione el tipo de documento.');
+                    return false;
+                }
+                return true;
+            }
+
+            function enfocarConMensaje(selector, mensaje) {
+                alert(mensaje);
+                jQuery(selector).trigger('focus');
+            }
+
+            function actualizarTotalesVisuales() {
+                var tipoDoc = tipoDocumento.val();
                 var totalExento = 0;
                 var totalGravado = 0;
-                
-                // Verificar si hay productos en la tabla
-                var filasProductos = jQuery('.table tbody tr').not(':contains("No hay productos")');
-                
-                if (filasProductos.length > 0) {
-                    // Calcular subtotales desde la tabla de productos
-                    filasProductos.each(function() {
-                        var row = jQuery(this);
-                        var subtotalText = row.find('td:eq(5)').text(); // Columna del subtotal
-                        var esExento = row.find('.badge').text().trim() === 'Exento';
-                        
-                        // Extraer el valor numérico del subtotal
-                        var subtotal = parseFloat(subtotalText.replace('$', '').replace(',', '')) || 0;
-                        
-                        if (esExento) {
-                            totalExento += subtotal;
-                        } else {
-                            totalGravado += subtotal;
-                        }
-                    });
-                }
-                
-                // Calcular IVA si corresponde
-                var iva = conIVA ? totalGravado * 0.13 : 0;
-                var totalGeneral = totalExento + totalGravado + iva;
-                
-                // Actualizar los valores en la interfaz
-                jQuery('.card-body .row:eq(0) .col-6:last').text('$' + totalExento.toFixed(2));
-                jQuery('.card-body .row:eq(1) .col-6:last').text('$' + totalGravado.toFixed(2));
-                jQuery('.iva-row .col-6:last').text('$' + iva.toFixed(2));
-                console.log('Totales recalculados:', { totalExento, totalGravado, iva, totalGeneral });
-            }
-            
-            // Actualizar cálculos cuando cambie el tipo de documento
-            jQuery('#tipoDocumentoSelect').on('change', function() {
-                console.log('Cambio detectado en tipo documento'); // Debug
-                actualizarEstado();
-            });
-            
-            // Ejecutar al cargar la página
-            actualizarEstado();
-            
-            // Manejar íconos de flecha en secciones colapsables
-            jQuery('.card-header[data-toggle="collapse"]').on('click', function() {
-                var target = jQuery(this).data('target');
-                var icon = jQuery(this).find('.fa-chevron-down, .fa-chevron-up');
-                
-                // Cambiar ícono después de un pequeño delay para que coincida con la animación
-                setTimeout(function() {
-                    if (jQuery(target).hasClass('show')) {
-                        icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+                var iva = tipoDoc === '02' ? totalGravado * 0.13 : 0;
+                var retencion = 0;
+
+                jQuery('.pv-cart-item').each(function () {
+                    var subtotal = parseFloat(jQuery(this).data('subtotal')) || 0;
+                    if (String(jQuery(this).data('exento')) === 'true') {
+                        totalExento += subtotal;
                     } else {
-                        icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
-                    }
-                }, 150);
-            });
-            
-            // Cargar municipios según departamento seleccionado
-            jQuery('#Factura_Receptor_CodigoDepartamento').on('change', function() {
-                var departamento = jQuery(this).val();
-                var municipioSelect = jQuery('#Factura_Receptor_CodigoMunicipio');
-                
-                // Limpiar municipios
-                municipioSelect.empty();
-                municipioSelect.append('<option value="">Seleccione municipio...</option>');
-                
-                if (departamento) {
-                    // Cargar municipios según el departamento
-                    var municipios = obtenerMunicipiosPorDepartamento(departamento);
-                    municipios.forEach(function(municipio) {
-                        municipioSelect.append('<option value="' + municipio.codigo + '">' + municipio.codigo + ' - ' + municipio.nombre + '</option>');
-                    });
-                }
-            });
-            
-            // Función para restaurar el municipio seleccionado
-            function restaurarMunicipioSeleccionado() {
-                var departamento = jQuery('#Factura_Receptor_CodigoDepartamento').val();
-                var municipioSeleccionado = jQuery('#Factura_Receptor_CodigoMunicipio').val();
-                
-                // Si no hay municipio seleccionado en el campo, intentar obtenerlo del sessionStorage
-                if (!municipioSeleccionado) {
-                    municipioSeleccionado = sessionStorage.getItem('municipioSeleccionado');
-                }
-                
-                if (departamento && municipioSeleccionado) {
-                    // Cargar municipios del departamento
-                    var municipioSelect = jQuery('#Factura_Receptor_CodigoMunicipio');
-                    municipioSelect.empty();
-                    municipioSelect.append('<option value="">Seleccione municipio...</option>');
-                    
-                    var municipios = obtenerMunicipiosPorDepartamento(departamento);
-                    municipios.forEach(function(municipio) {
-                        var option = '<option value="' + municipio.codigo + '">' + municipio.codigo + ' - ' + municipio.nombre + '</option>';
-                        municipioSelect.append(option);
-                    });
-                    
-                    // Seleccionar el municipio que estaba guardado con un pequeño delay
-                    setTimeout(function() {
-                        municipioSelect.val(municipioSeleccionado);
-                        // Limpiar el sessionStorage después de restaurar
-                        sessionStorage.removeItem('municipioSeleccionado');
-                    }, 50);
-                }
-            }
-            
-            // Función para obtener municipios por departamento (definida globalmente)
-            function obtenerMunicipiosPorDepartamento(departamento) {
-                var municipios = [];
-                
-                switch(departamento) {
-                    case '00': // Extranjero
-                        municipios.push({ codigo: '00', nombre: 'Extranjero' });
-                        break;
-                    case '01': // Ahuachapán
-                        municipios.push(
-                            { codigo: '13', nombre: 'AHUACHAPAN NORTE' },
-                            { codigo: '14', nombre: 'AHUACHAPAN CENTRO' },
-                            { codigo: '15', nombre: 'AHUACHAPAN SUR' }
-                        );
-                        break;
-                    case '02': // Santa Ana
-                        municipios.push(
-                            { codigo: '14', nombre: 'SANTA ANA NORTE' },
-                            { codigo: '15', nombre: 'SANTA ANA CENTRO' },
-                            { codigo: '16', nombre: 'SANTA ANA ESTE' },
-                            { codigo: '17', nombre: 'SANTA ANA OESTE' }
-                        );
-                        break;
-                    case '03': // Sonsonate
-                        municipios.push(
-                            { codigo: '17', nombre: 'SONSONATE NORTE' },
-                            { codigo: '18', nombre: 'SONSONATE CENTRO' },
-                            { codigo: '19', nombre: 'SONSONATE ESTE' },
-                            { codigo: '20', nombre: 'SONSONATE OESTE' }
-                        );
-                        break;
-                    case '04': // Chalatenango
-                        municipios.push(
-                            { codigo: '34', nombre: 'CHALATENANGO NORTE' },
-                            { codigo: '35', nombre: 'CHALATENANGO CENTRO' },
-                            { codigo: '36', nombre: 'CHALATENANGO SUR' }
-                        );
-                        break;
-                    case '05': // La Libertad
-                        municipios.push(
-                            { codigo: '23', nombre: 'LA LIBERTAD NORTE' },
-                            { codigo: '24', nombre: 'LA LIBERTAD CENTRO' },
-                            { codigo: '25', nombre: 'LA LIBERTAD OESTE' },
-                            { codigo: '26', nombre: 'LA LIBERTAD ESTE' },
-                            { codigo: '27', nombre: 'LA LIBERTAD COSTA' },
-                            { codigo: '28', nombre: 'LA LIBERTAD SUR' }
-                        );
-                        break;
-                    case '06': // San Salvador
-                        municipios.push(
-                            { codigo: '20', nombre: 'SAN SALVADOR NORTE' },
-                            { codigo: '21', nombre: 'SAN SALVADOR OESTE' },
-                            { codigo: '22', nombre: 'SAN SALVADOR ESTE' },
-                            { codigo: '23', nombre: 'SAN SALVADOR CENTRO' },
-                            { codigo: '24', nombre: 'SAN SALVADOR SUR' }
-                        );
-                        break;
-                    case '07': // Cuscatlán
-                        municipios.push(
-                            { codigo: '17', nombre: 'CUSCATLAN NORTE' },
-                            { codigo: '18', nombre: 'CUSCATLAN SUR' }
-                        );
-                        break;
-                    case '08': // La Paz
-                        municipios.push(
-                            { codigo: '23', nombre: 'LA PAZ OESTE' },
-                            { codigo: '24', nombre: 'LA PAZ CENTRO' },
-                            { codigo: '25', nombre: 'LA PAZ ESTE' }
-                        );
-                        break;
-                    case '09': // Cabañas
-                        municipios.push(
-                            { codigo: '10', nombre: 'CABAÑAS OESTE' },
-                            { codigo: '11', nombre: 'CABAÑAS ESTE' }
-                        );
-                        break;
-                    case '10': // San Vicente
-                        municipios.push(
-                            { codigo: '14', nombre: 'SAN VICENTE NORTE' },
-                            { codigo: '15', nombre: 'SAN VICENTE SUR' }
-                        );
-                        break;
-                    case '11': // Usulután
-                        municipios.push(
-                            { codigo: '24', nombre: 'USULUTAN NORTE' },
-                            { codigo: '25', nombre: 'USULUTAN ESTE' },
-                            { codigo: '26', nombre: 'USULUTAN OESTE' }
-                        );
-                        break;
-                    case '12': // San Miguel
-                        municipios.push(
-                            { codigo: '21', nombre: 'SAN MIGUEL NORTE' },
-                            { codigo: '22', nombre: 'SAN MIGUEL CENTRO' },
-                            { codigo: '23', nombre: 'SAN MIGUEL OESTE' }
-                        );
-                        break;
-                    case '13': // Morazán
-                        municipios.push(
-                            { codigo: '27', nombre: 'MORAZAN NORTE' },
-                            { codigo: '28', nombre: 'MORAZAN SUR' }
-                        );
-                        break;
-                    case '14': // La Unión
-                        municipios.push(
-                            { codigo: '19', nombre: 'LA UNION NORTE' },
-                            { codigo: '20', nombre: 'LA UNION SUR' }
-                        );
-                        break;
-                }
-                
-                return municipios;
-            }
-            
-            // Recalcular totales cuando se agregue o elimine un producto
-            function recalcularTotalesDespuesDeCambio() {
-                var tipoDoc = jQuery('#tipoDocumentoSelect').val();
-                var conIVA = tipoDoc === '02';
-                recalcularTotales(conIVA);
-                
-                // Restaurar municipio después de cambios en productos
-                setTimeout(function() {
-                    restaurarMunicipioSeleccionado();
-                }, 100);
-            }
-            
-            // Observar cambios en la tabla de productos (para cuando se agreguen/eliminen productos)
-            var observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.type === 'childList') {
-                        setTimeout(recalcularTotalesDespuesDeCambio, 100);
+                        totalGravado += subtotal;
                     }
                 });
-            });
-            
-            // Observar la tabla de productos
-            var tablaProductos = document.querySelector('.table tbody');
-            if (tablaProductos) {
-                observer.observe(tablaProductos, { childList: true, subtree: true });
+
+                iva = tipoDoc === '02' ? totalGravado * 0.13 : 0;
+
+                if (tipoDoc === '14' && jQuery('#retencionRentaCheck').is(':checked')) {
+                    retencion = (totalExento + totalGravado) * 0.10;
+                }
+
+                jQuery('#totalExentoValue').text(formatCurrency(totalExento));
+                jQuery('#totalGravadoValue').text(formatCurrency(totalGravado));
+                jQuery('#ivaValue').text(formatCurrency(iva));
+                jQuery('#retencionValue').text('-' + formatCurrency(retencion));
+                jQuery('.retencion-row').toggle(retencion > 0);
+                jQuery('#totalGeneralValue').text(formatCurrency(totalExento + totalGravado + iva - retencion));
+            }
+
+            function formatCurrency(value) {
+                return '$' + Number(value || 0).toFixed(2);
+            }
+
+            function guardarScrollYMunicipio() {
+                sessionStorage.setItem('pvScrollPosition', String(jQuery(window).scrollTop()));
+                municipioGuardado = jQuery('#Factura_Receptor_CodigoMunicipio').val();
+                if (municipioGuardado) {
+                    sessionStorage.setItem('pvMunicipioSeleccionado', municipioGuardado);
+                }
+            }
+
+            function restaurarScroll() {
+                var savedPosition = sessionStorage.getItem('pvScrollPosition');
+                if (!savedPosition) return;
+
+                setTimeout(function () {
+                    jQuery('html, body').animate({ scrollTop: savedPosition }, 220);
+                    sessionStorage.removeItem('pvScrollPosition');
+                    jQuery('#Factura_CodigoProducto').trigger('focus');
+                }, 120);
+            }
+
+            function restaurarMunicipioSeleccionado() {
+                var departamento = jQuery('#Factura_Receptor_CodigoDepartamento').val();
+                var municipio = jQuery('#Factura_Receptor_CodigoMunicipio').val() || sessionStorage.getItem('pvMunicipioSeleccionado');
+
+                if (departamento) {
+                    cargarMunicipios(departamento, municipio);
+                    sessionStorage.removeItem('pvMunicipioSeleccionado');
+                }
+            }
+
+            function cargarMunicipios(departamento, seleccionado) {
+                var municipioSelect = jQuery('#Factura_Receptor_CodigoMunicipio');
+                municipioSelect.empty().append('<option value="">Seleccione municipio...</option>');
+
+                obtenerMunicipiosPorDepartamento(departamento).forEach(function (municipio) {
+                    municipioSelect.append('<option value="' + municipio.codigo + '">' + municipio.codigo + ' - ' + municipio.nombre + '</option>');
+                });
+
+                if (seleccionado) {
+                    municipioSelect.val(seleccionado);
+                }
+            }
+
+            function obtenerMunicipiosPorDepartamento(departamento) {
+                var mapa = {
+                    '00': [{ codigo: '00', nombre: 'Extranjero' }],
+                    '01': [{ codigo: '13', nombre: 'AHUACHAPAN NORTE' }, { codigo: '14', nombre: 'AHUACHAPAN CENTRO' }, { codigo: '15', nombre: 'AHUACHAPAN SUR' }],
+                    '02': [{ codigo: '14', nombre: 'SANTA ANA NORTE' }, { codigo: '15', nombre: 'SANTA ANA CENTRO' }, { codigo: '16', nombre: 'SANTA ANA ESTE' }, { codigo: '17', nombre: 'SANTA ANA OESTE' }],
+                    '03': [{ codigo: '17', nombre: 'SONSONATE NORTE' }, { codigo: '18', nombre: 'SONSONATE CENTRO' }, { codigo: '19', nombre: 'SONSONATE ESTE' }, { codigo: '20', nombre: 'SONSONATE OESTE' }],
+                    '04': [{ codigo: '34', nombre: 'CHALATENANGO NORTE' }, { codigo: '35', nombre: 'CHALATENANGO CENTRO' }, { codigo: '36', nombre: 'CHALATENANGO SUR' }],
+                    '05': [{ codigo: '23', nombre: 'LA LIBERTAD NORTE' }, { codigo: '24', nombre: 'LA LIBERTAD CENTRO' }, { codigo: '25', nombre: 'LA LIBERTAD OESTE' }, { codigo: '26', nombre: 'LA LIBERTAD ESTE' }, { codigo: '27', nombre: 'LA LIBERTAD COSTA' }, { codigo: '28', nombre: 'LA LIBERTAD SUR' }],
+                    '06': [{ codigo: '20', nombre: 'SAN SALVADOR NORTE' }, { codigo: '21', nombre: 'SAN SALVADOR OESTE' }, { codigo: '22', nombre: 'SAN SALVADOR ESTE' }, { codigo: '23', nombre: 'SAN SALVADOR CENTRO' }, { codigo: '24', nombre: 'SAN SALVADOR SUR' }],
+                    '07': [{ codigo: '17', nombre: 'CUSCATLAN NORTE' }, { codigo: '18', nombre: 'CUSCATLAN SUR' }],
+                    '08': [{ codigo: '23', nombre: 'LA PAZ OESTE' }, { codigo: '24', nombre: 'LA PAZ CENTRO' }, { codigo: '25', nombre: 'LA PAZ ESTE' }],
+                    '09': [{ codigo: '10', nombre: 'CABANAS OESTE' }, { codigo: '11', nombre: 'CABANAS ESTE' }],
+                    '10': [{ codigo: '14', nombre: 'SAN VICENTE NORTE' }, { codigo: '15', nombre: 'SAN VICENTE SUR' }],
+                    '11': [{ codigo: '24', nombre: 'USULUTAN NORTE' }, { codigo: '25', nombre: 'USULUTAN ESTE' }, { codigo: '26', nombre: 'USULUTAN OESTE' }],
+                    '12': [{ codigo: '21', nombre: 'SAN MIGUEL NORTE' }, { codigo: '22', nombre: 'SAN MIGUEL CENTRO' }, { codigo: '23', nombre: 'SAN MIGUEL OESTE' }],
+                    '13': [{ codigo: '27', nombre: 'MORAZAN NORTE' }, { codigo: '28', nombre: 'MORAZAN SUR' }],
+                    '14': [{ codigo: '19', nombre: 'LA UNION NORTE' }, { codigo: '20', nombre: 'LA UNION SUR' }]
+                };
+
+                return mapa[departamento] || [];
+            }
+
+            function inicializarSelectorCodigoActividad() {
+                var selector = jQuery('#codigoActividadSelect');
+                if (!selector.length || typeof selector.select2 !== 'function') return;
+
+                selector.select2({
+                    placeholder: 'Buscar codigo de actividad economica...',
+                    allowClear: true,
+                    width: '100%',
+                    ajax: {
+                        url: '/api/CodigoActividadEconomicaApi/buscar',
+                        dataType: 'json',
+                        delay: 250,
+                        data: function (params) {
+                            return { term: params.term };
+                        },
+                        processResults: function (data) {
+                            return {
+                                results: jQuery.map(data, function (item) {
+                                    return {
+                                        id: item.codigo,
+                                        text: item.textoCompleto,
+                                        descripcion: item.descripcion
+                                    };
+                                })
+                            };
+                        },
+                        cache: true
+                    },
+                    minimumInputLength: 1,
+                    language: {
+                        inputTooShort: function () { return 'Ingrese al menos 1 caracter para buscar'; },
+                        noResults: function () { return 'No se encontraron resultados'; },
+                        searching: function () { return 'Buscando...'; }
+                    }
+                });
+
+                var codInicial = jQuery('#Factura_Receptor_CodActividad').val();
+                var descInicial = jQuery('#Factura_Receptor_DescActividad').val();
+                if (codInicial) {
+                    if (selector.find('option[value="' + codInicial + '"]').length === 0) {
+                        selector.append(new Option(descInicial || codInicial, codInicial, true, true));
+                    }
+                    selector.val(codInicial).trigger('change.select2');
+                }
+
+                selector.on('select2:select', function (e) {
+                    var data = e.params.data;
+                    jQuery('#Factura_Receptor_CodActividad').val(data.id);
+                    jQuery('#Factura_Receptor_DescActividad').val(data.descripcion);
+                });
+
+                selector.on('select2:clear', function () {
+                    jQuery('#Factura_Receptor_CodActividad').val('');
+                    jQuery('#Factura_Receptor_DescActividad').val('');
+                });
+            }
+
+            function bloquearProcesamiento(button) {
+                if (button.hasClass('processing')) return;
+
+                button.addClass('processing')
+                    .prop('disabled', true)
+                    .html('<i class="bi bi-hourglass-split"></i><span>Procesando factura...</span>');
+
+                showLoadingOverlay();
+            }
+
+            function showLoadingOverlay() {
+                if (jQuery('#loadingOverlay').length) {
+                    jQuery('#loadingOverlay').show();
+                    return;
+                }
+
+                jQuery('body').append(
+                    '<div id="loadingOverlay" style="position: fixed; inset: 0; background: rgba(15, 23, 42, 0.68); z-index: 9999; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(3px);">' +
+                        '<div class="pv-loading-box">' +
+                            '<div class="pv-spinner"></div>' +
+                            '<h4><i class="bi bi-gear"></i> Procesando factura</h4>' +
+                            '<p class="text-muted mb-2">Generando documento tributario electronico...</p>' +
+                            '<p class="text-danger mb-0 font-weight-bold"><i class="bi bi-exclamation-triangle"></i> No cierre esta ventana</p>' +
+                        '</div>' +
+                    '</div>'
+                );
             }
         });
-
-        // Validación básica del formulario
-        jQuery('form').on('submit', function(e) {
-            var handler = jQuery(e.target).attr('formaction') || jQuery(e.target).closest('button').attr('formaction');
-            
-            if (handler && handler.includes('AgregarProducto')) {
-                // Verificar que se haya seleccionado un tipo de documento
-                var tipoDoc = jQuery('#tipoDocumentoSelect').val();
-                if (!tipoDoc) {
-                    e.preventDefault();
-                    alert('Por favor seleccione un tipo de documento antes de agregar productos.');
-                    jQuery('#tipoDocumentoSelect').focus();
-                    return false;
-                }
-                
-                // Verificar código de país para donaciones
-                if (tipoDoc === '15') {
-                    var codigoPais = jQuery('#Factura_CodigoPais').val();
-                    if (!codigoPais) {
-                        e.preventDefault();
-                        alert('Por favor seleccione un código de país para documentos de donación.');
-                        jQuery('#Factura_CodigoPais').focus();
-                        return false;
-                    }
-                    
-                    var tipoDonacion = jQuery('#Factura_TipoDonacion').val();
-                    if (!tipoDonacion) {
-                        e.preventDefault();
-                        alert('Por favor seleccione un tipo de donación.');
-                        jQuery('#Factura_TipoDonacion').focus();
-                        return false;
-                    }
-                }
-                
-                var codigo = jQuery('#Factura_CodigoProducto').val();
-                var descripcion = jQuery('#Factura_DescripcionProducto').val();
-                var cantidad = jQuery('#Factura_CantidadProducto').val();
-                var precio = jQuery('#Factura_PrecioProducto').val();
-                
-                if (!codigo || !descripcion || !cantidad || cantidad <= 0 || !precio || precio <= 0) {
-                    e.preventDefault();
-                    alert('Por favor complete todos los campos del producto con valores válidos.');
-                    return false;
-                }
-                
-                // Limpiar campos después de agregar producto exitosamente
-                setTimeout(function() {
-                    jQuery('#Factura_CodigoProducto').val('');
-                    jQuery('#Factura_DescripcionProducto').val('');
-                    jQuery('#Factura_CantidadProducto').val('');
-                    jQuery('#Factura_PrecioProducto').val('');
-                    jQuery('#Factura_ProductoExento').prop('checked', false);
-                    jQuery('#Factura_CodigoProducto').focus();
-                }, 100);
-            }
-            
-            if (handler && handler.includes('ProcesarFactura')) {
-                var tipoDoc = jQuery('#tipoDocumentoSelect').val();
-                if (!tipoDoc) {
-                    e.preventDefault();
-                    alert('Por favor seleccione el tipo de documento.');
-                    return false;
-                }
-            }
-        });
-
-        // Función para abrir la clasificación del BCR
-        function abrirClasificacionBCR() {
-            var url = 'https://onec.bcr.gob.sv/clasificadoresv2/Clasificadores/Index/200?tipo=1';
-            var ventana = window.open(url, 'ClasificacionBCR', 'width=1200,height=800,scrollbars=yes,resizable=yes');
-            
-            // Mostrar mensaje informativo
-            if (ventana) {
-                alert('Se ha abierto la clasificación del BCR en una nueva ventana.\n\nPara usar la información:\n1. Busque la actividad económica del receptor\n2. Copie el código y descripción\n3. Cierre la ventana y regrese aquí\n4. Complete los campos de Giro y Código de Actividad Económica del receptor\n\nNota: Estos campos solo son necesarios para Crédito Fiscal.');
-            } else {
-                alert('No se pudo abrir la ventana. Por favor, habilite los popups para este sitio.');
-            }
-        }
-
-
-        // Prevenir doble clic y mostrar ventana de espera para Procesar Factura
-        jQuery(document).on('click', 'button[asp-page-handler="ProcesarFactura"]', function(e) {
-            var submitButton = jQuery(this);
-            
-            // Si ya está procesando, prevenir clic
-            if (submitButton.hasClass('processing')) {
-                e.preventDefault();
-                e.stopPropagation();
-                return false;
-            }
-            
-            // Marcar como procesando
-            submitButton.addClass('processing');
-            submitButton.prop('disabled', true);
-            submitButton.html('<i class="fas fa-hourglass-split me-2"></i>Procesando Factura...');
-            
-            // Mostrar overlay de carga
-            showLoadingOverlay();
-            
-            // Permitir el envío del formulario
-            return true;
-        });
-
-        // Función para inicializar el selector de códigos de actividad económica
-        function inicializarSelectorCodigoActividad() {
-            jQuery('#codigoActividadSelect').select2({
-                placeholder: 'Buscar código de actividad económica...',
-                allowClear: true,
-                width: '100%',
-                ajax: {
-                    url: '/api/CodigoActividadEconomicaApi/buscar',
-                    dataType: 'json',
-                    delay: 250,
-                    data: function (params) {
-                        return {
-                            term: params.term
-                        };
-                    },
-                    processResults: function (data) {
-                        return {
-                            results: jQuery.map(data, function (item) {
-                                return {
-                                    id: item.codigo,
-                                    text: item.textoCompleto,
-                                    descripcion: item.descripcion
-                                };
-                            })
-                        };
-                    },
-                    cache: true
-                },
-                minimumInputLength: 1,
-                language: {
-                    inputTooShort: function () {
-                        return 'Ingrese al menos 1 carácter para buscar';
-                    },
-                    noResults: function () {
-                        return 'No se encontraron resultados';
-                    },
-                    searching: function () {
-                        return 'Buscando...';
-                    }
-                }
-            });
-
-            // Sincronizar valor inicial desde los hidden inputs
-            // (para que Select2 conserve la selección si el servidor devuelve el formulario con error)
-            var codInicial = jQuery('#Factura_Receptor_CodActividad').val();
-            var descInicial = jQuery('#Factura_Receptor_DescActividad').val();
-            if (codInicial) {
-                if (jQuery('#codigoActividadSelect option[value="' + codInicial + '"]').length === 0) {
-                    jQuery('#codigoActividadSelect').append(
-                        new Option(descInicial || codInicial, codInicial, true, true)
-                    );
-                }
-                jQuery('#codigoActividadSelect').val(codInicial).trigger('change.select2');
-            }
-
-            // Manejar la selección de un código
-            jQuery('#codigoActividadSelect').on('select2:select', function (e) {
-                var data = e.params.data;
-                var codigo = data.id;
-                var descripcion = data.descripcion;
-                
-                // Asegurar que solo se guarde el código, no el texto completo
-                jQuery('#codigoActividadSelect').val(codigo);
-                jQuery('#Factura_Receptor_CodActividad').val(codigo);
-                
-                // Llenar el campo de giro con la descripción
-                jQuery('#Factura_Receptor_DescActividad').val(descripcion);
-            });
-
-            // Limpiar campos cuando se deselecciona
-            jQuery('#codigoActividadSelect').on('select2:clear', function (e) {
-                jQuery('#Factura_Receptor_CodActividad').val('');
-                jQuery('#Factura_Receptor_DescActividad').val('');
-            });
-
-            // Asegurar que el valor del select siempre sea solo el código
-            jQuery('#codigoActividadSelect').on('change', function (e) {
-                var valor = jQuery(this).val();
-                // Si el valor contiene un guión, extraer solo la parte del código
-                if (valor && valor.includes(' - ')) {
-                    var codigo = valor.split(' - ')[0];
-                    jQuery(this).val(codigo);
-                }
-            });
-        }
-
-        // Función para mostrar overlay de carga
-        function showLoadingOverlay() {
-            // Crear overlay si no existe
-            if (jQuery('#loadingOverlay').length === 0) {
-                jQuery('body').append(`
-                    <div id="loadingOverlay" style="
-                        position: fixed;
-                        top: 0;
-                        left: 0;
-                        width: 100%;
-                        height: 100%;
-                        background: rgba(0, 0, 0, 0.7);
-                        z-index: 9999;
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                        backdrop-filter: blur(3px);
-                    ">
-                        <div style="
-                            background: white;
-                            padding: 2rem;
-                            border-radius: 12px;
-                            text-align: center;
-                            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-                            max-width: 400px;
-                            width: 90%;
-                        ">
-                            <div style="
-                                width: 60px;
-                                height: 60px;
-                                border: 4px solid #e3e3e3;
-                                border-top: 4px solid #007bff;
-                                border-radius: 50%;
-                                animation: spin 1s linear infinite;
-                                margin: 0 auto 1rem;
-                            "></div>
-                            <h4 style="color: #007bff; margin-bottom: 0.5rem; font-weight: 600;">
-                                <i class="fas fa-gear-fill me-2"></i>Procesando Factura
-                            </h4>
-                            <p style="color: #6c757d; margin: 0; font-size: 0.9rem;">
-                                Generando documento tributario electrónico...
-                            </p>
-                            <p style="color: #dc3545; margin: 0.5rem 0 0 0; font-size: 0.8rem; font-weight: 500;">
-                                <i class="fas fa-exclamation-triangle me-1"></i>No cierre esta ventana
-                            </p>
-                        </div>
-                    </div>
-                `);
-                
-                // Agregar estilos CSS para la animación
-                jQuery('head').append(`
-                    <style>
-                        @@keyframes spin {
-                            0% { transform: rotate(0deg); }
-                            100% { transform: rotate(360deg); }
-                        }
-                    </style>
-                `);
-            } else {
-                jQuery('#loadingOverlay').show();
-            }
-        }
     </script>
-}
-
-@section Styles {
-    <style>
-        .card-outline {
-            border-top: 3px solid;
-        }
-        
-        .form-check-input {
-            margin-top: 0.5rem;
-        }
-        
-        .table th {
-            background-color: #f8f9fa;
-        }
-        
-        .badge {
-            font-size: 0.8em;
-        }
-        
-        /* Mejorar legibilidad de badges */
-        .badge-secondary {
-            background-color: #6c757d !important;
-            color: white !important;
-            font-weight: 600;
-        }
-        
-        .badge-primary {
-            background-color: #007bff !important;
-            color: white !important;
-            font-weight: 600;
-        }
-        
-        /* Alternativa con colores más contrastantes */
-        .badge-exento {
-            background-color: #28a745 !important;
-            color: white !important;
-            font-weight: 600;
-        }
-        
-        .badge-gravado {
-            background-color: #dc3545 !important;
-            color: white !important;
-            font-weight: 600;
-        }
-        
-        /* Transiciones suaves para mejor experiencia de usuario */
-        html {
-            scroll-behavior: smooth;
-        }
-        
-        .btn {
-            transition: all 0.3s ease;
-        }
-        
-        .table {
-            transition: opacity 0.3s ease;
-        }
-        
-        /* Prevenir saltos bruscos en el scroll */
-        body {
-            scroll-padding-top: 20px;
-        }
-        
-        /* Estilos para secciones colapsables */
-        .card-header[data-toggle="collapse"] {
-            transition: background-color 0.3s ease;
-        }
-        
-        .card-header[data-toggle="collapse"]:hover {
-            background-color: rgba(0,0,0,0.05);
-        }
-        
-        .card-header[data-toggle="collapse"] .card-title {
-            margin-bottom: 0;
-            user-select: none;
-        }
-        
-        .card-header[data-toggle="collapse"] .fa-chevron-down,
-        .card-header[data-toggle="collapse"] .fa-chevron-up {
-            transition: transform 0.3s ease;
-        }
-        
-        .card-header[data-toggle="collapse"] .fa-chevron-up {
-            transform: rotate(180deg);
-        }
-        
-        /* Animación suave para el collapse */
-        .collapse {
-            transition: all 0.3s ease;
-        }
-        
-        /* Estilos para campos de crédito fiscal */
-        .campos-credito-fiscal {
-            background-color: #f8f9fa;
-            border-radius: 5px;
-            padding: 15px;
-            margin-top: 15px;
-            border-left: 4px solid #17a2b8;
-            transition: all 0.3s ease-in-out;
-            opacity: 1;
-        }
-        
-        .campos-credito-fiscal[style*="display: none"] {
-            opacity: 0;
-        }
-        
-        .campos-credito-fiscal .form-group {
-            margin-bottom: 10px;
-        }
-        
-        .campos-credito-fiscal label {
-            font-weight: 600;
-            color: #495057;
-        }
-        
-        .campos-credito-fiscal .text-muted {
-            margin-top: 10px;
-            display: block;
-        }
-        
-        .campos-credito-fiscal hr {
-            border-color: #dee2e6;
-            margin: 15px 0;
-        }
-        
-        /* Estilo para el botón de búsqueda */
-        .btn-info {
-            background-color: #17a2b8;
-            border-color: #17a2b8;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-info:hover {
-            background-color: #138496;
-            border-color: #117a8b;
-            transform: translateY(-1px);
-        }
-        
-        /* Eliminar el indicador visual anterior ya que ahora está integrado */
-        .campos-credito-fiscal::before {
-            display: none;
-        }
-        
-        /* Estilo para el placeholder de los campos */
-        .campos-credito-fiscal input::placeholder {
-            color: #6c757d;
-            font-style: italic;
-        }
-        
-        /* Hover effect para el área de crédito fiscal */
-        .campos-credito-fiscal:hover {
-            background-color: #e9ecef;
-            border-left-color: #138496;
-        }
-        
-        /* Estilo para el ícono de información */
-        .campos-credito-fiscal .fa-info-circle {
-            color: #17a2b8;
-        }
-        
-        /* Estilos para la alerta del tipo de documento */
-        #alertaTipoDocumento .alert {
-            border-left: 4px solid #ffc107;
-            background-color: #fff3cd;
-            color: #856404;
-            margin-bottom: 0;
-        }
-        
-        #alertaTipoDocumento .alert .fa-exclamation-triangle {
-            color: #ffc107;
-            margin-right: 8px;
-        }
-        
-        #alertaTipoDocumento .alert strong {
-            color: #856404;
-        }
-        
-        #alertaTipoDocumento .alert .close {
-            color: #856404;
-            opacity: 0.7;
-        }
-        
-        #alertaTipoDocumento .alert .close:hover {
-            opacity: 1;
-        }
-        
-        /* Animación para la alerta */
-        #alertaTipoDocumento .alert {
-            animation: fadeInDown 0.5s ease-in-out;
-        }
-        
-        @@keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        /* Estilo para el select del tipo de documento cuando no hay selección */
-        #tipoDocumentoSelect:invalid {
-            border-color: #dc3545;
-            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
-        }
-        
-        /* Estilo para enfatizar la importancia del tipo de documento */
-        .card-warning.card-outline {
-            border-top-color: #ffc107 !important;
-        }
-        
-        .card-warning.card-outline .card-body {
-            background-color: #fff8e1;
-        }
-        
-        /* Estilos para Select2 */
-        .select2-container--default .select2-selection--single {
-            height: 38px;
-            border: 1px solid #ced4da;
-            border-radius: 0.25rem;
-        }
-        
-        .select2-container--default .select2-selection--single .select2-selection__rendered {
-            line-height: 36px;
-            padding-left: 12px;
-            color: #495057;
-        }
-        
-        .select2-container--default .select2-selection--single .select2-selection__arrow {
-            height: 36px;
-            right: 8px;
-        }
-        
-        .select2-dropdown {
-            border: 1px solid #ced4da;
-            border-radius: 0.25rem;
-        }
-        
-        .select2-container--default .select2-results__option--highlighted[aria-selected] {
-            background-color: #007bff;
-        }
-        
-        .select2-container--default .select2-results__option[aria-selected=true] {
-            background-color: #e9ecef;
-        }
-        
-        /* Estilo para el campo de giro cuando está readonly */
-        .campos-credito-fiscal input[readonly] {
-            background-color: #f8f9fa;
-            border-color: #dee2e6;
-            color: #6c757d;
-        }
-    </style>
 }
