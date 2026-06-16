@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using SRAUMOAR.Entidades.Historial;
 using SRAUMOAR.Entidades.Materias;
+using SRAUMOAR.Entidades.Generales;
 using SRAUMOAR.Modelos;
 using System.ComponentModel.DataAnnotations;
 
@@ -43,6 +44,11 @@ namespace SRAUMOAR.Pages.historial.EstudiosEquivalencia
         public List<Materia> MateriasDisponibles { get; set; } = new();
         public string NombreAlumno { get; set; } = string.Empty;
         public string DetallesJson { get; set; } = "[]";
+
+        [BindProperty]
+        public string TipoEquivalencia { get; set; } = "Externa";
+
+        public List<Carrera> CarrerasDisponiblesUmoar { get; set; } = new();
 
         public class DetalleEquivalenciaViewModel
         {
@@ -92,6 +98,12 @@ namespace SRAUMOAR.Pages.historial.EstudiosEquivalencia
 
         public async Task<IActionResult> OnPostAsync()
         {
+            if (TipoEquivalencia == "Interna")
+            {
+                UniversidadOrigen = "UNIVERSIDAD MONSEÑOR OSCAR ARNULFO ROMERO";
+                ModelState.Remove(nameof(UniversidadOrigen));
+            }
+
             if (AlumnoId == 0)
             {
                 ModelState.AddModelError(nameof(AlumnoId), "Debe seleccionar un alumno.");
@@ -126,7 +138,8 @@ namespace SRAUMOAR.Pages.historial.EstudiosEquivalencia
                     CarreraOrigen = CarreraOrigen,
                     FechaEstudio = FechaEstudio,
                     Estado = "Borrador", // Se crea en estado Borrador inicialmente
-                    FechaAprobacion = null
+                    FechaAprobacion = null,
+                    EsInterno = (TipoEquivalencia == "Interna")
                 };
 
                 _context.EstudiosEquivalencia.Add(estudio);
@@ -233,7 +246,30 @@ namespace SRAUMOAR.Pages.historial.EstudiosEquivalencia
         private async Task CargarMaterias()
         {
             MateriasDisponibles = new List<Materia>();
-            await Task.CompletedTask;
+            CarrerasDisponiblesUmoar = await _context.Carreras.OrderBy(c => c.NombreCarrera).ToListAsync();
+        }
+
+        public async Task<JsonResult> OnGetBuscarMateriasAprobadasAlumnoAsync(int alumnoId)
+        {
+            var materias = await _context.HistorialMateria
+                .Include(hm => hm.Materia)
+                .Include(hm => hm.HistorialCiclo)
+                    .ThenInclude(hc => hc.HistorialAcademico)
+                        .ThenInclude(ha => ha.Carrera)
+                .Where(hm => hm.HistorialCiclo.HistorialAcademico.AlumnoId == alumnoId && hm.Aprobada)
+                .Select(hm => new
+                {
+                    id = hm.MateriaId,
+                    codigo = hm.Materia != null ? hm.Materia.CodigoMateria : (hm.MateriaCodigoLibre ?? string.Empty),
+                    nombre = hm.Materia != null ? hm.Materia.NombreMateria : (hm.MateriaNombreLibre ?? string.Empty),
+                    nota = hm.Promedio,
+                    uv = hm.Materia != null ? hm.Materia.uv : (hm.MateriaUnidadesValorativasLibre ?? 0),
+                    carrera = hm.HistorialCiclo.HistorialAcademico.Carrera != null ? hm.HistorialCiclo.HistorialAcademico.Carrera.NombreCarrera : "Sin Carrera",
+                    ciclo = hm.HistorialCiclo.CicloTexto
+                })
+                .ToListAsync();
+
+            return new JsonResult(materias);
         }
     }
 }

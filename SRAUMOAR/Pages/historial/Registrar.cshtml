@@ -202,6 +202,12 @@
                                                 Equivalencia
                                             </label>
                                         </div>
+                                        <div class="form-check mt-1 ms-3" id="esEquivalenciaInternaGrupo" style="display: none;">
+                                            <input class="form-check-input" type="checkbox" id="esEquivalenciaInterna">
+                                            <label class="form-check-label text-success font-weight-bold" for="esEquivalenciaInterna">
+                                                Interna (UMOAR)
+                                            </label>
+                                        </div>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="form-check mt-4">
@@ -268,6 +274,16 @@
             // Cambio de modo
             jQuery('input[name="UsarPensumExistente"]').change(function() {
                 toggleModoPensum();
+            });
+
+            // Mostrar/ocultar switch interna al cambiar equivalencia
+            jQuery('#equivalencia').change(function() {
+                if (jQuery(this).is(':checked')) {
+                    jQuery('#esEquivalenciaInternaGrupo').show();
+                } else {
+                    jQuery('#esEquivalenciaInternaGrupo').hide();
+                    jQuery('#esEquivalenciaInterna').prop('checked', false);
+                }
             });
 
             // Habilitar carreras cuando se ingrese el ciclo
@@ -401,6 +417,7 @@
                 promedio: promedio,
                 aprobada: jQuery('#aprobada').is(':checked'),
                 equivalencia: jQuery('#equivalencia').is(':checked'),
+                esEquivalenciaInterna: jQuery('#equivalencia').is(':checked') && jQuery('#esEquivalenciaInterna').is(':checked'),
                 examenSuficiencia: jQuery('#examenSuficiencia').is(':checked')
             };
 
@@ -454,7 +471,7 @@
                     <div class="alert alert-success d-flex justify-content-between align-items-center">
                         <div>
                             <strong>${materia.nombreMateria}</strong><br>
-                            <small>Promedio: ${materia.promedio} | Aprobada: ${materia.aprobada ? 'Sí' : 'No'} | Equivalencia: ${materia.equivalencia ? 'Sí' : 'No'} | Examen de Suficiencia: ${materia.examenSuficiencia ? 'Sí' : 'No'}</small>
+                            <small>Promedio: ${materia.promedio} | Aprobada: ${materia.aprobada ? 'Sí' : 'No'} | Equivalencia: ${materia.equivalencia ? (materia.esEquivalenciaInterna ? 'Interna' : 'Externa') : 'No'} | Examen de Suficiencia: ${materia.examenSuficiencia ? 'Sí' : 'No'}</small>
                         </div>
                         <button type="button" class="btn btn-danger btn-sm" onclick="eliminarMateria(${index})">
                             <i class="bi bi-trash"></i>
@@ -488,6 +505,8 @@
             jQuery('input[id^="nota"]').val('');
             jQuery('#aprobada').prop('checked', true);
             jQuery('#equivalencia').prop('checked', false);
+            jQuery('#esEquivalenciaInterna').prop('checked', false);
+            jQuery('#esEquivalenciaInternaGrupo').hide();
             jQuery('#examenSuficiencia').prop('checked', false);
         }
 
@@ -609,6 +628,12 @@
                     type: 'hidden',
                     name: `Materias[${index}].Equivalencia`,
                     value: materia.equivalencia
+                }).appendTo('form');
+
+                jQuery('<input>').attr({
+                    type: 'hidden',
+                    name: `Materias[${index}].EsEquivalenciaInterna`,
+                    value: materia.esEquivalenciaInterna
                 }).appendTo('form');
                 
                 jQuery('<input>').attr({

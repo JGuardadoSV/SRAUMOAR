@@ -70,6 +70,8 @@ namespace SRAUMOAR.Entidades.Historial
         
         public bool Equivalencia { get; set; }
         
+        public bool EsEquivalenciaInterna { get; set; } = false;
+        
         public bool ExamenSuficiencia { get; set; }
         
         [ScaffoldColumn(false)]

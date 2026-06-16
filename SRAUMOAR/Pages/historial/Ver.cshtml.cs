@@ -138,6 +138,7 @@ namespace SRAUMOAR.Pages.historial
             decimal promedio,
             bool aprobada,
             bool equivalencia,
+            bool esEquivalenciaInterna,
             bool examenSuficiencia,
             int? nuevoCicloId = null,
             string? nuevoCicloTexto = null,
@@ -211,6 +212,7 @@ namespace SRAUMOAR.Pages.historial
                 historialMateria.Promedio = promedio;
                 historialMateria.Aprobada = aprobada;
                 historialMateria.Equivalencia = equivalencia;
+                historialMateria.EsEquivalenciaInterna = esEquivalenciaInterna;
                 historialMateria.ExamenSuficiencia = examenSuficiencia;
                 historialMateria.FechaRegistro = DateTime.Now;
                 

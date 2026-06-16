@@ -36,6 +36,8 @@ namespace SRAUMOAR.Modelos
         
         public bool Equivalencia { get; set; }
 
+        public bool EsEquivalenciaInterna { get; set; } = false;
+ 
         public bool ExamenSuficiencia { get; set; }
     }
 }

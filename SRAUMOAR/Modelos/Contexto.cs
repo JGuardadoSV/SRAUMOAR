@@ -183,7 +183,11 @@ namespace SRAUMOAR.Modelos
                 new ConfiguracionReporte { Id = 4, Reporte = "CertificacionNotas", Clave = "Introduccion", Valor = "", Descripcion = "Párrafo de texto introductorio en negrita" },
                 new ConfiguracionReporte { Id = 5, Reporte = "CertificacionNotas", Clave = "FirmaNombre", Valor = "", Descripcion = "Nombre del firmante en el pie de página" },
                 new ConfiguracionReporte { Id = 6, Reporte = "CertificacionNotas", Clave = "FirmaCargo", Valor = "", Descripcion = "Cargo del firmante en el pie de página" },
-                new ConfiguracionReporte { Id = 7, Reporte = "CertificacionNotas", Clave = "FirmaSublinea", Valor = "", Descripcion = "Información adicional o segunda línea de firma (ej. Sello o Registro)" }
+                new ConfiguracionReporte { Id = 7, Reporte = "CertificacionNotas", Clave = "FirmaSublinea", Valor = "", Descripcion = "Información adicional o segunda línea de firma (ej. Sello o Registro)" },
+                new ConfiguracionReporte { Id = 8, Reporte = "CertificacionNotas", Clave = "RectoraNombre", Valor = "LICDA. CARMEN NAVAS ESCOBAR DE MEJÍA", Descripcion = "Nombre de la Rectora" },
+                new ConfiguracionReporte { Id = 9, Reporte = "CertificacionNotas", Clave = "RectoraCargo", Valor = "RECTORA", Descripcion = "Cargo de la Rectora" },
+                new ConfiguracionReporte { Id = 10, Reporte = "CertificacionNotas", Clave = "ConfrontadoPor", Valor = "LIC. JOSE AUGUSTO HERNANDEZ GONZALEZ", Descripcion = "Nombre de la persona que confronta" },
+                new ConfiguracionReporte { Id = 11, Reporte = "CertificacionNotas", Clave = "RectoraCertificacion", Valor = "La infrascrita, Rectora de la Universidad Monseñor Oscar Arnulfo Romero, certifica que la firma que aparece al pie de la certificación global de notas es auténtica y es la misma que usa el {SecretarioNombre}, {SecretarioCargo} de esta universidad.", Descripcion = "Texto de certificación de la Rectora" }
             );
 
             // Relaciones para Estudios de Equivalencia

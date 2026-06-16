@@ -39,9 +39,20 @@ namespace SRAUMOAR.Pages.historial
                     // Fallback a diccionario vacío si la tabla aún no existe en la base de datos
                 }
 
-                string dir1 = configs.TryGetValue("DireccionLinea1", out var d1) ? d1 : "";
-                string dir2 = configs.TryGetValue("DireccionLinea2", out var d2) ? d2 : "";
-                string dir3 = configs.TryGetValue("DireccionLinea3", out var d3) ? d3 : "";
+                string CleanHeaderString(string input)
+                {
+                    if (string.IsNullOrWhiteSpace(input)) return "";
+                    input = input.Replace("\r\n", " ").Replace("\n", " ").Replace("\r", " ");
+                    while (input.Contains("  "))
+                    {
+                        input = input.Replace("  ", " ");
+                    }
+                    return input.Trim();
+                }
+
+                string dir1 = CleanHeaderString(configs.TryGetValue("DireccionLinea1", out var d1) ? d1 : "");
+                string dir2 = CleanHeaderString(configs.TryGetValue("DireccionLinea2", out var d2) ? d2 : "");
+                string dir3 = CleanHeaderString(configs.TryGetValue("DireccionLinea3", out var d3) ? d3 : "");
                 string intro = configs.TryGetValue("Introduccion", out var inText) ? inText : "";
                 string firmaNombre = configs.TryGetValue("FirmaNombre", out var fNom) ? fNom : "";
                 string firmaCargo = configs.TryGetValue("FirmaCargo", out var fCar) ? fCar : "";
@@ -229,11 +240,11 @@ namespace SRAUMOAR.Pages.historial
                                 var logoPath = Path.Combine("wwwroot", "images", "logoUmoar.jpg");
                                 if (System.IO.File.Exists(logoPath))
                                 {
-                                    row.ConstantItem(80).Image(logoPath);
+                                    row.ConstantItem(60).Image(logoPath);
                                 }
                                 else
                                 {
-                                    row.ConstantItem(80).Text("");
+                                    row.ConstantItem(60).Text("");
                                 }
 
                                 // Texto centrado
@@ -245,11 +256,11 @@ namespace SRAUMOAR.Pages.historial
                                         .AlignCenter();
                                     
                                     if (!string.IsNullOrWhiteSpace(dir1))
-                                        textCol.Item().AlignCenter().Text(dir1).FontSize(11).AlignCenter();
+                                        textCol.Item().AlignCenter().Text(dir1).FontSize(10f).AlignCenter();
                                     if (!string.IsNullOrWhiteSpace(dir2))
-                                        textCol.Item().AlignCenter().Text(dir2).FontSize(11).AlignCenter();
+                                        textCol.Item().AlignCenter().Text(dir2).FontSize(10f).AlignCenter();
                                     if (!string.IsNullOrWhiteSpace(dir3))
-                                        textCol.Item().AlignCenter().Text(dir3).FontSize(11).AlignCenter();
+                                        textCol.Item().AlignCenter().Text(dir3).FontSize(10f).AlignCenter();
                                 });
                             });
 
@@ -346,8 +357,18 @@ namespace SRAUMOAR.Pages.historial
                                             table.Cell().Element(c => CellStyle(c, 0)).Text("");
                                         }
 
-                                        // Estatus (vacío)
-                                        table.Cell().Element(c => CellStyle(c, 1)).Text("");
+                                        // Estatus
+                                        string estatusTexto = "";
+                                        if (materia.ExamenSuficiencia)
+                                        {
+                                            estatusTexto = "4";
+                                        }
+                                        else if (materia.Equivalencia)
+                                        {
+                                            estatusTexto = materia.EsEquivalenciaInterna ? "2" : "1";
+                                        }
+
+                                        table.Cell().Element(c => CellStyle(c, 1)).Text(estatusTexto).FontSize(tamanoFuenteCiclo).AlignCenter();
 
                                         // CODIGO
                                         string codigo = materia.Materia != null 

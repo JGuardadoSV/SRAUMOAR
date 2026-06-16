@@ -192,6 +192,7 @@ namespace SRAUMOAR.Pages.historial
                             Promedio = materia.Promedio,
                             Aprobada = materia.Aprobada,
                             Equivalencia = materia.Equivalencia,
+                            EsEquivalenciaInterna = materia.EsEquivalenciaInterna,
                             ExamenSuficiencia = materia.ExamenSuficiencia,
                             FechaRegistro = DateTime.Now
                         };

@@ -206,22 +206,29 @@
                                                                 }
                                                             </td>
                                                             <td>
-                                                                @if (materia.Equivalencia)
-                                                                {
-                                                                    <span class="badge bg-info">Sí</span>
-                                                                }
-                                                                else
-                                                                {
-                                                                    <span class="badge bg-secondary">No</span>
-                                                                }
-                                                            </td>
+                                                                 @if (materia.Equivalencia)
+                                                                 {
+                                                                     @if (materia.EsEquivalenciaInterna)
+                                                                     {
+                                                                         <span class="badge bg-success">Interna</span>
+                                                                     }
+                                                                     else
+                                                                     {
+                                                                         <span class="badge bg-info">Externa</span>
+                                                                     }
+                                                                 }
+                                                                 else
+                                                                 {
+                                                                     <span class="badge bg-secondary">No</span>
+                                                                 }
+                                                             </td>
                                                             <td>
                                                                 <button type="button" class="btn btn-primary btn-sm me-1" 
                                                                         onclick="abrirModalEditar(@materia.HistorialMateriaId, 
                                                                         '@(materia.Materia != null ? materia.Materia.NombreMateria : materia.MateriaNombreLibre ?? "")',
                                                                         @materia.HistorialCicloId,
                                                                         @materia.Nota1, @materia.Nota2, @materia.Nota3, @materia.Nota4, @materia.Nota5, @materia.Nota6,
-                                                                        @materia.Promedio, @(materia.Aprobada ? 1 : 0), @(materia.Equivalencia ? 1 : 0), @(materia.ExamenSuficiencia ? 1 : 0))"
+                                                                        @materia.Promedio, @(materia.Aprobada ? 1 : 0), @(materia.Equivalencia ? 1 : 0), @(materia.EsEquivalenciaInterna ? 1 : 0), @(materia.ExamenSuficiencia ? 1 : 0))"
                                                                         title="Editar notas">
                                                                     <i class="bi bi-pencil"></i>
                                                                 </button>
@@ -375,13 +382,19 @@
                             </div>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="equivalencia" name="equivalencia">
-                                <label class="form-check-label" for="equivalencia">
-                                    Equivalencia
-                                </label>
-                            </div>
-                        </div>
+                                                            <div class="form-check form-switch">
+                                                                <input class="form-check-input" type="checkbox" id="equivalencia" name="equivalencia">
+                                                                <label class="form-check-label" for="equivalencia">
+                                                                    Equivalencia
+                                                                </label>
+                                                            </div>
+                                                            <div class="form-check mt-1 ms-4" id="esEquivalenciaInternaGrupo" style="display: none;">
+                                                                <input class="form-check-input" type="checkbox" id="esEquivalenciaInterna" name="esEquivalenciaInterna">
+                                                                <label class="form-check-label text-success font-weight-bold" for="esEquivalenciaInterna">
+                                                                    Interna (UMOAR)
+                                                                </label>
+                                                            </div>
+                                                        </div>
                         <div class="col-md-4 mb-3">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="examenSuficiencia" name="examenSuficiencia">
@@ -536,7 +549,7 @@
         }
 
         // Función para abrir el modal de edición
-        function abrirModalEditar(historialMateriaId, nombreMateria, historialCicloIdActual, nota1, nota2, nota3, nota4, nota5, nota6, promedio, aprobada, equivalencia, examenSuficiencia) {
+        function abrirModalEditar(historialMateriaId, nombreMateria, historialCicloIdActual, nota1, nota2, nota3, nota4, nota5, nota6, promedio, aprobada, equivalencia, esEquivalenciaInterna, examenSuficiencia) {
             // Escapar el nombre de la materia para evitar problemas con comillas
             var nombreEscapado = nombreMateria.replace(/'/g, "\\'");
             
@@ -553,7 +566,15 @@
             // Convertir 1/0 a boolean para los checkboxes
             jQuery('#aprobada').prop('checked', aprobada === 1 || aprobada === true);
             jQuery('#equivalencia').prop('checked', equivalencia === 1 || equivalencia === true);
+            jQuery('#esEquivalenciaInterna').prop('checked', esEquivalenciaInterna === 1 || esEquivalenciaInterna === true);
             jQuery('#examenSuficiencia').prop('checked', examenSuficiencia === 1 || examenSuficiencia === true);
+
+            if (equivalencia === 1 || equivalencia === true) {
+                jQuery('#esEquivalenciaInternaGrupo').show();
+            } else {
+                jQuery('#esEquivalenciaInternaGrupo').hide();
+                jQuery('#esEquivalenciaInterna').prop('checked', false);
+            }
             
             // Resetear el selector de ciclo
             jQuery('#nuevoCicloId').val('');
@@ -573,6 +594,16 @@
 
         // Calcular promedio automáticamente
         jQuery(document).ready(function() {
+            // Mostrar/ocultar switch interna al cambiar equivalencia
+            jQuery('#equivalencia').on('change', function() {
+                if (jQuery(this).is(':checked')) {
+                    jQuery('#esEquivalenciaInternaGrupo').show();
+                } else {
+                    jQuery('#esEquivalenciaInternaGrupo').hide();
+                    jQuery('#esEquivalenciaInterna').prop('checked', false);
+                }
+            });
+
             jQuery('#calcularPromedio').on('change', function() {
                 if (jQuery(this).is(':checked')) {
                     jQuery('#promedio').prop('readonly', true);
@@ -639,6 +670,7 @@
                     promedio: parseFloat(jQuery('#promedio').val()) || 0,
                     aprobada: jQuery('#aprobada').is(':checked'),
                     equivalencia: jQuery('#equivalencia').is(':checked'),
+                    esEquivalenciaInterna: jQuery('#equivalencia').is(':checked') && jQuery('#esEquivalenciaInterna').is(':checked'),
                     examenSuficiencia: jQuery('#examenSuficiencia').is(':checked')
                 };
 

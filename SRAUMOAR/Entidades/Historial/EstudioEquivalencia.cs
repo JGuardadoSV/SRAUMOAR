@@ -30,6 +30,9 @@ namespace SRAUMOAR.Entidades.Historial
 
         public DateTime? FechaAprobacion { get; set; }
 
+        [Required]
+        public bool EsInterno { get; set; } = false;
+
         // Relaciones
         [ForeignKey("AlumnoId")]
         public virtual Alumno? Alumno { get; set; }

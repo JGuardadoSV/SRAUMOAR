@@ -90,18 +90,28 @@ namespace SRAUMOAR.Pages.historial.EstudiosEquivalencia
                 var ciclo = await _context.HistorialCiclo
                     .FirstOrDefaultAsync(c => c.HistorialAcademicoId == historial.HistorialAcademicoId && c.CicloTexto == "EQUIV");
 
+                bool esInterno = estudio.UniversidadOrigen != null && 
+                                 (estudio.UniversidadOrigen.Contains("MONSEÑOR OSCAR ARNULFO ROMERO", StringComparison.OrdinalIgnoreCase) || 
+                                  estudio.UniversidadOrigen.Contains("UMOAR", StringComparison.OrdinalIgnoreCase));
+
                 if (ciclo == null)
                 {
                     ciclo = new HistorialCiclo
                     {
                         HistorialAcademicoId = historial.HistorialAcademicoId,
                         CicloTexto = "EQUIV",
-                        PensumNombreLibre = "Equivalencia Externa",
+                        PensumNombreLibre = esInterno ? "Equivalencia Interna" : "Equivalencia Externa",
                         PensumId = null,
                         FechaRegistro = DateTime.Now
                     };
                     _context.HistorialCiclo.Add(ciclo);
                     await _context.SaveChangesAsync(); // Generar ID
+                }
+                else if (esInterno && (ciclo.PensumNombreLibre == "Equivalencia Externa" || string.IsNullOrEmpty(ciclo.PensumNombreLibre)))
+                {
+                    // Si ya existía el ciclo pero tiene descripción de externa o vacía, la actualizamos a interna o mixta
+                    ciclo.PensumNombreLibre = "Equivalencia Interna";
+                    _context.HistorialCiclo.Update(ciclo);
                 }
 
                 // 4. Agregar cada materia homologada al historial
@@ -120,6 +130,7 @@ namespace SRAUMOAR.Pages.historial.EstudiosEquivalencia
                             Promedio = det.NotaEquivalencia,
                             Aprobada = true,
                             Equivalencia = true,
+                            EsEquivalenciaInterna = esInterno,
                             ExamenSuficiencia = false,
                             FechaRegistro = DateTime.Now,
                             // Inicializar notas con la nota de equivalencia

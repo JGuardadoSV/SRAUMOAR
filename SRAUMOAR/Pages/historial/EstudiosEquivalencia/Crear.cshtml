@@ -49,6 +49,23 @@
                             <div class="card-body">
                                 <div class="row g-3">
                                     
+                                    <!-- Tipo de Equivalencia -->
+                                    <div class="col-md-12 mb-2 border-bottom pb-3">
+                                        <label class="form-label font-weight-bold d-block mb-2"><i class="bi bi-gear-fill text-secondary me-1"></i> Tipo de Equivalencia:</label>
+                                        <div class="form-check form-check-inline me-4">
+                                            <input class="form-check-input" type="radio" asp-for="TipoEquivalencia" id="tipoExterna" value="Externa" />
+                                            <label class="form-check-label font-weight-bold text-dark" for="tipoExterna" style="cursor: pointer;">
+                                                <i class="bi bi-box-arrow-up-right text-muted me-1"></i> Equivalencia Externa (Otra Universidad)
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" asp-for="TipoEquivalencia" id="tipoInterna" value="Interna" />
+                                            <label class="form-check-label font-weight-bold text-dark" for="tipoInterna" style="cursor: pointer;">
+                                                <i class="bi bi-arrow-left-right text-success me-1"></i> Equivalencia Interna (Carrera UMOAR)
+                                            </label>
+                                        </div>
+                                    </div>
+
                                     <!-- Buscador de Alumno -->
                                     <div class="col-md-6">
                                         <label class="form-label font-weight-bold">Buscar Alumno:</label>
@@ -71,9 +88,28 @@
                                     </div>
 
                                     <!-- Carrera de Origen -->
-                                    <div class="col-md-6">
-                                        <label asp-for="CarreraOrigen" class="form-label font-weight-bold">Carrera de Origen:</label>
-                                        <input asp-for="CarreraOrigen" class="form-control" placeholder="Ej: Licenciatura en Administración de Empresas" />
+                                    <div class="col-md-6" id="carreraOrigenContainer">
+                                        <label class="form-label font-weight-bold">Carrera de Origen:</label>
+                                        <input type="hidden" asp-for="CarreraOrigen" id="carreraOrigenActual" />
+                                        
+                                        <!-- Input para Externa -->
+                                        <input type="text" id="carreraOrigenExterna" class="form-control" placeholder="Ej: Licenciatura en Administración de Empresas" value="@Model.CarreraOrigen" />
+                                        
+                                        <!-- Select para Interna -->
+                                        <select id="carreraOrigenInterna" class="form-select d-none">
+                                            <option value="">-- Seleccione Carrera UMOAR --</option>
+                                            @foreach (var carrera in Model.CarrerasDisponiblesUmoar)
+                                            {
+                                                if (Model.CarreraOrigen == carrera.NombreCarrera)
+                                                {
+                                                    <option value="@carrera.NombreCarrera" selected>@carrera.NombreCarrera</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="@carrera.NombreCarrera">@carrera.NombreCarrera</option>
+                                                }
+                                            }
+                                        </select>
                                         <span asp-validation-for="CarreraOrigen" class="text-danger small"></span>
                                     </div>
 
@@ -168,6 +204,7 @@
         const detallesPrecargados = @Html.Raw(Model.DetallesJson);
         
         let blockCount = 0;
+        let materiasAprobadasAlumno = [];
 
         jQuery(document).ready(function () {
             // Autocomplete para seleccionar alumno
@@ -191,6 +228,9 @@
                     jQuery('#alumnoIdSelected').val(ui.item.id);
                     jQuery('#nombreAlumnoSpan').text(ui.item.value);
                     jQuery('#alumnoSeleccionadoLabel').removeClass('d-none');
+                    
+                    // Cargar materias aprobadas del alumno
+                    cargarMateriasAprobadas(ui.item.id);
                     return false;
                 }
             }).autocomplete("instance")._renderItem = function (ul, item) {
@@ -199,19 +239,37 @@
                     .appendTo(ul);
             };
 
+            // Evento al cambiar el tipo de equivalencia
+            jQuery('input[name="TipoEquivalencia"]').change(function() {
+                actualizarInterfazSegunTipo();
+            });
+
+            // Sincronizar inputs de carrera de origen con el oculto que se bindea
+            jQuery('#carreraOrigenExterna').on('input change', function() {
+                if (jQuery('input[name="TipoEquivalencia"]:checked').val() === "Externa") {
+                    jQuery('#carreraOrigenActual').val(jQuery(this).val());
+                }
+            });
+
+            jQuery('#carreraOrigenInterna').on('change', function() {
+                if (jQuery('input[name="TipoEquivalencia"]:checked').val() === "Interna") {
+                    jQuery('#carreraOrigenActual').val(jQuery(this).val());
+                }
+            });
+
             // Evento para añadir bloques de materias UMOAR
             jQuery('#btnAddUmoarBlock').click(function () {
                 agregarBloqueUmoar();
             });
 
-            // Si hay detalles precargados, los dibujamos
-            if (detallesPrecargados && detallesPrecargados.length > 0) {
-                detallesPrecargados.forEach(function (det) {
-                    agregarBloqueUmoar(det);
+            // Si el alumno ya está seleccionado al cargar, cargar sus materias
+            const alumnoIdInicial = parseInt(jQuery('#alumnoIdSelected').val());
+            if (alumnoIdInicial && alumnoIdInicial > 0) {
+                cargarMateriasAprobadas(alumnoIdInicial, function() {
+                    dibujarDetallesOMateriaInicial();
                 });
             } else {
-                // Añadir la primera fila por defecto
-                agregarBloqueUmoar();
+                dibujarDetallesOMateriaInicial();
             }
 
             // Quitar bloque UMOAR
@@ -226,13 +284,13 @@
                 }
             });
 
-            // Agregar asignatura externa
+            // Agregar asignatura de origen
             jQuery(document).on('click', '.btn-add-externa', function () {
                 const block = jQuery(this).closest('.umoar-block');
                 agregarFilaExterna(block);
             });
 
-            // Quitar asignatura externa
+            // Quitar asignatura de origen
             jQuery(document).on('click', '.btn-delete-externa-row', function () {
                 const block = jQuery(this).closest('.umoar-block');
                 const tbody = block.find('.tbody-externas');
@@ -245,7 +303,7 @@
                 }
             });
 
-            // Escuchar cambios en las UVs de materias externas
+            // Escuchar cambios en las UVs de materias origen
             jQuery(document).on('input change', '.externa-uv-input', function () {
                 const block = jQuery(this).closest('.umoar-block');
                 actualizarSumaUvs(block);
@@ -260,7 +318,156 @@
                 block.find('.materia-uvs-required').text('0');
                 actualizarSumaUvs(block);
             });
+
+            // Lógica al seleccionar una materia aprobada en el modo Interno
+            jQuery(document).on('change', '.select-materia-interna', function () {
+                const select = jQuery(this);
+                const row = select.closest('.externa-row');
+                const option = select.find('option:selected');
+                
+                if (option.val()) {
+                    const codigo = option.val();
+                    const nombre = option.data('nombre');
+                    const nota = option.data('nota');
+                    const uv = option.data('uv');
+                    
+                    row.find('.externa-codigo-input').val(codigo);
+                    row.find('.externa-nombre-input').val(nombre);
+                    row.find('.externa-nota-input').val(nota);
+                    row.find('.externa-uv-input').val(uv).trigger('change');
+                } else {
+                    row.find('.externa-codigo-input').val('');
+                    row.find('.externa-nombre-input').val('');
+                    row.find('.externa-nota-input').val('');
+                    row.find('.externa-uv-input').val('').trigger('change');
+                }
+            });
         });
+
+        function dibujarDetallesOMateriaInicial() {
+            // Si hay detalles precargados, los dibujamos
+            if (detallesPrecargados && detallesPrecargados.length > 0) {
+                detallesPrecargados.forEach(function (det) {
+                    agregarBloqueUmoar(det);
+                });
+            } else {
+                // Añadir la primera fila por defecto
+                agregarBloqueUmoar();
+            }
+            actualizarInterfazSegunTipo();
+        }
+
+        function cargarMateriasAprobadas(alumnoId, callback = null) {
+            if (!alumnoId) {
+                materiasAprobadasAlumno = [];
+                actualizarSelectsMateriasOrigen();
+                if (callback) callback();
+                return;
+            }
+            jQuery.get('/historial/EstudiosEquivalencia/Crear?handler=BuscarMateriasAprobadasAlumno&alumnoId=' + alumnoId)
+                .done(function (data) {
+                    materiasAprobadasAlumno = data;
+                    actualizarSelectsMateriasOrigen();
+                    if (callback) callback();
+                })
+                .fail(function () {
+                    console.error("Error al cargar materias aprobadas del alumno.");
+                    materiasAprobadasAlumno = [];
+                    actualizarSelectsMateriasOrigen();
+                    if (callback) callback();
+                });
+        }
+
+        function actualizarSelectsMateriasOrigen() {
+            jQuery('.select-materia-interna').each(function() {
+                const select = jQuery(this);
+                const row = select.closest('.externa-row');
+                const codigoActual = row.find('.externa-codigo-input').val();
+                
+                let optionsHtml = '<option value="">-- Seleccione Asignatura Cursada --</option>';
+                if (materiasAprobadasAlumno && materiasAprobadasAlumno.length > 0) {
+                    materiasAprobadasAlumno.forEach(function (mat) {
+                        const selected = (codigoActual === mat.codigo) ? 'selected' : '';
+                        optionsHtml += `<option value="${mat.codigo}" ${selected} data-nombre="${mat.nombre}" data-nota="${mat.nota}" data-uv="${mat.uv}">[${mat.codigo}] ${mat.nombre} (Nota: ${mat.nota} | UV: ${mat.uv})</option>`;
+                    });
+                }
+                select.html(optionsHtml);
+            });
+        }
+
+        function actualizarInterfazSegunTipo() {
+            const tipo = jQuery('input[name="TipoEquivalencia"]:checked').val() || "Externa";
+            const isInterna = (tipo === "Interna");
+
+            if (isInterna) {
+                // Universidad de Origen
+                jQuery('#UniversidadOrigen').val("UNIVERSIDAD MONSEÑOR OSCAR ARNULFO ROMERO").prop('readonly', true).css('background-color', '#e9ecef');
+                
+                // Carrera de Origen
+                jQuery('#carreraOrigenExterna').addClass('d-none').prop('required', false);
+                jQuery('#carreraOrigenInterna').removeClass('d-none').prop('required', true);
+                jQuery('#carreraOrigenActual').val(jQuery('#carreraOrigenInterna').val());
+
+                // Botones y headers
+                jQuery('.btn-add-externa').html('<i class="bi bi-plus-lg me-1"></i>Agregar Asignatura Interna');
+                jQuery('.sum-uvs-badge').closest('div').find('.text-muted').html('<i class="bi bi-box-arrow-in-right me-1 text-info"></i>Asignaturas de Origen (Internas)');
+                
+                jQuery('.tbody-externas').each(function() {
+                    const table = jQuery(this).closest('table');
+                    table.find('thead th:nth-child(1)').text('Código Interno');
+                    table.find('thead th:nth-child(2)').text('Asignatura Interna');
+                });
+                jQuery('.btn-delete-externa-row').attr('title', 'Quitar asignatura interna');
+                
+                // Actualizar filas existentes
+                jQuery('.externa-row').each(function() {
+                    const row = jQuery(this);
+                    row.find('.externa-codigo-input').prop('readonly', true).css('background-color', '#e9ecef');
+                    row.find('.externa-nota-input').prop('readonly', true).css('background-color', '#e9ecef');
+                    row.find('.externa-uv-input').prop('readonly', true).css('background-color', '#e9ecef');
+                    
+                    const select = row.find('.select-materia-interna');
+                    const input = row.find('.externa-nombre-input');
+                    
+                    select.removeClass('d-none').prop('required', true);
+                    input.addClass('d-none').prop('required', false);
+                });
+                actualizarSelectsMateriasOrigen();
+            } else {
+                // Universidad de Origen
+                jQuery('#UniversidadOrigen').val(jQuery('#UniversidadOrigen').val() === "UNIVERSIDAD MONSEÑOR OSCAR ARNULFO ROMERO" ? "" : jQuery('#UniversidadOrigen').val()).prop('readonly', false).css('background-color', '');
+                
+                // Carrera de Origen
+                jQuery('#carreraOrigenExterna').removeClass('d-none').prop('required', true);
+                jQuery('#carreraOrigenInterna').addClass('d-none').prop('required', false);
+                jQuery('#carreraOrigenActual').val(jQuery('#carreraOrigenExterna').val());
+
+                // Botones y headers
+                jQuery('.btn-add-externa').html('<i class="bi bi-plus-lg me-1"></i>Agregar Asignatura Externa');
+                jQuery('.sum-uvs-badge').closest('div').find('.text-muted').html('<i class="bi bi-box-arrow-in-right me-1 text-info"></i>Asignaturas de Origen (Externas)');
+                
+                jQuery('.tbody-externas').each(function() {
+                    const table = jQuery(this).closest('table');
+                    table.find('thead th:nth-child(1)').text('Código Origen');
+                    table.find('thead th:nth-child(2)').text('Asignatura Externa');
+                });
+                jQuery('.btn-delete-externa-row').attr('title', 'Quitar asignatura externa');
+
+                // Actualizar filas existentes
+                jQuery('.externa-row').each(function() {
+                    const row = jQuery(this);
+                    row.find('.externa-codigo-input').prop('readonly', false).css('background-color', '');
+                    row.find('.externa-nota-input').prop('readonly', false).css('background-color', '');
+                    row.find('.externa-uv-input').prop('readonly', false).css('background-color', '');
+                    
+                    const select = row.find('.select-materia-interna');
+                    const input = row.find('.externa-nombre-input');
+                    
+                    select.addClass('d-none').prop('required', false);
+                    input.removeClass('d-none').prop('required', true);
+                });
+            }
+        }
 
         function inicializarAutocompleteMateria(element) {
             element.autocomplete({
@@ -336,7 +543,7 @@
                             </div>
                         </div>
 
-                        <!-- Nested External Subjects -->
+                        <!-- Nested External/Internal Subjects -->
                         <div class="border rounded p-3 bg-light bg-opacity-25">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span class="fw-semibold text-muted small"><i class="bi bi-box-arrow-in-right me-1 text-info"></i>Asignaturas de Origen (Externas)</span>
@@ -390,23 +597,56 @@
             const blockIdStr = block.attr('id');
             const blockIndex = blockIdStr.split('-')[2];
             const externaIndex = tbody.find('tr').length;
+            const tipo = jQuery('input[name="TipoEquivalencia"]:checked').val() || "Externa";
+            const isInterna = (tipo === "Interna");
+
+            // Generar options
+            let optionsHtml = '<option value="">-- Seleccione Asignatura Cursada --</option>';
+            if (materiasAprobadasAlumno && materiasAprobadasAlumno.length > 0) {
+                materiasAprobadasAlumno.forEach(function (mat) {
+                    const selected = (initialExternaData && initialExternaData.materiaOrigenCodigo === mat.codigo) ? 'selected' : '';
+                    optionsHtml += `<option value="${mat.codigo}" ${selected} data-nombre="${mat.nombre}" data-nota="${mat.nota}" data-uv="${mat.uv}">[${mat.codigo}] ${mat.nombre} (Nota: ${mat.nota} | UV: ${mat.uv})</option>`;
+                });
+            }
 
             const trHtml = `
                 <tr class="externa-row">
                     <td>
-                        <input name="Detalles[${blockIndex}].MateriasOrigen[${externaIndex}].MateriaOrigenCodigo" class="form-control form-control-sm form-monospace" required placeholder="Cod: MAT101" value="${initialExternaData ? initialExternaData.materiaOrigenCodigo : ''}" />
+                        <input name="Detalles[${blockIndex}].MateriasOrigen[${externaIndex}].MateriaOrigenCodigo" 
+                               class="form-control form-control-sm form-monospace externa-codigo-input" 
+                               required placeholder="Cod: MAT101" 
+                               value="${initialExternaData ? initialExternaData.materiaOrigenCodigo : ''}" 
+                               ${isInterna ? 'readonly style="background-color: #e9ecef;"' : ''} />
                     </td>
                     <td>
-                        <input name="Detalles[${blockIndex}].MateriasOrigen[${externaIndex}].MateriaOrigenNombre" class="form-control form-control-sm" required placeholder="Nombre de asignatura" value="${initialExternaData ? initialExternaData.materiaOrigenNombre : ''}" />
+                        <select class="form-select form-select-sm select-materia-interna ${isInterna ? '' : 'd-none'}" 
+                                ${isInterna ? 'required' : ''}>
+                            ${optionsHtml}
+                        </select>
+                        <input name="Detalles[${blockIndex}].MateriasOrigen[${externaIndex}].MateriaOrigenNombre" 
+                               class="form-control form-control-sm externa-nombre-input ${isInterna ? 'd-none' : ''}" 
+                               placeholder="Nombre de asignatura" 
+                               value="${initialExternaData ? initialExternaData.materiaOrigenNombre : ''}" 
+                               ${isInterna ? '' : 'required'} />
                     </td>
                     <td>
-                        <input name="Detalles[${blockIndex}].MateriasOrigen[${externaIndex}].NotaOrigen" type="number" step="0.1" min="0" max="10" class="form-control form-control-sm" required placeholder="Nota: 8.0" value="${initialExternaData ? initialExternaData.notaOrigen : ''}" />
+                        <input name="Detalles[${blockIndex}].MateriasOrigen[${externaIndex}].NotaOrigen" 
+                               type="number" step="0.1" min="0" max="10" 
+                               class="form-control form-control-sm externa-nota-input" 
+                               required placeholder="Nota: 8.0" 
+                               value="${initialExternaData ? initialExternaData.notaOrigen : ''}" 
+                               ${isInterna ? 'readonly style="background-color: #e9ecef;"' : ''} />
                     </td>
                     <td>
-                        <input name="Detalles[${blockIndex}].MateriasOrigen[${externaIndex}].uv" type="number" min="1" max="20" class="form-control form-control-sm externa-uv-input" required placeholder="U.V." value="${initialExternaData ? initialExternaData.uv : ''}" />
+                        <input name="Detalles[${blockIndex}].MateriasOrigen[${externaIndex}].uv" 
+                               type="number" min="1" max="20" 
+                               class="form-control form-control-sm externa-uv-input" 
+                               required placeholder="U.V." 
+                               value="${initialExternaData ? initialExternaData.uv : ''}" 
+                               ${isInterna ? 'readonly style="background-color: #e9ecef;"' : ''} />
                     </td>
                     <td class="text-center">
-                        <button type="button" class="btn btn-outline-danger btn-sm btn-delete-externa-row" title="Quitar asignatura externa">
+                        <button type="button" class="btn btn-outline-danger btn-sm btn-delete-externa-row" title="Quitar asignatura">
                             <i class="bi bi-trash"></i>
                         </button>
                     </td>
@@ -455,7 +695,7 @@
                 block.find('.materia-destino-id').attr('name', `Detalles[${currentBlockIndex}].MateriaDestinoId`);
                 block.find('input[name*="NotaEquivalencia"]').attr('name', `Detalles[${currentBlockIndex}].NotaEquivalencia`);
 
-                // Renombrar inputs de las materias externas
+                // Renombrar inputs de las materias origen
                 let externaCount = 0;
                 block.find('.tbody-externas tr').each(function () {
                     const row = jQuery(this);
