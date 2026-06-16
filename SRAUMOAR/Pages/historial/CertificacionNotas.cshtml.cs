@@ -55,6 +55,7 @@ namespace SRAUMOAR.Pages.historial
                 // Obtener información del alumno
                 var alumno = _context.Alumno
                     .Include(a => a.Carrera)
+                        .ThenInclude(c => c.Facultad)
                     .FirstOrDefault(a => a.AlumnoId == alumnoId.Value);
 
                 if (alumno == null)
@@ -111,13 +112,13 @@ namespace SRAUMOAR.Pages.historial
                 float tamanoFuenteResultado = 9f;
                 
                 // Anchos de columnas (valores relativos, suman 16.4f)
-                float anchoCiclo = 1.3f;
-                float anchoEstatus = 1.2f;
-                float anchoCodigo = 1.5f;
-                float anchoNombre = 5.8f;  // Aumentado para dar más espacio a nombres de asignaturas
+                float anchoCiclo = 1.2f;
+                float anchoEstatus = 2.0f; // Aumentado para que "ESTATUS" no se divida
+                float anchoCodigo = 1.4f;
+                float anchoNombre = 5.4f;  // Ajustado para dar más espacio a Estatus manteniendo la suma en 16.4f
                 float anchoUV = 0.8f;
                 float anchoNota = 0.8f;
-                float anchoLetra = 3.0f;   // Ajustado para dar espacio a otras columnas
+                float anchoLetra = 2.8f;   // Ajustado para dar espacio a Estatus
                 float anchoResultado = 2.0f; // Aumentado para que "RESULTADO" no se corte
                 
                 // ============================================
@@ -148,6 +149,43 @@ namespace SRAUMOAR.Pages.historial
 
                 // Género del alumno
                 string interesadaTexto = alumno.Genero == 1 ? "la interesada" : "el interesado";
+
+                // Plantilla de respaldo para la introducción si no está configurada en la base de datos
+                if (string.IsNullOrWhiteSpace(intro))
+                {
+                    intro = "El infrascrito Secretario General de la Universidad Monseñor Oscar Arnulfo Romero, distrito de Tejutla, municipio de Chalatenango Centro, departamento de Chalatenango, CERTIFICA QUE: {nombrealumno}, con carnet No. {carnet}, es {alumnoalumna} de la {facultad} en la carrera {carrera}, habiendo cursado y aprobado las asignaturas detalladas a continuación:";
+                }
+
+                // Limpiar saltos de línea y formatear espacios/puntuación
+                intro = intro.Replace("\r\n", " ").Replace("\n", " ").Replace("\r", " ");
+                intro = intro.Replace(",", ", ").Replace(":", ": ");
+                while (intro.Contains("  "))
+                {
+                    intro = intro.Replace("  ", " ");
+                }
+                intro = intro.Trim();
+
+                // Reemplazar los comodines dinámicos
+                string nombreCompleto = $"{alumno.Nombres} {alumno.Apellidos}".ToUpper().Trim();
+                string carnet = (alumno.Carnet ?? "").Trim().ToUpper();
+                if (string.IsNullOrWhiteSpace(carnet) && !string.IsNullOrWhiteSpace(alumno.Email))
+                {
+                    int atIndex = alumno.Email.IndexOf('@');
+                    if (atIndex > 0)
+                    {
+                        carnet = alumno.Email.Substring(0, atIndex).Trim().ToUpper();
+                    }
+                }
+                string alumnoAlumna = alumno.Genero == 1 ? "alumna" : "alumno";
+                string facultad = (alumno.Carrera?.Facultad?.NombreFacultad ?? "").Trim().ToUpper();
+                string carrera = (alumno.Carrera?.NombreCarrera ?? "").Trim().ToUpper();
+
+                intro = intro
+                    .Replace("{nombrealumno}", nombreCompleto, StringComparison.OrdinalIgnoreCase)
+                    .Replace("{carnet}", carnet, StringComparison.OrdinalIgnoreCase)
+                    .Replace("{alumnoalumna}", alumnoAlumna, StringComparison.OrdinalIgnoreCase)
+                    .Replace("{facultad}", facultad, StringComparison.OrdinalIgnoreCase)
+                    .Replace("{carrera}", carrera, StringComparison.OrdinalIgnoreCase);
 
                 // Nuevos parámetros con fallbacks seguros
                 string rectoraNombre = configs.TryGetValue("RectoraNombre", out var rNom) ? rNom : "LICDA. CARMEN NAVAS ESCOBAR DE MEJÍA";
@@ -215,12 +253,15 @@ namespace SRAUMOAR.Pages.historial
                                 });
                             });
 
+                            // Linea horizontal de punta a punta
+                            col.Item().PaddingTop(10).LineHorizontal(1.5f).LineColor(Colors.Black);
+
                             // Párrafo introductorio
                             if (!string.IsNullOrWhiteSpace(intro))
                             {
                                 col.Item().PaddingTop(15).Text(intro)
                                     .Bold()
-                                    .FontSize(11)
+                                    .FontSize(9.5f)
                                     .Justify();
                             }
 
@@ -312,7 +353,7 @@ namespace SRAUMOAR.Pages.historial
                                         string codigo = materia.Materia != null 
                                             ? materia.Materia.CodigoMateria 
                                             : materia.MateriaCodigoLibre ?? "-";
-                                        table.Cell().Element(c => CellStyle(c, 2)).Text(codigo).FontSize(tamanoFuenteCodigo).AlignLeft();
+                                        table.Cell().Element(c => CellStyle(c, 2)).Text(codigo).FontSize(tamanoFuenteCodigo).AlignCenter();
 
                                         // Nombre de la asignatura
                                         string nombreMateria = materia.Materia != null 
