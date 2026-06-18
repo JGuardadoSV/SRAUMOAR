@@ -78,6 +78,22 @@
         background: linear-gradient(45deg, #0d6efd, #0b5ed7);
     }
 
+    .bg-gradient-egreso {
+        background: linear-gradient(45deg, #343a40, #198754);
+    }
+
+    .bg-gradient-practica-docente {
+        background: linear-gradient(45deg, #7952b3, #6f42c1);
+    }
+
+    .bg-gradient-avance70 {
+        background: linear-gradient(45deg, #198754, #20c997);
+    }
+
+    .bg-gradient-activo {
+        background: linear-gradient(45deg, #0dcaf0, #0d6efd);
+    }
+
     .report-icon {
         font-size: 1.8rem;
     }
@@ -341,6 +357,24 @@
                         </div>
                     </div>
 
+                    <!-- Certificación de Notas Parciales -->
+                    <div class="col-sm-6">
+                        <div class="card report-card">
+                            <div class="report-card-header bg-gradient-certification">
+                                <i class="bi bi-file-earmark-check-fill report-icon"></i>
+                                <span>Certificación de Notas Parciales</span>
+                            </div>
+                            <div class="report-body">
+                                <p class="report-description">
+                                    Genera el reporte oficial en PDF con el mismo formato de certificación de notas, identificado como certificación de notas parciales.
+                                </p>
+                                <a href="/historial/CertificacionNotas?alumnoId=@Model.AlumnoSelected.AlumnoId@(Model.AlumnoSelected.CarreraId.HasValue ? $"&carreraId={Model.AlumnoSelected.CarreraId.Value}" : "")&tituloReporte=CERTIFICACI%C3%93N%20DE%20NOTAS%20PARCIALES" target="_blank" class="btn btn-danger btn-generate">
+                                    <i class="bi bi-file-pdf me-1"></i>Generar Parciales
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Reporte de Notas Parciales -->
                     <div class="col-sm-6">
                         <div class="card report-card">
@@ -419,6 +453,78 @@
                                 </p>
                                 <a id="linkConstanciaHorario" href="/reportes/ConstanciaHorario?alumnoId=@Model.AlumnoSelected.AlumnoId&cicloId=@Model.SelectedCicloId" target="_blank" class="btn btn-primary btn-generate">
                                     <i class="bi bi-file-pdf me-1"></i>Generar Horario
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Carta de Egreso -->
+                    <div class="col-sm-6">
+                        <div class="card report-card">
+                            <div class="report-card-header bg-gradient-egreso">
+                                <i class="bi bi-patch-check-fill report-icon"></i>
+                                <span>Carta de Egreso</span>
+                            </div>
+                            <div class="report-body">
+                                <p class="report-description">
+                                    Genera la carta oficial de egreso con el conteo de materias aprobadas del historial académico del alumno.
+                                </p>
+                                <a href="/reportes/CartaEgreso?alumnoId=@Model.AlumnoSelected.AlumnoId" target="_blank" class="btn btn-success btn-generate">
+                                    <i class="bi bi-file-pdf me-1"></i>Generar Carta
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Constancia de Práctica Docente -->
+                    <div class="col-sm-6">
+                        <div class="card report-card">
+                            <div class="report-card-header bg-gradient-practica-docente">
+                                <i class="bi bi-person-workspace report-icon"></i>
+                                <span>Constancia Práctica Docente</span>
+                            </div>
+                            <div class="report-body">
+                                <p class="report-description">
+                                    Genera la constancia oficial de prácticas docentes aprobadas, tomando las asignaturas de práctica desde el historial académico.
+                                </p>
+                                <a href="/reportes/ConstanciaPracticaDocente?alumnoId=@Model.AlumnoSelected.AlumnoId" target="_blank" class="btn btn-primary btn-generate" style="background: #6f42c1; border-color: #6f42c1;">
+                                    <i class="bi bi-file-pdf me-1"></i>Generar Práctica
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Constancia de Avance 70% -->
+                    <div class="col-sm-6">
+                        <div class="card report-card">
+                            <div class="report-card-header bg-gradient-avance70">
+                                <i class="bi bi-percent report-icon"></i>
+                                <span>Constancia Avance 70%</span>
+                            </div>
+                            <div class="report-body">
+                                <p class="report-description">
+                                    Genera la constancia oficial de avance del 70% de la carrera, calculando materias aprobadas contra la carga del pensum.
+                                </p>
+                                <a href="/reportes/ConstanciaAvance70?alumnoId=@Model.AlumnoSelected.AlumnoId" target="_blank" class="btn btn-success btn-generate">
+                                    <i class="bi bi-file-pdf me-1"></i>Generar Avance
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Constancia de Alumno Activo -->
+                    <div class="col-sm-6">
+                        <div class="card report-card">
+                            <div class="report-card-header bg-gradient-activo">
+                                <i class="bi bi-person-check-fill report-icon"></i>
+                                <span>Constancia Alumno Activo</span>
+                            </div>
+                            <div class="report-body">
+                                <p class="report-description">
+                                    Genera la constancia oficial de alumno activo para el ciclo seleccionado, con fechas del ciclo y datos de la carrera.
+                                </p>
+                                <a id="linkAlumnoActivo" href="/reportes/ConstanciaAlumnoActivo?alumnoId=@Model.AlumnoSelected.AlumnoId&cicloId=@Model.SelectedCicloId" target="_blank" class="btn btn-info btn-generate text-white">
+                                    <i class="bi bi-file-pdf me-1"></i>Generar Activo
                                 </a>
                             </div>
                         </div>
@@ -516,6 +622,10 @@
                     // Actualizar link constancia de horario
                     var urlConstanciaHorario = '/reportes/ConstanciaHorario?alumnoId=' + alumnoId + '&cicloId=' + selectedCicloId;
                     jQuery('#linkConstanciaHorario').attr('href', urlConstanciaHorario);
+
+                    // Actualizar link constancia de alumno activo
+                    var urlAlumnoActivo = '/reportes/ConstanciaAlumnoActivo?alumnoId=' + alumnoId + '&cicloId=' + selectedCicloId;
+                    jQuery('#linkAlumnoActivo').attr('href', urlAlumnoActivo);
                     
                     // También actualizar la URL del navegador sin recargar para mantener el estado
                     var newUrl = new URL(window.location.href);

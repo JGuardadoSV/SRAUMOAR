@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SRAUMOAR.Modelos;
 
@@ -11,9 +12,11 @@ using SRAUMOAR.Modelos;
 namespace SRAUMOAR.Migrations
 {
     [DbContext(typeof(Contexto))]
-    partial class ContextoModelSnapshot : ModelSnapshot
+    [Migration("20260618132616_AgregarConfiguracionConstanciaAvance70")]
+    partial class AgregarConfiguracionConstanciaAvance70
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1176,110 +1179,6 @@ namespace SRAUMOAR.Migrations
                             Clave = "LeyendaValidez",
                             Descripcion = "Leyenda de validez al pie de la constancia",
                             Reporte = "ConstanciaAvance70",
-                            Valor = "ESTA CONSTANCIA NO ES VÁLIDA, SIN FIRMAS Y SELLOS DE ESTA UNIVERSIDAD"
-                        },
-                        new
-                        {
-                            Id = 66,
-                            Clave = "TituloReporte",
-                            Descripcion = "Nombre del reporte de alumno activo",
-                            Reporte = "ConstanciaAlumnoActivo",
-                            Valor = "ALUMNO ACTIVO"
-                        },
-                        new
-                        {
-                            Id = 67,
-                            Clave = "EmisorCargo",
-                            Descripcion = "Cargo de la persona que emite la constancia",
-                            Reporte = "ConstanciaAlumnoActivo",
-                            Valor = "Decano de la Facultad de Ciencias y Humanidades y Administrador en Funciones Ad Honorem de Registro Académico"
-                        },
-                        new
-                        {
-                            Id = 68,
-                            Clave = "LugarInstitucion",
-                            Descripcion = "Ubicación institucional para el cuerpo de la constancia",
-                            Reporte = "ConstanciaAlumnoActivo",
-                            Valor = "Distrito de Tejutla, Municipio de Chalatenango Centro, Departamento de Chalatenango"
-                        },
-                        new
-                        {
-                            Id = 69,
-                            Clave = "Destinatario",
-                            Descripcion = "Institución o destino donde se presentará la constancia",
-                            Reporte = "ConstanciaAlumnoActivo",
-                            Valor = "AFP CRECER"
-                        },
-                        new
-                        {
-                            Id = 70,
-                            Clave = "Cuerpo",
-                            Descripcion = "Cuerpo principal de la constancia de alumno activo",
-                            Reporte = "ConstanciaAlumnoActivo",
-                            Valor = "El Infrascrito {emisorCargo}, de la Universidad Monseñor Oscar Arnulfo Romero, en el {lugarInstitucion}, HACE CONSTAR QUE: {nombrealumno}, con carnet N°. {carnet}, es {alumnoalumna} {activoactiva} DE {cicloRomano} CICLO, de la {facultad}, en la Carrera de {carrera}, del Ciclo Académico {cicloAcademico}, el cual dio inicio el día {fechaInicioCiclo} y finalizará el día {fechaFinCiclo}."
-                        },
-                        new
-                        {
-                            Id = 71,
-                            Clave = "Cierre",
-                            Descripcion = "Párrafo de cierre de la constancia de alumno activo",
-                            Reporte = "ConstanciaAlumnoActivo",
-                            Valor = "Y para ser presentada a la {destinatario}, se le extiende la presente en el {lugarExpedicion}, {fechaExpedicion}."
-                        },
-                        new
-                        {
-                            Id = 72,
-                            Clave = "LugarExpedicion",
-                            Descripcion = "Lugar de expedición de la constancia de alumno activo",
-                            Reporte = "ConstanciaAlumnoActivo",
-                            Valor = "Distrito de Tejutla, Municipio de Chalatenango Centro, Departamento de Chalatenango"
-                        },
-                        new
-                        {
-                            Id = 73,
-                            Clave = "FirmaNombre",
-                            Descripcion = "Nombre del firmante de la constancia de alumno activo",
-                            Reporte = "ConstanciaAlumnoActivo",
-                            Valor = "LIC. JOSÉ AUGUSTO HERNÁNDEZ GONZÁLEZ"
-                        },
-                        new
-                        {
-                            Id = 74,
-                            Clave = "FirmaCargoLinea1",
-                            Descripcion = "Primera línea del cargo del firmante",
-                            Reporte = "ConstanciaAlumnoActivo",
-                            Valor = "DECANO DE LA FACULTAD DE CIENCIAS Y HUMANIDADES Y"
-                        },
-                        new
-                        {
-                            Id = 75,
-                            Clave = "FirmaCargoLinea2",
-                            Descripcion = "Segunda línea del cargo del firmante",
-                            Reporte = "ConstanciaAlumnoActivo",
-                            Valor = "ADMINISTRADOR EN FUNCIONES AD HONOREM"
-                        },
-                        new
-                        {
-                            Id = 76,
-                            Clave = "FirmaCargoLinea3",
-                            Descripcion = "Tercera línea del cargo del firmante",
-                            Reporte = "ConstanciaAlumnoActivo",
-                            Valor = "DE REGISTRO ACADÉMICO"
-                        },
-                        new
-                        {
-                            Id = 77,
-                            Clave = "ElaboradoPor",
-                            Descripcion = "Texto de elaboración al pie de la constancia",
-                            Reporte = "ConstanciaAlumnoActivo",
-                            Valor = "ELABORADO POR: MTRC"
-                        },
-                        new
-                        {
-                            Id = 78,
-                            Clave = "LeyendaValidez",
-                            Descripcion = "Leyenda de validez al pie de la constancia",
-                            Reporte = "ConstanciaAlumnoActivo",
                             Valor = "ESTA CONSTANCIA NO ES VÁLIDA, SIN FIRMAS Y SELLOS DE ESTA UNIVERSIDAD"
                         });
                 });

@@ -22,7 +22,7 @@ namespace SRAUMOAR.Pages.historial
             _context = context;
         }
 
-        public IActionResult OnGet(int? alumnoId, int? carreraId = null)
+        public IActionResult OnGet(int? alumnoId, int? carreraId = null, string? tituloReporte = null)
         {
             try
             {
@@ -266,6 +266,13 @@ namespace SRAUMOAR.Pages.historial
 
                             // Linea horizontal de punta a punta
                             col.Item().PaddingTop(10).LineHorizontal(1.5f).LineColor(Colors.Black);
+
+                            if (!string.IsNullOrWhiteSpace(tituloReporte))
+                            {
+                                col.Item().PaddingTop(12).AlignCenter().Text(tituloReporte.Trim().ToUpper())
+                                    .Bold()
+                                    .FontSize(12f);
+                            }
 
                             // Párrafo introductorio
                             if (!string.IsNullOrWhiteSpace(intro))
