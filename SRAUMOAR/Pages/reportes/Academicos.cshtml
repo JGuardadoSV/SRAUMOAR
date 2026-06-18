@@ -70,6 +70,14 @@
         background: linear-gradient(45deg, #6f42c1, #5a32a3);
     }
 
+    .bg-gradient-preuniversitario {
+        background: linear-gradient(45deg, #0f766e, #14b8a6);
+    }
+
+    .bg-gradient-horario {
+        background: linear-gradient(45deg, #0d6efd, #0b5ed7);
+    }
+
     .report-icon {
         font-size: 1.8rem;
     }
@@ -368,6 +376,53 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Constancia de Curso Pre Universitario -->
+                    <div class="col-sm-6">
+                        <div class="card report-card">
+                            <div class="report-card-header bg-gradient-preuniversitario">
+                                <i class="bi bi-file-earmark-person-fill report-icon"></i>
+                                <span>Constancia Curso Pre Universitario</span>
+                            </div>
+                            <div class="report-body">
+                                <p class="report-description">
+                                    Genera la constancia oficial del curso pre universitario del alumno. Seleccione el rango de fechas cursado antes de imprimir.
+                                </p>
+                                <form method="get" action="/reportes/ConstanciaCursoPreUniversitario" target="_blank" class="d-flex flex-column gap-2">
+                                    <input type="hidden" name="alumnoId" value="@Model.AlumnoSelected.AlumnoId" />
+                                    <div>
+                                        <label for="fechaInicioPreu" class="form-label small fw-bold mb-1">Fecha inicio</label>
+                                        <input id="fechaInicioPreu" type="date" name="fechaInicio" class="form-control form-control-sm" required />
+                                    </div>
+                                    <div>
+                                        <label for="fechaFinPreu" class="form-label small fw-bold mb-1">Fecha finalización</label>
+                                        <input id="fechaFinPreu" type="date" name="fechaFin" class="form-control form-control-sm" required />
+                                    </div>
+                                    <button type="submit" class="btn btn-success btn-generate mt-2">
+                                        <i class="bi bi-file-pdf me-1"></i>Generar Constancia
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Constancia de Horario -->
+                    <div class="col-sm-6">
+                        <div class="card report-card">
+                            <div class="report-card-header bg-gradient-horario">
+                                <i class="bi bi-calendar-week-fill report-icon"></i>
+                                <span>Constancia de Horario</span>
+                            </div>
+                            <div class="report-body">
+                                <p class="report-description">
+                                    Genera la constancia oficial con las materias inscritas, horarios y días del alumno en el ciclo seleccionado.
+                                </p>
+                                <a id="linkConstanciaHorario" href="/reportes/ConstanciaHorario?alumnoId=@Model.AlumnoSelected.AlumnoId&cicloId=@Model.SelectedCicloId" target="_blank" class="btn btn-primary btn-generate">
+                                    <i class="bi bi-file-pdf me-1"></i>Generar Horario
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         }
@@ -457,6 +512,10 @@
                     // Actualizar link notas finales
                     var urlFinales = '/reportes/notas/reporteNotasParcialesHistorico?alumnoId=' + alumnoId + '&cicloId=' + selectedCicloId;
                     jQuery('#linkFinales').attr('href', urlFinales);
+
+                    // Actualizar link constancia de horario
+                    var urlConstanciaHorario = '/reportes/ConstanciaHorario?alumnoId=' + alumnoId + '&cicloId=' + selectedCicloId;
+                    jQuery('#linkConstanciaHorario').attr('href', urlConstanciaHorario);
                     
                     // También actualizar la URL del navegador sin recargar para mantener el estado
                     var newUrl = new URL(window.location.href);

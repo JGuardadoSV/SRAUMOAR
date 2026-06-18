@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SRAUMOAR.Modelos;
 
@@ -11,9 +12,11 @@ using SRAUMOAR.Modelos;
 namespace SRAUMOAR.Migrations
 {
     [DbContext(typeof(Contexto))]
-    partial class ContextoModelSnapshot : ModelSnapshot
+    [Migration("20260618124337_AgregarConfiguracionConstanciaCursoPreUniversitario")]
+    partial class AgregarConfiguracionConstanciaCursoPreUniversitario
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -801,86 +804,6 @@ namespace SRAUMOAR.Migrations
                             Descripcion = "Lugar de expedición de la constancia",
                             Reporte = "ConstanciaCursoPreUniversitario",
                             Valor = "Tejutla, Chalatenango"
-                        },
-                        new
-                        {
-                            Id = 19,
-                            Clave = "TituloReporte",
-                            Descripcion = "Nombre del reporte de horario",
-                            Reporte = "ConstanciaHorario",
-                            Valor = "CONSTANCIA DE HORARIO"
-                        },
-                        new
-                        {
-                            Id = 20,
-                            Clave = "EmisorCargo",
-                            Descripcion = "Cargo de la persona que emite la constancia",
-                            Reporte = "ConstanciaHorario",
-                            Valor = "Decano de la Facultad de Ciencias y Humanidades y Administrador en Funciones Ad Honorem de Registro Académico"
-                        },
-                        new
-                        {
-                            Id = 21,
-                            Clave = "LugarInstitucion",
-                            Descripcion = "Ubicación institucional para el cuerpo de la constancia",
-                            Reporte = "ConstanciaHorario",
-                            Valor = "Distrito de Tejutla, Municipio de Chalatenango Centro, Departamento de Chalatenango"
-                        },
-                        new
-                        {
-                            Id = 22,
-                            Clave = "Destinatario",
-                            Descripcion = "Institución o destino donde se presentará la constancia",
-                            Reporte = "ConstanciaHorario",
-                            Valor = "PROCURADURÍA GENERAL DE LA REPÚBLICA DE EL SALVADOR"
-                        },
-                        new
-                        {
-                            Id = 23,
-                            Clave = "Cuerpo",
-                            Descripcion = "Cuerpo principal de la constancia de horario",
-                            Reporte = "ConstanciaHorario",
-                            Valor = "El Infrascrito {emisorCargo}, de la Universidad Monseñor Oscar Arnulfo Romero, en el {lugarInstitucion}, HACE CONSTAR QUE: {nombrealumno}, con carnet N° {carnet}, ES {alumnoalumna} {activoactiva} DEL {cicloRomano} CICLO, de la {facultad}, en la Carrera de {carrera}, del Ciclo Académico {cicloAcademico}, el cual dio inicio el {fechaInicioCiclo} y finalizará el día {fechaFinCiclo}, habiendo inscrito {cantidadMateriasLetras} materias en el horario siguiente:"
-                        },
-                        new
-                        {
-                            Id = 24,
-                            Clave = "Cierre",
-                            Descripcion = "Párrafo de cierre de la constancia de horario",
-                            Reporte = "ConstanciaHorario",
-                            Valor = "Y para ser presentada a la {destinatario}, se le extiende la presente en el {lugarExpedicion}, {fechaExpedicion}."
-                        },
-                        new
-                        {
-                            Id = 25,
-                            Clave = "LugarExpedicion",
-                            Descripcion = "Lugar de expedición de la constancia de horario",
-                            Reporte = "ConstanciaHorario",
-                            Valor = "Distrito de Tejutla, Municipio de Chalatenango Centro, Departamento de Chalatenango"
-                        },
-                        new
-                        {
-                            Id = 26,
-                            Clave = "FirmaNombre",
-                            Descripcion = "Nombre del firmante de la constancia de horario",
-                            Reporte = "ConstanciaHorario",
-                            Valor = "LIC. JOSÉ AUGUSTO HERNÁNDEZ GONZÁLEZ"
-                        },
-                        new
-                        {
-                            Id = 27,
-                            Clave = "FirmaCargoLinea1",
-                            Descripcion = "Primera línea del cargo del firmante",
-                            Reporte = "ConstanciaHorario",
-                            Valor = "DECANO DE LA FACULTAD DE CIENCIAS Y HUMANIDADES Y"
-                        },
-                        new
-                        {
-                            Id = 28,
-                            Clave = "FirmaCargoLinea2",
-                            Descripcion = "Segunda línea del cargo del firmante",
-                            Reporte = "ConstanciaHorario",
-                            Valor = "ADMINISTRADOR EN FUNCIONES AD HONOREM"
                         });
                 });
 
