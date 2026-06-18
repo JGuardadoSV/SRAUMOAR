@@ -20,7 +20,7 @@ namespace SRAUMOAR.Pages.reportes
             _context = context;
         }
 
-        public async Task<IActionResult> OnGetAsync(int? alumnoId, DateTime? fechaExpedicion = null)
+        public async Task<IActionResult> OnGetAsync(int? alumnoId, DateTime? fechaExpedicion = null, string? destinatario = null)
         {
             try
             {
@@ -123,7 +123,9 @@ namespace SRAUMOAR.Pages.reportes
                 string tituloReporte = GetConfig(configs, "ConstanciaAvance70", "TituloReporte", "CONSTANCIA DE AVANCE 70%");
                 string emisorCargo = GetConfig(configs, "ConstanciaAvance70", "EmisorCargo", "Decano de la Facultad de Ciencias y Humanidades y Administrador en Funciones Ad Honorem de Registro Académico");
                 string lugarInstitucion = GetConfig(configs, "ConstanciaAvance70", "LugarInstitucion", "Distrito de Tejutla, Municipio de Chalatenango Centro, Departamento de Chalatenango");
-                string destinatario = GetConfig(configs, "ConstanciaAvance70", "Destinatario", "PROCURADURIA GENERAL DE LA REPÚBLICA");
+                string destinatarioReporte = string.IsNullOrWhiteSpace(destinatario)
+                    ? GetConfig(configs, "ConstanciaAvance70", "Destinatario", "PROCURADURIA GENERAL DE LA REPÚBLICA")
+                    : destinatario.Trim();
                 string lugarExpedicion = GetConfig(configs, "ConstanciaAvance70", "LugarExpedicion", "Distrito de Tejutla, Municipio de Chalatenango Centro, Departamento de Chalatenango");
                 string firmaNombre = GetConfig(configs, "ConstanciaAvance70", "FirmaNombre", "LIC. JOSÉ AUGUSTO HERNÁNDEZ GONZÁLEZ");
                 string firmaCargoLinea1 = GetConfig(configs, "ConstanciaAvance70", "FirmaCargoLinea1", "DECANO DE LA FACULTAD DE CIENCIAS Y HUMANIDADES Y");
@@ -149,7 +151,7 @@ namespace SRAUMOAR.Pages.reportes
                     fechaExpedicion?.Date ?? DateTime.Now.Date,
                     emisorCargo,
                     lugarInstitucion,
-                    destinatario,
+                    destinatarioReporte,
                     lugarExpedicion);
 
                 cuerpo = ReemplazarPlaceholders(cuerpo, datos);

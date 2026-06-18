@@ -19,7 +19,7 @@ namespace SRAUMOAR.Pages.reportes
             _context = context;
         }
 
-        public async Task<IActionResult> OnGetAsync(int? alumnoId, int? cicloId, DateTime? fechaExpedicion = null)
+        public async Task<IActionResult> OnGetAsync(int? alumnoId, int? cicloId, DateTime? fechaExpedicion = null, string? destinatario = null)
         {
             try
             {
@@ -72,7 +72,9 @@ namespace SRAUMOAR.Pages.reportes
                 string tituloReporte = GetConfig(configs, "ConstanciaAlumnoActivo", "TituloReporte", "ALUMNO ACTIVO");
                 string emisorCargo = GetConfig(configs, "ConstanciaAlumnoActivo", "EmisorCargo", "Decano de la Facultad de Ciencias y Humanidades y Administrador en Funciones Ad Honorem de Registro Académico");
                 string lugarInstitucion = GetConfig(configs, "ConstanciaAlumnoActivo", "LugarInstitucion", "Distrito de Tejutla, Municipio de Chalatenango Centro, Departamento de Chalatenango");
-                string destinatario = GetConfig(configs, "ConstanciaAlumnoActivo", "Destinatario", "AFP CRECER");
+                string destinatarioReporte = string.IsNullOrWhiteSpace(destinatario)
+                    ? GetConfig(configs, "ConstanciaAlumnoActivo", "Destinatario", "AFP CRECER")
+                    : destinatario.Trim();
                 string lugarExpedicion = GetConfig(configs, "ConstanciaAlumnoActivo", "LugarExpedicion", "Distrito de Tejutla, Municipio de Chalatenango Centro, Departamento de Chalatenango");
                 string firmaNombre = GetConfig(configs, "ConstanciaAlumnoActivo", "FirmaNombre", "LIC. JOSÉ AUGUSTO HERNÁNDEZ GONZÁLEZ");
                 string firmaCargoLinea1 = GetConfig(configs, "ConstanciaAlumnoActivo", "FirmaCargoLinea1", "DECANO DE LA FACULTAD DE CIENCIAS Y HUMANIDADES Y");
@@ -87,7 +89,7 @@ namespace SRAUMOAR.Pages.reportes
                 string cierre = GetConfig(configs, "ConstanciaAlumnoActivo", "Cierre",
                     "Y para ser presentada a la {destinatario}, se le extiende la presente en el {lugarExpedicion}, {fechaExpedicion}.");
 
-                var datos = CrearDatosPlantilla(alumno, ciclo, fechaExpedicion?.Date ?? DateTime.Now.Date, emisorCargo, lugarInstitucion, destinatario, lugarExpedicion);
+                var datos = CrearDatosPlantilla(alumno, ciclo, fechaExpedicion?.Date ?? DateTime.Now.Date, emisorCargo, lugarInstitucion, destinatarioReporte, lugarExpedicion);
                 cuerpo = ReemplazarPlaceholders(cuerpo, datos);
                 cierre = ReemplazarPlaceholders(cierre, datos);
 

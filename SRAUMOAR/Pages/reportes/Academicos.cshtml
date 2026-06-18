@@ -451,9 +451,14 @@
                                 <p class="report-description">
                                     Genera la constancia oficial con las materias inscritas, horarios y días del alumno en el ciclo seleccionado.
                                 </p>
-                                <a id="linkConstanciaHorario" href="/reportes/ConstanciaHorario?alumnoId=@Model.AlumnoSelected.AlumnoId&cicloId=@Model.SelectedCicloId" target="_blank" class="btn btn-primary btn-generate">
+                                <button id="linkConstanciaHorario" type="button" class="btn btn-primary btn-generate js-reporte-destinatario"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#modalDestinatarioReporte"
+                                        data-url="/reportes/ConstanciaHorario?alumnoId=@Model.AlumnoSelected.AlumnoId&cicloId=@Model.SelectedCicloId"
+                                        data-titulo="Constancia de Horario"
+                                        data-destinatario="PROCURADURÍA GENERAL DE LA REPÚBLICA DE EL SALVADOR">
                                     <i class="bi bi-file-pdf me-1"></i>Generar Horario
-                                </a>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -505,9 +510,14 @@
                                 <p class="report-description">
                                     Genera la constancia oficial de avance del 70% de la carrera, calculando materias aprobadas contra la carga del pensum.
                                 </p>
-                                <a href="/reportes/ConstanciaAvance70?alumnoId=@Model.AlumnoSelected.AlumnoId" target="_blank" class="btn btn-success btn-generate">
+                                <button type="button" class="btn btn-success btn-generate js-reporte-destinatario"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#modalDestinatarioReporte"
+                                        data-url="/reportes/ConstanciaAvance70?alumnoId=@Model.AlumnoSelected.AlumnoId"
+                                        data-titulo="Constancia Avance 70%"
+                                        data-destinatario="PROCURADURIA GENERAL DE LA REPÚBLICA">
                                     <i class="bi bi-file-pdf me-1"></i>Generar Avance
-                                </a>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -523,11 +533,40 @@
                                 <p class="report-description">
                                     Genera la constancia oficial de alumno activo para el ciclo seleccionado, con fechas del ciclo y datos de la carrera.
                                 </p>
-                                <a id="linkAlumnoActivo" href="/reportes/ConstanciaAlumnoActivo?alumnoId=@Model.AlumnoSelected.AlumnoId&cicloId=@Model.SelectedCicloId" target="_blank" class="btn btn-info btn-generate text-white">
+                                <button id="linkAlumnoActivo" type="button" class="btn btn-info btn-generate text-white js-reporte-destinatario"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#modalDestinatarioReporte"
+                                        data-url="/reportes/ConstanciaAlumnoActivo?alumnoId=@Model.AlumnoSelected.AlumnoId&cicloId=@Model.SelectedCicloId"
+                                        data-titulo="Constancia Alumno Activo"
+                                        data-destinatario="AFP CRECER">
                                     <i class="bi bi-file-pdf me-1"></i>Generar Activo
-                                </a>
+                                </button>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="modalDestinatarioReporte" tabindex="-1" aria-labelledby="modalDestinatarioReporteLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <form id="formDestinatarioReporte">
+                            <div class="modal-header bg-success text-white">
+                                <h5 class="modal-title" id="modalDestinatarioReporteLabel">Lugar a presentar</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                            </div>
+                            <div class="modal-body">
+                                <input type="hidden" id="urlReporteDestinatario" />
+                                <label for="destinatarioReporte" class="form-label fw-bold">Presentar a</label>
+                                <input type="text" id="destinatarioReporte" class="form-control" maxlength="180" required />
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="bi bi-file-pdf me-1"></i>Generar PDF
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -604,6 +643,38 @@
                 jQuery('#buscadorAlumno').focus();
             });
 
+            jQuery('.js-reporte-destinatario').click(function() {
+                var button = jQuery(this);
+                jQuery('#modalDestinatarioReporteLabel').text(button.attr('data-titulo') || 'Lugar a presentar');
+                jQuery('#urlReporteDestinatario').val(button.attr('data-url') || '');
+                jQuery('#destinatarioReporte').val(button.attr('data-destinatario') || '');
+            });
+
+            jQuery('#modalDestinatarioReporte').on('shown.bs.modal', function() {
+                jQuery('#destinatarioReporte').trigger('focus').select();
+            });
+
+            jQuery('#formDestinatarioReporte').submit(function(event) {
+                event.preventDefault();
+
+                var baseUrl = jQuery('#urlReporteDestinatario').val();
+                var destinatario = jQuery('#destinatarioReporte').val().trim();
+
+                if (!baseUrl || !destinatario) {
+                    return;
+                }
+
+                var separator = baseUrl.indexOf('?') >= 0 ? '&' : '?';
+                var finalUrl = baseUrl + separator + 'destinatario=' + encodeURIComponent(destinatario);
+                window.open(finalUrl, '_blank');
+
+                var modalElement = document.getElementById('modalDestinatarioReporte');
+                var modal = bootstrap.Modal.getInstance(modalElement);
+                if (modal) {
+                    modal.hide();
+                }
+            });
+
             // Actualizar enlaces dinámicamente o recargar la página cuando se cambia el ciclo
             jQuery('#SelectedCicloId').change(function() {
                 var selectedCicloId = jQuery(this).val();
@@ -621,11 +692,11 @@
 
                     // Actualizar link constancia de horario
                     var urlConstanciaHorario = '/reportes/ConstanciaHorario?alumnoId=' + alumnoId + '&cicloId=' + selectedCicloId;
-                    jQuery('#linkConstanciaHorario').attr('href', urlConstanciaHorario);
+                    jQuery('#linkConstanciaHorario').attr('data-url', urlConstanciaHorario);
 
                     // Actualizar link constancia de alumno activo
                     var urlAlumnoActivo = '/reportes/ConstanciaAlumnoActivo?alumnoId=' + alumnoId + '&cicloId=' + selectedCicloId;
-                    jQuery('#linkAlumnoActivo').attr('href', urlAlumnoActivo);
+                    jQuery('#linkAlumnoActivo').attr('data-url', urlAlumnoActivo);
                     
                     // También actualizar la URL del navegador sin recargar para mantener el estado
                     var newUrl = new URL(window.location.href);
