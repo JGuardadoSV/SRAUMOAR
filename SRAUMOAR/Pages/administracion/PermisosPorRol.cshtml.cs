@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using SRAUMOAR.Entidades.Accesos;
 using SRAUMOAR.Modelos;
+using System.Text;
 
 namespace SRAUMOAR.Pages.administracion
 {
@@ -84,7 +85,7 @@ namespace SRAUMOAR.Pages.administracion
             {
                 ModuloPermisoId = m.Id,
                 Codigo = m.Codigo,
-                Modulo = m.Nombre,
+                Modulo = CorregirMojibake(m.Nombre),
                 Administrador = TienePermiso(permisos, m.Id, roles, "Administrador"),
                 Administracion = TienePermiso(permisos, m.Id, roles, "Administracion"),
                 Contabilidad = TienePermiso(permisos, m.Id, roles, "Contabilidad"),
@@ -101,6 +102,41 @@ namespace SRAUMOAR.Pages.administracion
             }
 
             return permisos.Any(p => p.ModuloPermisoId == moduloId && p.NivelAccesoId == rolId && p.PuedeVer);
+        }
+
+        private static string CorregirMojibake(string? texto)
+        {
+            if (string.IsNullOrWhiteSpace(texto))
+            {
+                return string.Empty;
+            }
+
+            if (!PareceMojibake(texto))
+            {
+                return texto;
+            }
+
+            try
+            {
+                var latin1Bytes = Encoding.Latin1.GetBytes(texto);
+                var corregido = Encoding.UTF8.GetString(latin1Bytes);
+                return PareceMojibake(corregido) ? texto : corregido;
+            }
+            catch
+            {
+                return texto;
+            }
+        }
+
+        private static bool PareceMojibake(string texto)
+        {
+            return texto.Contains("Ã", StringComparison.Ordinal)
+                || texto.Contains("Â", StringComparison.Ordinal)
+                || texto.Contains("â€", StringComparison.Ordinal)
+                || texto.Contains("â€™", StringComparison.Ordinal)
+                || texto.Contains("â€œ", StringComparison.Ordinal)
+                || texto.Contains("â€", StringComparison.Ordinal)
+                || texto.Contains("�", StringComparison.Ordinal);
         }
 
         private async Task GuardarPermisoAsync(int moduloId, Dictionary<string, int> roles, string rolNombre, bool puedeVer)

@@ -16,25 +16,30 @@ namespace SRAUMOAR.Pages.administracion
         }
 
         public List<BackupInfo> BackupHistory { get; set; } = new();
+        public string DatabaseName { get; private set; } = string.Empty;
+        public string? ConfigurationWarning { get; private set; }
 
         public async Task OnGetAsync()
         {
+            DatabaseName = _backupService.GetDatabaseName();
+            ConfigurationWarning = _backupService.GetStorageConfigurationError();
             BackupHistory = await _backupService.GetBackupHistoryAsync();
         }
+
+
 
         public async Task<IActionResult> OnPostCreateBackupAsync()
         {
             try
             {
                 TempData["InfoMessage"] = "Iniciando creación de respaldo...";
-                
-                // Verificar que el servicio existe
+
                 if (_backupService == null)
                 {
                     TempData["ErrorMessage"] = "Error: Servicio de respaldos no disponible";
                     return RedirectToPage();
                 }
-                
+
                 TempData["InfoMessage"] = "Conectando a la base de datos...";
                 var fileName = await _backupService.CreateBackupAsync();
                 TempData["SuccessMessage"] = $"Respaldo creado exitosamente: {fileName}";
@@ -42,11 +47,37 @@ namespace SRAUMOAR.Pages.administracion
             catch (Exception ex)
             {
                 TempData["ErrorMessage"] = $"Error al crear el respaldo: {ex.Message}";
-                // Log del error completo para debug
                 System.Diagnostics.Debug.WriteLine($"Error completo: {ex}");
             }
 
             return RedirectToPage();
+        }
+
+        public async Task<IActionResult> OnPostDownloadBakAsync()
+        {
+            try
+            {
+                if (_backupService == null)
+                {
+                    TempData["ErrorMessage"] = "Error: Servicio de respaldos no disponible";
+                    return RedirectToPage();
+                }
+
+                var backupFile = await _backupService.CreateRawBackupFileAsync();
+                if (backupFile.FileBytes == null || backupFile.FileBytes.Length == 0)
+                {
+                    TempData["ErrorMessage"] = "No se pudo generar el archivo .bak";
+                    return RedirectToPage();
+                }
+
+                return File(backupFile.FileBytes, backupFile.ContentType, backupFile.FileName);
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Error al descargar el respaldo .bak: {ex.Message}";
+                System.Diagnostics.Debug.WriteLine($"Error completo: {ex}");
+                return RedirectToPage();
+            }
         }
 
         public async Task<IActionResult> OnPostDeleteBackupAsync(string fileName)
@@ -77,7 +108,7 @@ namespace SRAUMOAR.Pages.administracion
             {
                 var backupHistory = await _backupService.GetBackupHistoryAsync();
                 var backup = backupHistory.FirstOrDefault(b => b.FileName == fileName);
-                
+
                 if (backup == null)
                 {
                     TempData["ErrorMessage"] = "El archivo de respaldo no existe";

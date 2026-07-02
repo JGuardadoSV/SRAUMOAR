@@ -47,7 +47,7 @@
 
 <div class="container-fluid py-4">
     @Html.AntiForgeryToken()
-    
+
     <!-- Mensajes -->
     @if (TempData["SuccessMessage"] != null)
     {
@@ -60,8 +60,17 @@
     @if (TempData["ErrorMessage"] != null)
     {
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle me-2"></i>
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
             @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.ConfigurationWarning))
+    {
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-circle-fill me-2"></i>
+            @Model.ConfigurationWarning
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
@@ -73,7 +82,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
-    
+
     <!-- Header -->
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-primary text-white">
@@ -103,13 +112,13 @@
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <strong>Base de Datos:</strong> raumoar
+                    <strong>Base de Datos:</strong> @Model.DatabaseName
                 </div>
                 <div class="col-md-3">
                     <strong>Total Respaldos:</strong> @Model.BackupHistory.Count
                 </div>
                 <div class="col-md-3">
-                    <strong>Último Respaldo:</strong> 
+                    <strong>Último Respaldo:</strong>
                     @if (Model.BackupHistory.Any())
                     {
                         @Model.BackupHistory.First().CreatedDate.ToString("dd/MM/yyyy HH:mm")
@@ -203,7 +212,7 @@
                                                 <i class="bi bi-download me-1"></i>
                                                 Descargar
                                             </a>
-                                            <button type="button" class="btn btn-outline-danger btn-sm" 
+                                            <button type="button" class="btn btn-outline-danger btn-sm"
                                                     onclick="confirmDelete('@backup.FileName')">
                                                 <i class="bi bi-trash me-1"></i>
                                                 Eliminar
@@ -246,7 +255,7 @@
             <div class="modal-body">
                 <div class="alert alert-info">
                     <i class="bi bi-info-circle me-2"></i>
-                    <strong>Información:</strong> Se creará un respaldo completo de la base de datos "raumoar" y se comprimirá automáticamente.
+                    <strong>Información:</strong> Puede crear un respaldo ZIP o descargar directamente el archivo .bak de la base de datos "@Model.DatabaseName".
                 </div>
                 <p>¿Está seguro de que desea crear un nuevo respaldo?</p>
                 <div class="form-check">
@@ -258,10 +267,16 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="post" asp-page-handler="DownloadBak" style="display: inline;">
+                    <button type="submit" class="btn btn-outline-primary backup-submit-btn" id="downloadBakBtn" disabled>
+                        <i class="bi bi-download me-1"></i>
+                        Descargar .bak
+                    </button>
+                </form>
                 <form method="post" asp-page-handler="CreateBackup" style="display: inline;">
-                    <button type="submit" class="btn btn-success" id="createBackupBtn">
-                        <i class="bi bi-database-gear me-1"></i>
-                        Crear Respaldo
+                    <button type="submit" class="btn btn-success backup-submit-btn" id="createBackupBtn" disabled>
+                        <i class="bi bi-file-earmark-zip me-1"></i>
+                        Crear ZIP
                     </button>
                 </form>
             </div>
@@ -301,29 +316,38 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Habilitar botón de crear respaldo cuando se confirme
+            // Habilitar botones de respaldo cuando se confirme
             const confirmCheckbox = document.getElementById('confirmBackup');
-            const createBackupBtn = document.getElementById('createBackupBtn');
-            
-            if (confirmCheckbox && createBackupBtn) {
+            const backupButtons = document.querySelectorAll('.backup-submit-btn');
+
+            if (confirmCheckbox && backupButtons.length > 0) {
                 confirmCheckbox.addEventListener('change', function() {
-                    createBackupBtn.disabled = !this.checked;
+                    backupButtons.forEach(button => {
+                        button.disabled = !this.checked;
+                    });
                 });
-                
-                // Validar antes de enviar
-                createBackupBtn.addEventListener('click', function(e) {
-                    if (!confirmCheckbox.checked) {
-                        e.preventDefault();
-                        alert('Por favor, confirme que desea crear el respaldo marcando la casilla.');
-                        return false;
-                    }
-                    
-                    // Mostrar loading
-                    this.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Creando...';
-                    this.disabled = true;
-                    
-                    // Permitir que el formulario se envíe
-                    return true;
+
+                backupButtons.forEach(button => {
+                    button.addEventListener('click', function(e) {
+                        if (!confirmCheckbox.checked) {
+                            e.preventDefault();
+                            alert('Por favor, confirme que desea crear el respaldo marcando la casilla.');
+                            return false;
+                        }
+
+                        const originalText = this.innerHTML;
+                        const loadingText = this.id === 'downloadBakBtn'
+                            ? '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Generando .bak...'
+                            : '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Creando ZIP...';
+
+                        this.innerHTML = loadingText;
+                        backupButtons.forEach(otherButton => {
+                            otherButton.disabled = true;
+                        });
+
+                        this.dataset.originalText = originalText;
+                        return true;
+                    });
                 });
             }
         });
@@ -332,7 +356,7 @@
         function confirmDelete(fileName) {
             const deleteFileNameInput = document.getElementById('deleteFileName');
             const deleteModal = document.getElementById('deleteBackupModal');
-            
+
             if (deleteFileNameInput && deleteModal) {
                 deleteFileNameInput.value = fileName;
                 new bootstrap.Modal(deleteModal).show();
