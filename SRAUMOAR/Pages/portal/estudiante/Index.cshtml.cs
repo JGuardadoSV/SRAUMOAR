@@ -1,4 +1,4 @@
-﻿using iText.Kernel.Pdf;
+using iText.Kernel.Pdf;
 using iText.Layout.Element;
 using iText.Layout;
 using Microsoft.AspNetCore.Authorization;
@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using SRAUMOAR.Servicios.FacturacionElectronica;
+using SRAUMOAR.Modelos;
 using SRAUMOAR.Entidades.Alumnos;
 using SRAUMOAR.Entidades.Becas;
 using SRAUMOAR.Entidades.Colecturia;
@@ -28,12 +30,14 @@ namespace SRAUMOAR.Pages.portal.estudiante
     {
         private readonly SRAUMOAR.Modelos.Contexto _context;
 
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IDtePdfService _pdfService;
+        private readonly IDteJsonFactory _jsonFactory;
 
-        public IndexModel(SRAUMOAR.Modelos.Contexto context, IHttpClientFactory httpClientFactory)
+        public IndexModel(Contexto context, IDtePdfService pdfService, IDteJsonFactory jsonFactory)
         {
             _context = context;
-            _httpClientFactory = httpClientFactory;
+            _pdfService = pdfService;
+            _jsonFactory = jsonFactory;
         }
         public Alumno Alumno { get; set; } = default!;
         public Ciclo Ciclo { get; set; } = default!;
@@ -336,41 +340,12 @@ namespace SRAUMOAR.Pages.portal.estudiante
                 }
 
 
-                var dteJson = factura.JsonDte; // Reemplazar con tu lï¿½gica
-                var selloRecibido = factura.SelloRecepcion; // Reemplazar con tu lï¿½gica
-                var tipo = factura.TipoDTE.ToString().PadLeft(2, '0');
-
-                // Datos que necesitas enviar
-                var requestData = new
-                {
-                    dteJson = dteJson,
-                    selloRecibido = selloRecibido,
-                    tipoDte = tipo
-                };
-
-                var json = JsonConvert.SerializeObject(requestData);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-                var client = _httpClientFactory.CreateClient();
-                //var response = await client.PostAsync("https://localhost:7122/api/generar-pdf", content);
-                var response = await client.PostAsync("http://207.58.153.147:7122/api/generar-pdf", content);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var pdfBytes = await response.Content.ReadAsByteArrayAsync();
-
-                    //Console.WriteLine($"[DEBUG CLIENT] PDF recibido, tamaï¿½o: {pdfBytes.Length} bytes");
-
-                    // Respuesta mï¿½s simple - deja que la API maneje los headers
-                    return File(pdfBytes, "application/pdf");
-                }
-                else
-                {
-                    var errorMessage = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"[ERROR CLIENT] Error de API: {errorMessage}");
-                    TempData["Error"] = $"Error al generar PDF: {errorMessage}";
-                    return RedirectToPage();
-                }
+                var root = Newtonsoft.Json.Linq.JObject.Parse(factura.JsonDte);
+                var tipoEntrada = factura.TipoDteCodigo
+                    ?? root["identificacion"]?.Value<string>("tipoDte")
+                    ?? factura.TipoDTE.ToString();
+                var tipo = _jsonFactory.ObtenerTipoCanonico(tipoEntrada);
+                return File(_pdfService.Generar(tipo, factura.JsonDte, factura.SelloRecepcion), "application/pdf");
             }
             catch (Exception ex)
             {

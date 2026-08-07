@@ -643,6 +643,14 @@
                 <span class="legend-text">Nota de Crédito</span>
             </div> *@
             <div class="legend-item">
+                <span class="badge bg-warning text-dark">NC</span>
+                <span class="legend-text">Nota de credito</span>
+            </div>
+            <div class="legend-item">
+                <span class="badge bg-danger">ND</span>
+                <span class="legend-text">Nota de debito</span>
+            </div>
+            <div class="legend-item">
                 <span class="badge bg-info">SE</span>
                 <span class="legend-text">Sujeto Excluido</span>
             </div>
@@ -692,6 +700,7 @@
                                             1 => "CF",
                                             3 => "CCF",
                                             5 => "NC",
+                                            6 => "ND",
                                             14 => "SE",
                                             15 => "DON",
                                             _ => item.TipoDTE.ToString()
@@ -701,6 +710,7 @@
                                             1 => "bg-primary",
                                             3 => "bg-success",
                                             5 => "bg-warning",
+                                            6 => "bg-danger",
                                             14 => "bg-info",
                                             15 => "bg-secondary",
                                             _ => "bg-secondary"

@@ -1,0 +1,66 @@
+@page "/facturas/nota"
+@model SRAUMOAR.Pages.facturas.NotaModel
+@using SRAUMOAR.Modelos.FacturacionElectronica
+@{
+    ViewData["Title"] = Model.TipoNota == DteTipos.NotaDebito ? "Nota de débito" : "Nota de crédito";
+}
+
+<div class="container py-4">
+    <h1>@ViewData["Title"]</h1>
+    <p class="text-muted">La nota se relaciona con el DTE 03 original y conserva su ambiente fiscal.</p>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Error))
+    {
+        <div class="alert alert-danger">@Model.Error</div>
+    }
+    @if (Model.Resultado is { Aceptado: true } resultado)
+    {
+        <div class="alert alert-success">
+            Nota @resultado.TipoNota aceptada en ambiente @resultado.AmbienteFiscal.<br />
+            Código: @resultado.CodigoGeneracion<br />
+            Sello: @resultado.SelloRecepcion
+        </div>
+    }
+
+    @if (Model.Factura is not null)
+    {
+        <div class="card mb-4">
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-3">Factura original</dt>
+                    <dd class="col-sm-9">@Model.Factura.NumeroControl</dd>
+                    <dt class="col-sm-3">Código de generación</dt>
+                    <dd class="col-sm-9">@Model.Factura.CodigoGeneracion</dd>
+                    <dt class="col-sm-3">Ambiente fiscal</dt>
+                    <dd class="col-sm-9">@Model.Factura.AmbienteFiscal</dd>
+                    <dt class="col-sm-3">Total original</dt>
+                    <dd class="col-sm-9">$@Model.Factura.TotalPagar.ToString("N2")</dd>
+                </dl>
+            </div>
+        </div>
+
+        <form method="post" class="card">
+            <div class="card-body">
+                <input type="hidden" asp-for="FacturaId" />
+                <div class="mb-3">
+                    <label class="form-label">Tipo de nota</label>
+                    <select class="form-select" asp-for="TipoNota">
+                        <option value="05">05 - Nota de crédito</option>
+                        <option value="06">06 - Nota de débito</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Monto</label>
+                    <input class="form-control" asp-for="Monto" type="number" min="0.01" step="0.01" />
+                    <div class="form-text">Para crédito no puede superar el total original; débito permite el monto adicional solicitado.</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Motivo</label>
+                    <textarea class="form-control" asp-for="Motivo" maxlength="500"></textarea>
+                </div>
+                <button class="btn btn-primary" type="submit">Generar y transmitir nota</button>
+                <a class="btn btn-secondary" asp-page="./Details" asp-route-id="@Model.FacturaId">Cancelar</a>
+            </div>
+        </form>
+    }
+</div>

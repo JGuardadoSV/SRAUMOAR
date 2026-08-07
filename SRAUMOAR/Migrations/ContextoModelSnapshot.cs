@@ -464,16 +464,47 @@ namespace SRAUMOAR.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("FacturaId"));
 
+                    b.Property<string>("AmbienteFiscal")
+                        .HasMaxLength(2)
+                        .HasColumnType("nvarchar(2)");
+
                     b.Property<bool>("Anulada")
                         .HasColumnType("bit");
+
+                    b.Property<string>("ClaveIdempotencia")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("CodigoGeneracion")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<string>("CorreoReceptor")
+                        .HasMaxLength(320)
+                        .HasColumnType("nvarchar(320)");
+
+                    b.Property<string>("EstadoTransmision")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasDefaultValue("Preparado");
+
+                    b.Property<int?>("FacturaOriginalId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("Fecha")
                         .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FechaAceptacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FechaAnulacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("IntentosTransmision")
+                        .HasColumnType("int");
 
                     b.Property<string>("JsonAnulacion")
                         .HasColumnType("nvarchar(max)");
@@ -481,10 +512,20 @@ namespace SRAUMOAR.Migrations
                     b.Property<string>("JsonDte")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<decimal?>("MontoNota")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("MotivoNota")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<string>("NumeroControl")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("RespuestaHacienda")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SelloAnulacion")
                         .HasColumnType("nvarchar(max)");
@@ -494,6 +535,10 @@ namespace SRAUMOAR.Migrations
 
                     b.Property<int>("TipoDTE")
                         .HasColumnType("int");
+
+                    b.Property<string>("TipoDteCodigo")
+                        .HasMaxLength(2)
+                        .HasColumnType("nvarchar(2)");
 
                     b.Property<decimal>("TotalExento")
                         .HasColumnType("decimal(18,2)");
@@ -508,6 +553,14 @@ namespace SRAUMOAR.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("FacturaId");
+
+                    b.HasIndex("ClaveIdempotencia")
+                        .IsUnique()
+                        .HasFilter("[ClaveIdempotencia] IS NOT NULL");
+
+                    b.HasIndex("CodigoGeneracion");
+
+                    b.HasIndex("FacturaOriginalId", "TipoDteCodigo");
 
                     b.ToTable("Factura");
                 });
@@ -569,6 +622,574 @@ namespace SRAUMOAR.Migrations
                     b.HasIndex("UsuarioId");
 
                     b.ToTable("Docentes");
+                });
+
+            modelBuilder.Entity("SRAUMOAR.Entidades.FacturacionElectronica.CatalogoFeItem", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Codigo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("CodigoCatalogo")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("Orden")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ValorAuxiliar")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CodigoCatalogo", "Version", "Codigo")
+                        .IsUnique();
+
+                    b.ToTable("CatalogosFe");
+                });
+
+            modelBuilder.Entity("SRAUMOAR.Entidades.FacturacionElectronica.ColaCorreoDte", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Asunto")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<DateTime?>("BloqueadoHasta")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ClaveIdempotencia")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("CodigoGeneracion")
+                        .HasMaxLength(36)
+                        .HasColumnType("nvarchar(36)");
+
+                    b.Property<string>("Copias")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("CuerpoHtml")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Destinatario")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("nvarchar(320)");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int?>("FacturaId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Intentos")
+                        .HasColumnType("int");
+
+                    b.Property<string>("JsonAdjunto")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NombreJson")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("NombrePdf")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<byte[]>("PdfAdjunto")
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<DateTime?>("ProcesadoEn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ProximoIntento")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Sello")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("TipoCorreo")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("UltimoError")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClaveIdempotencia")
+                        .IsUnique();
+
+                    b.HasIndex("FacturaId");
+
+                    b.ToTable("ColaCorreosDte");
+                });
+
+            modelBuilder.Entity("SRAUMOAR.Entidades.FacturacionElectronica.ConfiguracionFacturacionElectronica", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AmbienteFiscal")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("nvarchar(2)");
+
+                    b.Property<string>("CodigoActividad")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("CodigoDepartamento")
+                        .HasMaxLength(2)
+                        .HasColumnType("nvarchar(2)");
+
+                    b.Property<string>("CodigoDistrito")
+                        .HasMaxLength(2)
+                        .HasColumnType("nvarchar(2)");
+
+                    b.Property<string>("CodigoEstablecimiento")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("CodigoEstablecimientoMh")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("CodigoMunicipio")
+                        .HasMaxLength(2)
+                        .HasColumnType("nvarchar(2)");
+
+                    b.Property<string>("CodigoPuntoVenta")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("CodigoPuntoVentaMh")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("ComplementoDireccion")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("CorreoEmisor")
+                        .HasMaxLength(320)
+                        .HasColumnType("nvarchar(320)");
+
+                    b.Property<string>("CredencialApiCifrada")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DepartamentoDescripcion")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("DescripcionActividad")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("DistritoDescripcion")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<bool>("EsAmbienteFiscalActivo")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("FechaActualizacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("Habilitado")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("MaxReintentos")
+                        .HasColumnType("int");
+
+                    b.Property<string>("MunicipioDescripcion")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("NitEmisor")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("NombreComercial")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("NombreEmisor")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("NrcEmisor")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("PasswordCertificadoCifrada")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RutaCertificado")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("TelefonoEmisor")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int>("TimeoutSegundos")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TipoEstablecimiento")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("TipoEstablecimientoDescripcion")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("UrlAnulacion")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("UrlApiExterna")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("UrlAutenticacion")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("UrlConsulta")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("UrlContingencia")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("UrlFirmador")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("UrlRecepcion")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("UsarApiExterna")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("UsarFirmadorExterno")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("UsuarioHacienda")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AmbienteFiscal")
+                        .IsUnique();
+
+                    b.HasIndex("EsAmbienteFiscalActivo")
+                        .IsUnique()
+                        .HasFilter("[EsAmbienteFiscalActivo] = 1");
+
+                    b.ToTable("ConfiguracionFacturacionElectronica");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            AmbienteFiscal = "00",
+                            CodigoActividad = "85499",
+                            CodigoDepartamento = "04",
+                            CodigoDistrito = "33",
+                            CodigoEstablecimiento = "M001",
+                            CodigoEstablecimientoMh = "M001",
+                            CodigoMunicipio = "35",
+                            CodigoPuntoVenta = "P001",
+                            CodigoPuntoVentaMh = "P001",
+                            ComplementoDireccion = "KM 52 1/2 CARRETERA TEJUTLA, CHALATENANGO",
+                            CorreoEmisor = "umoar@enviosdte.email",
+                            DepartamentoDescripcion = "Chalatenango",
+                            DescripcionActividad = "Enseñanza superior universitaria",
+                            DistritoDescripcion = "TEJUTLA",
+                            EsAmbienteFiscalActivo = false,
+                            FechaActualizacion = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Habilitado = false,
+                            MaxReintentos = 3,
+                            MunicipioDescripcion = "CHALATENANGO CENTRO",
+                            NitEmisor = "04331410931010",
+                            NombreComercial = "UMOAR",
+                            NombreEmisor = "UNIVERSIDAD MONSEÑOR OSCAR ARNULFO ROMERO",
+                            NrcEmisor = "1029819",
+                            TelefonoEmisor = "23021800",
+                            TimeoutSegundos = 60,
+                            TipoEstablecimiento = "02",
+                            TipoEstablecimientoDescripcion = "Casa Matriz",
+                            UsarApiExterna = false,
+                            UsarFirmadorExterno = false
+                        },
+                        new
+                        {
+                            Id = 2,
+                            AmbienteFiscal = "01",
+                            CodigoActividad = "85499",
+                            CodigoDepartamento = "04",
+                            CodigoDistrito = "33",
+                            CodigoEstablecimiento = "M001",
+                            CodigoEstablecimientoMh = "M001",
+                            CodigoMunicipio = "35",
+                            CodigoPuntoVenta = "P001",
+                            CodigoPuntoVentaMh = "P001",
+                            ComplementoDireccion = "KM 52 1/2 CARRETERA TEJUTLA, CHALATENANGO",
+                            CorreoEmisor = "umoar@enviosdte.email",
+                            DepartamentoDescripcion = "Chalatenango",
+                            DescripcionActividad = "Enseñanza superior universitaria",
+                            DistritoDescripcion = "TEJUTLA",
+                            EsAmbienteFiscalActivo = false,
+                            FechaActualizacion = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Habilitado = false,
+                            MaxReintentos = 3,
+                            MunicipioDescripcion = "CHALATENANGO CENTRO",
+                            NitEmisor = "04331410931010",
+                            NombreComercial = "UMOAR",
+                            NombreEmisor = "UNIVERSIDAD MONSEÑOR OSCAR ARNULFO ROMERO",
+                            NrcEmisor = "1029819",
+                            TelefonoEmisor = "23021800",
+                            TimeoutSegundos = 60,
+                            TipoEstablecimiento = "02",
+                            TipoEstablecimientoDescripcion = "Casa Matriz",
+                            UsarApiExterna = false,
+                            UsarFirmadorExterno = false
+                        });
+                });
+
+            modelBuilder.Entity("SRAUMOAR.Entidades.FacturacionElectronica.ConfiguracionSmtp", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("CopiaOculta")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("EmailRemitente")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<DateTime>("FechaActualizacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("MaxReintentos")
+                        .HasColumnType("int");
+
+                    b.Property<string>("NombreRemitente")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("PasswordCifrada")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Puerto")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Servidor")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<bool>("UsarSsl")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("UsarTls")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Usuario")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Activo")
+                        .IsUnique()
+                        .HasFilter("[Activo] = 1");
+
+                    b.ToTable("ConfiguracionSmtp");
+                });
+
+            modelBuilder.Entity("SRAUMOAR.Entidades.FacturacionElectronica.DteEvento", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("AmbienteFiscal")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("nvarchar(2)");
+
+                    b.Property<string>("CodigoEvento")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("nvarchar(36)");
+
+                    b.Property<string>("Error")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int>("FacturaId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("JsonEvento")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Respuesta")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SelloRecepcion")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("TipoEvento")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FacturaId");
+
+                    b.HasIndex("CodigoEvento", "TipoEvento", "AmbienteFiscal")
+                        .IsUnique();
+
+                    b.ToTable("DteEventos");
+                });
+
+            modelBuilder.Entity("SRAUMOAR.Entidades.FacturacionElectronica.DteTransmision", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("AmbienteFiscal")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("nvarchar(2)");
+
+                    b.Property<string>("CodigoGeneracion")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("nvarchar(36)");
+
+                    b.Property<string>("Error")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int?>("FacturaId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("FechaFin")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FechaInicio")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Intentos")
+                        .HasColumnType("int");
+
+                    b.Property<string>("JsonEnviado")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Respuesta")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SelloRecepcion")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("TipoOperacion")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FacturaId");
+
+                    b.HasIndex("CodigoGeneracion", "TipoOperacion", "AmbienteFiscal")
+                        .IsUnique();
+
+                    b.ToTable("DteTransmisiones");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Generales.Carrera", b =>
@@ -2005,6 +2626,20 @@ namespace SRAUMOAR.Migrations
                     b.Property<long>("Correlativo")
                         .HasColumnType("bigint");
 
+                    b.Property<string>("Establecimiento")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("M001");
+
+                    b.Property<string>("PuntoVenta")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("P001");
+
                     b.Property<string>("TipoDocumento")
                         .IsRequired()
                         .HasMaxLength(2)
@@ -2014,6 +2649,9 @@ namespace SRAUMOAR.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("TipoDocumento", "Ambiente", "Establecimiento", "PuntoVenta")
+                        .IsUnique();
 
                     b.ToTable("DteCorrelativos");
                 });
@@ -2367,6 +3005,16 @@ namespace SRAUMOAR.Migrations
                     b.Navigation("CobroArancel");
                 });
 
+            modelBuilder.Entity("SRAUMOAR.Entidades.Colecturia.Factura", b =>
+                {
+                    b.HasOne("SRAUMOAR.Entidades.Colecturia.Factura", "FacturaOriginal")
+                        .WithMany("NotasDerivadas")
+                        .HasForeignKey("FacturaOriginalId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("FacturaOriginal");
+                });
+
             modelBuilder.Entity("SRAUMOAR.Entidades.Docentes.Docente", b =>
                 {
                     b.HasOne("SRAUMOAR.Entidades.Generales.Profesion", "Profesion")
@@ -2382,6 +3030,37 @@ namespace SRAUMOAR.Migrations
                     b.Navigation("Profesion");
 
                     b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("SRAUMOAR.Entidades.FacturacionElectronica.ColaCorreoDte", b =>
+                {
+                    b.HasOne("SRAUMOAR.Entidades.Colecturia.Factura", "Factura")
+                        .WithMany()
+                        .HasForeignKey("FacturaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Factura");
+                });
+
+            modelBuilder.Entity("SRAUMOAR.Entidades.FacturacionElectronica.DteEvento", b =>
+                {
+                    b.HasOne("SRAUMOAR.Entidades.Colecturia.Factura", "Factura")
+                        .WithMany()
+                        .HasForeignKey("FacturaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Factura");
+                });
+
+            modelBuilder.Entity("SRAUMOAR.Entidades.FacturacionElectronica.DteTransmision", b =>
+                {
+                    b.HasOne("SRAUMOAR.Entidades.Colecturia.Factura", "Factura")
+                        .WithMany()
+                        .HasForeignKey("FacturaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Factura");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Generales.Carrera", b =>
@@ -2746,6 +3425,11 @@ namespace SRAUMOAR.Migrations
             modelBuilder.Entity("SRAUMOAR.Entidades.Colecturia.CobroArancel", b =>
                 {
                     b.Navigation("DetallesCobroArancel");
+                });
+
+            modelBuilder.Entity("SRAUMOAR.Entidades.Colecturia.Factura", b =>
+                {
+                    b.Navigation("NotasDerivadas");
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Generales.Carrera", b =>

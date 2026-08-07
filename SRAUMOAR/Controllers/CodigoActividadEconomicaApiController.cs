@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using SRAUMOAR.Entidades.FacturacionElectronica;
 using SRAUMOAR.Entidades.Generales;
 using SRAUMOAR.Modelos;
 
@@ -19,6 +20,31 @@ namespace SRAUMOAR.Controllers
         [HttpGet("buscar")]
         public async Task<IActionResult> BuscarCodigos([FromQuery] string? term = null)
         {
+            var catalogoImportado = _context.CatalogosFe
+                .AsNoTracking()
+                .Where(x => x.CodigoCatalogo == "CAT-019" && x.Version == "1.1" && x.Activo);
+
+            if (!string.IsNullOrWhiteSpace(term))
+            {
+                var texto = term.Trim();
+                catalogoImportado = catalogoImportado.Where(x => x.Codigo.Contains(texto) || x.Descripcion.Contains(texto));
+            }
+
+            var catalogos = await catalogoImportado
+                .OrderBy(x => x.Codigo)
+                .Take(50)
+                .Select(x => new
+                {
+                    id = x.Id,
+                    codigo = x.Codigo,
+                    descripcion = x.Descripcion,
+                    textoCompleto = $"{x.Codigo} - {x.Descripcion}"
+                })
+                .ToListAsync();
+
+            if (catalogos.Count > 0)
+                return Ok(catalogos);
+
             var query = _context.CodigosActividadEconomica.AsQueryable();
 
             if (!string.IsNullOrEmpty(term))

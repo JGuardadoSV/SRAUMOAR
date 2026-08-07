@@ -10,6 +10,8 @@ using SRAUMOAR.Entidades.Generales;
 using System.Globalization;
 using NuGet.Packaging;
 using OfficeOpenXml;
+using Microsoft.AspNetCore.DataProtection;
+using SRAUMOAR.Servicios.FacturacionElectronica;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -86,6 +88,28 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
             options.LogoutPath = "/salir";
         });
 builder.Services.AddHttpClient();
+builder.Services.AddHttpClient("HaciendaDte");
+builder.Services.AddHttpClient("FirmadorDte");
+builder.Services.AddHttpClient("ApiExternaDte");
+builder.Services.AddMemoryCache();
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "storage", "keys")))
+    .SetApplicationName("SRAUMOAR");
+
+builder.Services.AddScoped<IConfiguracionFeService, ConfiguracionFeService>();
+builder.Services.AddScoped<ICertificadoStorageService, CertificadoStorageService>();
+builder.Services.AddScoped<ICatalogoFeService, CatalogoFeService>();
+builder.Services.AddScoped<IDteJsonFactory, DteJsonFactory>();
+builder.Services.AddScoped<IFirmadorDteService, FirmadorDteService>();
+builder.Services.AddScoped<ITokenHaciendaService, TokenHaciendaService>();
+builder.Services.AddScoped<IHaciendaDteClient, HaciendaDteClient>();
+builder.Services.AddScoped<IDteTransmisionService, DteTransmisionService>();
+builder.Services.AddScoped<IDteNotaService, DteNotaService>();
+builder.Services.AddScoped<IDtePdfService, DtePdfService>();
+builder.Services.AddScoped<ISmtpConfigurationService, SmtpConfigurationService>();
+builder.Services.AddScoped<IDteEmailSender, DteEmailSender>();
+builder.Services.AddScoped<IDteEmailQueueService, DteEmailQueueService>();
+builder.Services.AddHostedService<DteEmailQueueWorker>();
 builder.Services.AddAuthorization(options =>
     {
         options.FallbackPolicy = new AuthorizationPolicyBuilder()

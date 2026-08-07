@@ -16,6 +16,7 @@ using iText.Layout.Element;
 using iText.Layout;
 using SRAUMOAR.Entidades.Alumnos;
 using SRAUMOAR.Entidades.Generales;
+using SRAUMOAR.Servicios.FacturacionElectronica;
 
 namespace SRAUMOAR.Pages.aranceles
 {
@@ -23,12 +24,14 @@ namespace SRAUMOAR.Pages.aranceles
     public class FacturasModel : PageModel
     {
         private readonly SRAUMOAR.Modelos.Contexto _context;
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IDtePdfService _pdfService;
+        private readonly IDteJsonFactory _jsonFactory;
 
-        public FacturasModel(SRAUMOAR.Modelos.Contexto context, IHttpClientFactory httpClientFactory)
+        public FacturasModel(Contexto context, IDtePdfService pdfService, IDteJsonFactory jsonFactory)
         {
             _context = context;
-            _httpClientFactory = httpClientFactory;
+            _pdfService = pdfService;
+            _jsonFactory = jsonFactory;
         }
         
         [BindProperty]
@@ -63,14 +66,14 @@ namespace SRAUMOAR.Pages.aranceles
                 query = query.Where(c => c.Alumno.Carnet == carnetAlumno);
             }
 
-            // Obtener total de registros para paginación
+            // Obtener total de registros para paginaciÃ³n
             TotalRegistros = await query.CountAsync();
             TotalPaginas = (int)Math.Ceiling((double)TotalRegistros / RegistrosPorPagina);
 
-            // Calcular total del monto de todos los registros filtrados (no solo los de la página actual)
+            // Calcular total del monto de todos los registros filtrados (no solo los de la pÃ¡gina actual)
             TotalMonto = await query.SumAsync(c => c.Total);
 
-            // Aplicar paginación
+            // Aplicar paginaciÃ³n
             CobroArancel = await query
                 .OrderByDescending(c => c.CobroArancelId)
                 .Skip((PaginaActual - 1) * RegistrosPorPagina)
@@ -102,64 +105,25 @@ namespace SRAUMOAR.Pages.aranceles
         {
             try
             {
-                // Aquí puedes agregar tu lógica para obtener el JSON y sello
-                // Por ahora uso valores de ejemplo
                 CobroArancel cobroArancel = await _context.CobrosArancel
                     .Include(c => c.Alumno).ThenInclude(a => a.Carrera)
                     .Include(c => c.Ciclo)
                     .FirstOrDefaultAsync(c => c.CobroArancelId == id);
 
-                Alumno alumno = cobroArancel.Alumno;
-
                 Factura factura = await _context.Facturas.FirstOrDefaultAsync(f => f.CodigoGeneracion == cobroArancel.CodigoGeneracion);
-                if (string.IsNullOrWhiteSpace(factura?.JsonDte))
-                {
+                if (factura is null || string.IsNullOrWhiteSpace(factura.JsonDte))
+                    return OnGetGenerarPDFSinDatos();
 
-                   return OnGetGenerarPDFSinDatos();
-                }
-              
-
-                var dteJson = factura.JsonDte; // Reemplazar con tu lógica
-                var selloRecibido = factura.SelloRecepcion; // Reemplazar con tu lógica
-                var tipo = factura.TipoDTE.ToString().PadLeft(2, '0');
-
-                // Datos que necesitas enviar
-                var requestData = new
-                {
-                    dteJson = dteJson,
-                    selloRecibido = selloRecibido,
-                    tipoDte =tipo,
-                    carrera= alumno?.Carrera?.NombreCarrera ?? "-",
-                    observacion=cobroArancel.nota ?? "-",
-                };
-
-                var json = JsonConvert.SerializeObject(requestData);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-                var client = _httpClientFactory.CreateClient();
-                //var response = await client.PostAsync("https://localhost:7122/api/generar-pdf", content);
-                var response = await client.PostAsync("http://207.58.153.147:7122/api/generar-pdf", content);
-                
-                if (response.IsSuccessStatusCode)
-                {
-                    var pdfBytes = await response.Content.ReadAsByteArrayAsync();
-
-                    //Console.WriteLine($"[DEBUG CLIENT] PDF recibido, tamaño: {pdfBytes.Length} bytes");
-
-                    // Respuesta más simple - deja que la API maneje los headers
-                    return File(pdfBytes, "application/pdf");
-                }
-                else
-                {
-                    var errorMessage = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"[ERROR CLIENT] Error de API: {errorMessage}");
-                    TempData["Error"] = $"Error al generar PDF: {errorMessage}";
-                    return RedirectToPage();
-                }
+                var root = Newtonsoft.Json.Linq.JObject.Parse(factura.JsonDte);
+                var tipoEntrada = factura.TipoDteCodigo
+                    ?? root["identificacion"]?.Value<string>("tipoDte")
+                    ?? factura.TipoDTE.ToString();
+                var tipo = _jsonFactory.ObtenerTipoCanonico(tipoEntrada);
+                return File(_pdfService.Generar(tipo, factura.JsonDte, factura.SelloRecepcion), "application/pdf");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR CLIENT] Excepción: {ex}");
+                Console.WriteLine($"[ERROR CLIENT] ExcepciÃ³n: {ex}");
                 TempData["Error"] = $"Error: {ex.Message}";
                 return RedirectToPage();
             }

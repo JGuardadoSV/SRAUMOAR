@@ -1,0 +1,222 @@
+@page
+@model SRAUMOAR.Pages.administracion.facturacion.IndexModel
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Facturación Electrónica";
+}
+
+<div class="container-fluid py-4">
+    <h1>Facturación Electrónica</h1>
+    <p class="text-muted">El ambiente fiscal utilizado depende de esta configuración, no del ambiente de ASP.NET.</p>
+    @if (!string.IsNullOrWhiteSpace(Model.Mensaje))
+    {
+        <div class="alert alert-success">@Model.Mensaje</div>
+    }
+    @if (!string.IsNullOrWhiteSpace(Model.Error))
+    {
+        <div class="alert alert-danger">@Model.Error</div>
+    }
+
+    <div class="alert alert-info">
+        Ambiente fiscal activo: <strong>@(Model.AmbienteActivo ?? "No configurado")</strong>
+    </div>
+
+    <div class="row g-4">
+        @foreach (var ambiente in new[] { ("00", Model.Form00), ("01", Model.Form01) })
+        {
+            <div class="col-xl-6">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <strong>Ambiente fiscal @ambiente.Item1</strong>
+                        @if (ambiente.Item2.EsAmbienteFiscalActivo)
+                        {
+                            <span class="badge bg-success">Activo</span>
+                        }
+                    </div>
+                    <div class="card-body">
+                        <form method="post" enctype="multipart/form-data" asp-page-handler="GuardarAmbiente">
+                            <input type="hidden" name="ambienteFiscal" value="@ambiente.Item1" />
+                            <div class="row g-2">
+                                <div class="col-12">
+                                    <div class="alert alert-light border mb-1">
+                                        <strong>Datos fiscales del emisor</strong>
+                                        <small class="d-block text-muted">Estos datos se usan para generar el emisor de los DTE de este ambiente.</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4"><label class="form-label">NIT emisor</label><input class="form-control" name="@($"Form{ambiente.Item1}.NitEmisor")" value="@ambiente.Item2.NitEmisor" /></div>
+                                <div class="col-md-4"><label class="form-label">NRC emisor</label><input class="form-control" name="@($"Form{ambiente.Item1}.NrcEmisor")" value="@ambiente.Item2.NrcEmisor" /></div>
+                                <div class="col-md-4"><label class="form-label">Nombre o razón social</label><input class="form-control" name="@($"Form{ambiente.Item1}.NombreEmisor")" value="@ambiente.Item2.NombreEmisor" /></div>
+                                <div class="col-md-4"><label class="form-label">Nombre comercial</label><input class="form-control" name="@($"Form{ambiente.Item1}.NombreComercial")" value="@ambiente.Item2.NombreComercial" /></div>
+                                <div class="col-md-8"><label class="form-label">Dirección / complemento</label><input class="form-control" name="@($"Form{ambiente.Item1}.ComplementoDireccion")" value="@ambiente.Item2.ComplementoDireccion" /></div>
+                                <div class="col-md-4"><label class="form-label">Teléfono</label><input class="form-control" name="@($"Form{ambiente.Item1}.TelefonoEmisor")" value="@ambiente.Item2.TelefonoEmisor" /></div>
+                                <div class="col-md-4"><label class="form-label">Correo fiscal</label><input class="form-control" type="email" name="@($"Form{ambiente.Item1}.CorreoEmisor")" value="@ambiente.Item2.CorreoEmisor" /></div>
+                                <div class="col-md-4"><label class="form-label">Tipo de establecimiento</label><div class="input-group"><input class="form-control" readonly id="@($"Form{ambiente.Item1}_TipoEstablecimientoDescripcion")" name="@($"Form{ambiente.Item1}.TipoEstablecimientoDescripcion")" value="@ambiente.Item2.TipoEstablecimientoDescripcion" placeholder="Seleccione en Buscar" /><input type="hidden" id="@($"Form{ambiente.Item1}_TipoEstablecimiento")" name="@($"Form{ambiente.Item1}.TipoEstablecimiento")" value="@ambiente.Item2.TipoEstablecimiento" /><button type="button" class="btn btn-outline-secondary btn-buscar-catalogo" data-catalogo="ESTABLECIMIENTO" data-code-target="@($"Form{ambiente.Item1}_TipoEstablecimiento")" data-text-target="@($"Form{ambiente.Item1}_TipoEstablecimientoDescripcion")">Buscar</button></div></div>
+                                <div class="col-md-4"><label class="form-label">Actividad económica</label><div class="input-group"><input class="form-control" readonly id="@($"Form{ambiente.Item1}_DescripcionActividad")" name="@($"Form{ambiente.Item1}.DescripcionActividad")" value="@ambiente.Item2.DescripcionActividad" placeholder="Seleccione en Buscar" /><input type="hidden" id="@($"Form{ambiente.Item1}_CodigoActividad")" name="@($"Form{ambiente.Item1}.CodigoActividad")" value="@ambiente.Item2.CodigoActividad" /><button type="button" class="btn btn-outline-secondary btn-buscar-catalogo" data-catalogo="ACTIVIDAD" data-code-target="@($"Form{ambiente.Item1}_CodigoActividad")" data-text-target="@($"Form{ambiente.Item1}_DescripcionActividad")">Buscar</button></div></div>
+                                <div class="col-md-4"><label class="form-label">Departamento</label><div class="input-group"><input class="form-control" readonly id="@($"Form{ambiente.Item1}_DepartamentoDescripcion")" name="@($"Form{ambiente.Item1}.DepartamentoDescripcion")" value="@ambiente.Item2.DepartamentoDescripcion" placeholder="Seleccione en Buscar" /><input type="hidden" id="@($"Form{ambiente.Item1}_CodigoDepartamento")" name="@($"Form{ambiente.Item1}.CodigoDepartamento")" value="@ambiente.Item2.CodigoDepartamento" /><button type="button" class="btn btn-outline-secondary btn-buscar-catalogo" data-catalogo="DEPARTAMENTO" data-code-target="@($"Form{ambiente.Item1}_CodigoDepartamento")" data-text-target="@($"Form{ambiente.Item1}_DepartamentoDescripcion")">Buscar</button></div></div>
+                                <div class="col-md-4"><label class="form-label">Municipio</label><div class="input-group"><input class="form-control" readonly id="@($"Form{ambiente.Item1}_MunicipioDescripcion")" name="@($"Form{ambiente.Item1}.MunicipioDescripcion")" value="@ambiente.Item2.MunicipioDescripcion" placeholder="Seleccione en Buscar" /><input type="hidden" id="@($"Form{ambiente.Item1}_CodigoMunicipio")" name="@($"Form{ambiente.Item1}.CodigoMunicipio")" value="@ambiente.Item2.CodigoMunicipio" /><button type="button" class="btn btn-outline-secondary btn-buscar-catalogo" data-catalogo="MUNICIPIO" data-code-target="@($"Form{ambiente.Item1}_CodigoMunicipio")" data-text-target="@($"Form{ambiente.Item1}_MunicipioDescripcion")">Buscar</button></div></div>
+                                <div class="col-md-4"><label class="form-label">Distrito</label><div class="input-group"><input class="form-control" readonly id="@($"Form{ambiente.Item1}_DistritoDescripcion")" name="@($"Form{ambiente.Item1}.DistritoDescripcion")" value="@ambiente.Item2.DistritoDescripcion" placeholder="Seleccione en Buscar" /><input type="hidden" id="@($"Form{ambiente.Item1}_CodigoDistrito")" name="@($"Form{ambiente.Item1}.CodigoDistrito")" value="@ambiente.Item2.CodigoDistrito" /><button type="button" class="btn btn-outline-secondary btn-buscar-catalogo" data-catalogo="DISTRITO" data-code-target="@($"Form{ambiente.Item1}_CodigoDistrito")" data-text-target="@($"Form{ambiente.Item1}_DistritoDescripcion")">Buscar</button></div></div>
+                                <div class="col-12"><small class="text-muted">Si no aparecen resultados, importe primero el Excel en la sección Catálogos.</small></div>
+                                <div class="col-md-6"><label class="form-label">Usuario Hacienda</label><input class="form-control" name="@($"Form{ambiente.Item1}.UsuarioHacienda")" value="@ambiente.Item2.UsuarioHacienda" /></div>
+                                <div class="col-md-6"><label class="form-label">Credencial/API</label><input class="form-control" type="password" name="@($"Form{ambiente.Item1}.CredencialApi")" autocomplete="new-password" /></div>
+                                <div class="col-md-6"><label class="form-label">Contraseña certificado</label><input class="form-control" type="password" name="@($"Form{ambiente.Item1}.PasswordCertificado")" autocomplete="new-password" /></div>
+                                <div class="col-md-6"><label class="form-label">Certificado .crt</label><input class="form-control" type="file" name="certificado" accept=".crt" /></div>
+                                <div class="col-md-6"><label class="form-label">URL recepción</label><input class="form-control" name="@($"Form{ambiente.Item1}.UrlRecepcion")" value="@ambiente.Item2.UrlRecepcion" /></div>
+                                <div class="col-md-6"><label class="form-label">URL autenticación</label><input class="form-control" name="@($"Form{ambiente.Item1}.UrlAutenticacion")" value="@ambiente.Item2.UrlAutenticacion" /></div>
+                                <div class="col-md-6"><label class="form-label">URL anulación</label><input class="form-control" name="@($"Form{ambiente.Item1}.UrlAnulacion")" value="@ambiente.Item2.UrlAnulacion" /></div>
+                                 <div class="col-md-6"><label class="form-label">URL contingencia</label><input class="form-control" name="@($"Form{ambiente.Item1}.UrlContingencia")" value="@ambiente.Item2.UrlContingencia" /></div>
+                                 <div class="col-md-6"><label class="form-label">URL consulta</label><input class="form-control" name="@($"Form{ambiente.Item1}.UrlConsulta")" value="@ambiente.Item2.UrlConsulta" /></div>
+                                 <div class="col-md-6"><label class="form-label">URL API externa</label><input class="form-control" name="@($"Form{ambiente.Item1}.UrlApiExterna")" value="@ambiente.Item2.UrlApiExterna" /></div>
+                                 <div class="col-md-6"><label class="form-label">URL firmador externo</label><input class="form-control" name="@($"Form{ambiente.Item1}.UrlFirmador")" value="@ambiente.Item2.UrlFirmador" /></div>
+                                 <div class="col-md-3"><label class="form-label">Código establecimiento MH</label><input class="form-control" name="@($"Form{ambiente.Item1}.CodigoEstablecimientoMh")" value="@ambiente.Item2.CodigoEstablecimientoMh" /></div>
+                                 <div class="col-md-3"><label class="form-label">Establecimiento</label><input class="form-control" name="@($"Form{ambiente.Item1}.CodigoEstablecimiento")" value="@ambiente.Item2.CodigoEstablecimiento" /></div>
+                                 <div class="col-md-3"><label class="form-label">Código punto de venta MH</label><input class="form-control" name="@($"Form{ambiente.Item1}.CodigoPuntoVentaMh")" value="@ambiente.Item2.CodigoPuntoVentaMh" /></div>
+                                 <div class="col-md-3"><label class="form-label">Punto de venta</label><input class="form-control" name="@($"Form{ambiente.Item1}.CodigoPuntoVenta")" value="@ambiente.Item2.CodigoPuntoVenta" /></div>
+                                <div class="col-md-3"><label class="form-label">Timeout</label><input class="form-control" type="number" name="@($"Form{ambiente.Item1}.TimeoutSegundos")" value="@ambiente.Item2.TimeoutSegundos" /></div>
+                                <div class="col-md-3"><label class="form-label">Reintentos</label><input class="form-control" type="number" name="@($"Form{ambiente.Item1}.MaxReintentos")" value="@ambiente.Item2.MaxReintentos" /></div>
+                            </div>
+                            <div class="form-check mt-3"><input class="form-check-input" type="checkbox" name="@($"Form{ambiente.Item1}.Habilitado")" value="true" checked="@(ambiente.Item2.Habilitado ? "checked" : null)" /><label class="form-check-label">Ambiente habilitado</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" name="@($"Form{ambiente.Item1}.UsarFirmadorExterno")" value="true" checked="@(ambiente.Item2.UsarFirmadorExterno ? "checked" : null)" /><label class="form-check-label">Usar firmador externo</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" name="@($"Form{ambiente.Item1}.UsarApiExterna")" value="true" checked="@(ambiente.Item2.UsarApiExterna ? "checked" : null)" /><label class="form-check-label">Usar API externa compatible</label></div>
+                            <button class="btn btn-primary mt-3" type="submit">Guardar ambiente @ambiente.Item1</button>
+                        </form>
+                        <form method="post" asp-page-handler="ActivarAmbiente" class="mt-2">
+                            <input type="hidden" name="ambienteFiscal" value="@ambiente.Item1" />
+                            <button class="btn btn-outline-success" type="submit" disabled="@(ambiente.Item2.EsAmbienteFiscalActivo ? "disabled" : null)">Seleccionar ambiente @ambiente.Item1</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="modal fade" id="catalogoBusquedaModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="catalogoBusquedaTitulo">Buscar catálogo</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="search" class="form-control mb-3" id="catalogoBusquedaTexto" placeholder="Escriba código o descripción..." autocomplete="off" />
+                        <div id="catalogoBusquedaResultados" class="list-group"></div>
+                        <div id="catalogoBusquedaVacio" class="text-muted text-center py-3 d-none">No se encontraron resultados.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header"><strong>Configuración SMTP</strong></div>
+                <div class="card-body">
+                    <form method="post" asp-page-handler="GuardarSmtp">
+                        <div class="row g-2">
+                            <div class="col-md-4"><label class="form-label">Servidor</label><input class="form-control" asp-for="Smtp.Servidor" /></div>
+                            <div class="col-md-2"><label class="form-label">Puerto</label><input class="form-control" asp-for="Smtp.Puerto" /></div>
+                            <div class="col-md-3"><label class="form-label">Usuario</label><input class="form-control" asp-for="Smtp.Usuario" /></div>
+                            <div class="col-md-3"><label class="form-label">Contraseña</label><input class="form-control" type="password" asp-for="Smtp.Password" autocomplete="new-password" /></div>
+                            <div class="col-md-4"><label class="form-label">Correo remitente</label><input class="form-control" asp-for="Smtp.EmailRemitente" /></div>
+                            <div class="col-md-4"><label class="form-label">Nombre remitente</label><input class="form-control" asp-for="Smtp.NombreRemitente" /></div>
+                            <div class="col-md-4"><label class="form-label">Copia oculta</label><input class="form-control" asp-for="Smtp.CopiaOculta" placeholder="correo1;correo2" /></div>
+                        </div>
+                        <div class="form-check mt-3"><input class="form-check-input" asp-for="Smtp.UsarSsl" /><label class="form-check-label" asp-for="Smtp.UsarSsl">SSL directo</label></div>
+                        <div class="form-check"><input class="form-check-input" asp-for="Smtp.UsarTls" /><label class="form-check-label" asp-for="Smtp.UsarTls">STARTTLS</label></div>
+                        <button class="btn btn-primary mt-3" type="submit">Guardar SMTP</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const catalogos = {
+                DEPARTAMENTO: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoDepartamentos.Select(x => new { codigo = x.Codigo, descripcion = x.Descripcion }))),
+                MUNICIPIO: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoMunicipios.Select(x => new { codigo = x.Codigo, descripcion = x.Descripcion }))),
+                DISTRITO: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoDistritos.Select(x => new { codigo = x.Codigo, descripcion = x.Descripcion }))),
+                ACTIVIDAD: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoActividades.Select(x => new { codigo = x.Codigo, descripcion = x.Descripcion }))),
+                ESTABLECIMIENTO: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoEstablecimientos.Select(x => new { codigo = x.Codigo, descripcion = x.Descripcion })))
+            };
+            const municipiosPorDepartamento = {
+                '00': ['00'], '01': ['13', '14', '15'], '02': ['14', '15', '16', '17'],
+                '03': ['17', '18', '19', '20'], '04': ['34', '35', '36'],
+                '05': ['23', '24', '25', '26', '27', '28'], '06': ['20', '21', '22', '23', '24'],
+                '07': ['17', '18'], '08': ['23', '24', '25'], '09': ['10', '11'],
+                '10': ['14', '15'], '11': ['24', '25', '26'], '12': ['21', '22', '23'],
+                '13': ['27', '28'], '14': ['19', '20']
+            };
+            const modalElement = document.getElementById('catalogoBusquedaModal');
+            if (!modalElement || typeof bootstrap === 'undefined') return;
+            const modal = new bootstrap.Modal(modalElement);
+            const titulo = document.getElementById('catalogoBusquedaTitulo');
+            const buscador = document.getElementById('catalogoBusquedaTexto');
+            const resultados = document.getElementById('catalogoBusquedaResultados');
+            const vacio = document.getElementById('catalogoBusquedaVacio');
+            let estado = null;
+
+            document.querySelectorAll('.btn-buscar-catalogo').forEach(button => {
+                button.addEventListener('click', () => {
+                    estado = {
+                        catalogo: button.dataset.catalogo,
+                        codeTarget: button.dataset.codeTarget,
+                        textTarget: button.dataset.textTarget
+                    };
+                    const prefijo = estado.codeTarget.split('_')[0];
+                    if (estado.catalogo === 'MUNICIPIO' && !document.getElementById(`${prefijo}_CodigoDepartamento`)?.value) {
+                        alert('Seleccione primero el departamento.');
+                        estado = null;
+                        return;
+                    }
+                    titulo.textContent = `Buscar ${estado.catalogo.toLowerCase()}`;
+                    buscador.value = '';
+                    renderizar();
+                    modal.show();
+                    setTimeout(() => buscador.focus(), 150);
+                });
+            });
+
+            buscador.addEventListener('input', renderizar);
+
+            function renderizar() {
+                if (!estado) return;
+                const prefijo = estado.codeTarget.split('_')[0];
+                const departamento = document.getElementById(`${prefijo}_CodigoDepartamento`)?.value;
+                let items = catalogos[estado.catalogo] || [];
+                if (estado.catalogo === 'MUNICIPIO' && departamento && municipiosPorDepartamento[departamento]) {
+                    const permitidos = municipiosPorDepartamento[departamento];
+                    items = items.filter(x => permitidos.includes(String(x.codigo).padStart(2, '0')));
+                }
+                const termino = buscador.value.trim().toLowerCase();
+                items = items.filter(x => !termino || `${x.codigo} ${x.descripcion}`.toLowerCase().includes(termino)).slice(0, 100);
+                resultados.innerHTML = items.map(x => `<button type="button" class="list-group-item list-group-item-action" data-codigo="${escapar(x.codigo)}" data-descripcion="${escapar(x.descripcion)}"><span class="badge text-bg-light me-2">${escapar(x.codigo)}</span>${escapar(x.descripcion)}</button>`).join('');
+                vacio.classList.toggle('d-none', items.length > 0);
+                resultados.querySelectorAll('button').forEach(item => item.addEventListener('click', () => seleccionar(item.dataset.codigo, item.dataset.descripcion)));
+            }
+
+            function seleccionar(codigo, descripcion) {
+                document.getElementById(estado.codeTarget).value = codigo;
+                document.getElementById(estado.textTarget).value = descripcion;
+                if (estado.catalogo === 'DEPARTAMENTO') {
+                    limpiarCampo(estado.codeTarget.split('_')[0] + '_CodigoMunicipio', estado.codeTarget.split('_')[0] + '_MunicipioDescripcion');
+                    limpiarCampo(estado.codeTarget.split('_')[0] + '_CodigoDistrito', estado.codeTarget.split('_')[0] + '_DistritoDescripcion');
+                }
+                if (estado.catalogo === 'MUNICIPIO') {
+                    limpiarCampo(estado.codeTarget.split('_')[0] + '_CodigoDistrito', estado.codeTarget.split('_')[0] + '_DistritoDescripcion');
+                }
+                modal.hide();
+            }
+
+            function limpiarCampo(codeId, textId) {
+                const code = document.getElementById(codeId);
+                const text = document.getElementById(textId);
+                if (code) code.value = '';
+                if (text) text.value = '';
+            }
+
+            function escapar(valor) {
+                return String(valor ?? '').replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c]));
+            }
+        })();
+    </script>
+}

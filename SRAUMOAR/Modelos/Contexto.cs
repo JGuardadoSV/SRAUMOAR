@@ -11,6 +11,7 @@ using SRAUMOAR.Entidades.Colecturia;
 using SRAUMOAR.Entidades.Becas;
 using SRAUMOAR.Entidades.Historial;
 using SRAUMOAR.Entidades;
+using SRAUMOAR.Entidades.FacturacionElectronica;
 
 namespace SRAUMOAR.Modelos
 {
@@ -64,6 +65,12 @@ namespace SRAUMOAR.Modelos
         public DbSet<Donantes> Donantes { get; set; }
         public DbSet<DteCorrelativo> DteCorrelativos { get; set; }
         public DbSet<Factura> Facturas { get; set; }
+        public DbSet<ConfiguracionFacturacionElectronica> ConfiguracionesFacturacionElectronica { get; set; } = null!;
+        public DbSet<ConfiguracionSmtp> ConfiguracionesSmtp { get; set; } = null!;
+        public DbSet<DteTransmision> DteTransmisiones { get; set; } = null!;
+        public DbSet<DteEvento> DteEventos { get; set; } = null!;
+        public DbSet<ColaCorreoDte> ColaCorreosDte { get; set; } = null!;
+        public DbSet<CatalogoFeItem> CatalogosFe { get; set; } = null!;
         
         // DbSets para Historial Académico
         public DbSet<HistorialAcademico> HistorialAcademico { get; set; } = null!;
@@ -256,6 +263,146 @@ namespace SRAUMOAR.Modelos
                 new ConfiguracionReporte { Id = 77, Reporte = "ConstanciaAlumnoActivo", Clave = "ElaboradoPor", Valor = "ELABORADO POR: MTRC", Descripcion = "Texto de elaboración al pie de la constancia" },
                 new ConfiguracionReporte { Id = 78, Reporte = "ConstanciaAlumnoActivo", Clave = "LeyendaValidez", Valor = "ESTA CONSTANCIA NO ES VÁLIDA, SIN FIRMAS Y SELLOS DE ESTA UNIVERSIDAD", Descripcion = "Leyenda de validez al pie de la constancia" }
             );
+
+            modelBuilder.Entity<ConfiguracionFacturacionElectronica>()
+                .HasIndex(x => x.AmbienteFiscal)
+                .IsUnique();
+
+            modelBuilder.Entity<ConfiguracionFacturacionElectronica>()
+                .HasIndex(x => x.EsAmbienteFiscalActivo)
+                .IsUnique()
+                .HasFilter("[EsAmbienteFiscalActivo] = 1");
+
+            modelBuilder.Entity<ConfiguracionSmtp>()
+                .HasIndex(x => x.Activo)
+                .IsUnique()
+                .HasFilter("[Activo] = 1");
+
+            modelBuilder.Entity<DteTransmision>()
+                .HasIndex(x => new { x.CodigoGeneracion, x.TipoOperacion, x.AmbienteFiscal })
+                .IsUnique();
+
+            modelBuilder.Entity<DteEvento>()
+                .HasIndex(x => new { x.CodigoEvento, x.TipoEvento, x.AmbienteFiscal })
+                .IsUnique();
+
+            modelBuilder.Entity<ColaCorreoDte>()
+                .HasIndex(x => x.ClaveIdempotencia)
+                .IsUnique();
+
+            modelBuilder.Entity<CatalogoFeItem>()
+                .HasIndex(x => new { x.CodigoCatalogo, x.Version, x.Codigo })
+                .IsUnique();
+
+            modelBuilder.Entity<DteCorrelativo>()
+                .HasIndex(x => new { x.TipoDocumento, x.Ambiente, x.Establecimiento, x.PuntoVenta })
+                .IsUnique();
+
+            modelBuilder.Entity<Factura>()
+                .HasIndex(x => x.CodigoGeneracion);
+
+            modelBuilder.Entity<Factura>()
+                .Property(x => x.EstadoTransmision)
+                .HasDefaultValue("Preparado");
+
+            modelBuilder.Entity<Factura>()
+                .HasOne(x => x.FacturaOriginal)
+                .WithMany(x => x.NotasDerivadas)
+                .HasForeignKey(x => x.FacturaOriginalId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Factura>()
+                .HasIndex(x => new { x.FacturaOriginalId, x.TipoDteCodigo });
+
+            modelBuilder.Entity<Factura>()
+                .HasIndex(x => x.ClaveIdempotencia)
+                .IsUnique()
+                .HasFilter("[ClaveIdempotencia] IS NOT NULL");
+
+            modelBuilder.Entity<DteCorrelativo>().Property(x => x.Establecimiento).HasDefaultValue("M001");
+            modelBuilder.Entity<DteCorrelativo>().Property(x => x.PuntoVenta).HasDefaultValue("P001");
+
+            modelBuilder.Entity<ConfiguracionFacturacionElectronica>().HasData(
+                new ConfiguracionFacturacionElectronica
+                {
+                    Id = 1,
+                    AmbienteFiscal = "00",
+                    Habilitado = false,
+                    EsAmbienteFiscalActivo = false,
+                    CodigoEstablecimientoMh = "M001",
+                    CodigoEstablecimiento = "M001",
+                    CodigoPuntoVentaMh = "P001",
+                    CodigoPuntoVenta = "P001",
+                    NitEmisor = "04331410931010",
+                    NrcEmisor = "1029819",
+                    NombreEmisor = "UNIVERSIDAD MONSEÑOR OSCAR ARNULFO ROMERO",
+                    NombreComercial = "UMOAR",
+                    CodigoActividad = "85499",
+                    DescripcionActividad = "Enseñanza superior universitaria",
+                    TipoEstablecimiento = "02",
+                    TipoEstablecimientoDescripcion = "Casa Matriz",
+                    CodigoDepartamento = "04",
+                    DepartamentoDescripcion = "Chalatenango",
+                    CodigoMunicipio = "35",
+                    MunicipioDescripcion = "CHALATENANGO CENTRO",
+                    CodigoDistrito = "33",
+                    DistritoDescripcion = "TEJUTLA",
+                    ComplementoDireccion = "KM 52 1/2 CARRETERA TEJUTLA, CHALATENANGO",
+                    TelefonoEmisor = "23021800",
+                    CorreoEmisor = "umoar@enviosdte.email",
+                    TimeoutSegundos = 60,
+                    MaxReintentos = 3,
+                    FechaActualizacion = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new ConfiguracionFacturacionElectronica
+                {
+                    Id = 2,
+                    AmbienteFiscal = "01",
+                    Habilitado = false,
+                    EsAmbienteFiscalActivo = false,
+                    CodigoEstablecimientoMh = "M001",
+                    CodigoEstablecimiento = "M001",
+                    CodigoPuntoVentaMh = "P001",
+                    CodigoPuntoVenta = "P001",
+                    NitEmisor = "04331410931010",
+                    NrcEmisor = "1029819",
+                    NombreEmisor = "UNIVERSIDAD MONSEÑOR OSCAR ARNULFO ROMERO",
+                    NombreComercial = "UMOAR",
+                    CodigoActividad = "85499",
+                    DescripcionActividad = "Enseñanza superior universitaria",
+                    TipoEstablecimiento = "02",
+                    TipoEstablecimientoDescripcion = "Casa Matriz",
+                    CodigoDepartamento = "04",
+                    DepartamentoDescripcion = "Chalatenango",
+                    CodigoMunicipio = "35",
+                    MunicipioDescripcion = "CHALATENANGO CENTRO",
+                    CodigoDistrito = "33",
+                    DistritoDescripcion = "TEJUTLA",
+                    ComplementoDireccion = "KM 52 1/2 CARRETERA TEJUTLA, CHALATENANGO",
+                    TelefonoEmisor = "23021800",
+                    CorreoEmisor = "umoar@enviosdte.email",
+                    TimeoutSegundos = 60,
+                    MaxReintentos = 3,
+                    FechaActualizacion = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                });
+
+            modelBuilder.Entity<DteTransmision>()
+                .HasOne(x => x.Factura)
+                .WithMany()
+                .HasForeignKey(x => x.FacturaId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<DteEvento>()
+                .HasOne(x => x.Factura)
+                .WithMany()
+                .HasForeignKey(x => x.FacturaId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ColaCorreoDte>()
+                .HasOne(x => x.Factura)
+                .WithMany()
+                .HasForeignKey(x => x.FacturaId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // Relaciones para Estudios de Equivalencia
             modelBuilder.Entity<DetalleEquivalencia>()

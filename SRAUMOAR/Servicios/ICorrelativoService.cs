@@ -1,48 +1,61 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using System.Data;
 using SRAUMOAR.Entidades.Procesos;
-namespace SRAUMOAR.Servicios
+
+namespace SRAUMOAR.Servicios;
+
+public interface ICorrelativoService
 {
-    public interface ICorrelativoService
+    Task<long> ObtenerSiguienteCorrelativo(string tipoDocumento, string ambiente, string establecimiento = "M001", string puntoVenta = "P001");
+}
+
+public class CorrelativoService : ICorrelativoService
+{
+    private readonly SRAUMOAR.Modelos.Contexto _context;
+
+    public CorrelativoService(SRAUMOAR.Modelos.Contexto context) => _context = context;
+
+    public async Task<long> ObtenerSiguienteCorrelativo(string tipoDocumento, string ambiente, string establecimiento = "M001", string puntoVenta = "P001")
     {
-        Task<long> ObtenerSiguienteCorrelativo(string tipoDocumento, string ambiente);
-    }
-
-    public class CorrelativoService : ICorrelativoService
-    {
-        private readonly SRAUMOAR.Modelos.Contexto _context;
-
-        public CorrelativoService(SRAUMOAR.Modelos.Contexto context)
+        for (var intento = 1; intento <= 3; intento++)
         {
-            _context = context;
-        }
-
-        public async Task<long> ObtenerSiguienteCorrelativo(string tipoDocumento, string ambiente)
-        {
-            var correlativo = await _context.DteCorrelativos
-                .FirstOrDefaultAsync(x => x.TipoDocumento == tipoDocumento && x.Ambiente == ambiente);
-
-            if (correlativo == null)
+            await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
+            try
             {
-                // Si no existe, lo creamos con el primer correlativo
-                correlativo = new DteCorrelativo
+                var correlativo = await _context.DteCorrelativos
+                    .SingleOrDefaultAsync(x => x.TipoDocumento == tipoDocumento && x.Ambiente == ambiente && x.Establecimiento == establecimiento && x.PuntoVenta == puntoVenta);
+
+                if (correlativo is null)
                 {
-                    TipoDocumento = tipoDocumento,
-                    Ambiente = ambiente,
-                    Correlativo = 1,
-                    UltimaActualizacion = DateTime.Now
-                };
+                    correlativo = new DteCorrelativo
+                    {
+                        TipoDocumento = tipoDocumento,
+                        Ambiente = ambiente,
+                        Establecimiento = establecimiento,
+                        PuntoVenta = puntoVenta,
+                        Correlativo = 1,
+                        UltimaActualizacion = DateTime.UtcNow
+                    };
+                    _context.DteCorrelativos.Add(correlativo);
+                }
+                else
+                {
+                    correlativo.Correlativo++;
+                    correlativo.UltimaActualizacion = DateTime.UtcNow;
+                }
 
-                _context.DteCorrelativos.Add(correlativo);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return correlativo.Correlativo;
             }
-            else
+            catch (DbUpdateException) when (intento < 3)
             {
-                // Si existe, incrementamos el correlativo
-                correlativo.Correlativo++;
-                correlativo.UltimaActualizacion = DateTime.Now;
+                await transaction.RollbackAsync();
+                _context.ChangeTracker.Clear();
+                await Task.Delay(25 * intento);
             }
-
-            await _context.SaveChangesAsync();
-            return correlativo.Correlativo;
         }
+
+        throw new InvalidOperationException("No se pudo reservar un correlativo DTE después de varios intentos.");
     }
 }

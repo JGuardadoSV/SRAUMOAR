@@ -92,6 +92,11 @@
     </dl>
 </div>
 <div>
+    @if ((Model.Factura.TipoDteCodigo == "03" || Model.Factura.TipoDTE == 3) && !string.IsNullOrWhiteSpace(Model.Factura.SelloRecepcion) && !Model.Factura.Anulada)
+    {
+        <a asp-page="./Nota" asp-route-FacturaId="@Model.Factura.FacturaId" asp-route-TipoNota="05">Crear nota de crédito</a><text> | </text>
+        <a asp-page="./Nota" asp-route-FacturaId="@Model.Factura.FacturaId" asp-route-TipoNota="06">Crear nota de débito</a><text> | </text>
+    }
     <a asp-page="./Edit" asp-route-id="@Model.Factura.FacturaId">Edit</a> |
     <a asp-page="./Index">Back to List</a>
 </div>

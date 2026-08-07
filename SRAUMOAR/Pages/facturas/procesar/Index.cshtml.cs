@@ -73,6 +73,7 @@ namespace SRAUMOAR.Pages.facturas.procesar
                 1 => "CF",
                 3 => "CCF",
                 5 => "NC",
+                6 => "ND",
                 14 => "SE",
                 15 => "DON",
                 _ => tipoDTE.ToString()

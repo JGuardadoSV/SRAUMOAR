@@ -17,6 +17,8 @@ using SRAUMOAR.Entidades.Generales;
 using SRAUMOAR.Entidades.Procesos;
 using SRAUMOAR.Modelos;
 using SRAUMOAR.Servicios;
+using SRAUMOAR.Servicios.FacturacionElectronica;
+using SRAUMOAR.Modelos.FacturacionElectronica;
 
 namespace SRAUMOAR.Pages.aranceles
 {
@@ -26,12 +28,23 @@ namespace SRAUMOAR.Pages.aranceles
         private readonly SRAUMOAR.Modelos.Contexto _context;
         private readonly EmisorConfig _emisor;
         private readonly ICorrelativoService _correlativoService;
+        private readonly IDteTransmisionService _dteTransmision;
+        private readonly IConfiguracionFeService _configuracionFe;
+        private readonly IDteEmailQueueService _emailQueue;
+        private string ambienteFiscal = "01";
         private int ambiente = 1;
-        public FacturarModel(SRAUMOAR.Modelos.Contexto context, IOptions<EmisorConfig> emisorOptions, ICorrelativoService correlativoService)
+        private string codigoEstablecimientoMh = "M001";
+        private string codigoEstablecimiento = "M001";
+        private string codigoPuntoVentaMh = "P001";
+        private string codigoPuntoVenta = "P001";
+        public FacturarModel(SRAUMOAR.Modelos.Contexto context, IOptions<EmisorConfig> emisorOptions, ICorrelativoService correlativoService, IDteTransmisionService dteTransmision, IConfiguracionFeService configuracionFe, IDteEmailQueueService emailQueue)
         {
             _context = context;
             _emisor = emisorOptions.Value;
             _correlativoService = correlativoService;
+            _dteTransmision = dteTransmision;
+            _configuracionFe = configuracionFe;
+            _emailQueue = emailQueue;
         }
         public List<Arancel> Aranceles { get; set; }
         
@@ -165,6 +178,24 @@ namespace SRAUMOAR.Pages.aranceles
         // For more information, see https://aka.ms/RazorPagesCRUD.
         public async Task<IActionResult> OnPostAsync(List<int> selectedAranceles, List<decimal> arancelescostos, int idalumno)
         {
+            ConfiguracionFeActiva configuracionFiscal;
+            EmisorConfig _emisor;
+            try
+            {
+                configuracionFiscal = await _configuracionFe.ObtenerActivaAsync();
+                _emisor = DteEmisorConfigMapper.Crear(configuracionFiscal.Entidad);
+                ambienteFiscal = configuracionFiscal.Entidad.AmbienteFiscal;
+                ambiente = ambienteFiscal == "01" ? 1 : 0;
+                codigoEstablecimientoMh = configuracionFiscal.Entidad.CodigoEstablecimientoMh;
+                codigoEstablecimiento = configuracionFiscal.Entidad.CodigoEstablecimiento;
+                codigoPuntoVentaMh = configuracionFiscal.Entidad.CodigoPuntoVentaMh;
+                codigoPuntoVenta = configuracionFiscal.Entidad.CodigoPuntoVenta;
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"No se puede procesar el DTE: {ex.Message}";
+                return RedirectToPage("./Facturar", new { idalumno, arancelIds = string.Join(',', selectedAranceles ?? new List<int>()) });
+            }
             // Validar que los par�metros no sean null
             if (selectedAranceles == null || arancelescostos == null)
             {
@@ -257,9 +288,9 @@ namespace SRAUMOAR.Pages.aranceles
             string correlativo = i.ToString().PadLeft(15, '0'); // Rellena con ceros a la izquierda para que tenga 15 caracteres
                                                                 // Generar n�mero de control
 
-            int numero = (int)await _correlativoService.ObtenerSiguienteCorrelativo("01", ambiente == 1 ? "01" : "00");
+            int numero = (int)await _correlativoService.ObtenerSiguienteCorrelativo("01", ambiente == 1 ? "01" : "00", codigoEstablecimiento, codigoPuntoVenta);
             string numeroFormateado = numero.ToString("D15");
-            string numeroControl = "DTE-" + "01" + "-" + "M001P001" + "-" + numeroFormateado;
+            string numeroControl = "DTE-" + "01" + "-" + codigoEstablecimiento + codigoPuntoVenta + "-" + numeroFormateado;
 
             string fecEmi = DateTime.Now.ToString("yyyy-MM-dd");
             string horEmi = DateTime.Now.ToString("HH:mm:ss");
@@ -308,18 +339,19 @@ namespace SRAUMOAR.Pages.aranceles
                 codActividad = _emisor.CODACTIVIDAD,
                 descActividad = _emisor.GIRO,
                 nombreComercial = _emisor.NOMBRECOMERCIAL,
-                tipoEstablecimiento = "02",
+                tipoEstablecimiento = configuracionFiscal.Entidad.TipoEstablecimiento,
                 direccion = new
                 {
                     departamento = _emisor.DEPARTAMENTO,
                     municipio = _emisor.DISTRITO,
+                    distrito = configuracionFiscal.Entidad.CodigoDistrito,
                     complemento = _emisor.DIRECCION
                 },
                 telefono = _emisor.TELEFONO,
-                codEstableMH = "M001",
-                codEstable = "M001",
-                codPuntoVentaMH = "P001",
-                codPuntoVenta = "P001",
+                codEstableMH = codigoEstablecimientoMh,
+                codEstable = codigoEstablecimiento,
+                codPuntoVentaMH = codigoPuntoVentaMh,
+                codPuntoVenta = codigoPuntoVenta,
                 correo = _emisor.EMAIL
             };
 
@@ -469,56 +501,9 @@ namespace SRAUMOAR.Pages.aranceles
             });
 
 
-            //ENVIO A LA API
-            var requestUnificado = new
-            {
-                Usuario = _emisor.NIT,
-                Password = ambiente == 1 ? _emisor.CLAVEPRODAPI : _emisor.CLAVETESTAPI,
-                Ambiente = ambiente == 1 ? "01" : "00",
-                DteJson = dteJson,
-                Nit = _emisor.NIT,
-                PasswordPrivado = ambiente == 1 ? _emisor.CLAVEPRODCERTIFICADO : _emisor.CLAVETESTCERTIFICADO,
-                TipoDte = "01",
-                CodigoGeneracion = codigoGeneracion,
-                NumControl = numeroControl,
-                VersionDte = 1,
-                CorreoCliente = alumno.Email,
-                Carrera = string.IsNullOrEmpty(alumno.Carrera?.NombreCarrera) ? "-" : alumno.Carrera.NombreCarrera,
-                Observaciones = string.IsNullOrEmpty(CobroArancel.nota) ? "-" : CobroArancel.nota
-            };
-            var selloRecibido = "";
-            //string selloRecibido = null;
-            int intentos = 0;
-            int maxIntentos = 3;
-
-            while (intentos < maxIntentos && string.IsNullOrEmpty(selloRecibido))
-            {
-                intentos++;
-                try
-                {
-                    using (HttpClient client = new HttpClient())
-                    {
-                        var response = client.PostAsJsonAsync(
-                                 ambiente == 1 ? "http://207.58.153.147:7122/api/procesar-dte" : "http://207.58.153.147:7122/api/procesar-dte",
-                                  requestUnificado).Result;
-                        var responseData = response.Content.ReadAsStringAsync().Result;
-                        if (!response.IsSuccessStatusCode)
-                            throw new Exception($"Error al procesar DTE: {responseData}");
-                        var resultado = JsonDocument.Parse(responseData).RootElement;
-                        var selloRecepcion = resultado.TryGetProperty("selloRecibido", out var sello)
-                            ? sello.GetString()
-                            : null;
-                        selloRecibido = selloRecepcion;
-                    }
-                }
-                catch (Exception)
-                {
-
-                }
-
-                if (string.IsNullOrEmpty(selloRecibido) && intentos < maxIntentos)
-                    Thread.Sleep(8000); // Esperar 8 segundos solo si va a reintentar
-            }
+            var resultadoTransmision = await _dteTransmision.TransmitirAsync(
+                new DteTransmisionRequest(dteJson, "01", codigoGeneracion.ToString().ToUpperInvariant(), numeroControl, 1, alumno.Email));
+            var selloRecibido = resultadoTransmision.SelloRecepcion ?? string.Empty;
 
            // if (ambiente == 1)
           //  {
@@ -532,13 +517,22 @@ namespace SRAUMOAR.Pages.aranceles
                 string fechaHoraString = $"{identificacion.fecEmi} {identificacion.horEmi}";
                 DateTime fechaHora = DateTime.ParseExact(fechaHoraString, "yyyy-MM-dd HH:mm:ss", null);
                 factura.Fecha = fechaHora;
-                factura.TipoDTE = identificacion.tipoDte == "01" ? 1 : 2; // Asumiendo que 01 es Factura y 03 CCF
+                 factura.TipoDTE = 1;
+                 factura.TipoDteCodigo = "01";
+                 factura.AmbienteFiscal = ambienteFiscal;
+                 factura.EstadoTransmision = resultadoTransmision.Estado;
+                 factura.IntentosTransmision = resultadoTransmision.Intentos;
+                 factura.RespuestaHacienda = resultadoTransmision.Respuesta;
+                 factura.FechaAceptacion = resultadoTransmision.Aceptado ? DateTime.UtcNow : null;
+                 factura.CorreoReceptor = alumno.Email;
                 factura.TotalGravado = totalVenta;
                 factura.TotalExento = totalVentaExenta;
                 factura.TotalIva = totalIva;
                 factura.TotalPagar = totalPagar;
-                _context.Facturas.Add(factura);
-                await _context.SaveChangesAsync();
+                 _context.Facturas.Add(factura);
+                 await _context.SaveChangesAsync();
+                 if (resultadoTransmision.Aceptado && !string.IsNullOrWhiteSpace(factura.CorreoReceptor))
+                     await _emailQueue.EncolarDteAsync(factura, "01", dteJson, selloRecibido, factura.CorreoReceptor);
         //    }
             //****************************************************
             //FIN CREACION DEL DTE
@@ -603,4 +597,3 @@ namespace SRAUMOAR.Pages.aranceles
         }
     }
 }
-

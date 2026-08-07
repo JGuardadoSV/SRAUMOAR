@@ -24,14 +24,5 @@ namespace SRAUMOAR.Servicios
         public string NOMBRE => _configuration["EMISOR:NOMBRE"];
         public string NOMBRECOMERCIAL => _configuration["EMISOR:NOMBRECOMERCIAL"];
         public int AMBIENTE => _configuration.GetValue<int>("EMISOR:AMBIENTE");
-        public string CLAVETESTCERTIFICADO => _configuration["EMISOR:CLAVETESTCERTIFICADO"];
-        public string CLAVEPRODCERTIFICADO => _configuration["EMISOR:CLAVEPRODCERTIFICADO"];
-        public string CLAVETESTAPI => _configuration["EMISOR:CLAVETESTAPI"];
-        public string CLAVEPRODAPI => _configuration["EMISOR:CLAVEPRODAPI"];
-
-        public string ApiUrl => AMBIENTE == 1 ? "http://207.58.153.147:7122" : "http://207.58.153.147:7122";
-        public string AmbienteString => AMBIENTE == 0 ? "00" : "01";
-        public string PasswordAPI => AMBIENTE == 0 ? CLAVETESTAPI : CLAVEPRODAPI;
-        public string PasswordCertificado => AMBIENTE == 0 ? CLAVETESTCERTIFICADO : CLAVEPRODCERTIFICADO;
     }
 }

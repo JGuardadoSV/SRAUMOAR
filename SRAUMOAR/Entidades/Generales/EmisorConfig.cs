@@ -8,7 +8,9 @@
         public string CODACTIVIDAD { get; set; }
         public string DIRECCION { get; set; }
         public string DEPARTAMENTO { get; set; }
+        public string MUNICIPIO { get; set; }
         public string DISTRITO { get; set; }
+        public string CODIGODISTRITO { get; set; }
         public string EMAIL { get; set; }
         public string EMAILBCC { get; set; }
         public string TELEFONO { get; set; }

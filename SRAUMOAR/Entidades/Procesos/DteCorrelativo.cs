@@ -15,7 +15,15 @@ namespace SRAUMOAR.Entidades.Procesos
 
         [Required]
         [StringLength(2)]
-        public string Ambiente { get; set; } // 00 = Prueba, 01 = Producción
+        public string Ambiente { get; set; } // Ambiente fiscal 00 o 01
+
+        [Required]
+        [StringLength(20)]
+        public string Establecimiento { get; set; } = "M001";
+
+        [Required]
+        [StringLength(20)]
+        public string PuntoVenta { get; set; } = "P001";
 
         public long Correlativo { get; set; }
 

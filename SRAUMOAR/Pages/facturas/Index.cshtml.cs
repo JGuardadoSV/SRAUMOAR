@@ -8,6 +8,7 @@ using iText.Kernel.Pdf;
 using iText.Layout.Element;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using SRAUMOAR.Entidades.Colecturia;
@@ -25,20 +26,29 @@ using iText.Kernel.Colors;
 using iText.Layout.Borders;
 using System.Globalization;
 using SRAUMOAR.Servicios;
+using SRAUMOAR.Servicios.FacturacionElectronica;
+using SRAUMOAR.Modelos.FacturacionElectronica;
 
 namespace SRAUMOAR.Pages.facturas
 {
+    [Authorize(Roles = "Administrador,Administracion,Contabilidad")]
     public class IndexModel : PageModel
     {
         private readonly SRAUMOAR.Modelos.Contexto _context;
-        private readonly IHttpClientFactory _httpClientFactory;
-        private readonly EmisorConfigService _emisorConfig;
+        private readonly IDteEmailQueueService _emailQueue;
+        private readonly IDteJsonFactory _jsonFactory;
+        private readonly IDtePdfService _pdfService;
         
-        public IndexModel(SRAUMOAR.Modelos.Contexto context, IHttpClientFactory httpClientFactory, EmisorConfigService emisorConfig)
+        public IndexModel(
+            SRAUMOAR.Modelos.Contexto context,
+            IDteEmailQueueService emailQueue,
+            IDteJsonFactory jsonFactory,
+            IDtePdfService pdfService)
         {
             _context = context;
-            _httpClientFactory = httpClientFactory;
-            _emisorConfig = emisorConfig;
+            _emailQueue = emailQueue;
+            _jsonFactory = jsonFactory;
+            _pdfService = pdfService;
         }
 
         public IList<Factura> Factura { get;set; } = default!;
@@ -166,6 +176,7 @@ namespace SRAUMOAR.Pages.facturas
                 1 => "CF",
                 3 => "CCF",
                 5 => "NC",
+                6 => "ND",
                 14 => "SE",
                 15 => "DON",
                 _ => tipoDTE.ToString()
@@ -197,78 +208,16 @@ namespace SRAUMOAR.Pages.facturas
         {
             try
             {
-                
-                
-                Factura factura1 = await _context.Facturas
-                    .FirstOrDefaultAsync(c => c.FacturaId == id);
-                Factura factura = await _context.Facturas.FirstOrDefaultAsync(f => f.CodigoGeneracion == factura1.CodigoGeneracion);
-                if (string.IsNullOrWhiteSpace(factura?.JsonDte))
-                {
-
+                var factura = await _context.Facturas.FirstOrDefaultAsync(x => x.FacturaId == id);
+                if (factura is null || string.IsNullOrWhiteSpace(factura.JsonDte))
                     return OnGetGenerarPDFSinDatos();
-                }
 
-                CobroArancel cobroArancel = await _context.CobrosArancel
-                 .Include(c => c.Alumno).ThenInclude(a => a.Carrera)
-                 .Include(c => c.Ciclo)
-                 .FirstOrDefaultAsync(c => c.CodigoGeneracion == factura1.CodigoGeneracion);
-
-                bool existeCobro = cobroArancel != null;
-                Alumno alumno=new Alumno();
-                if (existeCobro)
-                {
-                     alumno = cobroArancel.Alumno;
-                    // Continúa con tu lógica...
-                }
-                else
-                {
-                    var jsonObj = JObject.Parse(factura.JsonDte); // OBTENER EL JSON ORIGINAL PARA LEERLO EN CADA SECCION
-                                                                  // Sección de Emisor
-                    string correo = jsonObj?["receptor"]?["correo"]?.ToString() ?? "";
-
-                    alumno = _context.Alumno.FirstOrDefault(a => a.Email.Equals(correo));
-                }
-
-                var dteJson = factura.JsonDte; // Reemplazar con tu lógica
-                var selloRecibido = factura.SelloRecepcion; // Reemplazar con tu lógica
-                var tipo = factura.TipoDTE.ToString().PadLeft(2, '0');
-                if (tipo=="02")
-                {
-                    tipo = "03";
-                }
-                // Datos que necesitas enviar
-                var requestData = new
-                {
-                    dteJson = dteJson,
-                    selloRecibido = selloRecibido,
-                    tipoDte = tipo,
-                    carrera = alumno?.Carrera?.NombreCarrera ?? "-",
-                    observacion = cobroArancel?.nota??"-"
-                };
-
-                var json = JsonConvert.SerializeObject(requestData);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-                var client = _httpClientFactory.CreateClient();
-                //var response = await client.PostAsync("https://localhost:7122/api/generar-pdf", content);
-                var response = await client.PostAsync("http://207.58.153.147:7122/api/generar-pdf", content);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var pdfBytes = await response.Content.ReadAsByteArrayAsync();
-
-                    //Console.WriteLine($"[DEBUG CLIENT] PDF recibido, tamaño: {pdfBytes.Length} bytes");
-
-                    // Respuesta más simple - deja que la API maneje los headers
-                    return File(pdfBytes, "application/pdf");
-                }
-                else
-                {
-                    var errorMessage = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"[ERROR CLIENT] Error de API: {errorMessage}");
-                    TempData["Error"] = $"Error al generar PDF: {errorMessage}";
-                    return RedirectToPage();
-                }
+                var root = JObject.Parse(factura.JsonDte);
+                var tipoEntrada = factura.TipoDteCodigo
+                    ?? root["identificacion"]?.Value<string>("tipoDte")
+                    ?? factura.TipoDTE.ToString();
+                var tipo = _jsonFactory.ObtenerTipoCanonico(tipoEntrada);
+                return File(_pdfService.Generar(tipo, factura.JsonDte, factura.SelloRecepcion), "application/pdf");
             }
             catch (Exception ex)
             {
@@ -1214,23 +1163,7 @@ namespace SRAUMOAR.Pages.facturas
             {
                 // Siempre devolver JSON para peticiones AJAX
                 var isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest";
-                Console.WriteLine($"[DEBUG] OnPostEnviarCorreoAsync llamado - ID: {id}, Correo: {correo}, IsAjax: {isAjax}");
-                string observacion;
                 var factura = await _context.Facturas.FindAsync(id);
-
-                CobroArancel? arancel =await _context.CobrosArancel
-                    .Where(c => c.CodigoGeneracion == factura.CodigoGeneracion)
-                    .FirstOrDefaultAsync();
-                string carrera= string.Empty;
-
-                observacion = arancel?.nota ?? string.Empty;
-                if (arancel != null)
-                {
-                    Alumno? alumno = await _context.Alumno
-                        .Where(a => a.AlumnoId == arancel.AlumnoId).Include(a => a.Carrera)
-                        .FirstOrDefaultAsync();
-                    carrera= alumno?.Carrera?.NombreCarrera ?? string.Empty;
-                }
 
                 if (factura == null)
                 {
@@ -1282,57 +1215,24 @@ namespace SRAUMOAR.Pages.facturas
                     return RedirectToPage();
                 }
 
-                // Extraer tipo DTE del número de control
-                var partes = factura.NumeroControl.Split('-');
-                var tipoDte = partes.Length > 1 ? partes[1] : factura.TipoDTE.ToString();
+                var root = JObject.Parse(factura.JsonDte);
+                var tipoDteEntrada = factura.TipoDteCodigo
+                    ?? root["identificacion"]?.Value<string>("tipoDte")
+                    ?? factura.TipoDTE.ToString();
+                var tipoDte = _jsonFactory.ObtenerTipoCanonico(tipoDteEntrada);
 
-                // Datos para enviar
-                var requestData = new
-                {
-                    dteJson = factura.JsonDte,
-                    selloRecibido = factura.SelloRecepcion,
-                    tipoDte = tipoDte,
-                    correoCliente = correo,
-                    codigoGeneracion = factura.CodigoGeneracion,
-                    observaciones= observacion,
-                    carrera= carrera
-                };
+                await _emailQueue.EncolarDteAsync(
+                    factura,
+                    tipoDte,
+                    factura.JsonDte,
+                    factura.SelloRecepcion,
+                    correo);
 
-                using (var client = _httpClientFactory.CreateClient())
-                {
-                    Console.WriteLine($"[DEBUG] Enviando petición a API: {_emisorConfig.ApiUrl}/api/enviar-correo");
-                    var response = await client.PostAsJsonAsync($"{_emisorConfig.ApiUrl}/api/enviar-correo", requestData);
-                    
-                    Console.WriteLine($"[DEBUG] Respuesta de API - Status: {response.StatusCode}");
-                    
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var responseContent = await response.Content.ReadAsStringAsync();
-                        Console.WriteLine($"[DEBUG] Respuesta exitosa de API: {responseContent}");
-                        
-                        if (isAjax)
-                        {
-                            return new JsonResult(new { success = true, message = $"Correo enviado exitosamente a {correo}" });
-                        }
-                        TempData["Success"] = $"Correo enviado exitosamente a {correo}";
-                    }
-                    else
-                    {
-                        var errorMessage = await response.Content.ReadAsStringAsync();
-                        Console.WriteLine($"[DEBUG] Error de API - Status: {response.StatusCode}, Mensaje: {errorMessage}");
-                        
-                        if (isAjax)
-                        {
-                            return new JsonResult(new { success = false, message = $"Error al enviar correo (Status {response.StatusCode}): {errorMessage}" });
-                        }
-                        TempData["Error"] = $"Error al enviar correo: {errorMessage}";
-                    }
-                }
-
+                var message = $"El correo quedó en cola para enviarse a {correo}.";
                 if (isAjax)
-                {
-                    return new JsonResult(new { success = false, message = "Error inesperado al procesar la solicitud." });
-                }
+                    return new JsonResult(new { success = true, message });
+
+                TempData["Success"] = message;
                 return RedirectToPage();
             }
             catch (Exception ex)
