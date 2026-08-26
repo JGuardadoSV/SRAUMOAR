@@ -2,12 +2,14 @@
 @model SRAUMOAR.Pages.facturas.DeleteModel
 
 @{
-    ViewData["Title"] = "Delete";
+    ViewData["Title"] = "Invalidar DTE";
 }
 
-<h1>Delete</h1>
+<h1>Invalidar documento tributario electrónico</h1>
 
-<h3>Are you sure you want to delete this?</h3>
+<div class="alert alert-warning">
+    Esta operación enviará una invalidación fiscal a Hacienda y no puede deshacerse. Confirme que seleccionó el documento correcto.
+</div>
 <div>
     <h4>Factura</h4>
     <hr />
@@ -94,7 +96,7 @@
     
     <form method="post">
         <input type="hidden" asp-for="Factura.FacturaId" />
-        <input type="submit" value="Delete" class="btn btn-danger" /> |
-        <a asp-page="./Index">Back to List</a>
+        <input type="submit" value="Confirmar invalidación" class="btn btn-danger" /> |
+        <a asp-page="./Index">Volver al listado</a>
     </form>
 </div>

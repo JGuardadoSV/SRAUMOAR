@@ -33,6 +33,11 @@ public sealed class EditarJsonModel : PageModel
         if (id is null) return NotFound();
         var factura = await _context.Facturas.FirstOrDefaultAsync(x => x.FacturaId == id);
         if (factura is null) return NotFound();
+        if (factura.TipoDTE == 18 || factura.TipoDteCodigo == "18")
+        {
+            TempData["Error"] = "Los ERET se reanudan desde su flujo controlado y no permiten edición manual del JSON.";
+            return RedirectToPage("./Index");
+        }
         if (!string.IsNullOrEmpty(factura.SelloRecepcion))
         {
             TempData["Error"] = "Esta factura ya tiene sello de recepción y no puede editarse.";
@@ -73,6 +78,11 @@ public sealed class EditarJsonModel : PageModel
 
         var factura = await _context.Facturas.FirstOrDefaultAsync(x => x.FacturaId == id, cancellationToken);
         if (factura is null) return NotFound();
+        if (factura.TipoDTE == 18 || factura.TipoDteCodigo == "18")
+        {
+            TempData["Error"] = "No se permite editar manualmente el JSON de un ERET.";
+            return RedirectToPage("./Index");
+        }
         if (!string.IsNullOrEmpty(factura.SelloRecepcion))
         {
             TempData["Error"] = "Esta factura ya tiene sello de recepción y no puede editarse.";

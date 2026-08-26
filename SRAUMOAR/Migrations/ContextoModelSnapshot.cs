@@ -456,6 +456,58 @@ namespace SRAUMOAR.Migrations
                     b.ToTable("DetallesCobrosArancel");
                 });
 
+            modelBuilder.Entity("SRAUMOAR.Entidades.Colecturia.DteRetornoDetalle", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("CantidadOriginal")
+                        .HasColumnType("decimal(18,8)");
+
+                    b.Property<decimal>("CantidadRetornada")
+                        .HasColumnType("decimal(18,8)");
+
+                    b.Property<string>("ClasificacionFiscal")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Codigo")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("FacturaId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NumeroItemOriginal")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("PrecioUnitario")
+                        .HasColumnType("decimal(18,8)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FacturaId", "NumeroItemOriginal")
+                        .IsUnique();
+
+                    b.ToTable("DteRetornoDetalle", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_DteRetornoDetalle_CantidadOriginal", "[CantidadOriginal] > 0");
+
+                            t.HasCheckConstraint("CK_DteRetornoDetalle_CantidadRetornada", "[CantidadRetornada] > 0 AND [CantidadRetornada] <= [CantidadOriginal]");
+
+                            t.HasCheckConstraint("CK_DteRetornoDetalle_PrecioUnitario", "[PrecioUnitario] > 0");
+                        });
+                });
+
             modelBuilder.Entity("SRAUMOAR.Entidades.Colecturia.Factura", b =>
                 {
                     b.Property<int>("FacturaId")
@@ -519,6 +571,10 @@ namespace SRAUMOAR.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<string>("MotivoRetorno")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
                     b.Property<string>("NumeroControl")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -539,6 +595,10 @@ namespace SRAUMOAR.Migrations
                     b.Property<string>("TipoDteCodigo")
                         .HasMaxLength(2)
                         .HasColumnType("nvarchar(2)");
+
+                    b.Property<string>("TipoRetorno")
+                        .HasMaxLength(1)
+                        .HasColumnType("nvarchar(1)");
 
                     b.Property<decimal>("TotalExento")
                         .HasColumnType("decimal(18,2)");
@@ -562,7 +622,10 @@ namespace SRAUMOAR.Migrations
 
                     b.HasIndex("FacturaOriginalId", "TipoDteCodigo");
 
-                    b.ToTable("Factura");
+                    b.ToTable("Factura", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Factura_TipoRetorno", "[TipoRetorno] IS NULL OR [TipoRetorno] IN ('1','2','3','4')");
+                        });
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Docentes.Docente", b =>
@@ -3005,6 +3068,17 @@ namespace SRAUMOAR.Migrations
                     b.Navigation("CobroArancel");
                 });
 
+            modelBuilder.Entity("SRAUMOAR.Entidades.Colecturia.DteRetornoDetalle", b =>
+                {
+                    b.HasOne("SRAUMOAR.Entidades.Colecturia.Factura", "Factura")
+                        .WithMany("DetallesRetorno")
+                        .HasForeignKey("FacturaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Factura");
+                });
+
             modelBuilder.Entity("SRAUMOAR.Entidades.Colecturia.Factura", b =>
                 {
                     b.HasOne("SRAUMOAR.Entidades.Colecturia.Factura", "FacturaOriginal")
@@ -3429,6 +3503,8 @@ namespace SRAUMOAR.Migrations
 
             modelBuilder.Entity("SRAUMOAR.Entidades.Colecturia.Factura", b =>
                 {
+                    b.Navigation("DetallesRetorno");
+
                     b.Navigation("NotasDerivadas");
                 });
 

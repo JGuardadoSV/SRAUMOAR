@@ -261,6 +261,7 @@
                             6 => "ND",
                             14 => "SE",
                             15 => "DON",
+                            18 => "ERET",
                             _ => Model.Factura.TipoDTE.ToString()
                         };
                         var tipoDTEClass = Model.Factura.TipoDTE switch
@@ -271,6 +272,7 @@
                             6 => "bg-danger",
                             14 => "bg-info",
                             15 => "bg-secondary",
+                            18 => "bg-dark",
                             _ => "bg-secondary"
                         };
                     }

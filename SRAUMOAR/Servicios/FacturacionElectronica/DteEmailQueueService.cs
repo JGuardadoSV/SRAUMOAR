@@ -12,6 +12,7 @@ namespace SRAUMOAR.Servicios.FacturacionElectronica;
 public interface IDteEmailQueueService
 {
     Task<ColaCorreoDte> EncolarDteAsync(Factura factura, string tipoDte, string json, string? sello, string destinatario, CancellationToken cancellationToken = default);
+    Task<ColaCorreoDte> ReencolarDteAsync(Factura factura, string tipoDte, string json, string? sello, string destinatario, CancellationToken cancellationToken = default);
     Task<ColaCorreoDte> EncolarInvalidacionAsync(Factura factura, string jsonInvalidacion, string? sello, string destinatario, CancellationToken cancellationToken = default);
     Task ProcesarPendienteAsync(CancellationToken cancellationToken = default);
 }
@@ -32,10 +33,13 @@ public sealed class DteEmailQueueService : IDteEmailQueueService
     }
 
     public Task<ColaCorreoDte> EncolarDteAsync(Factura factura, string tipoDte, string json, string? sello, string destinatario, CancellationToken cancellationToken = default)
-        => EncolarInternoAsync(factura, tipoDte, json, sello, destinatario, false, cancellationToken);
+        => EncolarInternoAsync(factura, tipoDte, json, sello, destinatario, false, false, cancellationToken);
+
+    public Task<ColaCorreoDte> ReencolarDteAsync(Factura factura, string tipoDte, string json, string? sello, string destinatario, CancellationToken cancellationToken = default)
+        => EncolarInternoAsync(factura, tipoDte, json, sello, destinatario, false, true, cancellationToken);
 
     public Task<ColaCorreoDte> EncolarInvalidacionAsync(Factura factura, string jsonInvalidacion, string? sello, string destinatario, CancellationToken cancellationToken = default)
-        => EncolarInternoAsync(factura, DteTipos.Invalidacion, jsonInvalidacion, sello, destinatario, true, cancellationToken);
+        => EncolarInternoAsync(factura, DteTipos.Invalidacion, jsonInvalidacion, sello, destinatario, true, false, cancellationToken);
 
     public async Task ProcesarPendienteAsync(CancellationToken cancellationToken = default)
     {
@@ -74,16 +78,29 @@ public sealed class DteEmailQueueService : IDteEmailQueueService
         await _contexto.SaveChangesAsync(cancellationToken);
     }
 
-    private async Task<ColaCorreoDte> EncolarInternoAsync(Factura factura, string tipoDte, string json, string? sello, string destinatario, bool anulacion, CancellationToken cancellationToken)
+    private async Task<ColaCorreoDte> EncolarInternoAsync(Factura factura, string tipoDte, string json, string? sello, string destinatario, bool anulacion, bool forzarReenvio, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(destinatario))
             throw new ArgumentException("El destinatario es requerido.", nameof(destinatario));
 
         var codigo = ExtraerCodigo(json) ?? factura.CodigoGeneracion;
-        var claveMaterial = $"{factura.FacturaId}:{tipoDte}:{codigo}:{sello}";
+        var claveMaterial = $"{factura.FacturaId}:{tipoDte}:{codigo}:{sello}:{destinatario.Trim().ToUpperInvariant()}";
         var clave = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(claveMaterial)));
         var existente = await _contexto.ColaCorreosDte.SingleOrDefaultAsync(x => x.ClaveIdempotencia == clave, cancellationToken);
-        if (existente is not null) return existente;
+        if (existente is not null)
+        {
+            if (forzarReenvio && existente.Estado is not ("Pendiente" or "Procesando"))
+            {
+                existente.Estado = "Pendiente";
+                existente.Intentos = 0;
+                existente.ProximoIntento = DateTime.UtcNow;
+                existente.BloqueadoHasta = null;
+                existente.ProcesadoEn = null;
+                existente.UltimoError = null;
+                await _contexto.SaveChangesAsync(cancellationToken);
+            }
+            return existente;
+        }
 
         var pdf = _pdfService.Generar(tipoDte, json, sello);
         var correo = new ColaCorreoDte

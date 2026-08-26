@@ -8,6 +8,7 @@ public static class DteEstados
     public const string Rechazado = "Rechazado";
     public const string Incierto = "Incierto";
     public const string Anulado = "Anulado";
+    public const string Anulando = "Anulando";
 }
 
 public static class DteTipos
@@ -18,5 +19,6 @@ public static class DteTipos
     public const string Donacion = "15";
     public const string NotaCredito = "05";
     public const string NotaDebito = "06";
+    public const string EventoRetorno = "18";
     public const string Invalidacion = "INVALIDACION";
 }

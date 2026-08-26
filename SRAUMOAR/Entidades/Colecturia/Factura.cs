@@ -27,11 +27,19 @@ namespace SRAUMOAR.Entidades.Colecturia
 
         public ICollection<Factura> NotasDerivadas { get; set; } = new List<Factura>();
 
+        public ICollection<DteRetornoDetalle> DetallesRetorno { get; set; } = new List<DteRetornoDetalle>();
+
         [StringLength(500)]
         public string? MotivoNota { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal? MontoNota { get; set; }
+
+        [StringLength(1)]
+        public string? TipoRetorno { get; set; }
+
+        [StringLength(1000)]
+        public string? MotivoRetorno { get; set; }
 
         [StringLength(100)]
         public string? ClaveIdempotencia { get; set; }
@@ -79,5 +87,35 @@ namespace SRAUMOAR.Entidades.Colecturia
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal TotalIva { get; set; }
+    }
+
+    [Table("DteRetornoDetalle")]
+    public class DteRetornoDetalle
+    {
+        [Key]
+        public int Id { get; set; }
+
+        public int FacturaId { get; set; }
+        public Factura Factura { get; set; } = null!;
+
+        public int NumeroItemOriginal { get; set; }
+
+        [StringLength(50)]
+        public string? Codigo { get; set; }
+
+        [StringLength(1000)]
+        public string Descripcion { get; set; } = string.Empty;
+
+        [Column(TypeName = "decimal(18,8)")]
+        public decimal CantidadOriginal { get; set; }
+
+        [Column(TypeName = "decimal(18,8)")]
+        public decimal CantidadRetornada { get; set; }
+
+        [Column(TypeName = "decimal(18,8)")]
+        public decimal PrecioUnitario { get; set; }
+
+        [StringLength(20)]
+        public string ClasificacionFiscal { get; set; } = string.Empty;
     }
 }

@@ -1,0 +1,169 @@
+@page "/facturas/retorno"
+@model SRAUMOAR.Pages.facturas.RetornoModel
+@{
+    ViewData["Title"] = "Evento de Retorno (ERET)";
+}
+
+<style>
+    .eret-header { background: linear-gradient(135deg, #155e75, #0891b2); color: #fff; border-radius: 14px; padding: 1.75rem; }
+    .eret-card { border: 0; border-radius: 14px; box-shadow: 0 5px 18px rgba(15, 23, 42, .08); }
+    .eret-table th { white-space: nowrap; background: #ecfeff; color: #164e63; }
+    .eret-money { min-width: 120px; }
+    .eret-quantity { min-width: 105px; }
+    .eret-summary { position: sticky; bottom: 1rem; background: #fff; border: 1px solid #a5f3fc; border-radius: 12px; box-shadow: 0 5px 18px rgba(15, 23, 42, .12); }
+    .eret-empty { padding: 3rem 1rem; text-align: center; color: #64748b; }
+</style>
+
+<div class="container-fluid py-4">
+    <div class="eret-header mb-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-center">
+            <div>
+                <div class="text-uppercase small opacity-75 fw-semibold">DTE 18</div>
+                <h1 class="h3 mb-1">Evento de Retorno</h1>
+                <p class="mb-0 opacity-75">Seleccione únicamente los productos y cantidades que serán retornados.</p>
+            </div>
+            <a asp-page="./Index" class="btn btn-light"><i class="fas fa-arrow-left me-2"></i>Volver a facturas</a>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Error))
+    {
+        <div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i>@Model.Error</div>
+    }
+    @if (Model.Resultado is { Aceptado: true } resultado)
+    {
+        <div class="alert alert-success">
+            <strong>ERET aceptado en ambiente @resultado.AmbienteFiscal.</strong>
+            <div>Código de generación: <code>@resultado.CodigoGeneracion</code></div>
+            <div>Número de control: <code>@resultado.NumeroControl</code></div>
+            <div>Sello: <code>@resultado.SelloRecepcion</code></div>
+        </div>
+    }
+
+    @if (Model.Disponible is not null)
+    {
+        <div class="card eret-card mb-4">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3"><span class="text-muted small d-block">Documento original</span><strong>DTE @Model.Disponible.TipoDocumento</strong></div>
+                    <div class="col-md-5"><span class="text-muted small d-block">Código de generación</span><code>@Model.Disponible.CodigoGeneracion</code></div>
+                    <div class="col-md-2"><span class="text-muted small d-block">Ambiente fiscal</span><span class="badge bg-info text-dark">@Model.Disponible.AmbienteFiscal</span></div>
+                    <div class="col-md-2"><span class="text-muted small d-block">Líneas disponibles</span><strong>@Model.Disponible.Lineas.Count(x => x.CantidadDisponible > 0)</strong></div>
+                </div>
+            </div>
+        </div>
+
+        <form method="post" id="eretForm">
+            <input type="hidden" asp-for="FacturaId" />
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+            <div class="card eret-card mb-4">
+                <div class="card-header bg-white py-3"><strong><i class="fas fa-box-open me-2 text-info"></i>Líneas del documento</strong></div>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0 eret-table">
+                        <thead><tr><th>Retornar</th><th>Ítem</th><th>Descripción</th><th>Original</th><th>Retornado</th><th>Disponible</th><th>Cantidad</th><th>Precio unitario</th><th>Subtotal</th></tr></thead>
+                        <tbody>
+                        @for (var i = 0; i < Model.Lineas.Count; i++)
+                        {
+                            var linea = Model.Lineas[i];
+                            var agotada = linea.CantidadDisponible <= 0;
+                            <tr class="eret-linea @(agotada ? "table-light text-muted" : "")">
+                                <td class="text-center">
+                                    <input type="hidden" asp-for="Lineas[i].NumeroItemOriginal" />
+                                    <input type="hidden" asp-for="Lineas[i].Codigo" />
+                                    <input type="hidden" asp-for="Lineas[i].Descripcion" />
+                                    <input type="hidden" asp-for="Lineas[i].CantidadOriginal" />
+                                    <input type="hidden" asp-for="Lineas[i].CantidadRetornada" />
+                                    <input type="hidden" asp-for="Lineas[i].CantidadDisponible" />
+                                    <input type="hidden" asp-for="Lineas[i].ClasificacionFiscal" />
+                                    <input class="form-check-input eret-check" asp-for="Lineas[i].Seleccionada" disabled="@agotada" />
+                                </td>
+                                <td><span class="badge bg-secondary">#@linea.NumeroItemOriginal</span><div class="small">@linea.Codigo</div></td>
+                                <td><strong>@linea.Descripcion</strong><div class="small text-muted">@linea.ClasificacionFiscal</div></td>
+                                <td>@linea.CantidadOriginal.ToString("N4")</td>
+                                <td>@linea.CantidadRetornada.ToString("N4")</td>
+                                <td><strong>@linea.CantidadDisponible.ToString("N4")</strong></td>
+                                <td><input class="form-control eret-quantity eret-cantidad" asp-for="Lineas[i].Cantidad" type="number" min="0" max="@linea.CantidadDisponible.ToString(System.Globalization.CultureInfo.InvariantCulture)" step="0.00000001" disabled="@agotada" /></td>
+                                <td><div class="input-group eret-money"><span class="input-group-text">$</span><input class="form-control eret-precio" asp-for="Lineas[i].PrecioUnitario" type="number" min="0.00000001" step="0.00000001" disabled="@agotada" /></div></td>
+                                <td class="fw-bold eret-subtotal">$0.00</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+                @if (!Model.Lineas.Any(x => x.CantidadDisponible > 0))
+                {
+                    <div class="eret-empty"><i class="fas fa-check-circle fa-2x mb-2"></i><div>Este documento ya no tiene cantidades disponibles para retornar.</div></div>
+                }
+            </div>
+
+            <div class="card eret-card mb-4">
+                <div class="card-body row g-3">
+                    <div class="col-lg-5">
+                        <label asp-for="TipoRetorno" class="form-label fw-semibold">Tipo de retorno</label>
+                        <select asp-for="TipoRetorno" class="form-select">
+                            <option value="1">1 - Reembolso y devolución física</option>
+                            <option value="2">2 - Cambio de mercancía</option>
+                            <option value="3">3 - Saldo a favor / nota de crédito</option>
+                            <option value="4">4 - Devolución de garantía</option>
+                        </select>
+                        <span asp-validation-for="TipoRetorno" class="text-danger"></span>
+                    </div>
+                    <div class="col-lg-7">
+                        <label asp-for="Motivo" class="form-label fw-semibold">Motivo</label>
+                        <textarea asp-for="Motivo" class="form-control" rows="3" maxlength="1000" placeholder="Describa claramente la razón del retorno"></textarea>
+                        <div class="d-flex justify-content-between"><span asp-validation-for="Motivo" class="text-danger"></span><small class="text-muted"><span id="motivoCount">0</span>/1000</small></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="eret-summary p-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                <div><span class="text-muted">Seleccionadas:</span> <strong id="lineasSeleccionadas">0</strong><span class="mx-3 text-muted">Total estimado:</span><strong class="text-info fs-5" id="totalEstimado">$0.00</strong></div>
+                <div class="d-flex gap-2"><a asp-page="./Index" class="btn btn-outline-secondary">Cancelar</a><button type="submit" class="btn btn-info text-white" id="emitirButton" disabled><i class="fas fa-paper-plane me-2"></i>Generar y transmitir ERET</button></div>
+            </div>
+        </form>
+    }
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (() => {
+            const form = document.getElementById('eretForm');
+            if (!form) return;
+            const motivo = document.getElementById('Motivo');
+            const boton = document.getElementById('emitirButton');
+            const numero = value => Number.parseFloat(value || '0') || 0;
+            function actualizar() {
+                let seleccionadas = 0, total = 0;
+                document.querySelectorAll('.eret-linea').forEach(row => {
+                    const check = row.querySelector('.eret-check');
+                    const cantidad = row.querySelector('.eret-cantidad');
+                    const precio = row.querySelector('.eret-precio');
+                    const activa = check && check.checked && !check.disabled;
+                    cantidad.disabled = !activa;
+                    precio.disabled = !activa;
+                    const subtotal = activa ? numero(cantidad.value) * numero(precio.value) : 0;
+                    row.querySelector('.eret-subtotal').textContent = subtotal.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+                    if (activa) { seleccionadas++; total += subtotal; }
+                });
+                document.getElementById('lineasSeleccionadas').textContent = seleccionadas;
+                document.getElementById('totalEstimado').textContent = total.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+                boton.disabled = seleccionadas === 0;
+                document.getElementById('motivoCount').textContent = motivo?.value.length || 0;
+            }
+            document.querySelectorAll('.eret-check').forEach(check => check.addEventListener('change', event => {
+                const row = event.target.closest('.eret-linea');
+                const cantidad = row.querySelector('.eret-cantidad');
+                if (event.target.checked && numero(cantidad.value) <= 0) cantidad.value = cantidad.max;
+                actualizar();
+            }));
+            form.addEventListener('input', actualizar);
+            form.addEventListener('submit', event => {
+                if (!window.confirm('Se generará y transmitirá el Evento de Retorno a Hacienda. ¿Desea continuar?')) event.preventDefault();
+                else boton.disabled = true;
+            });
+            actualizar();
+        })();
+    </script>
+}

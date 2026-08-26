@@ -5,6 +5,8 @@ VisualStudioVersion = 17.9.34607.119
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SRAUMOAR", "SRAUMOAR\SRAUMOAR.csproj", "{E2970A38-33CB-4C02-B09C-45ECC154A2DA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SRAUMOAR.Tests", "SRAUMOAR.Tests\SRAUMOAR.Tests.csproj", "{4D50B32F-10AA-4C22-A22E-5E8DBAB09018}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{E2970A38-33CB-4C02-B09C-45ECC154A2DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E2970A38-33CB-4C02-B09C-45ECC154A2DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E2970A38-33CB-4C02-B09C-45ECC154A2DA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4D50B32F-10AA-4C22-A22E-5E8DBAB09018}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4D50B32F-10AA-4C22-A22E-5E8DBAB09018}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4D50B32F-10AA-4C22-A22E-5E8DBAB09018}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4D50B32F-10AA-4C22-A22E-5E8DBAB09018}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

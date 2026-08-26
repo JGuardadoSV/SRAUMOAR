@@ -1,5 +1,6 @@
 @page
 @model SRAUMOAR.Pages.facturas.IndexModel
+@using SRAUMOAR.Modelos.FacturacionElectronica
 @{
     ViewData["Title"] = "Gestión de Facturas";
 }
@@ -658,6 +659,10 @@
                 <span class="badge bg-secondary">DON</span>
                 <span class="legend-text">Donación</span>
             </div>
+            <div class="legend-item">
+                <span class="badge bg-dark">ERET</span>
+                <span class="legend-text">Evento de Retorno</span>
+            </div>
         </div>
     </div>
         <div class="table-responsive-custom">
@@ -703,6 +708,7 @@
                                             6 => "ND",
                                             14 => "SE",
                                             15 => "DON",
+                                            18 => "ERET",
                                             _ => item.TipoDTE.ToString()
                                         };
                                         var tipoDTEClass = item.TipoDTE switch
@@ -713,6 +719,7 @@
                                             6 => "bg-danger",
                                             14 => "bg-info",
                                             15 => "bg-secondary",
+                                            18 => "bg-dark",
                                             _ => "bg-secondary"
                                         };
                                     }
@@ -765,26 +772,39 @@
                                 
                                 
                                         <div class="d-flex gap-1 flex-wrap">
-                                        <button class="btn btn-outline-danger btn-sm" onclick="verPDF(@item.FacturaId)" title="Ver PDF">
+                                        <button class="btn btn-outline-danger btn-sm" onclick="verPDF(@item.FacturaId, this)" title="Ver PDF">
                                                 PDF
                                             </button>
                                         @if (!string.IsNullOrEmpty(item.SelloRecepcion))
                                         {
                                             var correoReceptor = Model.CorreosReceptores.ContainsKey(item.FacturaId) ? Model.CorreosReceptores[item.FacturaId] : "";
                                             <button class="btn btn-outline-primary btn-sm" 
-                                                    onclick="enviarCorreo(@item.FacturaId, this.dataset.correo)" 
+                                                    onclick="enviarCorreo(@item.FacturaId, this.dataset.correo, this)"
                                                     data-correo="@correoReceptor"
                                                     title="Enviar por Correo">
                                                 <i class="fas fa-envelope"></i>
                                             </button>
                                         }
+                                        @if (!item.Anulada
+                                            && item.EstadoTransmision == DteEstados.Aceptado
+                                            && !string.IsNullOrWhiteSpace(item.SelloRecepcion)
+                                            && Model.EsElegibleParaEret(item)
+                                            && !Model.FacturasRetornoAgotado.Contains(item.FacturaId))
+                                        {
+                                            <a asp-page="./Retorno" asp-route-FacturaId="@item.FacturaId" class="btn btn-outline-info btn-sm" title="Crear Evento de Retorno">
+                                                <i class="fas fa-undo-alt me-1"></i>ERET
+                                            </a>
+                                        }
                                         </div>
                                 
                                     @Html.AntiForgeryToken()
 
-                                    <a href="javascript:void(0)" onclick="confirmarAnulacion(@item.FacturaId)" class="btn-action btn-delete" title="ANULAR">
-                                        <i class="fas fa-ban"></i>
-                                    </a>
+                                    @if (Model.PuedeAnular(item))
+                                    {
+                                        <a href="javascript:void(0)" onclick="confirmarAnulacion(@item.FacturaId, this)" class="btn-action btn-delete" title="ANULAR">
+                                            <i class="fas fa-ban"></i>
+                                        </a>
+                                    }
                             </div>
                         </td>
                     </tr>
@@ -950,10 +970,9 @@
         }
     });
 
-           function confirmarAnulacion(facturaId) {
+           function confirmarAnulacion(facturaId, button) {
         if (confirm('¿Está seguro que desea anular esta factura?\n\nEsta acción no se puede deshacer y anulará el documento tributario electrónico.')) {
             // Mostrar indicador de carga
-            const button = event.target;
             const originalText = button.innerHTML;
             button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Anulando...';
             button.disabled = true;
@@ -979,16 +998,20 @@
                 },
                 body: formData
             })
-            .then(response => {
+            .then(async response => {
+                const data = await response.json().catch(() => null);
                 if (response.ok) {
                     // Mostrar mensaje de éxito y recargar
                     const successAlert = document.createElement('div');
                     successAlert.className = 'alert alert-success alert-dismissible fade show';
                     successAlert.innerHTML = `
                         <i class="fas fa-check-circle me-2"></i>
-                        <strong>Éxito:</strong> Factura anulada correctamente
+                        <strong>Éxito:</strong>
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     `;
+                    const mensaje = document.createElement('span');
+                    mensaje.textContent = ' ' + (data?.mensaje ?? 'Documento anulado correctamente.');
+                    successAlert.insertBefore(mensaje, successAlert.querySelector('.btn-close'));
                     document.querySelector('.container-fluid').insertBefore(successAlert, document.querySelector('.page-header'));
                     
                     // Recargar la página después de un breve delay
@@ -997,10 +1020,8 @@
                     }, 2000);
                 } else {
                     // Mostrar error específico
-                    response.text().then(errorText => {
-                        console.error('Error del servidor:', errorText);
-                        alert('Error al anular la factura.');
-                    });
+                    console.error('Error del servidor:', data);
+                    alert(data?.mensaje ?? 'Error al anular la factura.');
                 }
             })
             .catch(error => {
@@ -1016,9 +1037,8 @@
     }
 
      // Función para ver PDF
-        function verPDF(id) {
+        function verPDF(id, button) {
             // Mostrar indicador de carga
-            const button = event.target;
             const originalText = button.innerHTML;
             button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
             button.disabled = true;
@@ -1081,7 +1101,7 @@
         }
 
         // Función para enviar por correo
-        function enviarCorreo(id, correoPorDefecto = '') {
+        function enviarCorreo(id, correoPorDefecto = '', button = null) {
             const correo = prompt('Ingrese el correo electrónico para enviar la factura:', correoPorDefecto);
             
             if (correo === null) {
@@ -1104,7 +1124,6 @@
 
             if (confirm(`¿Está seguro que desea enviar la factura al correo ${correo}?`)) {
                 // Mostrar indicador de carga
-                const button = event.target;
                 const originalText = button.innerHTML;
                 button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                 button.disabled = true;

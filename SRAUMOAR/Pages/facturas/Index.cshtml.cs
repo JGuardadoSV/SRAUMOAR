@@ -52,6 +52,8 @@ namespace SRAUMOAR.Pages.facturas
         }
 
         public IList<Factura> Factura { get;set; } = default!;
+        public HashSet<int> FacturasRetornoAgotado { get; } = [];
+        public HashSet<int> FacturasConRetornosActivos { get; } = [];
 
         // Propiedad para almacenar correos de receptores
         public Dictionary<int, string> CorreosReceptores { get; set; } = new Dictionary<int, string>();
@@ -114,6 +116,43 @@ namespace SRAUMOAR.Pages.facturas
 
             Factura = facturasPaginadas;
 
+            var idsPagina = Factura.Select(x => x.FacturaId).ToArray();
+            if (idsPagina.Length > 0)
+            {
+                var originalesConRetorno = await _context.Facturas.AsNoTracking()
+                    .Where(x => x.FacturaOriginalId.HasValue && idsPagina.Contains(x.FacturaOriginalId.Value)
+                        && x.TipoDteCodigo == DteTipos.EventoRetorno && !x.Anulada && x.EstadoTransmision != DteEstados.Rechazado)
+                    .Select(x => x.FacturaOriginalId!.Value)
+                    .Distinct()
+                    .ToListAsync();
+                FacturasConRetornosActivos.UnionWith(originalesConRetorno);
+            }
+
+            var idsOriginales = Factura.Where(EsElegibleParaEret).Select(x => x.FacturaId).ToArray();
+            if (idsOriginales.Length > 0)
+            {
+                var reservadas = await _context.DteRetornoDetalles.AsNoTracking()
+                    .Where(x => x.Factura.FacturaOriginalId.HasValue && idsOriginales.Contains(x.Factura.FacturaOriginalId.Value) && !x.Factura.Anulada
+                        && x.Factura.EstadoTransmision != DteEstados.Rechazado)
+                    .GroupBy(x => new { FacturaOriginalId = x.Factura.FacturaOriginalId!.Value, x.NumeroItemOriginal })
+                    .Select(x => new { x.Key.FacturaOriginalId, x.Key.NumeroItemOriginal, Cantidad = x.Sum(y => y.CantidadRetornada) })
+                    .ToListAsync();
+                foreach (var original in Factura.Where(x => idsOriginales.Contains(x.FacturaId) && !string.IsNullOrWhiteSpace(x.JsonDte)))
+                {
+                    try
+                    {
+                        var cuerpo = JObject.Parse(original.JsonDte!)["cuerpoDocumento"] as JArray;
+                        if (cuerpo is not null && cuerpo.OfType<JObject>().All(item =>
+                        {
+                            var numero = item.Value<int?>("numItem") ?? 0;
+                            var cantidad = item.Value<decimal?>("cantidad") ?? 0m;
+                            return reservadas.Where(x => x.FacturaOriginalId == original.FacturaId && x.NumeroItemOriginal == numero).Sum(x => x.Cantidad) >= cantidad;
+                        })) FacturasRetornoAgotado.Add(original.FacturaId);
+                    }
+                    catch (Newtonsoft.Json.JsonException) { FacturasRetornoAgotado.Add(original.FacturaId); }
+                }
+            }
+
             // Extraer correos de receptores del JSON
             CorreosReceptores.Clear();
             foreach (var factura in Factura)
@@ -123,7 +162,7 @@ namespace SRAUMOAR.Pages.facturas
                     try
                     {
                         var jsonObj = JObject.Parse(factura.JsonDte);
-                        var correo = jsonObj?["receptor"]?["correo"]?.ToString() ?? "";
+                        var correo = ExtraerCorreoReceptor(factura, jsonObj);
                         if (!string.IsNullOrEmpty(correo))
                         {
                             CorreosReceptores[factura.FacturaId] = correo;
@@ -179,8 +218,30 @@ namespace SRAUMOAR.Pages.facturas
                 6 => "ND",
                 14 => "SE",
                 15 => "DON",
+                18 => "ERET",
                 _ => tipoDTE.ToString()
             };
+        }
+
+        public bool EsElegibleParaEret(Factura factura)
+        {
+            var tipo = factura.TipoDteCodigo ?? factura.TipoDTE.ToString("00", CultureInfo.InvariantCulture);
+            return tipo is DteTipos.Factura or "11" or DteTipos.SujetoExcluido;
+        }
+
+        public bool PuedeAnular(Factura factura)
+            => !factura.Anulada
+                && (factura.EstadoTransmision == DteEstados.Aceptado
+                    || factura.EstadoTransmision == DteEstados.Anulando && !string.IsNullOrWhiteSpace(factura.JsonAnulacion))
+                && !string.IsNullOrWhiteSpace(factura.SelloRecepcion)
+                && !FacturasConRetornosActivos.Contains(factura.FacturaId);
+
+        private static string ExtraerCorreoReceptor(Factura factura, JObject json)
+        {
+            var esEret = factura.TipoDteCodigo == DteTipos.EventoRetorno || factura.TipoDTE == 18;
+            return (esEret ? json["documento"]?["correo"]?.ToString() : json["receptor"]?["correo"]?.ToString())
+                ?? factura.CorreoReceptor
+                ?? string.Empty;
         }
 
         public IActionResult OnGetGenerarPDFSinDatos()
@@ -215,6 +276,7 @@ namespace SRAUMOAR.Pages.facturas
                 var root = JObject.Parse(factura.JsonDte);
                 var tipoEntrada = factura.TipoDteCodigo
                     ?? root["identificacion"]?.Value<string>("tipoDte")
+                    ?? root["identificacion"]?.Value<string>("tipoEvento")
                     ?? factura.TipoDTE.ToString();
                 var tipo = _jsonFactory.ObtenerTipoCanonico(tipoEntrada);
                 return File(_pdfService.Generar(tipo, factura.JsonDte, factura.SelloRecepcion), "application/pdf");
@@ -447,10 +509,11 @@ namespace SRAUMOAR.Pages.facturas
                 document.Add(table);
 
                 // Sección de totales con estilo profesional
-                var totalGravado = facturas.Sum(f => f.TotalGravado);
-                var totalExento = facturas.Sum(f => f.TotalExento);
-                var totalIva = facturas.Sum(f => f.TotalIva);
-                var totalGeneral = facturas.Sum(f => f.TotalPagar);
+                var documentosVenta = facturas.Where(f => !f.Anulada && f.TipoDTE != 18 && f.TipoDteCodigo != DteTipos.EventoRetorno);
+                var totalGravado = documentosVenta.Sum(f => f.TotalGravado);
+                var totalExento = documentosVenta.Sum(f => f.TotalExento);
+                var totalIva = documentosVenta.Sum(f => f.TotalIva);
+                var totalGeneral = documentosVenta.Sum(f => f.TotalPagar);
 
                 // Espaciado antes de totales
                 document.Add(new Paragraph("").SetMarginTop(15));
@@ -637,10 +700,11 @@ namespace SRAUMOAR.Pages.facturas
 
                 // Agregar totales
                 var lastRow = facturas.Count + 2;
-                var totalGravado = facturas.Where(f => !f.Anulada).Sum(f => f.TotalGravado);
-                var totalExento = facturas.Where(f => !f.Anulada).Sum(f => f.TotalExento);
-                var totalIva = facturas.Where(f => !f.Anulada).Sum(f => f.TotalIva);
-                var totalGeneral = facturas.Where(f => !f.Anulada).Sum(f => f.TotalPagar);
+                var documentosVenta = facturas.Where(f => !f.Anulada && f.TipoDTE != 18 && f.TipoDteCodigo != DteTipos.EventoRetorno);
+                var totalGravado = documentosVenta.Sum(f => f.TotalGravado);
+                var totalExento = documentosVenta.Sum(f => f.TotalExento);
+                var totalIva = documentosVenta.Sum(f => f.TotalIva);
+                var totalGeneral = documentosVenta.Sum(f => f.TotalPagar);
 
                 worksheet.Cells[lastRow + 1, 8].Value = "Total Gravado:";
                 worksheet.Cells[lastRow + 1, 8].Style.Font.Bold = true;
@@ -1197,7 +1261,7 @@ namespace SRAUMOAR.Pages.facturas
                 }
 
                 var jsonObj = JObject.Parse(factura.JsonDte);
-                var correoReceptor = jsonObj?["receptor"]?["correo"]?.ToString() ?? "";
+                var correoReceptor = ExtraerCorreoReceptor(factura, jsonObj);
 
                 // Si no se proporciona correo, usar el del receptor
                 if (string.IsNullOrEmpty(correo))
@@ -1218,10 +1282,11 @@ namespace SRAUMOAR.Pages.facturas
                 var root = JObject.Parse(factura.JsonDte);
                 var tipoDteEntrada = factura.TipoDteCodigo
                     ?? root["identificacion"]?.Value<string>("tipoDte")
+                    ?? root["identificacion"]?.Value<string>("tipoEvento")
                     ?? factura.TipoDTE.ToString();
                 var tipoDte = _jsonFactory.ObtenerTipoCanonico(tipoDteEntrada);
 
-                await _emailQueue.EncolarDteAsync(
+                await _emailQueue.ReencolarDteAsync(
                     factura,
                     tipoDte,
                     factura.JsonDte,

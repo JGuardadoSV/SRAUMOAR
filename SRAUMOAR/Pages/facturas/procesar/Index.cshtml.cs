@@ -37,7 +37,7 @@ namespace SRAUMOAR.Pages.facturas.procesar
         public async Task OnGetAsync()
         {
             var query = _context.Facturas
-                .Where(f => string.IsNullOrEmpty(f.SelloRecepcion) && !f.Anulada)
+                .Where(f => string.IsNullOrEmpty(f.SelloRecepcion) && !f.Anulada && f.TipoDTE != 18 && f.TipoDteCodigo != "18")
                 .AsQueryable();
 
             // Filtro por fechas
@@ -76,6 +76,7 @@ namespace SRAUMOAR.Pages.facturas.procesar
                 6 => "ND",
                 14 => "SE",
                 15 => "DON",
+                18 => "ERET",
                 _ => tipoDTE.ToString()
             };
         }

@@ -65,6 +65,7 @@ namespace SRAUMOAR.Modelos
         public DbSet<Donantes> Donantes { get; set; }
         public DbSet<DteCorrelativo> DteCorrelativos { get; set; }
         public DbSet<Factura> Facturas { get; set; }
+        public DbSet<DteRetornoDetalle> DteRetornoDetalles { get; set; }
         public DbSet<ConfiguracionFacturacionElectronica> ConfiguracionesFacturacionElectronica { get; set; } = null!;
         public DbSet<ConfiguracionSmtp> ConfiguracionesSmtp { get; set; } = null!;
         public DbSet<DteTransmision> DteTransmisiones { get; set; } = null!;
@@ -318,6 +319,26 @@ namespace SRAUMOAR.Modelos
                 .HasIndex(x => x.ClaveIdempotencia)
                 .IsUnique()
                 .HasFilter("[ClaveIdempotencia] IS NOT NULL");
+
+            modelBuilder.Entity<DteRetornoDetalle>()
+                .HasOne(x => x.Factura)
+                .WithMany(x => x.DetallesRetorno)
+                .HasForeignKey(x => x.FacturaId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<DteRetornoDetalle>()
+                .HasIndex(x => new { x.FacturaId, x.NumeroItemOriginal })
+                .IsUnique();
+
+            modelBuilder.Entity<DteRetornoDetalle>().ToTable("DteRetornoDetalle", tabla =>
+            {
+                tabla.HasCheckConstraint("CK_DteRetornoDetalle_CantidadOriginal", "[CantidadOriginal] > 0");
+                tabla.HasCheckConstraint("CK_DteRetornoDetalle_CantidadRetornada", "[CantidadRetornada] > 0 AND [CantidadRetornada] <= [CantidadOriginal]");
+                tabla.HasCheckConstraint("CK_DteRetornoDetalle_PrecioUnitario", "[PrecioUnitario] > 0");
+            });
+
+            modelBuilder.Entity<Factura>().ToTable("Factura", tabla =>
+                tabla.HasCheckConstraint("CK_Factura_TipoRetorno", "[TipoRetorno] IS NULL OR [TipoRetorno] IN ('1','2','3','4')"));
 
             modelBuilder.Entity<DteCorrelativo>().Property(x => x.Establecimiento).HasDefaultValue("M001");
             modelBuilder.Entity<DteCorrelativo>().Property(x => x.PuntoVenta).HasDefaultValue("P001");

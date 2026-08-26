@@ -15,24 +15,7 @@ namespace SRAUMOAR.Pages.facturas.procesar;
 public sealed class DiagnosticoPruebasModel : PageModel
 {
     private readonly Contexto _context;
-    private readonly IConfiguracionFeService _configuracion;
-    private readonly IDteJsonFactory _jsonFactory;
-    private readonly IDteTransmisionService _dteTransmision;
-    private readonly IDteEmailQueueService _emailQueue;
-
-    public DiagnosticoPruebasModel(
-        Contexto context,
-        IConfiguracionFeService configuracion,
-        IDteJsonFactory jsonFactory,
-        IDteTransmisionService dteTransmision,
-        IDteEmailQueueService emailQueue)
-    {
-        _context = context;
-        _configuracion = configuracion;
-        _jsonFactory = jsonFactory;
-        _dteTransmision = dteTransmision;
-        _emailQueue = emailQueue;
-    }
+    public DiagnosticoPruebasModel(Contexto context) => _context = context;
 
     public List<FacturaInfo> FacturasPruebas { get; set; } = new();
 
@@ -52,50 +35,11 @@ public sealed class DiagnosticoPruebasModel : PageModel
 
     public async Task OnGetAsync() => await CargarFacturasPruebas();
 
-    public async Task<IActionResult> OnPostAnularAsync(int id, CancellationToken cancellationToken)
+    public IActionResult OnPostAnular(int id)
     {
-        try
-        {
-            var configuracion = await _configuracion.ObtenerActivaAsync(cancellationToken);
-            if (configuracion.Entidad.AmbienteFiscal != "00")
-                throw new InvalidOperationException("La anulación de diagnóstico solo permite el ambiente fiscal 00 activo.");
-
-            var factura = await _context.Facturas.FirstOrDefaultAsync(x => x.FacturaId == id, cancellationToken)
-                ?? throw new InvalidOperationException("Factura no encontrada.");
-            if (factura.Anulada) throw new InvalidOperationException("La factura ya fue anulada.");
-            if (string.IsNullOrWhiteSpace(factura.JsonDte) || string.IsNullOrWhiteSpace(factura.SelloRecepcion))
-                throw new InvalidOperationException("La factura necesita JSON DTE y sello de recepción.");
-
-            var jsonInvalidacion = _jsonFactory.CrearInvalidacion(
-                factura.JsonDte,
-                factura.SelloRecepcion,
-                "Anulación de factura emitida en ambiente de pruebas",
-                User.Identity?.Name ?? "Administrador",
-                configuracion.Entidad.NitEmisor ?? string.Empty,
-                configuracion.Entidad);
-            var resultado = await _dteTransmision.TransmitirInvalidacionAsync(factura.FacturaId, jsonInvalidacion, cancellationToken);
-            if (!resultado.Aceptado || string.IsNullOrWhiteSpace(resultado.SelloRecepcion))
-                throw new InvalidOperationException(resultado.Error ?? "La invalidación no fue aceptada.");
-
-            factura.JsonAnulacion = jsonInvalidacion;
-            factura.SelloAnulacion = resultado.SelloRecepcion;
-            factura.Anulada = true;
-            factura.EstadoTransmision = DteEstados.Anulado;
-            factura.FechaAnulacion = DateTime.UtcNow;
-            var correo = factura.CorreoReceptor ?? JObject.Parse(factura.JsonDte)["receptor"]?.Value<string>("correo");
-            if (!string.IsNullOrWhiteSpace(correo))
-                await _emailQueue.EncolarInvalidacionAsync(factura, jsonInvalidacion, resultado.SelloRecepcion, correo, cancellationToken);
-
-            await _context.SaveChangesAsync(cancellationToken);
-            TempData["Success"] = $"Factura {factura.FacturaId} invalidada en ambiente 00.";
-        }
-        catch (Exception ex)
-        {
-            TempData["Error"] = $"Error al anular la factura: {ex.Message}";
-        }
-
-        await CargarFacturasPruebas();
-        return Page();
+        // Toda invalidación usa el único flujo protegido del listado, también en ambiente 00.
+        // Aquí solo se redirige a la confirmación para no mantener un segundo transmisor inseguro.
+        return RedirectToPage("/facturas/Delete", new { id });
     }
 
     public async Task<IActionResult> OnPostProcesarAsync(int id)

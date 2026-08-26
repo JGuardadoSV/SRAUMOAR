@@ -1,3 +1,6 @@
+using System.Reflection;
+using System.Text.Json.Nodes;
+using Json.Schema;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SRAUMOAR.Entidades.FacturacionElectronica;
@@ -17,6 +20,8 @@ public interface IDteJsonFactory
 
 public sealed class DteJsonFactory : IDteJsonFactory
 {
+    private static readonly Lazy<JsonSchema> EsquemaEret = new(CargarEsquemaEret, LazyThreadSafetyMode.ExecutionAndPublication);
+
     public string ObtenerTipoCanonico(string tipoEntrada)
         => (tipoEntrada ?? string.Empty).Trim() switch
         {
@@ -26,6 +31,7 @@ public sealed class DteJsonFactory : IDteJsonFactory
             "06" => DteTipos.NotaDebito,
             "11" or "14" => DteTipos.SujetoExcluido,
             "15" => DteTipos.Donacion,
+            "18" => DteTipos.EventoRetorno,
             _ => throw new ArgumentException($"Tipo DTE no soportado: {tipoEntrada}", nameof(tipoEntrada))
         };
 
@@ -41,14 +47,56 @@ public sealed class DteJsonFactory : IDteJsonFactory
         if (!string.Equals(ambiente, ConfiguracionFeService.NormalizarAmbiente(ambienteFiscal), StringComparison.Ordinal))
             throw new InvalidOperationException("El ambiente del JSON no coincide con el ambiente fiscal activo.");
 
-        var tipo = identificacion.Value<string>("tipoDte");
-        if (string.IsNullOrWhiteSpace(tipo)) throw new InvalidOperationException("El DTE no contiene tipoDte.");
+        var tipo = identificacion.Value<string>("tipoDte") ?? identificacion.Value<string>("tipoEvento");
+        if (string.IsNullOrWhiteSpace(tipo)) throw new InvalidOperationException("El documento no contiene tipoDte/tipoEvento.");
         if (tipoDte is not null && ObtenerTipoCanonico(tipoDte) != ObtenerTipoCanonico(tipo))
             throw new InvalidOperationException("El tipo del JSON no coincide con el tipo solicitado.");
         if (string.IsNullOrWhiteSpace(identificacion.Value<string>("codigoGeneracion")))
             throw new InvalidOperationException("El DTE no contiene codigoGeneracion.");
         if (root["emisor"] is null && root["donatario"] is null)
             throw new InvalidOperationException("El DTE no contiene emisor/donatario.");
+        if (tipo == DteTipos.EventoRetorno)
+        {
+            ValidarEretContraEsquema(json);
+            if (identificacion.Value<int?>("version") != 1 || root["documentoRelacionado"] is not JArray relacionados || relacionados.Count == 0)
+                throw new InvalidOperationException("El ERET no cumple la identificación o relación documental requerida.");
+            if (root["cuerpoDocumento"] is not JArray cuerpo || cuerpo.Count == 0 || root["resumen"] is null)
+                throw new InvalidOperationException("El ERET no contiene documento, detalle o resumen.");
+            if (cuerpo.Count > 2000 || relacionados.Count > 50)
+                throw new InvalidOperationException("El ERET excede el máximo de líneas o documentos relacionados.");
+            ExigirPropiedades(root, "identificacion", "documentoRelacionado", "emisor", "documento", "ventaTercero", "compraTercero", "cuerpoDocumento", "resumen", "apendice");
+            ExigirPropiedades(identificacion, "version", "ambiente", "tipoModelo", "tipoOperacion", "tipoEvento", "tipoContingencia", "motivoContin", "codigoGeneracion", "fecEmi", "horEmi", "fusion", "tipoMoneda");
+            ExigirPropiedades((JObject)root["emisor"]!, "nit", "nombre", "codEstableMH", "codEstable", "codPuntoVentaMH", "codPuntoVenta", "recintoFiscal", "tipoRegimen", "regimen", "tipoItemExpor");
+            if (root["documento"] is JObject documento)
+                ExigirPropiedades(documento, "tipoDocumento", "numDocumento", "nombre", "codPais", "nombrePais", "telefono", "correo");
+            foreach (var relacionado in relacionados.OfType<JObject>())
+                ExigirPropiedades(relacionado, "tipoDocumento", "codigoGeneracion", "fechaEmision");
+            foreach (var item in cuerpo.OfType<JObject>())
+                ExigirPropiedades(item, "numItem", "tipoItem", "codigoGeneracion", "cantidad", "precioUni", "descripcion", "codigo", "uniMedida", "montoDescu", "codTributo", "ventaNoSuj", "ventaExenta", "ventaGravada", "compra", "tributos", "psv", "ivaItem", "noGravado", "seguro", "flete", "ivaRete", "reteRenta");
+            ExigirPropiedades((JObject)root["resumen"]!, "totalNoSuj", "totalExenta", "totalGravada", "totalCompraExcluidos", "subTotalVentas", "tributos", "totalSeguro", "totalFlete", "montoTotalOperacion", "ivaRete", "reteRenta", "totalNoGravado", "totalPagar", "totalLetras", "totalNoOnerosas", "totalIva", "saldoFavor");
+        }
+    }
+
+    private static void ValidarEretContraEsquema(string json)
+    {
+        var instancia = JsonNode.Parse(json) ?? throw new InvalidOperationException("El JSON ERET está vacío.");
+        var resultado = EsquemaEret.Value.Evaluate(instancia, new EvaluationOptions
+        {
+            EvaluateAs = SpecVersion.Draft7,
+            OutputFormat = OutputFormat.List,
+            RequireFormatValidation = true
+        });
+        if (!resultado.IsValid)
+            throw new InvalidOperationException("El ERET no cumple el esquema oficial fe-eret-v1.json.");
+    }
+
+    private static JsonSchema CargarEsquemaEret()
+    {
+        const string recurso = "SRAUMOAR.Schemas.fe-eret-v1.json";
+        using var stream = typeof(DteJsonFactory).Assembly.GetManifestResourceStream(recurso)
+            ?? throw new InvalidOperationException($"No se encontró el recurso fiscal {recurso}.");
+        using var reader = new StreamReader(stream);
+        return JsonSchema.FromText(reader.ReadToEnd());
     }
 
     public string CrearNota(string jsonDte, string tipoNota, string numeroControl, string codigoGeneracion, decimal monto, string? motivo, ConfiguracionFacturacionElectronica? configuracion = null)
@@ -198,14 +246,19 @@ public sealed class DteJsonFactory : IDteJsonFactory
             ?? throw new InvalidOperationException("El DTE no contiene identificación.");
         var emisorOriginal = (JObject?)(root["emisor"] ?? root["donatario"])
             ?? throw new InvalidOperationException("El DTE no contiene emisor/donatario.");
-        var receptor = (JObject?)(root["receptor"] ?? root["sujetoExcluido"] ?? root["donante"])
+        var receptor = (JObject?)(root["receptor"] ?? root["sujetoExcluido"] ?? root["donante"] ?? root["documento"])
             ?? throw new InvalidOperationException("El DTE no contiene los datos del receptor/donatario.");
         var fecha = ObtenerFechaElSalvador();
-        var tipoDte = ObtenerTipoCanonico(original.Value<string>("tipoDte") ?? "01");
-        var numeroDocumento = Obligatorio(Valor(receptor, "numDocumento", "nit"), "receptor.numDocumento");
+        var tipoDte = ObtenerTipoCanonico(original.Value<string>("tipoDte") ?? original.Value<string>("tipoEvento") ?? "01");
+        var esEventoRetorno = string.Equals(original.Value<string>("tipoEvento"), DteTipos.EventoRetorno, StringComparison.Ordinal);
+        var numeroDocumento = Valor(receptor, "numDocumento", "nit");
+        if (!esEventoRetorno)
+            numeroDocumento = Obligatorio(numeroDocumento, "receptor.numDocumento");
         var tipoDocumento = Valor(receptor, "tipoDocumento");
-        if (string.IsNullOrWhiteSpace(tipoDocumento))
+        if (string.IsNullOrWhiteSpace(tipoDocumento) && !string.IsNullOrWhiteSpace(numeroDocumento))
             tipoDocumento = numeroDocumento.Length == 14 ? "36" : numeroDocumento.Length == 9 ? "13" : "37";
+        var numeroSolicita = numeroDocumento ?? Obligatorio(nitResponsable, "numDocSolicita");
+        var tipoSolicita = tipoDocumento ?? (numeroSolicita.Length == 14 ? "36" : numeroSolicita.Length == 9 ? "13" : "37");
         var numeroControl = Valor(original, "numeroControl");
         if (string.IsNullOrWhiteSpace(numeroControl)) numeroControl = null;
 
@@ -241,9 +294,9 @@ public sealed class DteJsonFactory : IDteJsonFactory
                 ["codigoGeneracionR"] = null,
                 ["tipoDocumento"] = tipoDocumento,
                 ["numDocumento"] = numeroDocumento,
-                ["nombre"] = Obligatorio(Valor(receptor, "nombre"), "receptor.nombre"),
-                ["telefono"] = Obligatorio(Valor(receptor, "telefono"), "receptor.telefono"),
-                ["correo"] = Obligatorio(Valor(receptor, "correo"), "receptor.correo")
+                ["nombre"] = esEventoRetorno ? Valor(receptor, "nombre") : Obligatorio(Valor(receptor, "nombre"), "receptor.nombre"),
+                ["telefono"] = esEventoRetorno ? Valor(receptor, "telefono") : Obligatorio(Valor(receptor, "telefono"), "receptor.telefono"),
+                ["correo"] = esEventoRetorno ? Valor(receptor, "correo") : Obligatorio(Valor(receptor, "correo"), "receptor.correo")
             },
             ["motivo"] = new JObject
             {
@@ -252,9 +305,9 @@ public sealed class DteJsonFactory : IDteJsonFactory
                 ["nombreResponsable"] = Obligatorio(nombreResponsable, "nombreResponsable"),
                 ["tipDocResponsable"] = "37",
                 ["numDocResponsable"] = Obligatorio(nitResponsable, "numDocResponsable"),
-                ["nombreSolicita"] = "Cliente",
-                ["tipDocSolicita"] = tipoDocumento ?? "37",
-                ["numDocSolicita"] = numeroDocumento
+                ["nombreSolicita"] = Valor(receptor, "nombre") ?? nombreResponsable,
+                ["tipDocSolicita"] = tipoSolicita,
+                ["numDocSolicita"] = numeroSolicita
             }
         };
 
@@ -271,6 +324,12 @@ public sealed class DteJsonFactory : IDteJsonFactory
                 return valor.ToString();
         }
         return null;
+    }
+
+    private static void ExigirPropiedades(JObject objeto, params string[] nombres)
+    {
+        foreach (var nombre in nombres)
+            if (!objeto.ContainsKey(nombre)) throw new InvalidOperationException($"El ERET no contiene la propiedad requerida {nombre}.");
     }
 
     private static string? ValorConfigurado(string? configurado, JObject original, params string[] nombres)

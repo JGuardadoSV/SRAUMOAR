@@ -38,6 +38,11 @@ public class EnviarContingenciaModel : PageModel
         if (id is null) return NotFound();
         var factura = await _context.Facturas.AsNoTracking().FirstOrDefaultAsync(x => x.FacturaId == id);
         if (factura is null) return NotFound();
+        if (factura.TipoDTE == 18 || factura.TipoDteCodigo == DteTipos.EventoRetorno)
+        {
+            TempData["Error"] = "Los ERET no se procesan mediante el flujo genérico de contingencia.";
+            return RedirectToPage("./Index");
+        }
         if (!string.IsNullOrEmpty(factura.SelloRecepcion))
         {
             TempData["Error"] = "Esta factura ya tiene sello de recepción y no puede ser procesada.";
@@ -51,6 +56,11 @@ public class EnviarContingenciaModel : PageModel
     {
         var factura = await _context.Facturas.FirstOrDefaultAsync(x => x.FacturaId == id);
         if (factura is null) return NotFound();
+        if (factura.TipoDTE == 18 || factura.TipoDteCodigo == DteTipos.EventoRetorno)
+        {
+            TempData["Error"] = "Los ERET no se procesan mediante el flujo genérico de contingencia.";
+            return RedirectToPage("./Index");
+        }
         if (!string.IsNullOrEmpty(factura.SelloRecepcion))
         {
             TempData["Error"] = "Esta factura ya tiene sello de recepción y no puede ser procesada.";

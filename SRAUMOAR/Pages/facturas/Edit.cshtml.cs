@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +12,7 @@ using SRAUMOAR.Modelos;
 
 namespace SRAUMOAR.Pages.facturas
 {
+    [Authorize(Roles = "Administrador,Administracion,Contabilidad")]
     public class EditModel : PageModel
     {
         private readonly SRAUMOAR.Modelos.Contexto _context;
@@ -35,6 +37,8 @@ namespace SRAUMOAR.Pages.facturas
             {
                 return NotFound();
             }
+            if (EsDocumentoFiscalProtegido(factura))
+                return BadRequest("Los documentos fiscales no se editan desde el CRUD genérico.");
             Factura = factura;
             return Page();
         }
@@ -47,6 +51,11 @@ namespace SRAUMOAR.Pages.facturas
             {
                 return Page();
             }
+
+            var existente = await _context.Facturas.AsNoTracking().SingleOrDefaultAsync(x => x.FacturaId == Factura.FacturaId);
+            if (existente is null) return NotFound();
+            if (EsDocumentoFiscalProtegido(existente) || EsDocumentoFiscalProtegido(Factura))
+                return BadRequest("Los documentos fiscales no se editan desde el CRUD genérico.");
 
             _context.Attach(Factura).State = EntityState.Modified;
 
@@ -73,5 +82,15 @@ namespace SRAUMOAR.Pages.facturas
         {
             return _context.Facturas.Any(e => e.FacturaId == id);
         }
+
+        private static bool EsDocumentoFiscalProtegido(Factura factura)
+            => !string.IsNullOrWhiteSpace(factura.JsonDte)
+                || !string.IsNullOrWhiteSpace(factura.SelloRecepcion)
+                || !string.IsNullOrWhiteSpace(factura.JsonAnulacion)
+                || !string.IsNullOrWhiteSpace(factura.SelloAnulacion)
+                || !string.IsNullOrWhiteSpace(factura.TipoDteCodigo)
+                || factura.FacturaOriginalId.HasValue
+                || factura.Anulada
+                || factura.EstadoTransmision != "Preparado";
     }
 }

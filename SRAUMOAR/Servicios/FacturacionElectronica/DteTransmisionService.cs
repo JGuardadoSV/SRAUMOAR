@@ -50,7 +50,7 @@ public sealed class DteTransmisionService : IDteTransmisionService
     {
         var tipoSolicitado = request.TipoDte.Trim();
         var ambienteDocumento = ExtraerAmbienteDocumento(request.Json);
-        var configuracion = tipoSolicitado is DteTipos.NotaCredito or DteTipos.NotaDebito
+        var configuracion = tipoSolicitado is DteTipos.NotaCredito or DteTipos.NotaDebito or DteTipos.EventoRetorno
             ? await _configuracionService.ObtenerAsync(ambienteDocumento, cancellationToken)
             : await _configuracionService.ObtenerActivaAsync(cancellationToken);
         if (!configuracion.Entidad.Habilitado)
@@ -61,57 +61,68 @@ public sealed class DteTransmisionService : IDteTransmisionService
         if (!string.Equals(codigoJson, request.CodigoGeneracion, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("El código de generación del request no coincide con el JSON DTE.");
 
-        var existente = await _contexto.DteTransmisiones
+        var transmision = await _contexto.DteTransmisiones
             .AsNoTracking()
             .SingleOrDefaultAsync(x => x.CodigoGeneracion == request.CodigoGeneracion
                 && x.TipoOperacion == "EMISION"
                 && x.AmbienteFiscal == configuracion.Entidad.AmbienteFiscal, cancellationToken);
-        if (existente is not null)
+        if (transmision is null)
         {
-            return new DteTransmisionResult(
-                existente.Estado == DteEstados.Aceptado,
-                existente.Estado,
-                existente.SelloRecepcion,
-                existente.Respuesta ?? string.Empty,
-                existente.Intentos,
-                existente.AmbienteFiscal,
-                existente.Error);
+            transmision = new DteTransmision
+            {
+                FacturaId = request.FacturaId,
+                TipoOperacion = "EMISION",
+                AmbienteFiscal = configuracion.Entidad.AmbienteFiscal,
+                CodigoGeneracion = request.CodigoGeneracion,
+                JsonEnviado = request.Json,
+                Estado = DteEstados.Preparado,
+                FechaInicio = DateTime.UtcNow
+            };
+            _contexto.DteTransmisiones.Add(transmision);
+            try { await _contexto.SaveChangesAsync(cancellationToken); }
+            catch (DbUpdateException)
+            {
+                foreach (var entry in _contexto.ChangeTracker.Entries<DteTransmision>().ToArray())
+                    entry.State = EntityState.Detached;
+                transmision = await _contexto.DteTransmisiones.AsNoTracking().SingleAsync(x =>
+                    x.CodigoGeneracion == request.CodigoGeneracion && x.TipoOperacion == "EMISION" &&
+                    x.AmbienteFiscal == configuracion.Entidad.AmbienteFiscal, cancellationToken);
+            }
         }
 
-        var transmision = new DteTransmision
-        {
-            FacturaId = request.FacturaId,
-            TipoOperacion = "EMISION",
-            AmbienteFiscal = configuracion.Entidad.AmbienteFiscal,
-            CodigoGeneracion = request.CodigoGeneracion,
-            JsonEnviado = request.Json,
-            Estado = DteEstados.Preparado,
-            FechaInicio = DateTime.UtcNow
-        };
-        _contexto.DteTransmisiones.Add(transmision);
-        await _contexto.SaveChangesAsync(cancellationToken);
+        var reclamada = await _contexto.DteTransmisiones.Where(x => x.Id == transmision.Id &&
+                x.Estado == DteEstados.Preparado)
+            .ExecuteUpdateAsync(x => x
+                .SetProperty(t => t.Estado, DteEstados.Enviado)
+                .SetProperty(t => t.FechaInicio, DateTime.UtcNow)
+                .SetProperty(t => t.Intentos, t => t.Intentos + 1), cancellationToken);
+        foreach (var entry in _contexto.ChangeTracker.Entries<DteTransmision>().Where(x => x.Entity.Id == transmision.Id).ToArray())
+            entry.State = EntityState.Detached;
+        transmision = await _contexto.DteTransmisiones.SingleAsync(x => x.Id == transmision.Id, cancellationToken);
+        if (reclamada == 0)
+            return new DteTransmisionResult(transmision.Estado == DteEstados.Aceptado, transmision.Estado,
+                transmision.SelloRecepcion, transmision.Respuesta ?? string.Empty, transmision.Intentos,
+                transmision.AmbienteFiscal, transmision.Error);
 
         try
         {
             var respuesta = await EjecutarEmisionAsync(configuracion, request.Json, tipoDte, request.Version, request.CodigoGeneracion, request.NumeroControl, request.CorreoReceptor, cancellationToken);
-            transmision.Intentos = 1;
             transmision.SelloRecepcion = respuesta.SelloRecepcion;
             transmision.Respuesta = respuesta.Respuesta;
-            transmision.Estado = respuesta.Exito ? DteEstados.Aceptado : DteEstados.Incierto;
+            transmision.Estado = respuesta.Exito ? DteEstados.Aceptado : respuesta.RechazoFiscal ? DteEstados.Rechazado : DteEstados.Incierto;
             transmision.Error = respuesta.Error;
             transmision.FechaFin = DateTime.UtcNow;
             await _contexto.SaveChangesAsync(cancellationToken);
-            return new DteTransmisionResult(respuesta.Exito, transmision.Estado, respuesta.SelloRecepcion, respuesta.Respuesta, 1, configuracion.Entidad.AmbienteFiscal, respuesta.Error);
+            return new DteTransmisionResult(respuesta.Exito, transmision.Estado, respuesta.SelloRecepcion, respuesta.Respuesta, transmision.Intentos, configuracion.Entidad.AmbienteFiscal, respuesta.Error);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error transmitiendo DTE {CodigoGeneracion} en ambiente fiscal {AmbienteFiscal}", request.CodigoGeneracion, configuracion.Entidad.AmbienteFiscal);
-            transmision.Intentos = 1;
             transmision.Estado = DteEstados.Incierto;
             transmision.Error = ex.Message;
             transmision.FechaFin = DateTime.UtcNow;
             await _contexto.SaveChangesAsync(cancellationToken);
-            return new DteTransmisionResult(false, DteEstados.Incierto, null, "", 1, configuracion.Entidad.AmbienteFiscal, ex.Message);
+            return new DteTransmisionResult(false, DteEstados.Incierto, null, "", transmision.Intentos, configuracion.Entidad.AmbienteFiscal, ex.Message);
         }
     }
 
@@ -128,7 +139,7 @@ public sealed class DteTransmisionService : IDteTransmisionService
             var respuesta = await EjecutarEventoAsync(configuracion, jsonEvento, "CONTINGENCIA", cancellationToken);
             evento.SelloRecepcion = respuesta.SelloRecepcion;
             evento.Respuesta = respuesta.Respuesta;
-            evento.Estado = respuesta.Exito ? DteEstados.Aceptado : DteEstados.Incierto;
+            evento.Estado = respuesta.Exito ? DteEstados.Aceptado : respuesta.RechazoFiscal ? DteEstados.Rechazado : DteEstados.Incierto;
             evento.Error = respuesta.Error;
             await _contexto.SaveChangesAsync(cancellationToken);
             return new DteEventoResult(respuesta.Exito, evento.Estado, respuesta.SelloRecepcion, respuesta.Respuesta, ambienteFiscal, respuesta.Error);
@@ -155,7 +166,7 @@ public sealed class DteTransmisionService : IDteTransmisionService
             var respuesta = await EjecutarEventoAsync(configuracion, jsonInvalidacion, "INVALIDACION", cancellationToken);
             evento.SelloRecepcion = respuesta.SelloRecepcion;
             evento.Respuesta = respuesta.Respuesta;
-            evento.Estado = respuesta.Exito ? DteEstados.Aceptado : DteEstados.Incierto;
+            evento.Estado = respuesta.Exito ? DteEstados.Aceptado : respuesta.RechazoFiscal ? DteEstados.Rechazado : DteEstados.Incierto;
             evento.Error = respuesta.Error;
             await _contexto.SaveChangesAsync(cancellationToken);
             return new DteEventoResult(respuesta.Exito, evento.Estado, respuesta.SelloRecepcion, respuesta.Respuesta, ambienteFiscal, respuesta.Error);
@@ -235,7 +246,7 @@ public sealed class DteTransmisionService : IDteTransmisionService
             UsarFirmadorInterno = !configuracion.Entidad.UsarFirmadorExterno
         }, cancellationToken);
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
-        if (!response.IsSuccessStatusCode) return new HaciendaRespuesta(false, null, body, "La API externa rechazó el DTE.");
+        if (!response.IsSuccessStatusCode) return new HaciendaRespuesta(false, null, body, "La API externa no confirmó la recepción del DTE.", HaciendaDteClient.EsRechazoFiscalExplicito(body));
         return ParsearRespuesta(body);
     }
 
@@ -256,7 +267,7 @@ public sealed class DteTransmisionService : IDteTransmisionService
             UsarFirmadorInterno = !configuracion.Entidad.UsarFirmadorExterno
         }, cancellationToken);
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
-        if (!response.IsSuccessStatusCode) return new HaciendaRespuesta(false, null, body, "La API externa rechazó el evento.");
+        if (!response.IsSuccessStatusCode) return new HaciendaRespuesta(false, null, body, "La API externa no confirmó la recepción del evento.", HaciendaDteClient.EsRechazoFiscalExplicito(body));
         return ParsearRespuesta(body);
     }
 
@@ -317,7 +328,8 @@ public sealed class DteTransmisionService : IDteTransmisionService
             using var document = JsonDocument.Parse(body);
             var sello = document.RootElement.TryGetProperty("selloRecibido", out var direct) ? direct.GetString() : null;
             if (sello is null && document.RootElement.TryGetProperty("resultado", out var resultado) && resultado.TryGetProperty("selloRecibido", out var nested)) sello = nested.GetString();
-            return new HaciendaRespuesta(!string.IsNullOrWhiteSpace(sello), sello, body, sello is null ? "No se recibió sello." : null);
+            return new HaciendaRespuesta(!string.IsNullOrWhiteSpace(sello), sello, body, sello is null ? "No se recibió sello." : null,
+                sello is null && HaciendaDteClient.EsRechazoFiscalExplicito(body));
         }
         catch (System.Text.Json.JsonException ex)
         {

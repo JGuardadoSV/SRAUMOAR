@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 
 namespace SRAUMOAR.Servicios.FacturacionElectronica;
 
-public sealed record HaciendaRespuesta(bool Exito, string? SelloRecepcion, string Respuesta, string? Error = null);
+public sealed record HaciendaRespuesta(bool Exito, string? SelloRecepcion, string Respuesta, string? Error = null, bool RechazoFiscal = false);
 
 public interface IHaciendaDteClient
 {
@@ -62,7 +62,7 @@ public sealed class HaciendaDteClient : IHaciendaDteClient
         using var response = await client.SendAsync(request, cancellationToken);
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
         if (!response.IsSuccessStatusCode)
-            return new HaciendaRespuesta(false, null, body, $"Hacienda devolvió {(int)response.StatusCode}.");
+            return new HaciendaRespuesta(false, null, body, $"Hacienda devolvió {(int)response.StatusCode}.", EsRechazoFiscalExplicito(body));
 
         string? sello = null;
         try
@@ -71,7 +71,25 @@ public sealed class HaciendaDteClient : IHaciendaDteClient
             if (document.RootElement.TryGetProperty("selloRecibido", out var node)) sello = node.GetString();
         }
         catch (System.Text.Json.JsonException) { }
-        return new HaciendaRespuesta(!string.IsNullOrWhiteSpace(sello), sello, body, sello is null ? "Hacienda no devolvió sello de recepción." : null);
+        return new HaciendaRespuesta(!string.IsNullOrWhiteSpace(sello), sello, body,
+            sello is null ? "Hacienda no devolvió sello de recepción." : null,
+            sello is null && EsRechazoFiscalExplicito(body));
+    }
+
+    internal static bool EsRechazoFiscalExplicito(string body)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(body);
+            var root = document.RootElement;
+            if (root.TryGetProperty("estado", out var estado) &&
+                string.Equals(estado.GetString(), "RECHAZADO", StringComparison.OrdinalIgnoreCase)) return true;
+            if (root.TryGetProperty("resultado", out var resultado) && resultado.ValueKind == JsonValueKind.Object &&
+                resultado.TryGetProperty("estado", out estado) &&
+                string.Equals(estado.GetString(), "RECHAZADO", StringComparison.OrdinalIgnoreCase)) return true;
+        }
+        catch (System.Text.Json.JsonException) { }
+        return false;
     }
 
     private static string Base(ConfiguracionFeActiva configuracion)
