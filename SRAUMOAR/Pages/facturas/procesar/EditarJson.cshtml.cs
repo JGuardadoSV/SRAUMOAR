@@ -6,6 +6,9 @@ using Newtonsoft.Json;
 using SRAUMOAR.Entidades.Colecturia;
 using SRAUMOAR.Modelos;
 using SRAUMOAR.Entidades.FacturacionElectronica;
+using SRAUMOAR.Servicios.FacturacionElectronica;
+using SRAUMOAR.Modelos.FacturacionElectronica;
+using Newtonsoft.Json.Linq;
 
 namespace SRAUMOAR.Pages.facturas.procesar;
 
@@ -76,6 +79,7 @@ public sealed class EditarJsonModel : PageModel
             return await OnGetAsync(id);
         }
 
+        await using var transaccion = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable, cancellationToken);
         var factura = await _context.Facturas.FirstOrDefaultAsync(x => x.FacturaId == id, cancellationToken);
         if (factura is null) return NotFound();
         if (factura.TipoDTE == 18 || factura.TipoDteCodigo == "18")
@@ -89,8 +93,34 @@ public sealed class EditarJsonModel : PageModel
             return RedirectToPage("./Index");
         }
 
+        if (factura.Anulada || factura.EstadoTransmision != DteEstados.Preparado || factura.IntentosTransmision != 0
+            || factura.TipoDteCodigo is "05" or "06" || factura.TipoDTE is 5 or 6
+            || await _context.DteTransmisiones.AnyAsync(x => x.FacturaId == id || x.CodigoGeneracion == factura.CodigoGeneracion, cancellationToken)
+            || await _context.DteEventos.AnyAsync(x => x.FacturaId == id, cancellationToken))
+        {
+            TempData["Error"] = "No puede alterarse un JSON con transmisión/reserva fiscal previa. Reintente el documento intacto o utilice una corrección fiscal controlada.";
+            return RedirectToPage("./Index");
+        }
+        var original = JObject.Parse(factura.JsonDte ?? "{}");
+        var editado = JObject.Parse(JsonEditado);
+        foreach (var campo in new[] { "codigoGeneracion", "numeroControl", "ambiente", "tipoDte", "version" })
+            if (!JToken.DeepEquals(original["identificacion"]?[campo], editado["identificacion"]?[campo]))
+            {
+                TempData["Error"] = "La edición no puede cambiar la identidad, versión ni ambiente fiscal del documento.";
+                return RedirectToPage("./Index");
+            }
+        try
+        {
+            new DteJsonFactory().ValidarDocumento(JsonEditado, editado["identificacion"]!.Value<string>("ambiente")!);
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["Error"] = ex.Message;
+            return RedirectToPage("./Index");
+        }
         factura.JsonDte = JsonEditado;
         await _context.SaveChangesAsync(cancellationToken);
+        await transaccion.CommitAsync(cancellationToken);
         TempData["Success"] = "JSON actualizado. Revise el DTE antes de procesar la contingencia.";
         return RedirectToPage("./EnviarContingencia", new { id = factura.FacturaId });
     }

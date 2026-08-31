@@ -29,7 +29,8 @@ public sealed class DteJsonFactory : IDteJsonFactory
             "02" or "03" => DteTipos.CreditoFiscal,
             "05" => DteTipos.NotaCredito,
             "06" => DteTipos.NotaDebito,
-            "11" or "14" => DteTipos.SujetoExcluido,
+            "11" => "11",
+            "14" => DteTipos.SujetoExcluido,
             "15" => DteTipos.Donacion,
             "18" => DteTipos.EventoRetorno,
             _ => throw new ArgumentException($"Tipo DTE no soportado: {tipoEntrada}", nameof(tipoEntrada))
@@ -55,6 +56,7 @@ public sealed class DteJsonFactory : IDteJsonFactory
             throw new InvalidOperationException("El DTE no contiene codigoGeneracion.");
         if (root["emisor"] is null && root["donatario"] is null)
             throw new InvalidOperationException("El DTE no contiene emisor/donatario.");
+        DteSchemaValidator.Validar(json, tipo, identificacion.Value<int>("version"));
         if (tipo == DteTipos.EventoRetorno)
         {
             ValidarEretContraEsquema(json);
@@ -166,12 +168,15 @@ public sealed class DteJsonFactory : IDteJsonFactory
             ["emisor"] = ConstruirEmisor(emisorOriginal, configuracion),
             ["receptor"] = ConstruirReceptor(receptorOriginal),
             ["ventaTercero"] = null,
-            ["cuerpoDocumento"] = ConstruirCuerpo(cuerpoOriginal, codigoOriginal, factor),
+            ["cuerpoDocumento"] = ConstruirCuerpo(cuerpoOriginal, resumenOriginal, codigoOriginal, factor),
             ["resumen"] = ConstruirResumen(resumenOriginal, factor, monto, motivo),
             ["apendice"] = null
         };
 
-        return dte.ToString(Formatting.None);
+        if (tipoNota == DteTipos.NotaDebito) dte["resumen"]!["numPagoElectronico"] = null;
+        var json = dte.ToString(Formatting.None);
+        ValidarDocumento(json, identificacion.Value<string>("ambiente")!, tipoNota);
+        return json;
     }
 
     // Esquema vigente de FacturaME: contingencia v4.
@@ -246,14 +251,11 @@ public sealed class DteJsonFactory : IDteJsonFactory
             ?? throw new InvalidOperationException("El DTE no contiene identificación.");
         var emisorOriginal = (JObject?)(root["emisor"] ?? root["donatario"])
             ?? throw new InvalidOperationException("El DTE no contiene emisor/donatario.");
-        var receptor = (JObject?)(root["receptor"] ?? root["sujetoExcluido"] ?? root["donante"] ?? root["documento"])
-            ?? throw new InvalidOperationException("El DTE no contiene los datos del receptor/donatario.");
+        var receptor = root["receptor"] as JObject ?? root["sujetoExcluido"] as JObject
+            ?? root["donante"] as JObject ?? root["documento"] as JObject ?? new JObject();
         var fecha = ObtenerFechaElSalvador();
         var tipoDte = ObtenerTipoCanonico(original.Value<string>("tipoDte") ?? original.Value<string>("tipoEvento") ?? "01");
-        var esEventoRetorno = string.Equals(original.Value<string>("tipoEvento"), DteTipos.EventoRetorno, StringComparison.Ordinal);
         var numeroDocumento = Valor(receptor, "numDocumento", "nit");
-        if (!esEventoRetorno)
-            numeroDocumento = Obligatorio(numeroDocumento, "receptor.numDocumento");
         var tipoDocumento = Valor(receptor, "tipoDocumento");
         if (string.IsNullOrWhiteSpace(tipoDocumento) && !string.IsNullOrWhiteSpace(numeroDocumento))
             tipoDocumento = numeroDocumento.Length == 14 ? "36" : numeroDocumento.Length == 9 ? "13" : "37";
@@ -294,9 +296,9 @@ public sealed class DteJsonFactory : IDteJsonFactory
                 ["codigoGeneracionR"] = null,
                 ["tipoDocumento"] = tipoDocumento,
                 ["numDocumento"] = numeroDocumento,
-                ["nombre"] = esEventoRetorno ? Valor(receptor, "nombre") : Obligatorio(Valor(receptor, "nombre"), "receptor.nombre"),
-                ["telefono"] = esEventoRetorno ? Valor(receptor, "telefono") : Obligatorio(Valor(receptor, "telefono"), "receptor.telefono"),
-                ["correo"] = esEventoRetorno ? Valor(receptor, "correo") : Obligatorio(Valor(receptor, "correo"), "receptor.correo")
+                ["nombre"] = Valor(receptor, "nombre"),
+                ["telefono"] = Valor(receptor, "telefono"),
+                ["correo"] = Valor(receptor, "correo")
             },
             ["motivo"] = new JObject
             {
@@ -346,7 +348,6 @@ public sealed class DteJsonFactory : IDteJsonFactory
             ["codActividad"] = Obligatorio(ValorConfigurado(configuracion?.CodigoActividad, original, "codActividad"), "emisor.codActividad"),
             ["descActividad"] = Obligatorio(ValorConfigurado(configuracion?.DescripcionActividad, original, "descActividad"), "emisor.descActividad"),
             ["nombreComercial"] = ValorConfigurado(configuracion?.NombreComercial, original, "nombreComercial"),
-            ["tipoEstablecimiento"] = ValorConfigurado(configuracion?.TipoEstablecimiento, original, "tipoEstablecimiento"),
             ["direccion"] = new JObject
             {
                 ["departamento"] = Obligatorio(ValorConfigurado(configuracion?.CodigoDepartamento, direccion, "departamento"), "emisor.direccion.departamento"),
@@ -387,11 +388,14 @@ public sealed class DteJsonFactory : IDteJsonFactory
         };
     }
 
-    private static JArray ConstruirCuerpo(JArray original, string codigoOriginal, decimal factor)
+    private static JArray ConstruirCuerpo(JArray original, JObject resumenOriginal, string codigoOriginal, decimal factor)
     {
         var cuerpo = new JArray();
+        var baseGravada = original.OfType<JObject>().Sum(x => Numero(x, "ventaGravada") ?? 0m);
+        var ivaOriginal = Numero(resumenOriginal, "totalIva") ?? SumarTributos(resumenOriginal["tributos"] as JArray ?? new JArray());
         foreach (var token in original.OfType<JObject>())
         {
+            var pesoGravado = baseGravada > 0m ? (Numero(token, "ventaGravada") ?? 0m) / baseGravada : 0m;
             var linea = new JObject
             {
                 ["numItem"] = token.Value<int?>("numItem") ?? cuerpo.Count + 1,
@@ -409,9 +413,9 @@ public sealed class DteJsonFactory : IDteJsonFactory
                 ["ventaGravada"] = Escalar(Numero(token, "ventaGravada") ?? 0m, factor, 8),
                 ["tributos"] = token["tributos"]?.DeepClone(),
                 ["noGravado"] = Escalar(Numero(token, "noGravado") ?? 0m, factor, 8),
-                ["ivaPerci"] = Escalar(Numero(token, "ivaPerci") ?? 0m, factor, 8),
-                ["totalIva"] = Escalar(Numero(token, "totalIva") ?? 0m, factor, 8),
-                ["ivaRete"] = Escalar(Numero(token, "ivaRete") ?? 0m, factor, 8)
+                ["ivaPerci"] = Escalar(Numero(token, "ivaPerci") ?? (Numero(resumenOriginal, "ivaPerci", "ivaPerci1") ?? 0m) * pesoGravado, factor, 8),
+                ["totalIva"] = Escalar(Numero(token, "totalIva") ?? ivaOriginal * pesoGravado, factor, 8),
+                ["ivaRete"] = Escalar(Numero(token, "ivaRete") ?? (Numero(resumenOriginal, "ivaRete", "ivaRete1") ?? 0m) * pesoGravado, factor, 8)
             };
             if (linea["tributos"] is null && (Numero(linea, "ventaGravada") ?? 0m) > 0m)
                 linea["tributos"] = new JArray("20");
@@ -434,8 +438,8 @@ public sealed class DteJsonFactory : IDteJsonFactory
                 tributos.Add(tributo);
             }
         }
-        if (tributos.Count == 0 && (Numero(original, "totalIva", "ivaRete1") ?? 0m) > 0m)
-            tributos.Add(new JObject { ["codigo"] = "20", ["descripcion"] = "Impuesto al Valor Agregado 13%", ["valor"] = Escalar(Numero(original, "totalIva", "ivaRete1") ?? 0m, factor, 2) });
+        if (tributos.Count == 0 && (Numero(original, "totalIva") ?? 0m) > 0m)
+            tributos.Add(new JObject { ["codigo"] = "20", ["descripcion"] = "Impuesto al Valor Agregado 13%", ["valor"] = Escalar(Numero(original, "totalIva") ?? 0m, factor, 2) });
 
         var resumen = new JObject
         {
@@ -447,11 +451,11 @@ public sealed class DteJsonFactory : IDteJsonFactory
             ["tributos"] = tributos.Count == 0 ? null : tributos,
             ["montoTotalOperacion"] = Math.Round(monto, 2, MidpointRounding.AwayFromZero),
             ["ivaPerci"] = Escalar(Numero(original, "ivaPerci", "ivaPerci1") ?? 0m, factor, 2),
-            ["totalIva"] = Escalar(Numero(original, "totalIva") ?? SumarTributos(tributos), factor, 2),
+            ["totalIva"] = Numero(original, "totalIva") is decimal iva ? Escalar(iva, factor, 2) : SumarTributos(tributos),
             ["ivaRete"] = Escalar(Numero(original, "ivaRete", "ivaRete1") ?? 0m, factor, 2),
             ["totalNoGravado"] = Escalar(Numero(original, "totalNoGravado") ?? 0m, factor, 2),
-            ["totalPagar"] = Math.Round(monto, 2, MidpointRounding.AwayFromZero),
-            ["totalLetras"] = new Conversor().ConvertirNumeroALetras(Math.Round(monto, 2, MidpointRounding.AwayFromZero)),
+            ["totalPagar"] = Escalar(Numero(original, "totalPagar") ?? monto / factor, factor, 2),
+            ["totalLetras"] = new Conversor().ConvertirNumeroALetras(Escalar(Numero(original, "totalPagar") ?? monto / factor, factor, 2)),
             ["condicionOperacion"] = original.Value<int?>("condicionOperacion") ?? 1,
             ["observaciones"] = string.IsNullOrWhiteSpace(motivo) ? null : motivo.Trim(),
             ["codigoRetencionMH"] = Valor(original, "codigoRetencionMH")
@@ -460,7 +464,7 @@ public sealed class DteJsonFactory : IDteJsonFactory
     }
 
     private static decimal SumarTributos(JArray tributos)
-        => tributos.OfType<JObject>().Sum(x => Numero(x, "valor") ?? 0m);
+        => tributos.OfType<JObject>().Where(x => x.Value<string>("codigo") == "20").Sum(x => Numero(x, "valor") ?? 0m);
 
     private static decimal? Numero(JObject objeto, params string[] nombres)
     {
@@ -468,6 +472,7 @@ public sealed class DteJsonFactory : IDteJsonFactory
         {
             var token = objeto[nombre];
             if (token is null || token.Type is JTokenType.Null) continue;
+            if (token.Type is JTokenType.Integer or JTokenType.Float) return token.Value<decimal>();
             if (decimal.TryParse(token.ToString(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var valor))
                 return valor;
         }

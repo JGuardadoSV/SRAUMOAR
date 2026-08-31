@@ -128,7 +128,7 @@ public sealed class DteRetornoService : IDteRetornoService
             {
                 ["numItem"] = cuerpo.Count + 1, ["tipoItem"] = original.Value<int?>("tipoItem") ?? 1,
                 ["codigoGeneracion"] = codigoOriginal, ["cantidad"] = solicitada.Cantidad,
-                ["precioUni"] = Redondear6(precio), ["descripcion"] = Texto(original, "descripcion") ?? "Ítem retornado",
+                ["precioUni"] = precio, ["descripcion"] = Texto(original, "descripcion") ?? "Ítem retornado",
                 ["codigo"] = Nulo(Texto(original, "codigo")), ["uniMedida"] = original.Value<int?>("uniMedida") ?? 59,
                 ["montoDescu"] = descuento, ["codTributo"] = original["codTributo"]?.DeepClone() ?? JValue.CreateNull(),
                 ["ventaNoSuj"] = Redondear2(lineaNoSujeta), ["ventaExenta"] = Redondear2(lineaExenta),
@@ -144,8 +144,8 @@ public sealed class DteRetornoService : IDteRetornoService
         gravada = Redondear2(gravada); exenta = Redondear2(exenta); noSujeta = Redondear2(noSujeta); compra = Redondear2(compra); iva = Redondear2(iva);
         var subtotal = Redondear2(gravada + exenta + noSujeta + compra);
         var proporcionOperacion = baseOriginal > 0m ? Math.Min(1m, subtotal / baseOriginal) : 0m;
-        var seguro = seguroItems != 0m ? Redondear2(seguroItems) : Redondear2(Numero(resumenOriginal, "totalSeguro") * proporcionOperacion);
-        var flete = fleteItems != 0m ? Redondear2(fleteItems) : Redondear2(Numero(resumenOriginal, "totalFlete") * proporcionOperacion);
+        var seguro = CargoRetornado(resumenOriginal, tipoRelacionado, "seguro", "totalSeguro", seguroItems, proporcionOperacion);
+        var flete = CargoRetornado(resumenOriginal, tipoRelacionado, "flete", "totalFlete", fleteItems, proporcionOperacion);
         var noGravado = noGravadoItems != 0m ? Redondear2(noGravadoItems) : Redondear2(Numero(resumenOriginal, "totalNoGravado") * proporcionOperacion);
         var ivaRete = ivaReteItems != 0m ? Redondear2(ivaReteItems) : Redondear2(Numero(resumenOriginal, "ivaRete") * proporcionOperacion);
         var reteRenta = reteRentaItems != 0m ? Redondear2(reteRentaItems) : Redondear2(Numero(resumenOriginal, "reteRenta") * proporcionOperacion);
@@ -187,18 +187,32 @@ public sealed class DteRetornoService : IDteRetornoService
     {
         ValidarSolicitud(request);
         var clave = ClaveIdempotencia(request);
-        var existente = await _contexto.Facturas.AsNoTracking().SingleOrDefaultAsync(x => x.ClaveIdempotencia == clave, cancellationToken);
-        if (existente?.EstadoTransmision == DteEstados.Rechazado)
-        {
-            await _contexto.Facturas.Where(x => x.FacturaId == existente.FacturaId && x.EstadoTransmision == DteEstados.Rechazado)
-                .ExecuteUpdateAsync(x => x.SetProperty(f => f.ClaveIdempotencia, (string?)null), cancellationToken);
-            existente = null;
-        }
+        var prefijo = PrefijoOperacion(request.OperacionId);
+        var existente = await BuscarOperacionAsync(prefijo, cancellationToken);
         if (existente is not null)
-            return existente.EstadoTransmision is DteEstados.Preparado or DteEstados.Enviado
-                ? await TransmitirPersistidaAsync(existente.FacturaId, cancellationToken)
-                : ResultadoExistente(existente);
-        var preparada = await PrepararAsync(request, cancellationToken);
+        {
+            ValidarContenidoOperacion(existente.ClaveIdempotencia!, clave);
+            if (existente.EstadoTransmision != DteEstados.Rechazado)
+                return await ReutilizarAsync(existente, cancellationToken);
+        }
+        DteRetornoPreparado preparada;
+        try
+        {
+            preparada = await PrepararAsync(request, cancellationToken);
+        }
+        catch (InvalidOperationException)
+        {
+            // El primer POST pudo consumir el saldo entre la consulta de identidad
+            // y la preparación del segundo; este último sigue siendo un reintento.
+            existente = await BuscarOperacionAsync(prefijo, cancellationToken);
+            if (existente is not null)
+            {
+                ValidarContenidoOperacion(existente.ClaveIdempotencia!, clave);
+                if (existente.EstadoTransmision != DteEstados.Rechazado)
+                    return await ReutilizarAsync(existente, cancellationToken);
+            }
+            throw;
+        }
         var factura = new Factura
         {
             Fecha = DateTime.UtcNow, CodigoGeneracion = preparada.CodigoGeneracion, NumeroControl = preparada.NumeroControl,
@@ -218,32 +232,71 @@ public sealed class DteRetornoService : IDteRetornoService
         try
         {
             await using var tx = await _contexto.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
-            await ValidarReservaAsync(preparada, cancellationToken);
-            _contexto.Facturas.Add(factura);
-            await _contexto.SaveChangesAsync(cancellationToken);
+            // El lock usa SOLO la identidad, también si otro POST cambia el original o el payload.
+            await _contexto.Database.ExecuteSqlInterpolatedAsync($@"
+                DECLARE @resultado int;
+                EXEC @resultado = sys.sp_getapplock @Resource = {prefijo}, @LockMode = 'Exclusive',
+                    @LockOwner = 'Transaction', @LockTimeout = 15000;
+                IF @resultado < 0 THROW 50001, 'No se pudo reservar la operación ERET; reintente con el mismo identificador.', 1;", cancellationToken);
+            existente = await BuscarOperacionAsync(prefijo, cancellationToken);
+            if (existente is not null)
+                ValidarContenidoOperacion(existente.ClaveIdempotencia!, clave);
+            if (existente is null || existente.EstadoTransmision == DteEstados.Rechazado)
+            {
+                await ValidarReservaAsync(preparada, cancellationToken);
+                // Un rechazo libera saldo. Reintentar genera otro DTE, sin perder la asociación
+                // operación/contenido: liberar la clave e insertar se confirman juntos.
+                if (existente is not null)
+                    await _contexto.Facturas.Where(x => x.FacturaId == existente.FacturaId)
+                        .ExecuteUpdateAsync(x => x.SetProperty(f => f.ClaveIdempotencia, (string?)null), cancellationToken);
+                _contexto.Facturas.Add(factura);
+                await _contexto.SaveChangesAsync(cancellationToken);
+            }
+            else
+            {
+                factura = existente;
+            }
             await tx.CommitAsync(cancellationToken);
         }
         catch (DbUpdateException)
         {
+            foreach (var detalle in factura.DetallesRetorno)
+                _contexto.Entry(detalle).State = EntityState.Detached;
             _contexto.Entry(factura).State = EntityState.Detached;
-            existente = await _contexto.Facturas.AsNoTracking().SingleOrDefaultAsync(x => x.ClaveIdempotencia == clave, cancellationToken);
+            existente = await BuscarOperacionAsync(prefijo, cancellationToken);
             if (existente is not null)
-                return existente.EstadoTransmision is DteEstados.Preparado or DteEstados.Enviado
-                    ? await TransmitirPersistidaAsync(existente.FacturaId, cancellationToken)
-                    : ResultadoExistente(existente);
+            {
+                ValidarContenidoOperacion(existente.ClaveIdempotencia!, clave);
+                if (existente.EstadoTransmision != DteEstados.Rechazado)
+                    return await ReutilizarAsync(existente, cancellationToken);
+            }
             throw;
         }
-        return await TransmitirPersistidaAsync(factura.FacturaId, cancellationToken);
+        return await ReutilizarAsync(factura, cancellationToken);
     }
+
+    private Task<Factura?> BuscarOperacionAsync(string prefijo, CancellationToken ct) =>
+        _contexto.Facturas.AsNoTracking().SingleOrDefaultAsync(x =>
+            x.ClaveIdempotencia != null && x.ClaveIdempotencia.StartsWith(prefijo), ct);
+
+    private Task<DteRetornoResultado> ReutilizarAsync(Factura factura, CancellationToken ct) =>
+        !factura.Anulada && !DteReservaReglas.EsOriginalAceptadoVigente(factura)
+            && factura.EstadoTransmision is DteEstados.Preparado or DteEstados.Enviado
+            ? TransmitirPersistidaAsync(factura.FacturaId, ct)
+            : Task.FromResult(ResultadoExistente(factura));
 
     private async Task<DteRetornoResultado> TransmitirPersistidaAsync(int facturaId, CancellationToken cancellationToken)
     {
         var reclamada = await _contexto.Facturas
-            .Where(x => x.FacturaId == facturaId && x.TipoDteCodigo == DteTipos.EventoRetorno && x.EstadoTransmision == DteEstados.Preparado)
+            .Where(x => x.FacturaId == facturaId && !x.Anulada && (x.SelloRecepcion == null || x.SelloRecepcion == "")
+                && x.TipoDteCodigo == DteTipos.EventoRetorno && x.EstadoTransmision == DteEstados.Preparado)
             .ExecuteUpdateAsync(x => x.SetProperty(f => f.EstadoTransmision, DteEstados.Enviado), cancellationToken);
-        _contexto.ChangeTracker.Clear();
+        foreach (var entry in _contexto.ChangeTracker.Entries<Factura>().Where(x => x.Entity.FacturaId == facturaId).ToArray())
+            entry.State = EntityState.Detached;
         var factura = await _contexto.Facturas.SingleAsync(x => x.FacturaId == facturaId, cancellationToken);
-        if (reclamada == 0 && factura.EstadoTransmision != DteEstados.Enviado) return ResultadoExistente(factura);
+        // Sólo el dueño del claim puede transmitir y persistir la respuesta. Un segundo
+        // POST no debe escribir un Enviado viejo encima de una aceptación concurrente.
+        if (!DteReservaReglas.PuedeTransmitirReclamada(reclamada, factura)) return ResultadoExistente(factura);
         if (string.IsNullOrWhiteSpace(factura.JsonDte)) throw new InvalidOperationException("El ERET preparado no contiene JSON.");
         DteTransmisionResult resultado;
         try
@@ -259,9 +312,10 @@ public sealed class DteRetornoService : IDteRetornoService
         factura.SelloRecepcion = resultado.SelloRecepcion; factura.EstadoTransmision = resultado.Estado;
         factura.IntentosTransmision = resultado.Intentos; factura.RespuestaHacienda = resultado.Respuesta;
         factura.FechaAceptacion = resultado.Aceptado ? DateTime.UtcNow : null;
-        await _contexto.SaveChangesAsync(cancellationToken);
+        using var cierre = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        await _contexto.SaveChangesAsync(cierre.Token);
         if (resultado.Aceptado && !string.IsNullOrWhiteSpace(factura.CorreoReceptor))
-            await EncolarCorreoSeguroAsync(factura, factura.JsonDte, resultado.SelloRecepcion, cancellationToken);
+            await EncolarCorreoSeguroAsync(factura, factura.JsonDte, resultado.SelloRecepcion, cierre.Token);
         return new(factura.FacturaId, factura.CodigoGeneracion, factura.NumeroControl, resultado.Aceptado, resultado.Estado,
             resultado.AmbienteFiscal, resultado.SelloRecepcion, resultado.Error);
     }
@@ -270,7 +324,7 @@ public sealed class DteRetornoService : IDteRetornoService
     {
         var factura = await _contexto.Facturas.AsNoTracking().SingleOrDefaultAsync(x => x.FacturaId == id, ct)
             ?? throw new InvalidOperationException("No se encontró el documento original.");
-        if (factura.Anulada || string.IsNullOrWhiteSpace(factura.SelloRecepcion) || factura.EstadoTransmision != DteEstados.Aceptado)
+        if (!DteReservaReglas.EsOriginalAceptadoVigente(factura))
             throw new InvalidOperationException("El documento original debe estar aceptado y vigente.");
         if (string.IsNullOrWhiteSpace(factura.JsonDte)) throw new InvalidOperationException("El documento original no tiene JSON DTE.");
         var root = JObject.Parse(factura.JsonDte);
@@ -296,13 +350,29 @@ public sealed class DteRetornoService : IDteRetornoService
 
     private async Task ValidarReservaAsync(DteRetornoPreparado preparada, CancellationToken ct)
     {
-        var original = await _contexto.Facturas.SingleAsync(x => x.FacturaId == preparada.FacturaOriginalId, ct);
-        if (original.Anulada || original.EstadoTransmision != DteEstados.Aceptado || string.IsNullOrWhiteSpace(original.SelloRecepcion))
+        var original = await DteReservaReglas.BloquearOriginalAsync(_contexto, preparada.FacturaOriginalId, ct);
+        if (!DteReservaReglas.EsOriginalAceptadoVigente(original))
             throw new InvalidOperationException("El documento original dejó de estar aceptado y vigente antes de reservar el retorno.");
+        var root = JObject.Parse(original.JsonDte ?? throw new InvalidOperationException("Falta el JSON original."));
+        var identificacion = Identificacion(root);
+        if (ConfiguracionFeService.NormalizarAmbiente(identificacion.Value<string>("ambiente") ?? string.Empty) != preparada.AmbienteFiscal
+            || !string.Equals(identificacion.Value<string>("codigoGeneracion"), original.CodigoGeneracion, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("La identificación del original cambió antes de reservar el retorno.");
+        var originales = Cuerpo(root).ToDictionary(x => Entero(x, "numItem"));
         var usadas = await CantidadesReservadasAsync(preparada.FacturaOriginalId, ct);
         foreach (var linea in preparada.Lineas)
-            if (usadas.GetValueOrDefault(linea.NumeroItemOriginal) + linea.CantidadRetornada > linea.CantidadOriginal)
-                throw new InvalidOperationException($"El ítem {linea.NumeroItemOriginal} fue retornado simultáneamente y ya no tiene saldo suficiente.");
+        {
+            if (!originales.TryGetValue(linea.NumeroItemOriginal, out var item)
+                || Numero(item, "cantidad") != linea.CantidadOriginal || linea.PrecioUnitario > Numero(item, "precioUni"))
+                throw new InvalidOperationException($"El ítem original {linea.NumeroItemOriginal} cambió antes de reservar el retorno.");
+            ValidarSaldoRetorno(Numero(item, "cantidad"), usadas.GetValueOrDefault(linea.NumeroItemOriginal), linea.CantidadRetornada);
+        }
+    }
+
+    private static void ValidarSaldoRetorno(decimal original, decimal reservado, decimal cantidad)
+    {
+        if (cantidad <= 0m || reservado + cantidad > original)
+            throw new InvalidOperationException("La cantidad retornada supera el saldo disponible del ítem original.");
     }
 
     private async Task EncolarCorreoSeguroAsync(Factura factura, string json, string? sello, CancellationToken ct)
@@ -334,11 +404,15 @@ public sealed class DteRetornoService : IDteRetornoService
 
     private static void ValidarSolicitud(DteRetornoRequest request)
     {
+        if (request.OperacionId == Guid.Empty) throw new InvalidOperationException("Falta el identificador de la operación de retorno. Abra un nuevo formulario.");
+        if (request.FacturaOriginalId <= 0) throw new InvalidOperationException("Seleccione un documento original válido.");
         if (request.TipoRetorno is not ("1" or "2" or "3" or "4")) throw new InvalidOperationException("El tipo de retorno debe estar entre 1 y 4.");
         if (string.IsNullOrWhiteSpace(request.Motivo) || request.Motivo.Trim().Length > 1000) throw new InvalidOperationException("El motivo es obligatorio y admite hasta 1000 caracteres.");
         if (request.Lineas is null || request.Lineas.Count == 0) throw new InvalidOperationException("Seleccione al menos una línea para retornar.");
         if (request.Lineas.Count > 2000) throw new InvalidOperationException("El ERET admite como máximo 2000 líneas.");
         if (request.Lineas.GroupBy(x => x.NumeroItemOriginal).Any(x => x.Count() > 1)) throw new InvalidOperationException("No se puede repetir una línea original.");
+        if (request.Lineas.Any(x => x.NumeroItemOriginal <= 0 || x.Cantidad <= 0m || x.PrecioUnitario is <= 0m))
+            throw new InvalidOperationException("Los ítems, cantidades y precios deben ser mayores que cero.");
         if (request.Lineas.Any(x => Escala(x.Cantidad) > 8 || x.PrecioUnitario.HasValue && Escala(x.PrecioUnitario.Value) > 8))
             throw new InvalidOperationException("Cantidades y precios admiten hasta ocho decimales.");
         if (request.Lineas.Any(x => x.Cantidad >= 100000000000m || x.PrecioUnitario >= 100000000000m))
@@ -407,9 +481,9 @@ public sealed class DteRetornoService : IDteRetornoService
     private static string Clasificacion(JObject x) => Numero(x, "compra") > 0 ? "compra" : Numero(x, "ventaExenta") > 0 ? "ventaExenta" : Numero(x, "ventaNoSuj") > 0 ? "ventaNoSuj" : "ventaGravada";
     private static string? Texto(JObject x, string nombre) => x.Value<string>(nombre);
     private static int Entero(JObject x, string nombre) => x.Value<int?>(nombre) ?? throw new InvalidOperationException($"Falta {nombre}.");
-    private static decimal Numero(JObject x, string nombre) => decimal.TryParse(x[nombre]?.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var n) ? n : 0m;
+    private static decimal Numero(JObject x, string nombre) => x[nombre]?.Type is JTokenType.Integer or JTokenType.Float
+        ? x[nombre]!.Value<decimal>() : decimal.TryParse(x[nombre]?.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var n) ? n : 0m;
     private static decimal Redondear2(decimal n) => Math.Round(n, 2, MidpointRounding.AwayFromZero);
-    private static decimal Redondear6(decimal n) => Math.Round(n, 6, MidpointRounding.AwayFromZero);
     private static int Escala(decimal n) => (decimal.GetBits(n)[3] >> 16) & 0x7F;
     private static JToken Nulo(string? s) => string.IsNullOrWhiteSpace(s) ? JValue.CreateNull() : new JValue(s);
     private static DateTime FechaElSalvador()
@@ -417,13 +491,44 @@ public sealed class DteRetornoService : IDteRetornoService
         try { return TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, "Central America Standard Time"); }
         catch (TimeZoneNotFoundException) { return DateTime.UtcNow.AddHours(-6); }
     }
-    private static string ClaveIdempotencia(DteRetornoRequest request)
+    private static decimal CargoRetornado(JObject resumen, string tipoOriginal, string campoExportacion,
+        string campoTotal, decimal sumaItems, decimal proporcion)
     {
-        var lineas = string.Join(";", request.Lineas.OrderBy(x => x.NumeroItemOriginal).Select(x => $"{x.NumeroItemOriginal}:{x.Cantidad:0.########}:{x.PrecioUnitario:0.########}"));
-        var material = $"ERET|{request.FacturaOriginalId}|{request.TipoRetorno}|{request.Motivo.Trim()}|{lineas}";
+        if (sumaItems != 0m) return Redondear2(sumaItems);
+        var campo = tipoOriginal == "11" && resumen[campoExportacion] is { Type: not JTokenType.Null }
+            ? campoExportacion : campoTotal;
+        return Redondear2(Numero(resumen, campo) * proporcion);
+    }
+
+    private static string PrefijoOperacion(Guid operacionId) => $"18:{operacionId:N}:";
+
+    private static string ClaveIdempotencia(DteRetornoRequest request) =>
+        PrefijoOperacion(request.OperacionId) + HashContenido(request);
+
+    private static string HashContenido(DteRetornoRequest request)
+    {
+        // JSON canónico evita ambigüedad por separadores y por cultura (coma/punto).
+        var material = new JObject
+        {
+            ["original"] = request.FacturaOriginalId, ["tipo"] = request.TipoRetorno, ["motivo"] = request.Motivo.Trim(),
+            ["lineas"] = new JArray(request.Lineas.OrderBy(x => x.NumeroItemOriginal).Select(x => new JObject
+            {
+                ["item"] = x.NumeroItemOriginal,
+                ["cantidad"] = x.Cantidad.ToString("0.########", CultureInfo.InvariantCulture),
+                ["precio"] = x.PrecioUnitario?.ToString("0.########", CultureInfo.InvariantCulture)
+            }))
+        }.ToString(Formatting.None);
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(material)));
     }
+
+    private static void ValidarContenidoOperacion(string persistida, string solicitada)
+    {
+        if (!string.Equals(persistida, solicitada, StringComparison.Ordinal))
+            throw new InvalidOperationException("El identificador de operación ya fue utilizado con un contenido distinto. Para otro retorno abra un nuevo formulario.");
+    }
+
     private static DteRetornoResultado ResultadoExistente(Factura x) => new(x.FacturaId, x.CodigoGeneracion, x.NumeroControl,
-        x.EstadoTransmision == DteEstados.Aceptado, x.EstadoTransmision, x.AmbienteFiscal ?? string.Empty, x.SelloRecepcion,
-        x.EstadoTransmision == DteEstados.Aceptado ? null : x.RespuestaHacienda);
+        DteReservaReglas.EsOriginalAceptadoVigente(x), DteReservaReglas.EsOriginalAceptadoVigente(x) ? DteEstados.Aceptado : x.EstadoTransmision,
+        x.AmbienteFiscal ?? string.Empty, x.SelloRecepcion,
+        DteReservaReglas.EsOriginalAceptadoVigente(x) ? null : x.RespuestaHacienda);
 }

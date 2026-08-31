@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using SRAUMOAR.Entidades.FacturacionElectronica;
@@ -48,136 +49,138 @@ public sealed class DteTransmisionService : IDteTransmisionService
 
     public async Task<DteTransmisionResult> TransmitirAsync(DteTransmisionRequest request, CancellationToken cancellationToken = default)
     {
-        var tipoSolicitado = request.TipoDte.Trim();
         var ambienteDocumento = ExtraerAmbienteDocumento(request.Json);
-        var configuracion = tipoSolicitado is DteTipos.NotaCredito or DteTipos.NotaDebito or DteTipos.EventoRetorno
-            ? await _configuracionService.ObtenerAsync(ambienteDocumento, cancellationToken)
-            : await _configuracionService.ObtenerActivaAsync(cancellationToken);
-        if (!configuracion.Entidad.Habilitado)
-            throw new InvalidOperationException($"El ambiente fiscal {configuracion.Entidad.AmbienteFiscal} está deshabilitado.");
-        _jsonFactory.ValidarDocumento(request.Json, configuracion.Entidad.AmbienteFiscal, request.TipoDte);
-        var tipoDte = _jsonFactory.ObtenerTipoCanonico(request.TipoDte);
-        var codigoJson = Newtonsoft.Json.Linq.JObject.Parse(request.Json)["identificacion"]?.Value<string>("codigoGeneracion");
-        if (!string.Equals(codigoJson, request.CodigoGeneracion, StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("El código de generación del request no coincide con el JSON DTE.");
-
         var transmision = await _contexto.DteTransmisiones
             .AsNoTracking()
             .SingleOrDefaultAsync(x => x.CodigoGeneracion == request.CodigoGeneracion
                 && x.TipoOperacion == "EMISION"
-                && x.AmbienteFiscal == configuracion.Entidad.AmbienteFiscal, cancellationToken);
+                && x.AmbienteFiscal == ambienteDocumento, cancellationToken);
         if (transmision is null)
         {
-            transmision = new DteTransmision
+            // INSERT parametrizado y actualizaciones por clave: nunca guardar ni desconectar
+            // las facturas/reservas pendientes que pertenecen al contexto del llamador.
+            try
             {
-                FacturaId = request.FacturaId,
-                TipoOperacion = "EMISION",
-                AmbienteFiscal = configuracion.Entidad.AmbienteFiscal,
-                CodigoGeneracion = request.CodigoGeneracion,
-                JsonEnviado = request.Json,
-                Estado = DteEstados.Preparado,
-                FechaInicio = DateTime.UtcNow
-            };
-            _contexto.DteTransmisiones.Add(transmision);
-            try { await _contexto.SaveChangesAsync(cancellationToken); }
-            catch (DbUpdateException)
-            {
-                foreach (var entry in _contexto.ChangeTracker.Entries<DteTransmision>().ToArray())
-                    entry.State = EntityState.Detached;
-                transmision = await _contexto.DteTransmisiones.AsNoTracking().SingleAsync(x =>
-                    x.CodigoGeneracion == request.CodigoGeneracion && x.TipoOperacion == "EMISION" &&
-                    x.AmbienteFiscal == configuracion.Entidad.AmbienteFiscal, cancellationToken);
+                await _contexto.Database.ExecuteSqlInterpolatedAsync($@"
+                    INSERT INTO [DteTransmisiones]
+                        ([FacturaId], [TipoOperacion], [AmbienteFiscal], [CodigoGeneracion], [JsonEnviado], [Estado], [FechaInicio], [Intentos])
+                    VALUES ({request.FacturaId}, {"EMISION"}, {ambienteDocumento}, {request.CodigoGeneracion},
+                        {request.Json}, {DteEstados.Preparado}, {DateTime.UtcNow}, {0})", cancellationToken);
             }
+            catch (SqlException ex) when (ex.Number is 2601 or 2627) { /* Otro proceso registró la misma clave. */ }
+            transmision = await _contexto.DteTransmisiones.AsNoTracking().SingleAsync(x =>
+                x.CodigoGeneracion == request.CodigoGeneracion && x.TipoOperacion == "EMISION" &&
+                x.AmbienteFiscal == ambienteDocumento, cancellationToken);
         }
 
+        if (!PuedeReintentar(transmision.Estado)) return ConvertirResultado(transmision);
         var reclamada = await _contexto.DteTransmisiones.Where(x => x.Id == transmision.Id &&
-                x.Estado == DteEstados.Preparado)
+                x.Estado == DteEstados.Preparado && x.Intentos == transmision.Intentos)
             .ExecuteUpdateAsync(x => x
                 .SetProperty(t => t.Estado, DteEstados.Enviado)
                 .SetProperty(t => t.FechaInicio, DateTime.UtcNow)
                 .SetProperty(t => t.Intentos, t => t.Intentos + 1), cancellationToken);
-        foreach (var entry in _contexto.ChangeTracker.Entries<DteTransmision>().Where(x => x.Entity.Id == transmision.Id).ToArray())
-            entry.State = EntityState.Detached;
-        transmision = await _contexto.DteTransmisiones.SingleAsync(x => x.Id == transmision.Id, cancellationToken);
         if (reclamada == 0)
-            return new DteTransmisionResult(transmision.Estado == DteEstados.Aceptado, transmision.Estado,
-                transmision.SelloRecepcion, transmision.Respuesta ?? string.Empty, transmision.Intentos,
-                transmision.AmbienteFiscal, transmision.Error);
-
-        try
         {
-            var respuesta = await EjecutarEmisionAsync(configuracion, request.Json, tipoDte, request.Version, request.CodigoGeneracion, request.NumeroControl, request.CorreoReceptor, cancellationToken);
-            transmision.SelloRecepcion = respuesta.SelloRecepcion;
-            transmision.Respuesta = respuesta.Respuesta;
-            transmision.Estado = respuesta.Exito ? DteEstados.Aceptado : respuesta.RechazoFiscal ? DteEstados.Rechazado : DteEstados.Incierto;
-            transmision.Error = respuesta.Error;
-            transmision.FechaFin = DateTime.UtcNow;
-            await _contexto.SaveChangesAsync(cancellationToken);
-            return new DteTransmisionResult(respuesta.Exito, transmision.Estado, respuesta.SelloRecepcion, respuesta.Respuesta, transmision.Intentos, configuracion.Entidad.AmbienteFiscal, respuesta.Error);
+            transmision = await _contexto.DteTransmisiones.AsNoTracking().SingleAsync(x => x.Id == transmision.Id, cancellationToken);
+            return ConvertirResultado(transmision);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error transmitiendo DTE {CodigoGeneracion} en ambiente fiscal {AmbienteFiscal}", request.CodigoGeneracion, configuracion.Entidad.AmbienteFiscal);
-            transmision.Estado = DteEstados.Incierto;
-            transmision.Error = ex.Message;
-            transmision.FechaFin = DateTime.UtcNow;
-            await _contexto.SaveChangesAsync(cancellationToken);
-            return new DteTransmisionResult(false, DteEstados.Incierto, null, "", transmision.Intentos, configuracion.Entidad.AmbienteFiscal, ex.Message);
-        }
+        transmision.Intentos++;
+        var resultado = await EvaluarEnvioAsync(() => PrepararYEnviarDocumentoAsync(request, transmision, cancellationToken),
+            ambienteDocumento, transmision.Intentos);
+        // Una cancelación del request no debe impedir liberar una reserva PRE ni registrar incertidumbre POST.
+        using var cierre = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        await _contexto.DteTransmisiones.Where(x => x.Id == transmision.Id && x.Estado == DteEstados.Enviado && x.Intentos == transmision.Intentos)
+            .ExecuteUpdateAsync(x => x.SetProperty(t => t.Estado, resultado.Estado)
+                .SetProperty(t => t.SelloRecepcion, resultado.SelloRecepcion)
+                .SetProperty(t => t.Respuesta, resultado.Respuesta).SetProperty(t => t.Error, resultado.Error)
+                .SetProperty(t => t.FechaFin, DateTime.UtcNow), cierre.Token);
+        return resultado;
     }
 
-    public async Task<DteEventoResult> TransmitirContingenciaAsync(int facturaId, string jsonEvento, CancellationToken cancellationToken = default)
+    public Task<DteEventoResult> TransmitirContingenciaAsync(int facturaId, string jsonEvento, CancellationToken cancellationToken = default)
+        => TransmitirEventoAsync(facturaId, jsonEvento, "CONTINGENCIA", cancellationToken);
+
+    public Task<DteEventoResult> TransmitirInvalidacionAsync(int facturaId, string jsonInvalidacion, CancellationToken cancellationToken = default)
+        => TransmitirEventoAsync(facturaId, jsonInvalidacion, "INVALIDACION", cancellationToken);
+
+    private async Task<DteEventoResult> TransmitirEventoAsync(int facturaId, string json, string tipo, CancellationToken cancellationToken)
     {
-        var ambienteFiscal = ExtraerAmbienteEvento(jsonEvento);
-        var configuracion = await _configuracionService.ObtenerAsync(ambienteFiscal, cancellationToken);
-        var codigoEvento = ExtraerCodigoEvento(jsonEvento);
-        var existente = await ObtenerEventoExistenteAsync(codigoEvento, "CONTINGENCIA", ambienteFiscal, cancellationToken);
-        if (existente is not null) return ConvertirResultadoEvento(existente);
-        var evento = await RegistrarEventoAsync(facturaId, "CONTINGENCIA", codigoEvento, jsonEvento, ambienteFiscal, cancellationToken);
-        try
-        {
-            var respuesta = await EjecutarEventoAsync(configuracion, jsonEvento, "CONTINGENCIA", cancellationToken);
-            evento.SelloRecepcion = respuesta.SelloRecepcion;
-            evento.Respuesta = respuesta.Respuesta;
-            evento.Estado = respuesta.Exito ? DteEstados.Aceptado : respuesta.RechazoFiscal ? DteEstados.Rechazado : DteEstados.Incierto;
-            evento.Error = respuesta.Error;
-            await _contexto.SaveChangesAsync(cancellationToken);
-            return new DteEventoResult(respuesta.Exito, evento.Estado, respuesta.SelloRecepcion, respuesta.Respuesta, ambienteFiscal, respuesta.Error);
-        }
-        catch (Exception ex)
-        {
-            evento.Estado = DteEstados.Incierto;
-            evento.Error = ex.Message;
-            await _contexto.SaveChangesAsync(cancellationToken);
-            return new DteEventoResult(false, evento.Estado, null, "", ambienteFiscal, ex.Message);
-        }
+        var ambienteFiscal = ExtraerAmbienteEvento(json);
+        var codigoEvento = ExtraerCodigoEvento(json);
+        var evento = await ObtenerEventoExistenteAsync(codigoEvento, tipo, ambienteFiscal, cancellationToken)
+            ?? await RegistrarEventoAsync(facturaId, tipo, codigoEvento, json, ambienteFiscal, cancellationToken);
+        if (!PuedeReintentar(evento.Estado)) return ConvertirResultadoEvento(evento);
+        var reclamada = await _contexto.DteEventos.Where(x => x.Id == evento.Id && x.Estado == DteEstados.Preparado)
+            .ExecuteUpdateAsync(x => x.SetProperty(t => t.Estado, DteEstados.Enviado), cancellationToken);
+        if (reclamada == 0)
+            return ConvertirResultadoEvento((await ObtenerEventoExistenteAsync(codigoEvento, tipo, ambienteFiscal, cancellationToken))!);
+        var resultado = await EvaluarEnvioAsync(() => PrepararYEnviarEventoAsync(facturaId, json, tipo, evento, cancellationToken), ambienteFiscal, 1);
+        using var cierre = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        await _contexto.DteEventos.Where(x => x.Id == evento.Id && x.Estado == DteEstados.Enviado)
+            .ExecuteUpdateAsync(x => x.SetProperty(t => t.Estado, resultado.Estado)
+                .SetProperty(t => t.SelloRecepcion, resultado.SelloRecepcion)
+                .SetProperty(t => t.Respuesta, resultado.Respuesta).SetProperty(t => t.Error, resultado.Error), cierre.Token);
+        return new(resultado.Aceptado, resultado.Estado, resultado.SelloRecepcion, resultado.Respuesta, ambienteFiscal, resultado.Error);
     }
 
-    public async Task<DteEventoResult> TransmitirInvalidacionAsync(int facturaId, string jsonInvalidacion, CancellationToken cancellationToken = default)
+    private async Task<HaciendaRespuesta> PrepararYEnviarDocumentoAsync(DteTransmisionRequest request, DteTransmision transmision, CancellationToken cancellationToken)
     {
-        var ambienteFiscal = ExtraerAmbienteEvento(jsonInvalidacion);
-        var configuracion = await _configuracionService.ObtenerAsync(ambienteFiscal, cancellationToken);
-        var codigoEvento = ExtraerCodigoEvento(jsonInvalidacion);
-        var existente = await ObtenerEventoExistenteAsync(codigoEvento, "INVALIDACION", ambienteFiscal, cancellationToken);
-        if (existente is not null) return ConvertirResultadoEvento(existente);
-        var evento = await RegistrarEventoAsync(facturaId, "INVALIDACION", codigoEvento, jsonInvalidacion, ambienteFiscal, cancellationToken);
+        ConfiguracionFeActiva configuracion;
+        string tipoDte;
         try
         {
-            var respuesta = await EjecutarEventoAsync(configuracion, jsonInvalidacion, "INVALIDACION", cancellationToken);
-            evento.SelloRecepcion = respuesta.SelloRecepcion;
-            evento.Respuesta = respuesta.Respuesta;
-            evento.Estado = respuesta.Exito ? DteEstados.Aceptado : respuesta.RechazoFiscal ? DteEstados.Rechazado : DteEstados.Incierto;
-            evento.Error = respuesta.Error;
-            await _contexto.SaveChangesAsync(cancellationToken);
-            return new DteEventoResult(respuesta.Exito, evento.Estado, respuesta.SelloRecepcion, respuesta.Respuesta, ambienteFiscal, respuesta.Error);
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!Newtonsoft.Json.Linq.JToken.DeepEquals(
+                Newtonsoft.Json.Linq.JObject.Parse(transmision.JsonEnviado), Newtonsoft.Json.Linq.JObject.Parse(request.Json)))
+                throw new InvalidOperationException("El reproceso debe conservar la factura y el JSON originalmente reservados.");
+            configuracion = await ObtenerConfiguracionDocumentoAsync(request, cancellationToken);
+            tipoDte = _jsonFactory.ObtenerTipoCanonico(request.TipoDte);
+            await VincularFacturaAsync(request, transmision, cancellationToken);
         }
-        catch (Exception ex)
+        catch (Exception ex) { throw new DteEnvioNoRealizadoException(ex); }
+        return await EjecutarEmisionAsync(configuracion, request.Json, tipoDte, request.Version, request.CodigoGeneracion,
+            request.NumeroControl, request.CorreoReceptor, cancellationToken);
+    }
+
+    private async Task VincularFacturaAsync(DteTransmisionRequest request, DteTransmision transmision, CancellationToken cancellationToken)
+    {
+        if (transmision.FacturaId == request.FacturaId) return;
+        if (transmision.FacturaId.HasValue || !request.FacturaId.HasValue)
+            throw new InvalidOperationException("No se permite cambiar la factura vinculada a la transmisión.");
+        // La primera venta puede transmitirse antes de crear Factura. El enlace tardío
+        // requiere identidad fiscal y documento persistido iguales, no sólo el id recibido.
+        var factura = await _contexto.Facturas.AsNoTracking()
+            .Where(x => x.FacturaId == request.FacturaId.Value)
+            .Select(x => new { x.CodigoGeneracion, x.AmbienteFiscal, x.JsonDte })
+            .SingleOrDefaultAsync(cancellationToken);
+        if (factura is null || !CoincideFacturaPersistida(request, factura.CodigoGeneracion, factura.AmbienteFiscal, factura.JsonDte))
+            throw new InvalidOperationException("La factura persistida no coincide con código, ambiente y JSON de la transmisión.");
+        var vinculada = await _contexto.DteTransmisiones.Where(x => x.Id == transmision.Id && x.FacturaId == null &&
+                x.Estado == DteEstados.Enviado && x.Intentos == transmision.Intentos)
+            .ExecuteUpdateAsync(x => x.SetProperty(t => t.FacturaId, request.FacturaId), cancellationToken);
+        if (vinculada != 1) throw new InvalidOperationException("No se pudo vincular la factura a la reserva exclusiva.");
+        transmision.FacturaId = request.FacturaId;
+    }
+
+    private static bool CoincideFacturaPersistida(DteTransmisionRequest request, string? codigo, string? ambiente, string? json)
+        => string.Equals(codigo, request.CodigoGeneracion, StringComparison.OrdinalIgnoreCase) &&
+           ambiente == ExtraerAmbienteDocumento(request.Json) && !string.IsNullOrWhiteSpace(json) &&
+           Newtonsoft.Json.Linq.JToken.DeepEquals(Newtonsoft.Json.Linq.JObject.Parse(json), Newtonsoft.Json.Linq.JObject.Parse(request.Json));
+
+    private async Task<HaciendaRespuesta> PrepararYEnviarEventoAsync(int facturaId, string json, string tipo, DteEvento evento, CancellationToken cancellationToken)
+    {
+        ConfiguracionFeActiva configuracion;
+        try
         {
-            evento.Estado = DteEstados.Incierto;
-            evento.Error = ex.Message;
-            await _contexto.SaveChangesAsync(cancellationToken);
-            return new DteEventoResult(false, evento.Estado, null, "", ambienteFiscal, ex.Message);
+            cancellationToken.ThrowIfCancellationRequested();
+            if (evento.FacturaId != facturaId || !Newtonsoft.Json.Linq.JToken.DeepEquals(
+                Newtonsoft.Json.Linq.JObject.Parse(evento.JsonEvento), Newtonsoft.Json.Linq.JObject.Parse(json)))
+                throw new InvalidOperationException("El reproceso debe conservar la factura y el JSON del evento reservado.");
+            configuracion = await _configuracionService.ObtenerAsync(ExtraerAmbienteEvento(json), cancellationToken);
         }
+        catch (Exception ex) { throw new DteEnvioNoRealizadoException(ex); }
+        return await EjecutarEventoAsync(configuracion, json, tipo, cancellationToken);
     }
 
     private async Task<HaciendaRespuesta> EjecutarEmisionAsync(ConfiguracionFeActiva configuracion, string json, string tipoDte, int version, string codigoGeneracion, string numeroControl, string? correo, CancellationToken cancellationToken)
@@ -185,21 +188,59 @@ public sealed class DteTransmisionService : IDteTransmisionService
         if (configuracion.Entidad.UsarApiExterna)
             return await EnviarApiExternaAsync(configuracion, json, tipoDte, version, codigoGeneracion, numeroControl, correo, cancellationToken);
 
-        var jsonFirmado = await FirmarAsync(configuracion, json, cancellationToken);
-        var token = await _tokenService.ObtenerAsync(configuracion, cancellationToken);
-        return await _haciendaClient.EnviarDteAsync(configuracion, token, jsonFirmado, tipoDte, version, codigoGeneracion, cancellationToken);
+        return await EnviarFirmadoAsync(configuracion, json,
+            (token, firmado) => _haciendaClient.EnviarDteAsync(configuracion, token, firmado, tipoDte, version, codigoGeneracion, cancellationToken), cancellationToken);
     }
 
     private async Task<HaciendaRespuesta> EjecutarEventoAsync(ConfiguracionFeActiva configuracion, string json, string tipoEvento, CancellationToken cancellationToken)
     {
+        try
+        {
+            var version = ExtraerVersion(json);
+            ValidarConfiguracion(configuracion, ExtraerAmbienteEvento(json));
+            DteSchemaValidator.Validar(json, tipoEvento.ToLowerInvariant(), version);
+        }
+        catch (Exception ex) { throw new DteEnvioNoRealizadoException(ex); }
         if (configuracion.Entidad.UsarApiExterna)
             return await EnviarApiExternaEventoAsync(configuracion, json, tipoEvento, cancellationToken);
 
-        var jsonFirmado = await FirmarAsync(configuracion, json, cancellationToken);
-        var token = await _tokenService.ObtenerAsync(configuracion, cancellationToken);
-        return tipoEvento == "INVALIDACION"
-            ? await _haciendaClient.EnviarInvalidacionAsync(configuracion, token, jsonFirmado, ExtraerCodigoEvento(json), cancellationToken)
-            : await _haciendaClient.EnviarContingenciaAsync(configuracion, token, jsonFirmado, cancellationToken);
+        return await EnviarFirmadoAsync(configuracion, json, (token, firmado) => tipoEvento == "INVALIDACION"
+            ? _haciendaClient.EnviarInvalidacionAsync(configuracion, token, firmado, ExtraerCodigoEvento(json), cancellationToken)
+            : _haciendaClient.EnviarContingenciaAsync(configuracion, token, firmado, cancellationToken), cancellationToken);
+    }
+
+    private async Task<HaciendaRespuesta> EnviarFirmadoAsync(ConfiguracionFeActiva configuracion, string json,
+        Func<string, string, Task<HaciendaRespuesta>> enviar, CancellationToken cancellationToken)
+    {
+        string firmado, token;
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            firmado = await FirmarAsync(configuracion, json, cancellationToken);
+            token = await _tokenService.ObtenerAsync(configuracion, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+        catch (Exception ex) { throw new DteEnvioNoRealizadoException(ex); }
+
+        try { return await enviar(token, firmado); }
+        catch (HaciendaNoAutorizadoException)
+        {
+            // Sólo un 401 explícito permite repetir el POST; nunca errores de red, 5xx o respuestas ambiguas.
+            try
+            {
+                if (_tokenService is TokenHaciendaService servicio)
+                    token = await servicio.RenovarTrasRechazoAsync(configuracion, token, cancellationToken);
+                else
+                {
+                    _tokenService.Invalidar(configuracion.Entidad.AmbienteFiscal, configuracion.Entidad.UsuarioHacienda);
+                    token = await _tokenService.ObtenerAsync(configuracion, cancellationToken);
+                }
+                cancellationToken.ThrowIfCancellationRequested();
+            }
+            catch (Exception ex) { throw new DteEnvioNoRealizadoException(ex); }
+            try { return await enviar(token, firmado); }
+            catch (HaciendaNoAutorizadoException ex) { throw new DteEnvioNoRealizadoException(ex); }
+        }
     }
 
     private async Task<string> FirmarAsync(ConfiguracionFeActiva configuracion, string json, CancellationToken cancellationToken)
@@ -208,14 +249,29 @@ public sealed class DteTransmisionService : IDteTransmisionService
         {
             if (string.IsNullOrWhiteSpace(configuracion.Entidad.UrlFirmador))
                 throw new InvalidOperationException("El firmador externo no tiene URL configurada.");
+            if (string.IsNullOrWhiteSpace(configuracion.PasswordCertificado))
+                throw new InvalidOperationException("Falta contraseña de la clave privada para el firmador externo.");
+            using var dte = JsonDocument.Parse(json);
+            if (dte.RootElement.ValueKind != JsonValueKind.Object)
+                throw new InvalidOperationException("dteJson debe ser un objeto JSON.");
             using var client = _httpClientFactory.CreateClient("FirmadorDte");
-            using var response = await client.PostAsJsonAsync(configuracion.Entidad.UrlFirmador.TrimEnd('/') + "/firmardocumento/", new { nit = configuracion.Entidad.NitEmisor, activo = true, documento = json }, cancellationToken);
+            using var response = await client.PostAsJsonAsync(HaciendaDteClient.ValidarUrl(configuracion.Entidad.UrlFirmador.TrimEnd('/') + "/firmardocumento/",
+                configuracion.Entidad.AmbienteFiscal, permitirHttpLoopback: true),
+                new { nit = configuracion.Entidad.NitEmisor, activo = true, passwordPri = configuracion.PasswordCertificado, dteJson = dte.RootElement }, cancellationToken);
             var body = await response.Content.ReadAsStringAsync(cancellationToken);
             if (!response.IsSuccessStatusCode) throw new HttpRequestException("El firmador externo rechazó el documento.");
             using var document = JsonDocument.Parse(body);
-            return document.RootElement.TryGetProperty("body", out var bodyNode) && bodyNode.TryGetProperty("documento", out var signed)
-                ? signed.GetString() ?? throw new InvalidOperationException("El firmador externo no devolvió documento.")
-                : document.RootElement.TryGetProperty("documento", out var rootSigned) ? rootSigned.GetString() ?? throw new InvalidOperationException("El firmador externo no devolvió documento.") : throw new InvalidOperationException("Respuesta inválida del firmador externo.");
+            if (document.RootElement.ValueKind != JsonValueKind.Object ||
+                (document.RootElement.TryGetProperty("status", out var status) &&
+                 (status.ValueKind != JsonValueKind.String || !string.Equals(status.GetString(), "OK", StringComparison.OrdinalIgnoreCase))) ||
+                !document.RootElement.TryGetProperty("body", out var bodyNode) || bodyNode.ValueKind != JsonValueKind.String)
+                throw new InvalidOperationException("Respuesta inválida del firmador externo: se esperaba body como JWS.");
+            var firmado = bodyNode.GetString()!.Trim();
+            var partes = firmado.Split('.');
+            if (partes.Length != 3 || partes.Any(p => p.Length == 0 || p.Any(c =>
+                !(char.IsAsciiLetterOrDigit(c) || c is '-' or '_'))))
+                throw new InvalidOperationException("El firmador externo no devolvió un JWS compacto válido.");
+            return firmado;
         }
 
         if (string.IsNullOrWhiteSpace(configuracion.Entidad.RutaCertificado) || string.IsNullOrWhiteSpace(configuracion.PasswordCertificado))
@@ -225,11 +281,7 @@ public sealed class DteTransmisionService : IDteTransmisionService
 
     private async Task<HaciendaRespuesta> EnviarApiExternaAsync(ConfiguracionFeActiva configuracion, string json, string tipoDte, int version, string codigoGeneracion, string numeroControl, string? correo, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(configuracion.Entidad.UrlApiExterna))
-            throw new InvalidOperationException("La API externa está habilitada pero no tiene URL configurada.");
-        using var client = _httpClientFactory.CreateClient("ApiExternaDte");
-        var url = configuracion.Entidad.UrlApiExterna.TrimEnd('/') + "/api/procesar-dte";
-        using var response = await client.PostAsJsonAsync(url, new
+        return await PostApiExternaAsync(configuracion, "procesar-dte", new
         {
             Usuario = configuracion.Entidad.UsuarioHacienda,
             Password = configuracion.CredencialApi,
@@ -245,18 +297,12 @@ public sealed class DteTransmisionService : IDteTransmisionService
             sincorreos = 1,
             UsarFirmadorInterno = !configuracion.Entidad.UsarFirmadorExterno
         }, cancellationToken);
-        var body = await response.Content.ReadAsStringAsync(cancellationToken);
-        if (!response.IsSuccessStatusCode) return new HaciendaRespuesta(false, null, body, "La API externa no confirmó la recepción del DTE.", HaciendaDteClient.EsRechazoFiscalExplicito(body));
-        return ParsearRespuesta(body);
     }
 
     private async Task<HaciendaRespuesta> EnviarApiExternaEventoAsync(ConfiguracionFeActiva configuracion, string json, string tipoEvento, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(configuracion.Entidad.UrlApiExterna))
-            throw new InvalidOperationException("La API externa está habilitada pero no tiene URL configurada.");
-        using var client = _httpClientFactory.CreateClient("ApiExternaDte");
         var endpoint = tipoEvento == "INVALIDACION" ? "anular-dte" : "contingencia";
-        using var response = await client.PostAsJsonAsync(configuracion.Entidad.UrlApiExterna.TrimEnd('/') + "/api/" + endpoint, new
+        return await PostApiExternaAsync(configuracion, endpoint, new
         {
             Usuario = configuracion.Entidad.UsuarioHacienda,
             Password = configuracion.CredencialApi,
@@ -266,25 +312,111 @@ public sealed class DteTransmisionService : IDteTransmisionService
             PasswordPrivado = configuracion.PasswordCertificado,
             UsarFirmadorInterno = !configuracion.Entidad.UsarFirmadorExterno
         }, cancellationToken);
-        var body = await response.Content.ReadAsStringAsync(cancellationToken);
-        if (!response.IsSuccessStatusCode) return new HaciendaRespuesta(false, null, body, "La API externa no confirmó la recepción del evento.", HaciendaDteClient.EsRechazoFiscalExplicito(body));
+    }
+
+    private async Task<HaciendaRespuesta> PostApiExternaAsync(ConfiguracionFeActiva configuracion, string endpoint, object payload, CancellationToken cancellationToken)
+    {
+        HttpClient? client = null;
+        HttpRequestMessage? request = null;
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (string.IsNullOrWhiteSpace(configuracion.Entidad.UrlApiExterna))
+                throw new InvalidOperationException("La API externa está habilitada pero no tiene URL configurada.");
+            var url = HaciendaDteClient.ValidarUrl(configuracion.Entidad.UrlApiExterna.TrimEnd('/') + "/api/" + endpoint, configuracion.Entidad.AmbienteFiscal);
+            client = _httpClientFactory.CreateClient("ApiExternaDte");
+            request = new HttpRequestMessage(HttpMethod.Post, url)
+            {
+                Content = new StringContent(System.Text.Json.JsonSerializer.Serialize(payload,
+                    new JsonSerializerOptions(JsonSerializerDefaults.Web)), Encoding.UTF8, "application/json")
+            };
+        }
+        catch (Exception ex)
+        {
+            request?.Dispose(); client?.Dispose();
+            throw new DteEnvioNoRealizadoException(ex);
+        }
+        using var clientLifetime = client;
+        using var requestLifetime = request;
+        using var envio = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        envio.CancelAfter(client.Timeout);
+        using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, envio.Token);
+        var body = await response.Content.ReadAsStringAsync(envio.Token);
+        if (!response.IsSuccessStatusCode)
+            return new(false, null, body, "La API externa no confirmó la recepción.", HaciendaDteClient.EsRechazoFiscalExplicito(body));
         return ParsearRespuesta(body);
     }
 
     private async Task<DteEvento> RegistrarEventoAsync(int facturaId, string tipo, string codigo, string json, string ambiente, CancellationToken cancellationToken)
     {
-        var evento = new DteEvento
+        try
         {
-            FacturaId = facturaId,
-            TipoEvento = tipo,
-            AmbienteFiscal = ambiente,
-            CodigoEvento = codigo,
-            JsonEvento = json,
-            Estado = DteEstados.Preparado
-        };
-        _contexto.DteEventos.Add(evento);
-        await _contexto.SaveChangesAsync(cancellationToken);
-        return evento;
+            await _contexto.Database.ExecuteSqlInterpolatedAsync($@"
+                INSERT INTO [DteEventos]
+                    ([FacturaId], [TipoEvento], [AmbienteFiscal], [CodigoEvento], [JsonEvento], [Estado], [FechaCreacion])
+                VALUES ({facturaId}, {tipo}, {ambiente}, {codigo}, {json}, {DteEstados.Preparado}, {DateTime.UtcNow})", cancellationToken);
+        }
+        catch (SqlException ex) when (ex.Number is 2601 or 2627) { }
+        return (await ObtenerEventoExistenteAsync(codigo, tipo, ambiente, cancellationToken))!;
+    }
+
+    private static bool PuedeReintentar(string estado) => estado == DteEstados.Preparado;
+
+    private static DteTransmisionResult ConvertirResultado(DteTransmision transmision)
+        => new(transmision.Estado == DteEstados.Aceptado, transmision.Estado, transmision.SelloRecepcion,
+            transmision.Respuesta ?? string.Empty, transmision.Intentos, transmision.AmbienteFiscal, transmision.Error);
+
+    private async Task<DteTransmisionResult> EvaluarEnvioAsync(Func<Task<HaciendaRespuesta>> enviar, string ambiente, int intentos)
+    {
+        try
+        {
+            var respuesta = await enviar();
+            var estado = respuesta.Exito ? DteEstados.Aceptado : respuesta.RechazoFiscal ? DteEstados.Rechazado : DteEstados.Incierto;
+            return new(respuesta.Exito, estado, respuesta.SelloRecepcion, respuesta.Respuesta, intentos, ambiente, respuesta.Error);
+        }
+        catch (Exception ex)
+        {
+            var estado = ex is DteEnvioNoRealizadoException ? DteEstados.Preparado : DteEstados.Incierto;
+            _logger.LogWarning("Transporte DTE finalizó en {Estado} en ambiente {AmbienteFiscal}", estado, ambiente);
+            return new(false, estado, null, string.Empty, intentos, ambiente, ex.Message);
+        }
+    }
+
+    private async Task<ConfiguracionFeActiva> ObtenerConfiguracionDocumentoAsync(DteTransmisionRequest request, CancellationToken cancellationToken)
+    {
+        ValidarIdentificacion(request);
+        var ambiente = ExtraerAmbienteDocumento(request.Json);
+        var configuracion = await _configuracionService.ObtenerAsync(ambiente, cancellationToken);
+        ValidarConfiguracion(configuracion, ambiente);
+        _jsonFactory.ValidarDocumento(request.Json, ambiente, request.TipoDte);
+        return configuracion;
+    }
+
+    private static void ValidarConfiguracion(ConfiguracionFeActiva configuracion, string ambiente)
+    {
+        if (!configuracion.Entidad.Habilitado || configuracion.Entidad.AmbienteFiscal != ambiente)
+            throw new InvalidOperationException($"No hay configuración habilitada para el ambiente del JSON {ambiente}.");
+    }
+
+    private static void ValidarIdentificacion(DteTransmisionRequest request)
+    {
+        var identificacion = Newtonsoft.Json.Linq.JObject.Parse(request.Json)["identificacion"];
+        var codigo = identificacion?.Value<string>("codigoGeneracion");
+        if (!string.Equals(codigo, request.CodigoGeneracion, StringComparison.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(codigo))
+            throw new InvalidOperationException("El código de generación del request no coincide con el JSON DTE.");
+        if (ExtraerVersion(request.Json) != request.Version)
+            throw new InvalidOperationException("La versión de transmisión no coincide con identificacion.version.");
+    }
+
+    private static int ExtraerVersion(string json)
+    {
+        using var document = JsonDocument.Parse(json);
+        if (document.RootElement.ValueKind != JsonValueKind.Object ||
+            !document.RootElement.TryGetProperty("identificacion", out var identificacion) || identificacion.ValueKind != JsonValueKind.Object ||
+            !identificacion.TryGetProperty("version", out var version) || version.ValueKind != JsonValueKind.Number ||
+            !version.TryGetInt32(out var numero) || numero <= 0)
+            throw new InvalidOperationException("El JSON no contiene identificacion.version entera positiva.");
+        return numero;
     }
 
     private Task<DteEvento?> ObtenerEventoExistenteAsync(string codigo, string tipo, string ambiente, CancellationToken cancellationToken)
@@ -326,10 +458,16 @@ public sealed class DteTransmisionService : IDteTransmisionService
         try
         {
             using var document = JsonDocument.Parse(body);
-            var sello = document.RootElement.TryGetProperty("selloRecibido", out var direct) ? direct.GetString() : null;
-            if (sello is null && document.RootElement.TryGetProperty("resultado", out var resultado) && resultado.TryGetProperty("selloRecibido", out var nested)) sello = nested.GetString();
-            return new HaciendaRespuesta(!string.IsNullOrWhiteSpace(sello), sello, body, sello is null ? "No se recibió sello." : null,
-                sello is null && HaciendaDteClient.EsRechazoFiscalExplicito(body));
+            var root = document.RootElement;
+            string? sello = null;
+            if (root.ValueKind == JsonValueKind.Object)
+            {
+                if (root.TryGetProperty("selloRecibido", out var direct) && direct.ValueKind == JsonValueKind.String) sello = direct.GetString();
+                if (string.IsNullOrWhiteSpace(sello) && root.TryGetProperty("resultado", out var resultado) && resultado.ValueKind == JsonValueKind.Object &&
+                    resultado.TryGetProperty("selloRecibido", out var nested) && nested.ValueKind == JsonValueKind.String) sello = nested.GetString();
+            }
+            return new HaciendaRespuesta(!string.IsNullOrWhiteSpace(sello), sello, body, string.IsNullOrWhiteSpace(sello) ? "No se recibió sello." : null,
+                string.IsNullOrWhiteSpace(sello) && HaciendaDteClient.EsRechazoFiscalExplicito(body));
         }
         catch (System.Text.Json.JsonException ex)
         {

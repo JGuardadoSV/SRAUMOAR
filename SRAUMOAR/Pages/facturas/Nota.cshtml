@@ -42,6 +42,21 @@
         <form method="post" class="card">
             <div class="card-body">
                 <input type="hidden" asp-for="FacturaId" />
+                @if (Model.RequiereGeografia)
+                {
+                    <div class="alert alert-info">El documento histórico no contiene distrito. Seleccione la ubicación fiscal actual del receptor para esta nota; el JSON original no será modificado.</div>
+                    @foreach (var campo in new[] { ("DepartamentoReceptor", "Departamento", "CAT-012", Model.DepartamentoReceptor), ("MunicipioReceptor", "Municipio", "CAT-013", Model.MunicipioReceptor), ("DistritoReceptor", "Distrito", "CAT-008", Model.DistritoReceptor) })
+                    {
+                        <div class="mb-3">
+                            <label class="form-label" for="@(campo.Item1)Texto">@campo.Item2 del receptor</label>
+                            <div class="input-group">
+                                <input type="hidden" id="@campo.Item1" name="@campo.Item1" value="@campo.Item4" />
+                                <input class="form-control" id="@(campo.Item1)Texto" readonly value="@Model.CatalogosGeograficos.FirstOrDefault(x => x.CodigoCatalogo == campo.Item3 && x.Codigo == campo.Item4)?.Descripcion" placeholder="Seleccione en Buscar" />
+                                <button type="button" class="btn btn-outline-secondary buscar-geografia" data-target="@campo.Item1" data-catalogo="@campo.Item3">Buscar @campo.Item2.ToLowerInvariant()</button>
+                            </div>
+                        </div>
+                    }
+                }
                 <div class="mb-3">
                     <label class="form-label">Tipo de nota</label>
                     <select class="form-select" asp-for="TipoNota">
@@ -50,9 +65,9 @@
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Monto</label>
+                    <label class="form-label">Monto de la operación a ajustar</label>
                     <input class="form-control" asp-for="Monto" type="number" min="0.01" step="0.01" />
-                    <div class="form-text">Para crédito no puede superar el total original; débito permite el monto adicional solicitado.</div>
+                    <div class="form-text">Operación original: $@Model.MontoOperacionOriginal.ToString("N2"). Se conservan proporcionalmente las retenciones y percepciones; el neto a pagar puede ser diferente. El crédito no puede superar el saldo de la operación.</div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Motivo</label>
@@ -64,3 +79,39 @@
         </form>
     }
 </div>
+
+<div class="modal fade" id="geografiaNota" tabindex="-1" aria-labelledby="geografiaNotaTitulo" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
+        <div class="modal-header"><h2 class="modal-title fs-5" id="geografiaNotaTitulo">Buscar ubicación del receptor</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+        <div class="modal-body"><input class="form-control mb-3" id="buscarGeografiaNota" type="search" aria-label="Buscar por código o nombre" placeholder="Código o nombre" /><div id="resultadosGeografiaNota" class="list-group"></div></div>
+    </div></div>
+</div>
+@section Scripts {
+<script>
+(() => {
+    const datos = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CatalogosGeograficos.Select(x => new { catalogo = x.CodigoCatalogo, codigo = x.Codigo, nombre = x.Descripcion })));
+    const elemento = document.getElementById('geografiaNota'), modal = new bootstrap.Modal(elemento);
+    const buscador = document.getElementById('buscarGeografiaNota'), lista = document.getElementById('resultadosGeografiaNota');
+    let destino, catalogo;
+    document.querySelectorAll('.buscar-geografia').forEach(b => b.addEventListener('click', () => {
+        destino = b.dataset.target; catalogo = b.dataset.catalogo; buscador.value = ''; render(); modal.show();
+    }));
+    elemento.addEventListener('shown.bs.modal', () => buscador.focus());
+    buscador.addEventListener('input', render);
+    function render() {
+        lista.replaceChildren();
+        const q = buscador.value.trim().toLocaleLowerCase('es');
+        datos.filter(x => x.catalogo === catalogo && `${x.codigo} ${x.nombre}`.toLocaleLowerCase('es').includes(q)).slice(0, 100).forEach(x => {
+            const b = document.createElement('button'); b.type = 'button'; b.className = 'list-group-item list-group-item-action'; b.textContent = `${x.codigo} — ${x.nombre}`;
+            b.addEventListener('click', () => {
+                document.getElementById(destino).value = x.codigo; document.getElementById(destino + 'Texto').value = x.nombre;
+                const dependientes = destino === 'DepartamentoReceptor' ? ['MunicipioReceptor', 'DistritoReceptor'] : destino === 'MunicipioReceptor' ? ['DistritoReceptor'] : [];
+                dependientes.forEach(id => { document.getElementById(id).value = ''; document.getElementById(id + 'Texto').value = ''; });
+                modal.hide();
+            }); lista.append(b);
+        });
+        if (!lista.childElementCount) lista.textContent = 'Sin resultados. Verifique que los catálogos fiscales estén importados.';
+    }
+})();
+</script>
+}

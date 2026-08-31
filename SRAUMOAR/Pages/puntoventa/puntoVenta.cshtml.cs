@@ -24,6 +24,7 @@ namespace SRAUMOAR.Pages.puntoventa
         public FacturaViewModel Factura { get; set; } = new FacturaViewModel();
         public IReadOnlyList<CatalogoFeItem> CatalogoDepartamentos { get; private set; } = Array.Empty<CatalogoFeItem>();
         public IReadOnlyList<CatalogoFeItem> CatalogoMunicipios { get; private set; } = Array.Empty<CatalogoFeItem>();
+        public IReadOnlyList<CatalogoFeItem> CatalogoDistritos { get; private set; } = Array.Empty<CatalogoFeItem>();
         public IReadOnlyList<CatalogoFeItem> CatalogoPaises { get; private set; } = Array.Empty<CatalogoFeItem>();
         public IReadOnlyList<CatalogoFeItem> CatalogoDonaciones { get; private set; } = Array.Empty<CatalogoFeItem>();
         private readonly ICorrelativoService _correlativoService;
@@ -33,12 +34,13 @@ namespace SRAUMOAR.Pages.puntoventa
         private readonly IConfiguracionFeService _configuracionFe;
         private readonly ICatalogoFeService _catalogos;
         private readonly IDteEmailQueueService _emailQueue;
+        private readonly IDteJsonFactory _jsonFactory;
         private string ambienteFiscal = "01";
         private string codigoEstablecimientoMh = "M001";
         private string codigoEstablecimiento = "M001";
         private string codigoPuntoVentaMh = "P001";
         private string codigoPuntoVenta = "P001";
-        public puntoVentaModel(SRAUMOAR.Modelos.Contexto context, IOptions<EmisorConfig> emisorOptions, ICorrelativoService correlativoService, IDteTransmisionService dteTransmision, IConfiguracionFeService configuracionFe, ICatalogoFeService catalogos, IDteEmailQueueService emailQueue)
+        public puntoVentaModel(SRAUMOAR.Modelos.Contexto context, IOptions<EmisorConfig> emisorOptions, ICorrelativoService correlativoService, IDteTransmisionService dteTransmision, IConfiguracionFeService configuracionFe, ICatalogoFeService catalogos, IDteEmailQueueService emailQueue, IDteJsonFactory jsonFactory)
         {
             _context = context;
             _emisor = emisorOptions.Value;
@@ -47,6 +49,7 @@ namespace SRAUMOAR.Pages.puntoventa
             _configuracionFe = configuracionFe;
             _catalogos = catalogos;
             _emailQueue = emailQueue;
+            _jsonFactory = jsonFactory;
         }
         public async Task OnGetAsync(CancellationToken cancellationToken)
         {
@@ -100,7 +103,7 @@ namespace SRAUMOAR.Pages.puntoventa
             }
 
             // Validar campos requeridos para Crédito Fiscal
-            if (Factura.TipoDocumento == "02")
+            if (Factura.TipoDocumento is "02" or "03")
             {
                 if (string.IsNullOrEmpty(Factura.Receptor.Nit))
                 {
@@ -213,6 +216,10 @@ namespace SRAUMOAR.Pages.puntoventa
                 codigoEstablecimiento = configuracionFiscal.Entidad.CodigoEstablecimiento;
                 codigoPuntoVentaMh = configuracionFiscal.Entidad.CodigoPuntoVentaMh;
                 codigoPuntoVenta = configuracionFiscal.Entidad.CodigoPuntoVenta;
+                // El emisor se obtiene de configuración, nunca de los campos ocultos del navegador.
+                Factura.Emisor = CrearEmisorDesdeConfiguracion(configuracionFiscal.Entidad);
+                foreach (var clave in ModelState.Keys.Where(x => x.StartsWith("Factura.Emisor.", StringComparison.Ordinal)).ToArray())
+                    ModelState.Remove(clave);
             }
             catch (Exception ex)
             {
@@ -255,7 +262,7 @@ namespace SRAUMOAR.Pages.puntoventa
             }
 
             // Validar campos requeridos para Crédito Fiscal
-            if (Factura.TipoDocumento == "02")
+            if (Factura.TipoDocumento is "02" or "03")
             {
                 if (string.IsNullOrEmpty(Factura.Receptor.Nit))
                 {
@@ -326,6 +333,34 @@ namespace SRAUMOAR.Pages.puntoventa
                 Factura.Retencion = false;
                 ModelState.Remove("Factura.TipoOperacion");
                 ModelState.Remove("Factura.Retencion");
+            }
+
+            string distritoReceptor;
+            if (Factura.TipoDocumento == "15" && Factura.Receptor.CodigoDomicilioFiscal is not (1 or 2))
+            {
+                ModelState.AddModelError(string.Empty, "Seleccione el domicilio fiscal del donante; no se deduce del país de nacionalidad.");
+                return Page();
+            }
+            try
+            {
+                distritoReceptor = DteDocumentoActualizador.ResolverDistritoReceptor(
+                    Factura.Receptor.CodigoDepartamento, Factura.Receptor.CodigoMunicipio, Factura.Receptor.DistritoId,
+                    CatalogoDepartamentos, CatalogoMunicipios, CatalogoDistritos);
+                Factura.Receptor.Direccion.Departamento = Factura.Receptor.CodigoDepartamento;
+                Factura.Receptor.Direccion.Municipio = Factura.Receptor.CodigoMunicipio;
+                ModelState.Remove("Factura.Receptor.Direccion.Departamento");
+                ModelState.Remove("Factura.Receptor.Direccion.Municipio");
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+                return Page();
+            }
+
+            if (Factura.TipoDocumento is not ("01" or "02" or "03" or "14" or "15"))
+            {
+                ModelState.AddModelError(string.Empty, "Tipo de documento no soportado.");
+                return Page();
             }
 
             if (ModelState.IsValid)
@@ -438,6 +473,7 @@ namespace SRAUMOAR.Pages.puntoventa
                         {
                             departamento = Factura.Receptor.CodigoDepartamento,
                             municipio = Factura.Receptor.CodigoMunicipio,
+                            distrito = distritoReceptor,
                             complemento = Factura.Receptor.Direccion.Complemento
                         },
                         telefono = Factura.Receptor.Telefono,
@@ -461,17 +497,17 @@ namespace SRAUMOAR.Pages.puntoventa
                             precioUni = arancel.PrecioUnitario,
                             montoDescu = 0.0,
                             ventaNoSuj = 0.0,
-                            ventaExenta = arancel.EsExento ? arancel.SubTotal : 0.0m,
-                            ventaGravada = !arancel.EsExento ? arancel.SubTotal : 0.0m,
+                            ventaExenta = arancel.EsExento ? Math.Round(arancel.SubTotal, 2) : 0.0m,
+                            ventaGravada = !arancel.EsExento ? Math.Round(arancel.SubTotal, 2) : 0.0m,
                             tributos = (string)null,
                             psv = arancel.PrecioUnitario,
                             noGravado = 0.0,
-                            ivaItem = !arancel.EsExento ? Math.Round(arancel.SubTotal - (arancel.SubTotal / 1.13m), 2) : 0.0m
+                            ivaItem = !arancel.EsExento ? Math.Round(Math.Round(arancel.SubTotal, 2) - (Math.Round(arancel.SubTotal, 2) / 1.13m), 2) : 0.0m
                         })
                         .ToArray();
 
-                    decimal totalVenta = Factura.Productos.Where(a => a.EsExento == false).Sum(a => a.SubTotal);
-                    decimal totalVentaExenta = Factura.Productos.Where(a => a.EsExento == true).Sum(a => a.SubTotal);
+                    decimal totalVenta = Factura.Productos.Where(a => a.EsExento == false).Sum(a => Math.Round(a.SubTotal, 2));
+                    decimal totalVentaExenta = Factura.Productos.Where(a => a.EsExento == true).Sum(a => Math.Round(a.SubTotal, 2));
 
                     //ivaItem = Math.Round(arancelescostos[index] - (arancelescostos[index] / 1.13m), 6)
                     // Crear el resumen
@@ -550,11 +586,12 @@ namespace SRAUMOAR.Pages.puntoventa
                     });
 
 
+                    if (!PrepararBorrador(ref dteJson)) return Page();
                     var resultadoTransmision = await _dteTransmision.TransmitirAsync(
-                        new DteTransmisionRequest(dteJson, "01", codigoGeneracion.ToString().ToUpperInvariant(), numeroControl, 1, Factura.Receptor.Correo));
+                        new DteTransmisionRequest(dteJson, "01", codigoGeneracion.ToString().ToUpperInvariant(), numeroControl, 2, Factura.Receptor.Correo));
                     var selloRecibido = resultadoTransmision.SelloRecepcion ?? string.Empty;
 
-                    if (resultadoTransmision.Aceptado || resultadoTransmision.Estado == DteEstados.Incierto)
+                    // Persistir también los rechazos para conservar la respuesta y evitar éxito falso.
                     {
                         //guardar factura
 
@@ -580,14 +617,13 @@ namespace SRAUMOAR.Pages.puntoventa
                         factura.TotalPagar = totalPagar;
                         _context.Facturas.Add(factura);
                         await _context.SaveChangesAsync();
-                        if (resultadoTransmision.Aceptado && !string.IsNullOrWhiteSpace(factura.CorreoReceptor))
-                            await _emailQueue.EncolarDteAsync(factura, "01", dteJson, selloRecibido, factura.CorreoReceptor);
+                        await NotificarResultadoAsync(factura, resultadoTransmision);
                     }
                     //****************************************************
                     //FIN CREACION DEL DTE
                     //****************************************************
                 }
-                else if (Factura.TipoDocumento == "02")
+                else if (Factura.TipoDocumento is "02" or "03")
                 {
                     // CRÉDITO FISCAL
                     //****************************************************
@@ -676,6 +712,7 @@ namespace SRAUMOAR.Pages.puntoventa
                         {
                             departamento = Factura.Receptor.CodigoDepartamento,
                             municipio = Factura.Receptor.CodigoMunicipio,
+                            distrito = distritoReceptor,
                             complemento = Factura.Receptor.Direccion.Complemento
                         },
                         telefono = Factura.Receptor.Telefono,
@@ -705,7 +742,7 @@ namespace SRAUMOAR.Pages.puntoventa
                                 ventaNoSuj = 0.0,
                                 ventaExenta = producto.EsExento ? subTotalProducto : 0.0m,
                                 ventaGravada = !producto.EsExento ? subTotalProducto : 0.0m,
-                                tributos = new[] { "20" },
+                                tributos = producto.EsExento ? null : new[] { "20" },
                                 psv = producto.PrecioUnitario,
                                 noGravado = 0.0
                             };
@@ -801,11 +838,12 @@ namespace SRAUMOAR.Pages.puntoventa
                         apendice = (string)null
                     });
 
+                    if (!PrepararBorrador(ref dteJson)) return Page();
                     var resultadoTransmision = await _dteTransmision.TransmitirAsync(
-                        new DteTransmisionRequest(dteJson, "03", codigoGeneracion.ToString().ToUpperInvariant(), numeroControl, 3, Factura.Receptor.Correo));
+                        new DteTransmisionRequest(dteJson, "03", codigoGeneracion.ToString().ToUpperInvariant(), numeroControl, 4, Factura.Receptor.Correo));
                     var selloRecibido = resultadoTransmision.SelloRecepcion ?? string.Empty;
 
-                    if (resultadoTransmision.Aceptado || resultadoTransmision.Estado == DteEstados.Incierto)
+                    // Persistir también los rechazos para conservar la respuesta y evitar éxito falso.
                     {
                         //guardar la factura
 
@@ -831,8 +869,7 @@ namespace SRAUMOAR.Pages.puntoventa
                         factura.TotalPagar = totalPagar;
                         _context.Facturas.Add(factura);
                         await _context.SaveChangesAsync();
-                        if (resultadoTransmision.Aceptado && !string.IsNullOrWhiteSpace(factura.CorreoReceptor))
-                            await _emailQueue.EncolarDteAsync(factura, "03", dteJson, selloRecibido, factura.CorreoReceptor);
+                        await NotificarResultadoAsync(factura, resultadoTransmision);
                     }
                     //****************************************************
                     //FIN CREACION DEL DTE
@@ -920,6 +957,7 @@ namespace SRAUMOAR.Pages.puntoventa
                         {
                             departamento = Factura.Receptor.CodigoDepartamento,
                             municipio = Factura.Receptor.CodigoMunicipio,
+                            distrito = distritoReceptor,
                             complemento = Factura.Receptor.Direccion.Complemento
                         },
                         telefono = Factura.Receptor.Telefono,
@@ -938,7 +976,7 @@ namespace SRAUMOAR.Pages.puntoventa
                             descripcion = producto.Descripcion,
                             precioUni = producto.PrecioUnitario,
                             montoDescu = 0,
-                            compra = producto.Cantidad * producto.PrecioUnitario
+                            compra = Math.Round(producto.Cantidad * producto.PrecioUnitario, 2)
                         })
                         .ToArray();
                     bool retencion = Factura.Retencion;
@@ -991,11 +1029,12 @@ namespace SRAUMOAR.Pages.puntoventa
                         apendice
                     });
 
+                    if (!PrepararBorrador(ref dteJson)) return Page();
                     var resultadoTransmision = await _dteTransmision.TransmitirAsync(
-                        new DteTransmisionRequest(dteJson, "14", codigoGeneracion.ToString().ToUpperInvariant(), numeroControl, 1, Factura.Receptor.Correo));
+                        new DteTransmisionRequest(dteJson, "14", codigoGeneracion.ToString().ToUpperInvariant(), numeroControl, 2, Factura.Receptor.Correo));
                     var selloRecibido = resultadoTransmision.SelloRecepcion ?? string.Empty;
 
-                    if (resultadoTransmision.Aceptado || resultadoTransmision.Estado == DteEstados.Incierto)
+                    // Persistir también los rechazos para conservar la respuesta y evitar éxito falso.
                     {
                         //guardar la factura
 
@@ -1021,8 +1060,7 @@ namespace SRAUMOAR.Pages.puntoventa
                         factura.TotalPagar = totalPagar;
                         _context.Facturas.Add(factura);
                         await _context.SaveChangesAsync();
-                        if (resultadoTransmision.Aceptado && !string.IsNullOrWhiteSpace(factura.CorreoReceptor))
-                            await _emailQueue.EncolarDteAsync(factura, "14", dteJson, selloRecibido, factura.CorreoReceptor);
+                        await NotificarResultadoAsync(factura, resultadoTransmision);
                     }
                 }
                 else if (Factura.TipoDocumento == "15")
@@ -1108,11 +1146,12 @@ namespace SRAUMOAR.Pages.puntoventa
                         {
                             departamento = Factura.Receptor.CodigoDepartamento,
                             municipio = Factura.Receptor.CodigoMunicipio,
+                            distrito = distritoReceptor,
                             complemento = Factura.Receptor.Direccion.Complemento
                         },
                         telefono = Factura.Receptor.Telefono,
                         correo = Factura.Receptor.Correo,
-                        codDomiciliado = 1,
+                        codDomiciliado = Factura.Receptor.CodigoDomicilioFiscal,
                         codPais = Factura.CodigoPais
                     };
 
@@ -1121,9 +1160,9 @@ namespace SRAUMOAR.Pages.puntoventa
      {
         new
         {
-            codDocAsociado =1,
-            descDocumento ="DESCRIPCION DOCUMENTO",
-            detalleDocumento = "DETALLES DOCUMENTO"
+            codDocAsociado = (int?)null,
+            descDocumento = (string)null,
+            detalleDocumento = (string)null
         }
     };
 
@@ -1139,7 +1178,7 @@ namespace SRAUMOAR.Pages.puntoventa
                             descripcion = producto.Descripcion,
                             depreciacion = 0,
                             valorUni = producto.PrecioUnitario,
-                            valor = producto.Cantidad * producto.PrecioUnitario
+                            valor = Math.Round(producto.Cantidad * producto.PrecioUnitario, 2)
                         })
                         .ToArray();
 
@@ -1162,22 +1201,7 @@ namespace SRAUMOAR.Pages.puntoventa
             }
         }
 
-        #if false
-        private async Task CargarCatalogosAsync(CancellationToken cancellationToken)
-        {
-            try
-            {
-                CatalogoDepartamentos = await _catalogos.ObtenerAsync("CAT-012", "1.1", cancellationToken);
-                CatalogoMunicipios = await _catalogos.ObtenerAsync("CAT-013", "1.1", cancellationToken);
-                CatalogoPaises = await _catalogos.ObtenerAsync("CAT-020", "1.1", cancellationToken);
-                CatalogoDonaciones = await _catalogos.ObtenerAsync("CAT-026", "1.1", cancellationToken);
-            }
-            catch
-            {
-                // Se mantienen los catálogos de respaldo del navegador hasta que se importe el Excel y exista la tabla.
-            }
-        }
-        #endif
+
                     };
 
                     // Crear el apéndice (opcional)
@@ -1195,11 +1219,12 @@ namespace SRAUMOAR.Pages.puntoventa
                         apendice
                     });
 
+                    if (!PrepararBorrador(ref dteJson)) return Page();
                     var resultadoTransmision = await _dteTransmision.TransmitirAsync(
-                        new DteTransmisionRequest(dteJson, "15", codigoGeneracion.ToString().ToUpperInvariant(), numeroControl, 1, Factura.Receptor.Correo));
+                        new DteTransmisionRequest(dteJson, "15", codigoGeneracion.ToString().ToUpperInvariant(), numeroControl, 2, Factura.Receptor.Correo));
                     var selloRecibido = resultadoTransmision.SelloRecepcion ?? string.Empty;
 
-                    if (resultadoTransmision.Aceptado || resultadoTransmision.Estado == DteEstados.Incierto)
+                    // Persistir también los rechazos para conservar la respuesta y evitar éxito falso.
                     {
                         //guardar la factura
                         Factura factura = new Factura();
@@ -1224,15 +1249,50 @@ namespace SRAUMOAR.Pages.puntoventa
                         factura.TotalPagar = valorTotal;
                         _context.Facturas.Add(factura);
                         await _context.SaveChangesAsync();
-                        if (resultadoTransmision.Aceptado && !string.IsNullOrWhiteSpace(factura.CorreoReceptor))
-                            await _emailQueue.EncolarDteAsync(factura, "15", dteJson, selloRecibido, factura.CorreoReceptor);
+                        await NotificarResultadoAsync(factura, resultadoTransmision);
                     }
                 }
-                TempData["Success"] = "Factura procesada exitosamente";
                 return RedirectToPage("../facturas/Index");
             }
 
             return Page();
+        }
+
+        private bool PrepararBorrador(ref string json)
+        {
+            try
+            {
+                json = DteDocumentoActualizador.ActualizarBorrador(json, ambienteFiscal, _jsonFactory);
+                return true;
+            }
+            catch (Exception ex) when (ex is InvalidOperationException or ArgumentException or Newtonsoft.Json.JsonException)
+            {
+                ModelState.AddModelError(string.Empty, $"No se transmitió el borrador: {ex.Message}");
+                return false;
+            }
+        }
+
+        private async Task NotificarResultadoAsync(Factura factura, DteTransmisionResult resultado)
+        {
+            TempData.Remove("Success");
+            TempData.Remove("Error");
+            if (!resultado.Aceptado)
+            {
+                TempData["Error"] = $"Documento guardado con estado {resultado.Estado}; no está aceptado. Revise la factura antes de reintentar.";
+                return;
+            }
+
+            TempData["Success"] = "Factura aceptada y guardada.";
+            if (string.IsNullOrWhiteSpace(factura.CorreoReceptor)) return;
+            try
+            {
+                await _emailQueue.EncolarDteAsync(factura, factura.TipoDteCodigo!, factura.JsonDte!,
+                    factura.SelloRecepcion!, factura.CorreoReceptor);
+            }
+            catch (Exception)
+            {
+                TempData["Error"] = "Factura aceptada y guardada, pero no se pudo encolar el correo. No vuelva a emitirla; reintente solo el envío.";
+            }
         }
 
         public static string CorregirCorreo(string correo)
@@ -1283,12 +1343,16 @@ namespace SRAUMOAR.Pages.puntoventa
             {
                 CatalogoDepartamentos = await _catalogos.ObtenerAsync("CAT-012", "1.1", cancellationToken);
                 CatalogoMunicipios = await _catalogos.ObtenerAsync("CAT-013", "1.1", cancellationToken);
+                CatalogoDistritos = await _catalogos.ObtenerAsync("CAT-008", "1.1", cancellationToken);
                 CatalogoPaises = await _catalogos.ObtenerAsync("CAT-020", "1.1", cancellationToken);
                 CatalogoDonaciones = await _catalogos.ObtenerAsync("CAT-026", "1.1", cancellationToken);
             }
             catch
             {
-                // Se mantienen los catalogos de respaldo del navegador hasta que se importe el Excel y exista la tabla.
+                CatalogoDepartamentos = Array.Empty<CatalogoFeItem>();
+                CatalogoMunicipios = Array.Empty<CatalogoFeItem>();
+                CatalogoDistritos = Array.Empty<CatalogoFeItem>();
+                // La emisión se bloquea sin catálogos fiscales; no se usa geografía legacy.
             }
         }
 

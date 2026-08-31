@@ -786,7 +786,7 @@
                                             </button>
                                         }
                                         @if (!item.Anulada
-                                            && item.EstadoTransmision == DteEstados.Aceptado
+                                            && SRAUMOAR.Servicios.FacturacionElectronica.DteEstadoFiscal.EsAceptado(item)
                                             && !string.IsNullOrWhiteSpace(item.SelloRecepcion)
                                             && Model.EsElegibleParaEret(item)
                                             && !Model.FacturasRetornoAgotado.Contains(item.FacturaId))

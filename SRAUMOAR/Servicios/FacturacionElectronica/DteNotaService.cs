@@ -1,11 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
 using SRAUMOAR.Entidades.Colecturia;
+using SRAUMOAR.Entidades.FacturacionElectronica;
 using SRAUMOAR.Modelos;
 using SRAUMOAR.Modelos.FacturacionElectronica;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
+using System.Data;
+using System.Linq.Expressions;
 
 namespace SRAUMOAR.Servicios.FacturacionElectronica;
 
@@ -50,10 +53,8 @@ public sealed class DteNotaService : IDteNotaService
             .SingleOrDefaultAsync(x => x.FacturaId == request.FacturaOriginalId, cancellationToken)
             ?? throw new InvalidOperationException("No se encontró la factura original.");
 
-        if (original.Anulada)
-            throw new InvalidOperationException("No se puede generar una nota sobre una factura anulada.");
-        if (string.IsNullOrWhiteSpace(original.SelloRecepcion))
-            throw new InvalidOperationException("La factura original debe estar aceptada por Hacienda.");
+        if (!DteReservaReglas.EsOriginalAceptadoVigente(original))
+            throw new InvalidOperationException("La factura original debe estar aceptada y vigente.");
         if (string.IsNullOrWhiteSpace(original.JsonDte))
             throw new InvalidOperationException("La factura original no tiene JSON DTE.");
 
@@ -79,21 +80,13 @@ public sealed class DteNotaService : IDteNotaService
         if (totalOriginal <= 0m)
             throw new InvalidOperationException("La factura original no tiene un total válido.");
 
-        var monto = request.Monto.GetValueOrDefault(totalOriginal);
+        var monto = Math.Round(request.Monto.GetValueOrDefault(totalOriginal), 2, MidpointRounding.AwayFromZero);
         if (monto <= 0m)
             throw new InvalidOperationException("El monto de la nota debe ser mayor que cero.");
         if (tipoNota == DteTipos.NotaCredito)
-        {
-            var montoAcreditado = await _contexto.Facturas.AsNoTracking()
-                .Where(x => x.FacturaOriginalId == original.FacturaId
-                    && x.TipoDteCodigo == DteTipos.NotaCredito
-                    && x.EstadoTransmision == DteEstados.Aceptado)
-                .SumAsync(x => x.MontoNota ?? 0m, cancellationToken);
+            DteReservaReglas.ValidarMontoCredito(totalOriginal, 0m, monto);
 
-            if (montoAcreditado + monto > totalOriginal + 0.01m)
-                throw new InvalidOperationException("La suma de las notas de crédito no puede superar el total original.");
-        }
-
+        var originalParaNota = await CompletarReceptorHistoricoAsync(root, request, cancellationToken);
         var codigo = Guid.NewGuid().ToString().ToUpperInvariant();
         var correlativo = await _correlativos.ObtenerSiguienteCorrelativo(
             tipoNota,
@@ -101,7 +94,8 @@ public sealed class DteNotaService : IDteNotaService
             configuracion.Entidad.CodigoEstablecimiento,
             configuracion.Entidad.CodigoPuntoVenta);
         var numeroControl = $"DTE-{tipoNota}-{configuracion.Entidad.CodigoEstablecimiento}{configuracion.Entidad.CodigoPuntoVenta}-{correlativo:D15}";
-        var json = _jsonFactory.CrearNota(original.JsonDte, tipoNota, numeroControl, codigo, monto, request.Motivo, configuracion.Entidad);
+        var json = _jsonFactory.CrearNota(originalParaNota.ToString(Newtonsoft.Json.Formatting.None), tipoNota, numeroControl, codigo, monto, request.Motivo, configuracion.Entidad);
+        var totalesNota = LeerTotalesNota(json);
         var receptorCorreo = (root["receptor"] as JObject)?.Value<string>("correo") ?? original.CorreoReceptor;
 
         return new DteNotaPreparada(
@@ -115,9 +109,9 @@ public sealed class DteNotaService : IDteNotaService
             Math.Round(monto, 2, MidpointRounding.AwayFromZero),
             receptorCorreo,
             string.IsNullOrWhiteSpace(request.Motivo) ? null : request.Motivo.Trim(),
-            Numero(resumen, "totalGravada") is decimal gravada ? Math.Round(gravada * monto / totalOriginal, 2) : 0m,
-            Numero(resumen, "totalExenta") is decimal exenta ? Math.Round(exenta * monto / totalOriginal, 2) : 0m,
-            Numero(resumen, "totalIva") is decimal iva ? Math.Round(iva * monto / totalOriginal, 2) : 0m);
+            totalesNota.TotalGravado,
+            totalesNota.TotalExento,
+            totalesNota.TotalIva);
     }
 
     public async Task<DteNotaResultado> EmitirAsync(DteNotaRequest request, CancellationToken cancellationToken = default)
@@ -131,7 +125,7 @@ public sealed class DteNotaService : IDteNotaService
         var existente = await _contexto.Facturas.AsNoTracking()
             .SingleOrDefaultAsync(x => x.ClaveIdempotencia == claveIdempotencia, cancellationToken);
         if (existente is not null)
-            return ConvertirResultado(existente, preparada);
+            return await TransmitirNotaPersistidaAsync(existente.FacturaId, preparada, cancellationToken);
 
         var nota = new Factura
         {
@@ -150,14 +144,42 @@ public sealed class DteNotaService : IDteNotaService
             CorreoReceptor = preparada.CorreoReceptor,
             TotalGravado = preparada.TotalGravado,
             TotalExento = preparada.TotalExento,
-            TotalPagar = preparada.Monto,
+            TotalPagar = LeerTotalesNota(preparada.Json).TotalPagar,
             TotalIva = preparada.TotalIva
         };
 
-        _contexto.Facturas.Add(nota);
         try
         {
-            await _contexto.SaveChangesAsync(cancellationToken);
+            await using var tx = await _contexto.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+            var original = await DteReservaReglas.BloquearOriginalAsync(_contexto, preparada.FacturaOriginalId, cancellationToken);
+            if (!DteReservaReglas.EsOriginalAceptadoVigente(original))
+                throw new InvalidOperationException("La factura original dejó de estar aceptada y vigente antes de reservar la nota.");
+
+            // Releer después del lock: un doble POST no consume saldo dos veces.
+            existente = await _contexto.Facturas.AsNoTracking()
+                .SingleOrDefaultAsync(x => x.ClaveIdempotencia == claveIdempotencia, cancellationToken);
+            if (existente is not null)
+            {
+                nota = existente;
+            }
+            else
+            {
+                if (preparada.TipoNota == DteTipos.NotaCredito)
+                {
+                    var resumen = JObject.Parse(original.JsonDte ?? throw new InvalidOperationException("Falta el JSON original."))["resumen"] as JObject
+                        ?? throw new InvalidOperationException("Falta el resumen original.");
+                    var total = Numero(resumen, "montoTotalOperacion", "totalPagar") ?? original.TotalPagar;
+                    var reservado = await _contexto.Facturas.AsNoTracking()
+                        .Where(x => x.FacturaOriginalId == original.FacturaId)
+                        .Where(DteReservaReglas.ReservaCredito)
+                        .SumAsync(x => x.MontoNota ?? x.TotalPagar, cancellationToken);
+                    DteReservaReglas.ValidarMontoCredito(total, reservado, preparada.Monto);
+                }
+
+                _contexto.Facturas.Add(nota);
+                await _contexto.SaveChangesAsync(cancellationToken);
+            }
+            await tx.CommitAsync(cancellationToken);
         }
         catch (DbUpdateException)
         {
@@ -165,26 +187,43 @@ public sealed class DteNotaService : IDteNotaService
             existente = await _contexto.Facturas.AsNoTracking()
                 .SingleOrDefaultAsync(x => x.ClaveIdempotencia == claveIdempotencia, cancellationToken);
             if (existente is not null)
-                return ConvertirResultado(existente, preparada);
+                return await TransmitirNotaPersistidaAsync(existente.FacturaId, preparada, cancellationToken);
             throw;
         }
+
+        return await TransmitirNotaPersistidaAsync(nota.FacturaId, preparada, cancellationToken);
+    }
+
+    private async Task<DteNotaResultado> TransmitirNotaPersistidaAsync(int facturaId, DteNotaPreparada preparada, CancellationToken ct)
+    {
+        // Una falla PRE deja Preparado y conserva JSON, código y reserva para el retry.
+        var reclamada = await _contexto.Facturas.Where(x => x.FacturaId == facturaId && !x.Anulada
+                && (x.SelloRecepcion == null || x.SelloRecepcion == "") && x.EstadoTransmision == DteEstados.Preparado
+                && (x.TipoDteCodigo == DteTipos.NotaCredito || x.TipoDteCodigo == DteTipos.NotaDebito))
+            .ExecuteUpdateAsync(x => x.SetProperty(f => f.EstadoTransmision, DteEstados.Enviado), ct);
+        foreach (var entry in _contexto.ChangeTracker.Entries<Factura>().Where(x => x.Entity.FacturaId == facturaId).ToArray())
+            entry.State = EntityState.Detached;
+        var nota = await _contexto.Facturas.SingleAsync(x => x.FacturaId == facturaId, ct);
+        if (!DteReservaReglas.PuedeTransmitirReclamada(reclamada, nota)) return ConvertirResultado(nota, preparada);
+        var json = nota.JsonDte ?? throw new InvalidOperationException("La nota preparada no contiene JSON.");
+        var tipoNota = nota.TipoDteCodigo ?? preparada.TipoNota;
 
         DteTransmisionResult resultado;
         try
         {
             resultado = await _transmision.TransmitirAsync(new DteTransmisionRequest(
-                preparada.Json,
-                preparada.TipoNota,
-                preparada.CodigoGeneracion,
-                preparada.NumeroControl,
-                preparada.Version,
-                preparada.CorreoReceptor,
-                nota.FacturaId), cancellationToken);
+                json,
+                tipoNota,
+                nota.CodigoGeneracion,
+                nota.NumeroControl,
+                4,
+                nota.CorreoReceptor,
+                nota.FacturaId), ct);
         }
         catch (Exception ex)
         {
             resultado = new DteTransmisionResult(false, DteEstados.Incierto, null, string.Empty, 1, preparada.AmbienteFiscal, ex.Message);
-            _logger.LogError(ex, "Error preparando la transmisión de nota {CodigoGeneracion}", preparada.CodigoGeneracion);
+            _logger.LogError(ex, "Error preparando la transmisión de nota {CodigoGeneracion}", nota.CodigoGeneracion);
         }
 
         nota.SelloRecepcion = resultado.SelloRecepcion;
@@ -192,13 +231,14 @@ public sealed class DteNotaService : IDteNotaService
         nota.IntentosTransmision = resultado.Intentos;
         nota.RespuestaHacienda = resultado.Respuesta;
         nota.FechaAceptacion = resultado.Aceptado ? DateTime.UtcNow : null;
-        await _contexto.SaveChangesAsync(cancellationToken);
+        using var cierre = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        await _contexto.SaveChangesAsync(cierre.Token);
 
-        if (resultado.Aceptado && !string.IsNullOrWhiteSpace(preparada.CorreoReceptor))
+        if (resultado.Aceptado && !string.IsNullOrWhiteSpace(nota.CorreoReceptor))
         {
             try
             {
-                await _emailQueue.EncolarDteAsync(nota, preparada.TipoNota, preparada.Json, resultado.SelloRecepcion, preparada.CorreoReceptor, cancellationToken);
+                await _emailQueue.EncolarDteAsync(nota, tipoNota, json, resultado.SelloRecepcion, nota.CorreoReceptor, cierre.Token);
             }
             catch (Exception ex)
             {
@@ -208,9 +248,9 @@ public sealed class DteNotaService : IDteNotaService
 
         return new DteNotaResultado(
             nota.FacturaId,
-            preparada.TipoNota,
-            preparada.CodigoGeneracion,
-            preparada.NumeroControl,
+            tipoNota,
+            nota.CodigoGeneracion,
+            nota.NumeroControl,
             resultado.Aceptado,
             resultado.Estado,
             resultado.AmbienteFiscal,
@@ -226,12 +266,70 @@ public sealed class DteNotaService : IDteNotaService
             _ => throw new ArgumentException("La nota debe ser tipo 05 o 06.", nameof(tipoNota))
         };
 
+    private async Task<JObject> CompletarReceptorHistoricoAsync(JObject original, DteNotaRequest request, CancellationToken ct)
+    {
+        var seleccion = SeleccionReceptorHistorico(original, request.DepartamentoReceptor, request.MunicipioReceptor, request.DistritoReceptor);
+        if (seleccion is null) return (JObject)original.DeepClone();
+        foreach (var (catalogo, codigo) in seleccion)
+        {
+            if (!await _contexto.CatalogosFe.AsNoTracking().AnyAsync(CodigoCatalogoValido(catalogo, codigo), ct))
+                throw new InvalidOperationException($"El código {codigo} no existe activo en el catálogo importado {catalogo}.");
+        }
+
+        // CrearNota aplica el esquema completo, incluida pertenencia geográfica. Nunca
+        // se modifica JsonDte de la factura histórica ni la dirección de su emisor.
+        return ClonarConDireccionReceptor(original, seleccion[0].Codigo, seleccion[1].Codigo, seleccion[2].Codigo);
+    }
+
+    private static Expression<Func<CatalogoFeItem, bool>> CodigoCatalogoValido(string catalogo, string codigo) =>
+        x => x.Activo && x.Version == "1.1" && x.CodigoCatalogo == catalogo && x.Codigo == codigo;
+
+    private static (string Catalogo, string Codigo)[]? SeleccionReceptorHistorico(
+        JObject original, string? departamento, string? municipio, string? distrito)
+    {
+        if (!string.IsNullOrWhiteSpace(original["receptor"]?["direccion"]?.Value<string>("distrito")))
+            return null;
+        if (string.IsNullOrWhiteSpace(departamento) || string.IsNullOrWhiteSpace(municipio) || string.IsNullOrWhiteSpace(distrito))
+            throw new InvalidOperationException("El receptor histórico no tiene distrito. Seleccione departamento, municipio y distrito de los catálogos importados.");
+        return [("CAT-012", departamento.Trim()), ("CAT-013", municipio.Trim()), ("CAT-008", distrito.Trim())];
+    }
+
+    private static JObject ClonarConDireccionReceptor(JObject original, string departamento, string municipio, string distrito)
+    {
+        var copia = (JObject)original.DeepClone();
+        var receptor = copia["receptor"] as JObject ?? throw new InvalidOperationException("Falta el receptor original.");
+        var direccion = receptor["direccion"] as JObject;
+        if (direccion is null)
+        {
+            direccion = new JObject();
+            receptor["direccion"] = direccion;
+        }
+        // Una dirección existente ya pertenece a la copia. Reasignarla puede clonar
+        // el token y dejar esta referencia desconectada de la dirección devuelta.
+        direccion["departamento"] = departamento;
+        direccion["municipio"] = municipio;
+        direccion["distrito"] = distrito;
+        return copia;
+    }
+
+    private static (decimal TotalGravado, decimal TotalExento, decimal TotalIva, decimal TotalPagar) LeerTotalesNota(string json)
+    {
+        var resumen = JObject.Parse(json)["resumen"] as JObject
+            ?? throw new InvalidOperationException("La nota generada no contiene resumen.");
+        decimal Requerido(string campo) => Numero(resumen, campo)
+            ?? throw new InvalidOperationException($"La nota generada no contiene {campo} válido.");
+        // No recalcular desde el CCF legacy: el JSON generado ya contiene IVA y neto.
+        // MontoNota sigue siendo el monto de operación usado para reservar el crédito.
+        return (Requerido("totalGravada"), Requerido("totalExenta"), Requerido("totalIva"), Requerido("totalPagar"));
+    }
+
     private static decimal? Numero(JObject objeto, params string[] nombres)
     {
         foreach (var nombre in nombres)
         {
             var token = objeto[nombre];
             if (token is null || token.Type == Newtonsoft.Json.Linq.JTokenType.Null) continue;
+            if (token.Type is Newtonsoft.Json.Linq.JTokenType.Integer or Newtonsoft.Json.Linq.JTokenType.Float) return token.Value<decimal>();
             if (decimal.TryParse(token.ToString(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var valor))
                 return valor;
         }
@@ -251,9 +349,35 @@ public sealed class DteNotaService : IDteNotaService
             preparada.TipoNota,
             nota.CodigoGeneracion,
             nota.NumeroControl,
-            nota.EstadoTransmision == DteEstados.Aceptado,
-            nota.EstadoTransmision,
+            DteReservaReglas.EsOriginalAceptadoVigente(nota),
+            DteReservaReglas.EsOriginalAceptadoVigente(nota) ? DteEstados.Aceptado : nota.EstadoTransmision,
             nota.AmbienteFiscal ?? preparada.AmbienteFiscal,
             nota.SelloRecepcion,
-            nota.EstadoTransmision == DteEstados.Aceptado ? null : nota.RespuestaHacienda);
+            DteReservaReglas.EsOriginalAceptadoVigente(nota) ? null : nota.RespuestaHacienda);
+}
+
+// Reglas compartidas por NC y ERET, evaluables sin contexto ni proveedor de BD.
+internal static class DteReservaReglas
+{
+    internal static readonly Expression<Func<Factura, bool>> ReservaCredito = x =>
+        !x.Anulada && (x.TipoDteCodigo == DteTipos.NotaCredito || x.TipoDteCodigo == null && x.TipoDTE == 5)
+        && (x.EstadoTransmision == DteEstados.Preparado || x.EstadoTransmision == DteEstados.Enviado
+            || x.EstadoTransmision == DteEstados.Incierto || x.EstadoTransmision == DteEstados.Aceptado
+            || x.EstadoTransmision == DteEstados.Anulando);
+
+    internal static bool EsOriginalAceptadoVigente(Factura factura) => DteEstadoFiscal.EsAceptado(factura);
+
+    internal static bool PuedeTransmitirReclamada(int reclamada, Factura factura) =>
+        reclamada == 1 && !factura.Anulada && !EsOriginalAceptadoVigente(factura)
+        && factura.EstadoTransmision == DteEstados.Enviado;
+
+    internal static void ValidarMontoCredito(decimal totalOriginal, decimal reservado, decimal monto)
+    {
+        if (totalOriginal <= 0m || monto <= 0m || reservado + monto > totalOriginal)
+            throw new InvalidOperationException("La suma de las notas de crédito reservadas no puede superar el total original.");
+    }
+
+    internal static Task<Factura> BloquearOriginalAsync(Contexto contexto, int id, CancellationToken ct) =>
+        contexto.Facturas.FromSqlInterpolated($"SELECT * FROM [Factura] WITH (UPDLOCK, HOLDLOCK) WHERE [FacturaId] = {id}")
+            .AsNoTracking().SingleAsync(ct);
 }

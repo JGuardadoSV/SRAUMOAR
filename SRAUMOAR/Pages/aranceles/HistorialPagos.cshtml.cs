@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +10,7 @@ using System.Threading.Tasks;
 
 namespace SRAUMOAR.Pages.aranceles
 {
+    [Authorize(Roles = "Administrador,Administracion,Contabilidad")]
     public class HistorialPagosModel : PageModel
     {
         private readonly SRAUMOAR.Modelos.Contexto _context;
@@ -29,12 +31,14 @@ namespace SRAUMOAR.Pages.aranceles
 
         public async Task<IActionResult> OnGetAsync()
         {
+            if (!TienePermiso()) return Forbid();
             await CargarHistorialAsync(AlumnoId);
             return Page();
         }
 
         public async Task<IActionResult> OnPostBuscarAlumnoAsync()
         {
+            if (!TienePermiso()) return Forbid();
             // Búsqueda de alumnos por nombre, apellido o carnet
             ResultadosBusqueda = new List<Alumno>();
 
@@ -86,31 +90,20 @@ namespace SRAUMOAR.Pages.aranceles
                 .ToListAsync();
         }
 
-        public async Task<IActionResult> OnPostEliminarPagoAsync(string codigoGeneracion, int? alumnoId)
+        private bool TienePermiso()
+            => User.Identity?.IsAuthenticated == true
+                && (User.IsInRole("Administrador") || User.IsInRole("Administracion") || User.IsInRole("Contabilidad"));
+
+        public Task<IActionResult> OnPostEliminarPagoAsync(string codigoGeneracion, int? alumnoId)
         {
-            if (string.IsNullOrEmpty(codigoGeneracion) || alumnoId == null)
-            {
-                ModelState.AddModelError(string.Empty, "Faltan parámetros requeridos para eliminar el pago.");
-                AlumnoId = alumnoId;
-                await CargarHistorialAsync(AlumnoId);
-                return Page();
-            }
+            if (!TienePermiso()) return Task.FromResult<IActionResult>(Forbid());
 
-            // Buscar el cobro principal por CodigoGeneracion
-            var cobro = await _context.CobrosArancel
-                .Include(c => c.DetallesCobroArancel)
-                .FirstOrDefaultAsync(c => c.CodigoGeneracion == codigoGeneracion && c.AlumnoId == alumnoId);
-
-            if (cobro != null)
-            {
-                // Eliminar todos los detalles asociados
-                _context.DetallesCobrosArancel.RemoveRange(cobro.DetallesCobroArancel);
-                // Eliminar el cobro principal
-                _context.CobrosArancel.Remove(cobro);
-                await _context.SaveChangesAsync();
-            }
-
-            return RedirectToPage(new { alumnoId = alumnoId.Value });
+            // Este endpoint histórico solo recibe un código, no una relación fiscal
+            // verificable. No inferir que es seguro borrar por código vacío/inválido,
+            // factura no encontrada o estado rechazado/anulado. Conservar el cobro
+            // y sus detalles; la corrección debe pasar por el flujo fiscal auditable.
+            return Task.FromResult<IActionResult>(BadRequest(
+                "No se permite eliminar pagos desde el historial. Utilice la ruta fiscal de invalidación o nota de crédito del DTE, según corresponda; el cobro y sus detalles deben conservarse."));
         }
     }
-} 
+}

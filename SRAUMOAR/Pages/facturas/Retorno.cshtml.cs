@@ -21,6 +21,9 @@ public sealed class RetornoModel : PageModel
     public int FacturaId { get; set; }
 
     [BindProperty]
+    public Guid OperacionId { get; set; }
+
+    [BindProperty]
     [Required(ErrorMessage = "Seleccione el tipo de retorno.")]
     public string TipoRetorno { get; set; } = "1";
 
@@ -40,6 +43,8 @@ public sealed class RetornoModel : PageModel
     {
         if (FacturaId <= 0) return NotFound();
 
+        OperacionId = Guid.NewGuid();
+
         try
         {
             await CargarDisponibilidadAsync(cancellationToken, conservarEntrada: false);
@@ -55,6 +60,8 @@ public sealed class RetornoModel : PageModel
     public async Task<IActionResult> OnPostAsync(CancellationToken cancellationToken)
     {
         if (FacturaId <= 0) return NotFound();
+        if (OperacionId == Guid.Empty)
+            ModelState.AddModelError(nameof(OperacionId), "Falta el identificador de operación. Abra un nuevo formulario.");
 
         if (TipoRetorno is not ("1" or "2" or "3" or "4"))
             ModelState.AddModelError(nameof(TipoRetorno), "Seleccione un tipo de retorno válido.");
@@ -67,8 +74,8 @@ public sealed class RetornoModel : PageModel
         {
             if (linea.Cantidad <= 0)
                 ModelState.AddModelError(string.Empty, $"La cantidad del ítem {linea.NumeroItemOriginal} debe ser mayor que cero.");
-            if (linea.Cantidad > linea.CantidadDisponible)
-                ModelState.AddModelError(string.Empty, $"La cantidad del ítem {linea.NumeroItemOriginal} supera el saldo disponible.");
+            // La disponibilidad enviada por el navegador no es autoridad y puede ser cero
+            // por la propia reserva del POST que se está reintentando.
             if (linea.PrecioUnitario is <= 0)
                 ModelState.AddModelError(string.Empty, $"El precio del ítem {linea.NumeroItemOriginal} debe ser mayor que cero.");
         }
@@ -88,14 +95,25 @@ public sealed class RetornoModel : PageModel
                 seleccionadas.Select(x => new DteRetornoLineaRequest(
                     x.NumeroItemOriginal,
                     x.Cantidad,
-                    x.PrecioUnitario)).ToArray());
+                    x.PrecioUnitario)).ToArray(),
+                OperacionId);
 
             // Esta es la única acción de la página que puede transmitir el ERET.
             Resultado = await _retornos.EmitirAsync(solicitud, cancellationToken);
             if (!Resultado.Aceptado)
                 Error = Resultado.Error ?? $"El ERET quedó con estado {Resultado.Estado}.";
+            else
+            {
+                OperacionId = Guid.NewGuid();
+                Motivo = string.Empty;
+                TipoRetorno = "1";
+                Lineas = [];
+                Disponible = null;
+                // Los tag helpers prefieren ModelState: limpiar también el GUID anterior.
+                ModelState.Clear();
+            }
 
-            await CargarDisponibilidadSeguraAsync(cancellationToken, conservarEntrada: false);
+            await CargarDisponibilidadSeguraAsync(cancellationToken, conservarEntrada: !Resultado.Aceptado);
         }
         catch (Exception ex)
         {
@@ -122,7 +140,7 @@ public sealed class RetornoModel : PageModel
     {
         Disponible = await _retornos.ObtenerDisponibleAsync(FacturaId, cancellationToken);
         var entradas = conservarEntrada
-            ? Lineas.ToDictionary(x => x.NumeroItemOriginal)
+            ? Lineas.GroupBy(x => x.NumeroItemOriginal).ToDictionary(x => x.Key, x => x.First())
             : new Dictionary<int, LineaEntrada>();
 
         Lineas = Disponible.Lineas.Select(linea =>
@@ -135,6 +153,8 @@ public sealed class RetornoModel : PageModel
                 entrada.CantidadRetornada = linea.CantidadRetornada;
                 entrada.CantidadDisponible = linea.CantidadDisponible;
                 entrada.ClasificacionFiscal = linea.ClasificacionFiscal;
+                if (!entrada.Seleccionada && entrada.PrecioUnitario is null)
+                    entrada.PrecioUnitario = linea.PrecioUnitario;
                 return entrada;
             }
 

@@ -1,6 +1,8 @@
 using System.Data;
+using System.Linq.Expressions;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using SRAUMOAR.Entidades.Colecturia;
 using SRAUMOAR.Entidades.FacturacionElectronica;
@@ -43,14 +45,28 @@ public sealed class DteEmailQueueService : IDteEmailQueueService
 
     public async Task ProcesarPendienteAsync(CancellationToken cancellationToken = default)
     {
-        ColaCorreoDte? correo = null;
+        var candidato = await _contexto.ColaCorreosDte.AsNoTracking()
+            .Where(FiltroElegibles(DateTime.UtcNow))
+            .OrderBy(x => x.FechaCreacion).ThenBy(x => x.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (candidato is null) return;
+
+        // El lease permite recuperar un proceso caído; NO concede exclusión por sí solo.
+        // El mismo bloqueo distribuido protege worker, recuperación y reenvío hasta
+        // terminar SMTP y persistir el resultado, incluso si vence BloqueadoHasta.
+        await using var exclusion = await AdquirirExclusionAsync(candidato.ClaveIdempotencia, cancellationToken);
+        if (exclusion is null) return;
+
+        ColaCorreoDte correo;
         await using (var transaccion = await _contexto.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken))
         {
             correo = await _contexto.ColaCorreosDte
-                .Where(x => x.Estado == "Pendiente" && (x.ProximoIntento == null || x.ProximoIntento <= DateTime.UtcNow) && (x.BloqueadoHasta == null || x.BloqueadoHasta < DateTime.UtcNow))
-                .OrderBy(x => x.FechaCreacion)
-                .FirstOrDefaultAsync(cancellationToken);
-            if (correo is null) return;
+                .SingleAsync(x => x.Id == candidato.Id, cancellationToken);
+            // El contexto puede haber leído esta entidad antes de adquirir el bloqueo.
+            await _contexto.Entry(correo).ReloadAsync(cancellationToken);
+            if (!FiltroElegibles(DateTime.UtcNow).Compile()(correo)) return;
+            if (correo.Estado == "Procesando")
+                _logger.LogWarning("Recuperando lease vencido del correo DTE {CorreoId}; intentos previos {Intentos}", correo.Id, correo.Intentos);
             correo.Estado = "Procesando";
             correo.BloqueadoHasta = DateTime.UtcNow.AddMinutes(10);
             correo.Intentos++;
@@ -60,22 +76,27 @@ public sealed class DteEmailQueueService : IDteEmailQueueService
 
         try
         {
-            await _sender.SendAsync(correo!, cancellationToken);
-            correo!.Estado = "Enviado";
+            using var envioCancelacion = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            // Plazo inferior al lease; MailKit debe terminar/abortar antes de que
+            // otra instancia pueda recuperar un lease tras perder la conexión SQL.
+            envioCancelacion.CancelAfter(TimeSpan.FromMinutes(2));
+            await _sender.SendAsync(correo, envioCancelacion.Token);
+            correo.Estado = "Enviado";
             correo.ProcesadoEn = DateTime.UtcNow;
             correo.BloqueadoHasta = null;
-            correo.UltimoError = null;
+            // Conservar el último error como evidencia de los intentos anteriores.
         }
         catch (Exception ex)
         {
-            var max = await _contexto.ConfiguracionesSmtp.AsNoTracking().Where(x => x.Activo).Select(x => x.MaxReintentos).SingleOrDefaultAsync(cancellationToken);
-            correo!.Estado = correo.Intentos >= (max <= 0 ? 5 : max) ? "Error" : "Pendiente";
+            var max = await _contexto.ConfiguracionesSmtp.AsNoTracking().Where(x => x.Activo).Select(x => x.MaxReintentos).SingleOrDefaultAsync(CancellationToken.None);
+            correo.Estado = correo.Intentos >= (max <= 0 ? 5 : max) ? "Error" : "Pendiente";
             correo.ProximoIntento = DateTime.UtcNow.AddMinutes(Math.Min(60, Math.Pow(2, correo.Intentos)));
             correo.BloqueadoHasta = null;
             correo.UltimoError = ex.Message;
             _logger.LogError(ex, "Error enviando correo DTE {CorreoId}", correo.Id);
         }
-        await _contexto.SaveChangesAsync(cancellationToken);
+        // Un cierre solicitado después de SMTP no debe impedir guardar su resultado.
+        await _contexto.SaveChangesAsync(CancellationToken.None);
     }
 
     private async Task<ColaCorreoDte> EncolarInternoAsync(Factura factura, string tipoDte, string json, string? sello, string destinatario, bool anulacion, bool forzarReenvio, CancellationToken cancellationToken)
@@ -86,20 +107,28 @@ public sealed class DteEmailQueueService : IDteEmailQueueService
         var codigo = ExtraerCodigo(json) ?? factura.CodigoGeneracion;
         var claveMaterial = $"{factura.FacturaId}:{tipoDte}:{codigo}:{sello}:{destinatario.Trim().ToUpperInvariant()}";
         var clave = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(claveMaterial)));
-        var existente = await _contexto.ColaCorreosDte.SingleOrDefaultAsync(x => x.ClaveIdempotencia == clave, cancellationToken);
+        await using var exclusion = await AdquirirExclusionAsync(clave, cancellationToken);
+        if (exclusion is null)
+            throw new InvalidOperationException("Este correo está siendo procesado. Espere a que termine antes de solicitar otro envío.");
+
+        var prefijoReenvio = clave + ":";
+        var existente = await _contexto.ColaCorreosDte
+            .Where(x => x.ClaveIdempotencia == clave || x.ClaveIdempotencia.StartsWith(prefijoReenvio))
+            .OrderByDescending(x => x.Id).FirstOrDefaultAsync(cancellationToken);
         if (existente is not null)
         {
-            if (forzarReenvio && existente.Estado is not ("Pendiente" or "Procesando"))
+            await _contexto.Entry(existente).ReloadAsync(cancellationToken);
+            if (forzarReenvio && RecuperarLeaseVencido(existente, DateTime.UtcNow))
             {
-                existente.Estado = "Pendiente";
-                existente.Intentos = 0;
-                existente.ProximoIntento = DateTime.UtcNow;
-                existente.BloqueadoHasta = null;
-                existente.ProcesadoEn = null;
-                existente.UltimoError = null;
                 await _contexto.SaveChangesAsync(cancellationToken);
+                _logger.LogInformation("Lease recuperado por reenvío del correo DTE {CorreoId}", existente.Id);
             }
-            return existente;
+            if (!forzarReenvio || existente.Estado is not ("Enviado" or "Error"))
+                return existente;
+
+            // Un reenvío terminado es una nueva entrega: el registro anterior y toda
+            // su auditoría permanecen intactos. La familia comparte el mismo bloqueo.
+            clave = prefijoReenvio + Guid.NewGuid().ToString("N");
         }
 
         var pdf = _pdfService.Generar(tipoDte, json, sello);
@@ -122,7 +151,66 @@ public sealed class DteEmailQueueService : IDteEmailQueueService
         };
         _contexto.ColaCorreosDte.Add(correo);
         await _contexto.SaveChangesAsync(cancellationToken);
+        if (existente is not null)
+            _logger.LogInformation("Reenvío DTE {CorreoId} creado desde {CorreoAnteriorId}", correo.Id, existente.Id);
         return correo;
+    }
+
+    private static Expression<Func<ColaCorreoDte, bool>> FiltroElegibles(DateTime ahora)
+        => x => (x.BloqueadoHasta == null || x.BloqueadoHasta <= ahora)
+            && (x.Estado == "Procesando"
+                || (x.Estado == "Pendiente" && (x.ProximoIntento == null || x.ProximoIntento <= ahora)));
+
+    // Solo llamar después de adquirir la exclusión compartida con el worker.
+    private static bool RecuperarLeaseVencido(ColaCorreoDte correo, DateTime ahora)
+    {
+        if (correo.Estado != "Procesando" || !FiltroElegibles(ahora).Compile()(correo)) return false;
+        correo.Estado = "Pendiente";
+        correo.ProximoIntento = ahora;
+        correo.BloqueadoHasta = null;
+        return true;
+    }
+
+    private static string RecursoExclusion(string clave)
+        => "SRAUMOAR:DteEmail:" + clave.Split(':', 2)[0];
+
+    private async Task<SqlConnection?> AdquirirExclusionAsync(string clave, CancellationToken cancellationToken)
+    {
+        // Conexión dedicada: su transacción solo mantiene el application lock, no
+        // bloquea filas durante SMTP. Las transacciones de trabajo se confirman aparte.
+        // Dispose cierra/rollback y libera el lock incluso ante excepción/cancelación.
+        // Usar las opciones de EF, no la cadena de una conexión ya abierta (SqlClient
+        // puede haber ocultado su contraseña con Persist Security Info=false).
+        var opciones = new SqlConnectionStringBuilder(_contexto.Database.GetConnectionString())
+        {
+            Pooling = false,
+            Enlist = false,
+            ConnectRetryCount = 0
+        };
+        var conexion = new SqlConnection(opciones.ConnectionString);
+        try
+        {
+            await conexion.OpenAsync(cancellationToken);
+            using var comando = conexion.CreateCommand();
+            comando.CommandText = """
+                BEGIN TRANSACTION;
+                DECLARE @resultado int;
+                EXEC @resultado = sys.sp_getapplock @Resource = @recurso,
+                    @LockMode = 'Exclusive', @LockOwner = 'Transaction', @LockTimeout = 0;
+                SELECT @resultado;
+                """;
+            comando.Parameters.AddWithValue("@recurso", RecursoExclusion(clave));
+            var resultado = Convert.ToInt32(await comando.ExecuteScalarAsync(cancellationToken));
+            if (resultado >= 0) return conexion;
+            await conexion.DisposeAsync();
+            if (resultado == -1) return null; // Otra instancia posee el envío.
+            throw new InvalidOperationException($"No se pudo adquirir la exclusión del correo DTE ({resultado}).");
+        }
+        catch
+        {
+            await conexion.DisposeAsync();
+            throw;
+        }
     }
 
     private static string? ExtraerCodigo(string json)

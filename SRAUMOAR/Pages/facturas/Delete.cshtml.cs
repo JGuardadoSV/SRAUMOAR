@@ -73,7 +73,7 @@ public sealed class DeleteModel : PageModel
             var reanudando = factura.EstadoTransmision == DteEstados.Anulando && !string.IsNullOrWhiteSpace(factura.JsonAnulacion);
             if (reanudando)
                 throw new InvalidOperationException("La invalidación ya fue enviada o quedó incierta. Debe conciliarse con Hacienda usando el mismo código; no se retransmitirá automáticamente.");
-            if (!reanudando && factura.EstadoTransmision != DteEstados.Aceptado)
+            if (!reanudando && !DteEstadoFiscal.EsAceptado(factura))
                 throw new InvalidOperationException("El documento no está aceptado o ya tiene una invalidación en proceso.");
             var jsonInvalidacion = _jsonFactory.CrearInvalidacion(
                 factura.JsonDte,
@@ -86,7 +86,9 @@ public sealed class DeleteModel : PageModel
             await using (var transaccion = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken))
             {
                 var reclamada = await _context.Facturas
-                    .Where(x => x.FacturaId == factura.FacturaId && !x.Anulada && x.EstadoTransmision == DteEstados.Aceptado)
+                    .Where(x => x.FacturaId == factura.FacturaId && !x.Anulada && x.SelloRecepcion != null && x.SelloRecepcion != ""
+                        && (x.EstadoTransmision == DteEstados.Aceptado
+                            || x.EstadoTransmision == DteEstados.Preparado && x.IntentosTransmision == 0))
                     .ExecuteUpdateAsync(x => x
                         .SetProperty(f => f.EstadoTransmision, DteEstados.Anulando)
                         .SetProperty(f => f.JsonAnulacion, jsonInvalidacion), cancellationToken);
@@ -115,7 +117,7 @@ public sealed class DeleteModel : PageModel
 
             if (!resultado.Aceptado || string.IsNullOrWhiteSpace(resultado.SelloRecepcion))
             {
-                if (resultado.Estado == DteEstados.Rechazado)
+                if (resultado.Estado is DteEstados.Rechazado or DteEstados.Preparado)
                 {
                     await _context.Facturas.Where(x => x.FacturaId == factura.FacturaId && !x.Anulada && x.EstadoTransmision == DteEstados.Anulando)
                         .ExecuteUpdateAsync(x => x

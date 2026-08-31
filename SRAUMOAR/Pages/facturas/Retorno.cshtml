@@ -55,6 +55,8 @@
 
         <form method="post" id="eretForm">
             <input type="hidden" asp-for="FacturaId" />
+            <input type="hidden" asp-for="OperacionId" />
+            <span asp-validation-for="OperacionId" class="text-danger"></span>
             <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
             <div class="card eret-card mb-4">
@@ -66,7 +68,8 @@
                         @for (var i = 0; i < Model.Lineas.Count; i++)
                         {
                             var linea = Model.Lineas[i];
-                            var agotada = linea.CantidadDisponible <= 0;
+                            var agotada = linea.CantidadDisponible <= 0 && !linea.Seleccionada;
+                            var maximoCantidad = linea.Seleccionada ? Math.Max(linea.CantidadDisponible, linea.Cantidad) : linea.CantidadDisponible;
                             <tr class="eret-linea @(agotada ? "table-light text-muted" : "")">
                                 <td class="text-center">
                                     <input type="hidden" asp-for="Lineas[i].NumeroItemOriginal" />
@@ -83,8 +86,8 @@
                                 <td>@linea.CantidadOriginal.ToString("N4")</td>
                                 <td>@linea.CantidadRetornada.ToString("N4")</td>
                                 <td><strong>@linea.CantidadDisponible.ToString("N4")</strong></td>
-                                <td><input class="form-control eret-quantity eret-cantidad" asp-for="Lineas[i].Cantidad" type="number" min="0" max="@linea.CantidadDisponible.ToString(System.Globalization.CultureInfo.InvariantCulture)" step="0.00000001" disabled="@agotada" /></td>
-                                <td><div class="input-group eret-money"><span class="input-group-text">$</span><input class="form-control eret-precio" asp-for="Lineas[i].PrecioUnitario" type="number" min="0.00000001" step="0.00000001" disabled="@agotada" /></div></td>
+                                <td><input class="form-control eret-quantity eret-cantidad" asp-for="Lineas[i].Cantidad" type="number" min="0" max="@maximoCantidad.ToString(System.Globalization.CultureInfo.InvariantCulture)" step="0.00000001" readonly="@agotada" /></td>
+                                <td><div class="input-group eret-money"><span class="input-group-text">$</span><input class="form-control eret-precio" asp-for="Lineas[i].PrecioUnitario" type="number" min="0.00000001" step="0.00000001" readonly="@agotada" /></div></td>
                                 <td class="fw-bold eret-subtotal">$0.00</td>
                             </tr>
                         }
@@ -141,8 +144,9 @@
                     const cantidad = row.querySelector('.eret-cantidad');
                     const precio = row.querySelector('.eret-precio');
                     const activa = check && check.checked && !check.disabled;
-                    cantidad.disabled = !activa;
-                    precio.disabled = !activa;
+                    // readonly conserva valores en el POST, incluso en líneas no seleccionadas.
+                    cantidad.readOnly = !activa;
+                    precio.readOnly = !activa;
                     const subtotal = activa ? numero(cantidad.value) * numero(precio.value) : 0;
                     row.querySelector('.eret-subtotal').textContent = subtotal.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
                     if (activa) { seleccionadas++; total += subtotal; }

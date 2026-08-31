@@ -13,6 +13,7 @@ using Microsoft.Extensions.Options;
 using SRAUMOAR.Entidades;
 using SRAUMOAR.Entidades.Alumnos;
 using SRAUMOAR.Entidades.Colecturia;
+using SRAUMOAR.Entidades.FacturacionElectronica;
 using SRAUMOAR.Entidades.Generales;
 using SRAUMOAR.Entidades.Procesos;
 using SRAUMOAR.Modelos;
@@ -31,13 +32,23 @@ namespace SRAUMOAR.Pages.aranceles
         private readonly IDteTransmisionService _dteTransmision;
         private readonly IConfiguracionFeService _configuracionFe;
         private readonly IDteEmailQueueService _emailQueue;
+        private readonly IDteJsonFactory _jsonFactory;
+        private readonly ICatalogoFeService _catalogos;
+        // No existe correspondencia fiable con MunicipioId/DistritoId legacy.
+        // La pantalla debe capturar los tres datos explícitamente en cada borrador.
+        [BindProperty] public string? CodigoDepartamentoReceptor { get; set; }
+        [BindProperty] public string? CodigoMunicipioReceptor { get; set; }
+        [BindProperty] public long? DistritoReceptorId { get; set; }
+        public IReadOnlyList<CatalogoFeItem> CatalogoDepartamentos { get; private set; } = Array.Empty<CatalogoFeItem>();
+        public IReadOnlyList<CatalogoFeItem> CatalogoMunicipios { get; private set; } = Array.Empty<CatalogoFeItem>();
+        public IReadOnlyList<CatalogoFeItem> CatalogoDistritos { get; private set; } = Array.Empty<CatalogoFeItem>();
         private string ambienteFiscal = "01";
         private int ambiente = 1;
         private string codigoEstablecimientoMh = "M001";
         private string codigoEstablecimiento = "M001";
         private string codigoPuntoVentaMh = "P001";
         private string codigoPuntoVenta = "P001";
-        public FacturarModel(SRAUMOAR.Modelos.Contexto context, IOptions<EmisorConfig> emisorOptions, ICorrelativoService correlativoService, IDteTransmisionService dteTransmision, IConfiguracionFeService configuracionFe, IDteEmailQueueService emailQueue)
+        public FacturarModel(SRAUMOAR.Modelos.Contexto context, IOptions<EmisorConfig> emisorOptions, ICorrelativoService correlativoService, IDteTransmisionService dteTransmision, IConfiguracionFeService configuracionFe, IDteEmailQueueService emailQueue, IDteJsonFactory jsonFactory, ICatalogoFeService catalogos)
         {
             _context = context;
             _emisor = emisorOptions.Value;
@@ -45,12 +56,32 @@ namespace SRAUMOAR.Pages.aranceles
             _dteTransmision = dteTransmision;
             _configuracionFe = configuracionFe;
             _emailQueue = emailQueue;
+            _jsonFactory = jsonFactory;
+            _catalogos = catalogos;
         }
-        public List<Arancel> Aranceles { get; set; }
+        public List<Arancel> Aranceles { get; set; } = new();
+
+        private async Task CargarCatalogosReceptorAsync()
+        {
+            try
+            {
+                CatalogoDepartamentos = await _catalogos.ObtenerAsync("CAT-012", "1.1");
+                CatalogoMunicipios = await _catalogos.ObtenerAsync("CAT-013", "1.1");
+                CatalogoDistritos = await _catalogos.ObtenerAsync("CAT-008", "1.1");
+            }
+            catch (Exception)
+            {
+                CatalogoDepartamentos = Array.Empty<CatalogoFeItem>();
+                CatalogoMunicipios = Array.Empty<CatalogoFeItem>();
+                CatalogoDistritos = Array.Empty<CatalogoFeItem>();
+                ModelState.AddModelError(string.Empty, "No se pudieron cargar los catálogos fiscales. La emisión está bloqueada.");
+            }
+        }
         
         // M�todo para cargar datos de la vista (reutilizable)
         private async Task CargarDatosParaVista(int idalumno)
         {
+            await CargarCatalogosReceptorAsync();
             var alumno = await _context.Alumno.FirstOrDefaultAsync(m => m.AlumnoId == idalumno);
             if (alumno != null)
             {
@@ -197,7 +228,8 @@ namespace SRAUMOAR.Pages.aranceles
                 return RedirectToPage("./Facturar", new { idalumno, arancelIds = string.Join(',', selectedAranceles ?? new List<int>()) });
             }
             // Validar que los par�metros no sean null
-            if (selectedAranceles == null || arancelescostos == null)
+            if (selectedAranceles == null || arancelescostos == null || selectedAranceles.Count == 0
+                || selectedAranceles.Count != arancelescostos.Count || selectedAranceles.Distinct().Count() != selectedAranceles.Count)
             {
                 ModelState.AddModelError("", "Los datos de aranceles son requeridos");
                 return Page();
@@ -211,11 +243,33 @@ namespace SRAUMOAR.Pages.aranceles
                 return Page();
             }
 
+            string distritoReceptor;
+            try
+            {
+                await CargarCatalogosReceptorAsync();
+                distritoReceptor = DteDocumentoActualizador.ResolverDistritoReceptor(
+                    CodigoDepartamentoReceptor, CodigoMunicipioReceptor, DistritoReceptorId,
+                    CatalogoDepartamentos, CatalogoMunicipios, CatalogoDistritos);
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["Error"] = ex.Message + " Complete la selección fiscal explícita del alumno antes de facturar.";
+                return RedirectToPage("./Facturar", new { idalumno, arancelIds = string.Join(',', selectedAranceles) });
+            }
+
             // Verificar si el alumno tiene beca parcial y obtener precios personalizados
             var arancelesSeleccionadosDb = await _context.Aranceles
                 .AsNoTracking()
                 .Where(a => selectedAranceles.Contains(a.ArancelId))
                 .ToListAsync();
+
+            Aranceles = arancelesSeleccionadosDb;
+            if (arancelesSeleccionadosDb.Count != selectedAranceles.Count)
+            {
+                ModelState.AddModelError(string.Empty, "La selección contiene aranceles inexistentes.");
+                await CargarDatosParaVista(idalumno);
+                return Page();
+            }
 
             var cicloUnico = ObtenerCicloUnico(arancelesSeleccionadosDb);
             if (cicloUnico == -1)
@@ -243,12 +297,7 @@ namespace SRAUMOAR.Pages.aranceles
             for (int x = 0; x < selectedAranceles.Count; x++)
             {
                 var arancelId = selectedAranceles[x];
-                if (!arancelesById.TryGetValue(arancelId, out var arancelDb))
-                {
-                    // Respaldo: si no se encontr� en BD, usar el valor posteado
-                    totalACobrar += arancelescostos[x];
-                    continue;
-                }
+                var arancelDb = arancelesById[arancelId];
 
                 // Base: precio personalizado si existe, sino el costo normal
                 var costoBase = preciosPersonalizados.TryGetValue(arancelId, out var precioPers)
@@ -257,7 +306,10 @@ namespace SRAUMOAR.Pages.aranceles
 
                 // Mora si aplica
                 var mostrarMora = arancelDb.EstaVencido && !alumno.ExentoMora;
-                totalACobrar += mostrarMora ? costoBase + arancelDb.ValorMora : costoBase;
+                var costoFiscal = Math.Round(mostrarMora ? costoBase + arancelDb.ValorMora : costoBase, 2);
+                // DTE y cobro comparten el precio autorizado, no el importe enviado por el navegador.
+                arancelescostos[x] = costoFiscal;
+                totalACobrar += costoFiscal;
             }
 
             if (CobroArancel.EfectivoRecibido < totalACobrar)
@@ -366,8 +418,9 @@ namespace SRAUMOAR.Pages.aranceles
                 descActividad = (string)null,
                 direccion = new
                 {
-                    departamento = "04",
-                    municipio = "34",
+                    departamento = CodigoDepartamentoReceptor,
+                    municipio = CodigoMunicipioReceptor,
+                    distrito = distritoReceptor,
                     complemento = alumno.DireccionDeResidencia
                 },
                 telefono = (string)null,
@@ -501,8 +554,19 @@ namespace SRAUMOAR.Pages.aranceles
             });
 
 
+            try
+            {
+                dteJson = DteDocumentoActualizador.ActualizarBorrador(dteJson, ambienteFiscal, _jsonFactory);
+            }
+            catch (Exception ex) when (ex is InvalidOperationException or ArgumentException or Newtonsoft.Json.JsonException)
+            {
+                ModelState.AddModelError(string.Empty, $"No se transmitió el borrador: {ex.Message}");
+                await CargarDatosParaVista(idalumno);
+                return Page();
+            }
+
             var resultadoTransmision = await _dteTransmision.TransmitirAsync(
-                new DteTransmisionRequest(dteJson, "01", codigoGeneracion.ToString().ToUpperInvariant(), numeroControl, 1, alumno.Email));
+                new DteTransmisionRequest(dteJson, "01", codigoGeneracion.ToString().ToUpperInvariant(), numeroControl, 2, alumno.Email));
             var selloRecibido = resultadoTransmision.SelloRecepcion ?? string.Empty;
 
            // if (ambiente == 1)
@@ -530,9 +594,7 @@ namespace SRAUMOAR.Pages.aranceles
                 factura.TotalIva = totalIva;
                 factura.TotalPagar = totalPagar;
                  _context.Facturas.Add(factura);
-                 await _context.SaveChangesAsync();
-                 if (resultadoTransmision.Aceptado && !string.IsNullOrWhiteSpace(factura.CorreoReceptor))
-                     await _emailQueue.EncolarDteAsync(factura, "01", dteJson, selloRecibido, factura.CorreoReceptor);
+                 // Se guarda junto con CobroArancel al final, antes de cualquier correo.
         //    }
             //****************************************************
             //FIN CREACION DEL DTE
@@ -542,23 +604,12 @@ namespace SRAUMOAR.Pages.aranceles
             bool algunConMora = false;
             for (int y = 0; y < selectedAranceles.Count; y++)
             {
-                var arancelDb = await _context.Aranceles.FindAsync(selectedAranceles[y]);
+                var arancelDb = arancelesById[selectedAranceles[y]];
                 var vencido = arancelDb.EstaVencido;
                 var mostrarMora = vencido && !alumno.ExentoMora;
                 
-                // Determinar el costo base (precio personalizado si existe, sino el original)
-                decimal costoBase;
-                if (preciosPersonalizados.ContainsKey(selectedAranceles[y]))
-                {
-                    costoBase = preciosPersonalizados[selectedAranceles[y]];
-                }
-                else
-                {
-                    costoBase = arancelDb.Costo;
-                }
-                
-                // Aplicar mora si es necesario
-                var costoFinal = mostrarMora ? costoBase + arancelDb.ValorMora : costoBase;
+                // Reutilizar exactamente el importe fiscal calculado antes de transmitir.
+                var costoFinal = arancelescostos[y];
                 
                 if (mostrarMora)
                 {
@@ -581,6 +632,8 @@ namespace SRAUMOAR.Pages.aranceles
             }
             // Asignar el total real cobrado (incluyendo mora si aplica)
             CobroArancel.Total = aranceles.Sum(a => a.costo);
+            CobroArancel.AlumnoId = idalumno;
+            CobroArancel.Cambio = CobroArancel.EfectivoRecibido - CobroArancel.Total;
             CobroArancel.CodigoGeneracion = codigoGeneracion.ToString().ToUpper();
             CobroArancel.Fecha = DateTime.Now;
             
@@ -591,7 +644,30 @@ namespace SRAUMOAR.Pages.aranceles
                 CobroArancel.CicloId = cicloDeAranceles.Id;
             }
             _context.CobrosArancel.Add(CobroArancel);
+            // Una sola unidad de guardado: factura, cobro y sus detalles.
             await _context.SaveChangesAsync();
+
+            TempData.Remove("Success");
+            TempData.Remove("Error");
+            if (!resultadoTransmision.Aceptado)
+            {
+                TempData["Error"] = $"Factura y cobro guardados; el documento tiene estado {resultadoTransmision.Estado}, no está aceptado. Revíselo antes de reintentar.";
+            }
+            else
+            {
+                TempData["Success"] = "Factura aceptada y cobro guardados.";
+                if (!string.IsNullOrWhiteSpace(factura.CorreoReceptor))
+                {
+                    try
+                    {
+                        await _emailQueue.EncolarDteAsync(factura, "01", dteJson, selloRecibido, factura.CorreoReceptor);
+                    }
+                    catch (Exception)
+                    {
+                        TempData["Error"] = "Factura y cobro guardados, pero no se pudo encolar el correo. Reintente solo el envío, no el cobro.";
+                    }
+                }
+            }
 
             return RedirectToPage("./Facturas");
         }

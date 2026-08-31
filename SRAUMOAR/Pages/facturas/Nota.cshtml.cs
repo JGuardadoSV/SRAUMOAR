@@ -6,6 +6,8 @@ using SRAUMOAR.Entidades.Colecturia;
 using SRAUMOAR.Modelos;
 using SRAUMOAR.Modelos.FacturacionElectronica;
 using SRAUMOAR.Servicios.FacturacionElectronica;
+using SRAUMOAR.Entidades.FacturacionElectronica;
+using Newtonsoft.Json.Linq;
 
 namespace SRAUMOAR.Pages.facturas;
 
@@ -33,6 +35,13 @@ public sealed class NotaModel : PageModel
     [BindProperty]
     public string? Motivo { get; set; }
 
+    [BindProperty] public string? DepartamentoReceptor { get; set; }
+    [BindProperty] public string? MunicipioReceptor { get; set; }
+    [BindProperty] public string? DistritoReceptor { get; set; }
+    public IReadOnlyList<CatalogoFeItem> CatalogosGeograficos { get; private set; } = [];
+    public bool RequiereGeografia { get; private set; }
+    public decimal MontoOperacionOriginal { get; private set; }
+
     public Factura? Factura { get; private set; }
     public DteNotaResultado? Resultado { get; private set; }
     public string? Error { get; private set; }
@@ -41,7 +50,7 @@ public sealed class NotaModel : PageModel
     {
         if (!await CargarFacturaAsync(cancellationToken)) return NotFound();
         TipoNota = NormalizarTipoNota(TipoNota);
-        Monto ??= Factura!.TotalPagar;
+        Monto ??= MontoOperacionOriginal;
         return Page();
     }
 
@@ -55,7 +64,8 @@ public sealed class NotaModel : PageModel
 
         try
         {
-            Resultado = await _notas.EmitirAsync(new DteNotaRequest(FacturaId, TipoNota, Monto, Motivo), cancellationToken);
+            Resultado = await _notas.EmitirAsync(new DteNotaRequest(FacturaId, TipoNota, Monto, Motivo,
+                DepartamentoReceptor, MunicipioReceptor, DistritoReceptor), cancellationToken);
             if (!Resultado.Aceptado)
                 Error = Resultado.Error ?? "La nota no fue aceptada por Hacienda.";
         }
@@ -71,6 +81,16 @@ public sealed class NotaModel : PageModel
     {
         Factura = await _contexto.Facturas.AsNoTracking()
             .SingleOrDefaultAsync(x => x.FacturaId == FacturaId, cancellationToken);
+        if (Factura is not null)
+        {
+            var original = JObject.Parse(Factura.JsonDte ?? "{}");
+            MontoOperacionOriginal = original["resumen"]?.Value<decimal?>("montoTotalOperacion") ?? Factura.TotalPagar;
+            RequiereGeografia = string.IsNullOrWhiteSpace(original["receptor"]?["direccion"]?["distrito"]?.Value<string>());
+            if (RequiereGeografia)
+                CatalogosGeograficos = await _contexto.CatalogosFe.AsNoTracking()
+                    .Where(x => x.Activo && x.Version == "1.1" && (x.CodigoCatalogo == "CAT-012" || x.CodigoCatalogo == "CAT-013" || x.CodigoCatalogo == "CAT-008"))
+                    .OrderBy(x => x.Orden).ToListAsync(cancellationToken);
+        }
         return Factura is not null;
     }
 

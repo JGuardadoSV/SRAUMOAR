@@ -165,6 +165,17 @@
                             <input type="hidden" asp-for="Factura.Receptor.CodigoMunicipio" id="Factura_Receptor_CodigoMunicipio" />
                         </div>
                         <div class="form-group">
+                            <label>Distrito fiscal</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control catalogo-valor" id="Factura_Receptor_DistritoTexto" placeholder="Seleccione municipio primero..." readonly />
+                                <button type="button" class="btn btn-outline-secondary btn-buscar-catalogo" data-catalogo="distrito" data-target-code="Factura_Receptor_DistritoId" data-target-text="Factura_Receptor_DistritoTexto" title="Buscar distrito fiscal">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                            <input type="hidden" asp-for="Factura.Receptor.DistritoId" id="Factura_Receptor_DistritoId" />
+                            <small>Seleccione explícitamente el distrito del receptor. No se deduce de la dirección legacy.</small>
+                        </div>
+                        <div class="form-group">
                             <label>Telefono</label>
                             <input type="text" class="form-control" asp-for="Factura.Receptor.Telefono" autocomplete="off" />
                         </div>
@@ -176,7 +187,7 @@
                             <input type="email" class="form-control" asp-for="Factura.Receptor.Correo" autocomplete="off" />
                         </div>
                         <div class="form-group campo-pais" style="display: none;">
-                            <label>Codigo de pais</label>
+                            <label>País de nacionalidad del donante</label>
                             <div class="input-group">
                                 <input type="text" class="form-control catalogo-valor" id="Factura_CodigoPaisTexto" placeholder="Buscar pais..." readonly />
                                 <button type="button" class="btn btn-outline-secondary btn-buscar-catalogo" data-catalogo="pais" data-target-code="Factura_CodigoPais" data-target-text="Factura_CodigoPaisTexto" title="Buscar pais">
@@ -185,6 +196,14 @@
                             </div>
                             <input type="hidden" asp-for="Factura.CodigoPais" id="Factura_CodigoPais" />
                             <span asp-validation-for="Factura.CodigoPais" class="text-danger"></span>
+                        </div>
+                        <div class="form-group campo-pais" style="display: none;">
+                            <label asp-for="Factura.Receptor.CodigoDomicilioFiscal">Domicilio fiscal del donante</label>
+                            <select asp-for="Factura.Receptor.CodigoDomicilioFiscal" class="form-control">
+                                <option value="">Seleccione...</option>
+                                <option value="1">Domiciliado</option>
+                                <option value="2">No domiciliado</option>
+                            </select>
                         </div>
                     </div>
 
@@ -1023,41 +1042,8 @@
             var catalogoSeleccionActual = null;
             var catalogoBusquedaTimer = null;
 
-            var departamentos = [
-                { codigo: '00', nombre: 'Otro (para extranjeros)' },
-                { codigo: '01', nombre: 'Ahuachapan' },
-                { codigo: '02', nombre: 'Santa Ana' },
-                { codigo: '03', nombre: 'Sonsonate' },
-                { codigo: '04', nombre: 'Chalatenango' },
-                { codigo: '05', nombre: 'La Libertad' },
-                { codigo: '06', nombre: 'San Salvador' },
-                { codigo: '07', nombre: 'Cuscatlan' },
-                { codigo: '08', nombre: 'La Paz' },
-                { codigo: '09', nombre: 'Cabanas' },
-                { codigo: '10', nombre: 'San Vicente' },
-                { codigo: '11', nombre: 'Usulutan' },
-                { codigo: '12', nombre: 'San Miguel' },
-                { codigo: '13', nombre: 'Morazan' },
-                { codigo: '14', nombre: 'La Union' }
-            ];
-
-            var municipiosPorDepartamento = {
-                '00': [{ codigo: '00', nombre: 'Extranjero' }],
-                '01': [{ codigo: '13', nombre: 'AHUACHAPAN NORTE' }, { codigo: '14', nombre: 'AHUACHAPAN CENTRO' }, { codigo: '15', nombre: 'AHUACHAPAN SUR' }],
-                '02': [{ codigo: '14', nombre: 'SANTA ANA NORTE' }, { codigo: '15', nombre: 'SANTA ANA CENTRO' }, { codigo: '16', nombre: 'SANTA ANA ESTE' }, { codigo: '17', nombre: 'SANTA ANA OESTE' }],
-                '03': [{ codigo: '17', nombre: 'SONSONATE NORTE' }, { codigo: '18', nombre: 'SONSONATE CENTRO' }, { codigo: '19', nombre: 'SONSONATE ESTE' }, { codigo: '20', nombre: 'SONSONATE OESTE' }],
-                '04': [{ codigo: '34', nombre: 'CHALATENANGO NORTE' }, { codigo: '35', nombre: 'CHALATENANGO CENTRO' }, { codigo: '36', nombre: 'CHALATENANGO SUR' }],
-                '05': [{ codigo: '23', nombre: 'LA LIBERTAD NORTE' }, { codigo: '24', nombre: 'LA LIBERTAD CENTRO' }, { codigo: '25', nombre: 'LA LIBERTAD OESTE' }, { codigo: '26', nombre: 'LA LIBERTAD ESTE' }, { codigo: '27', nombre: 'LA LIBERTAD COSTA' }, { codigo: '28', nombre: 'LA LIBERTAD SUR' }],
-                '06': [{ codigo: '20', nombre: 'SAN SALVADOR NORTE' }, { codigo: '21', nombre: 'SAN SALVADOR OESTE' }, { codigo: '22', nombre: 'SAN SALVADOR ESTE' }, { codigo: '23', nombre: 'SAN SALVADOR CENTRO' }, { codigo: '24', nombre: 'SAN SALVADOR SUR' }],
-                '07': [{ codigo: '17', nombre: 'CUSCATLAN NORTE' }, { codigo: '18', nombre: 'CUSCATLAN SUR' }],
-                '08': [{ codigo: '23', nombre: 'LA PAZ OESTE' }, { codigo: '24', nombre: 'LA PAZ CENTRO' }, { codigo: '25', nombre: 'LA PAZ ESTE' }],
-                '09': [{ codigo: '10', nombre: 'CABANAS ESTE' }, { codigo: '11', nombre: 'CABANAS OESTE' }],
-                '10': [{ codigo: '14', nombre: 'SAN VICENTE NORTE' }, { codigo: '15', nombre: 'SAN VICENTE SUR' }],
-                '11': [{ codigo: '24', nombre: 'USULUTAN NORTE' }, { codigo: '25', nombre: 'USULUTAN ESTE' }, { codigo: '26', nombre: 'USULUTAN OESTE' }],
-                '12': [{ codigo: '21', nombre: 'SAN MIGUEL NORTE' }, { codigo: '22', nombre: 'SAN MIGUEL CENTRO' }, { codigo: '23', nombre: 'SAN MIGUEL OESTE' }],
-                '13': [{ codigo: '27', nombre: 'MORAZAN NORTE' }, { codigo: '28', nombre: 'MORAZAN SUR' }],
-                '14': [{ codigo: '19', nombre: 'LA UNION NORTE' }, { codigo: '20', nombre: 'LA UNION SUR' }]
-            };
+            // La geografía proviene exclusivamente del catálogo fiscal importado.
+            var departamentos = [];
 
             var paises = [
                 { codigo: 'BZ', nombre: 'Belice' }, { codigo: 'CR', nombre: 'Costa Rica' },
@@ -1069,17 +1055,19 @@
             ];
 
             var catalogosServidor = {
-                departamentos: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoDepartamentos.Select(x => new { codigo = x.Codigo, nombre = x.Descripcion }))),
-                municipios: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoMunicipios.Select(x => new { codigo = x.Codigo, nombre = x.Descripcion }))),
+                departamentos: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoDepartamentos.Where(x => x.Activo).Select(x => new { codigo = x.Codigo, nombre = x.Descripcion }))),
+                municipios: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoMunicipios.Where(x => x.Activo).Select(x => new { codigo = x.Codigo, nombre = x.Descripcion }))),
+                distritos: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoDistritos.Where(x => x.Activo).Select(x => new { id = x.Id.ToString(), codigo = x.Codigo, nombre = x.Descripcion }))),
                 paises: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoPaises.Select(x => new { codigo = x.Codigo, nombre = x.Descripcion }))),
                 donaciones: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoDonaciones.Select(x => new { codigo = x.Codigo, nombre = x.Descripcion })))
             };
             var municipiosCatalogo = catalogosServidor.municipios || [];
-            if (catalogosServidor.departamentos && catalogosServidor.departamentos.length) departamentos = catalogosServidor.departamentos;
+            departamentos = catalogosServidor.departamentos || [];
             if (catalogosServidor.paises && catalogosServidor.paises.length) paises = catalogosServidor.paises;
 
             var catalogosLocales = {
                 departamento: departamentos,
+                distrito: catalogosServidor.distritos || [],
                 pais: paises,
                 donacion: catalogosServidor.donaciones && catalogosServidor.donaciones.length ? catalogosServidor.donaciones : [
                     { codigo: '1', nombre: 'Efectivo' },
@@ -1313,7 +1301,10 @@
                 }
 
                 inicializarTextoCatalogo('Factura_Receptor_CodigoDepartamento', 'Factura_Receptor_CodigoDepartamentoTexto', departamentos);
-                inicializarTextoCatalogo('Factura_Receptor_CodigoMunicipio', 'Factura_Receptor_CodigoMunicipioTexto', obtenerMunicipiosPorDepartamento(jQuery('#Factura_Receptor_CodigoDepartamento').val()));
+                inicializarTextoCatalogo('Factura_Receptor_CodigoMunicipio', 'Factura_Receptor_CodigoMunicipioTexto', municipiosCatalogo);
+                var distritoId = jQuery('#Factura_Receptor_DistritoId').val();
+                var distrito = catalogosLocales.distrito.find(function (item) { return item.id === distritoId; });
+                if (distrito) jQuery('#Factura_Receptor_DistritoTexto').val(distrito.codigo + ' - ' + distrito.nombre);
                 inicializarTextoCatalogo('Factura_CodigoPais', 'Factura_CodigoPaisTexto', paises);
                 inicializarTextoCatalogo('Factura_TipoDonacion', 'Factura_TipoDonacionTexto', catalogosLocales.donacion);
                 inicializarTextoCatalogo('Factura_TipoOperacion', 'Factura_TipoOperacionTexto', catalogosLocales.operacion);
@@ -1347,6 +1338,10 @@
                     enfocarConMensaje('#Factura_Receptor_CodigoDepartamentoTexto', 'Seleccione primero el departamento.');
                     return;
                 }
+                if (tipo === 'distrito' && !jQuery('#Factura_Receptor_CodigoMunicipio').val()) {
+                    enfocarConMensaje('#Factura_Receptor_CodigoMunicipioTexto', 'Seleccione primero el municipio fiscal.');
+                    return;
+                }
 
                 catalogoSeleccionActual = {
                     tipo: tipo,
@@ -1368,7 +1363,7 @@
 
             function tituloCatalogo(tipo) {
                 return {
-                    departamento: 'departamento', municipio: 'municipio', pais: 'pais',
+                    departamento: 'departamento', municipio: 'municipio', distrito: 'distrito fiscal', pais: 'pais',
                     actividad: 'actividad economica', donacion: 'tipo de donacion', operacion: 'tipo de operacion'
                 }[tipo] || 'valor';
             }
@@ -1409,14 +1404,7 @@
             }
 
             function obtenerItemsCatalogo(tipo) {
-                if (tipo === 'municipio') {
-                    var departamento = jQuery('#Factura_Receptor_CodigoDepartamento').val();
-                    var permitidos = obtenerMunicipiosPorDepartamento(departamento).map(function (item) { return String(item.codigo); });
-                    if (municipiosCatalogo.length) {
-                        return jQuery.grep(municipiosCatalogo, function (item) { return permitidos.indexOf(String(item.codigo)) !== -1; });
-                    }
-                    return obtenerMunicipiosPorDepartamento(departamento);
-                }
+                if (tipo === 'municipio') return municipiosCatalogo;
                 return catalogosLocales[tipo] || [];
             }
 
@@ -1435,12 +1423,15 @@
             function seleccionarCatalogo(item) {
                 if (!catalogoSeleccionActual) return;
                 var actual = catalogoSeleccionActual;
-                jQuery('#' + actual.codigoId).val(item.codigo).trigger('change');
+                jQuery('#' + actual.codigoId).val(actual.tipo === 'distrito' ? item.id : item.codigo).trigger('change');
                 jQuery('#' + actual.textoId).val(item.codigo + ' - ' + item.nombre);
 
                 if (actual.tipo === 'departamento') {
                     limpiarCatalogo('#Factura_Receptor_CodigoMunicipio', '#Factura_Receptor_CodigoMunicipioTexto');
                     sessionStorage.removeItem('pvMunicipioSeleccionado');
+                }
+                if (actual.tipo === 'departamento' || actual.tipo === 'municipio') {
+                    limpiarCatalogo('#Factura_Receptor_DistritoId', '#Factura_Receptor_DistritoTexto');
                 }
                 if (actual.tipo === 'actividad') {
                     jQuery('#Factura_Receptor_DescActividad').val(item.descripcion || item.nombre);
@@ -1452,10 +1443,6 @@
             function limpiarCatalogo(codigoSelector, textoSelector) {
                 jQuery(codigoSelector).val('').trigger('change');
                 jQuery(textoSelector).val('');
-            }
-
-            function obtenerMunicipiosPorDepartamento(departamento) {
-                return municipiosPorDepartamento[departamento] || [];
             }
 
             function bloquearProcesamiento(button) {

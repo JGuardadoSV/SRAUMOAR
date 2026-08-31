@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -14,7 +15,8 @@ public sealed class TokenHaciendaService : ITokenHaciendaService
 {
     private readonly IMemoryCache _cache;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly ConcurrentDictionary<string, SemaphoreSlim> _locks = new();
+    // El servicio es scoped, pero el cache es compartido: los locks también deben serlo.
+    private static readonly ConditionalWeakTable<IMemoryCache, ConcurrentDictionary<string, SemaphoreSlim>> Locks = new();
 
     public TokenHaciendaService(IMemoryCache cache, IHttpClientFactory httpClientFactory)
     {
@@ -24,19 +26,27 @@ public sealed class TokenHaciendaService : ITokenHaciendaService
 
     public async Task<string> ObtenerAsync(ConfiguracionFeActiva configuracion, CancellationToken cancellationToken = default)
     {
+        return await ObtenerORenovarAsync(configuracion, null, cancellationToken);
+    }
+
+    internal Task<string> RenovarTrasRechazoAsync(ConfiguracionFeActiva configuracion, string tokenRechazado, CancellationToken cancellationToken)
+        => ObtenerORenovarAsync(configuracion, NormalizarToken(tokenRechazado), cancellationToken);
+
+    private async Task<string> ObtenerORenovarAsync(ConfiguracionFeActiva configuracion, string? tokenRechazado, CancellationToken cancellationToken)
+    {
         var usuario = configuracion.Entidad.UsuarioHacienda;
         var password = configuracion.CredencialApi;
         if (string.IsNullOrWhiteSpace(usuario) || string.IsNullOrWhiteSpace(password))
             throw new InvalidOperationException($"Falta usuario o credencial de Hacienda para {configuracion.Entidad.AmbienteFiscal}.");
 
-        var key = $"SRAUMOAR:DTE:TOKEN:{configuracion.Entidad.AmbienteFiscal}:{usuario}";
-        if (_cache.TryGetValue(key, out string? token) && TokenValido(token)) return token;
-
-        var semaphore = _locks.GetOrAdd(key, _ => new SemaphoreSlim(1, 1));
+        var key = Clave(configuracion.Entidad.AmbienteFiscal, usuario);
+        var semaphore = Locks.GetValue(_cache, _ => new()).GetOrAdd(key, _ => new SemaphoreSlim(1, 1));
         await semaphore.WaitAsync(cancellationToken);
         try
         {
-            if (_cache.TryGetValue(key, out token) && TokenValido(token)) return token;
+            if (_cache.TryGetValue(key, out string? token) && TokenValido(token) &&
+                (tokenRechazado is null || NormalizarToken(token!) != tokenRechazado)) return NormalizarToken(token!);
+            _cache.Remove(key);
 
             var url = configuracion.Entidad.UrlAutenticacion;
             if (string.IsNullOrWhiteSpace(url))
@@ -45,11 +55,12 @@ public sealed class TokenHaciendaService : ITokenHaciendaService
                     : "https://apitest.dtes.mh.gob.sv/seguridad/auth";
 
             using var client = _httpClientFactory.CreateClient("HaciendaDte");
-            using var response = await client.PostAsync(url, new FormUrlEncodedContent(new[]
+            using var content = new FormUrlEncodedContent(new[]
             {
                 new KeyValuePair<string, string>("user", usuario),
                 new KeyValuePair<string, string>("pwd", password)
-            }), cancellationToken);
+            });
+            using var response = await client.PostAsync(HaciendaDteClient.ValidarUrl(url, configuracion.Entidad.AmbienteFiscal), content, cancellationToken);
             var body = await response.Content.ReadAsStringAsync(cancellationToken);
             if (!response.IsSuccessStatusCode)
                 throw new HttpRequestException($"Hacienda rechazó la autenticación ({(int)response.StatusCode}).");
@@ -58,10 +69,12 @@ public sealed class TokenHaciendaService : ITokenHaciendaService
             var bodyNode = Propiedad(document.RootElement, "body");
             var tokenNode = bodyNode.HasValue ? Propiedad(bodyNode.Value, "token") : null;
             var rootToken = Propiedad(document.RootElement, "token");
-            var recibido = tokenNode?.GetString() ?? rootToken?.GetString();
+            var recibido = tokenNode?.ValueKind == JsonValueKind.String ? tokenNode.Value.GetString()
+                : rootToken?.ValueKind == JsonValueKind.String ? rootToken.Value.GetString() : null;
             if (string.IsNullOrWhiteSpace(recibido) || !TokenValido(recibido))
                 throw new InvalidOperationException("Hacienda no devolvió un token JWT válido.");
 
+            recibido = NormalizarToken(recibido);
             var expiracion = LeerExpiracion(recibido);
             var duracion = expiracion - DateTimeOffset.UtcNow - TimeSpan.FromMinutes(5);
             if (duracion < TimeSpan.FromMinutes(1)) duracion = TimeSpan.FromMinutes(1);
@@ -75,7 +88,23 @@ public sealed class TokenHaciendaService : ITokenHaciendaService
     }
 
     public void Invalidar(string ambienteFiscal, string? usuario = null)
-        => _cache.Remove($"SRAUMOAR:DTE:TOKEN:{ConfiguracionFeService.NormalizarAmbiente(ambienteFiscal)}:{usuario}");
+    {
+        var key = Clave(ambienteFiscal, usuario);
+        var semaphore = Locks.GetValue(_cache, _ => new()).GetOrAdd(key, _ => new SemaphoreSlim(1, 1));
+        semaphore.Wait();
+        try { _cache.Remove(key); }
+        finally { semaphore.Release(); }
+    }
+
+    private static string Clave(string ambiente, string? usuario)
+        => $"SRAUMOAR:DTE:TOKEN:{ConfiguracionFeService.NormalizarAmbiente(ambiente)}:{usuario?.Trim()}";
+
+    internal static string NormalizarToken(string token)
+    {
+        var normalizado = token.Trim();
+        return normalizado.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase)
+            ? normalizado[7..].Trim() : normalizado;
+    }
 
     private static bool TokenValido(string? token)
     {
@@ -86,7 +115,7 @@ public sealed class TokenHaciendaService : ITokenHaciendaService
 
     private static DateTimeOffset LeerExpiracion(string token)
     {
-        var partes = token.Split('.');
+        var partes = NormalizarToken(token).Split('.');
         if (partes.Length != 3) throw new InvalidOperationException("Token JWT inválido.");
         var payload = partes[1].Replace('-', '+').Replace('_', '/');
         payload = payload.PadRight(payload.Length + ((4 - payload.Length % 4) % 4), '=');
@@ -97,6 +126,7 @@ public sealed class TokenHaciendaService : ITokenHaciendaService
 
     private static JsonElement? Propiedad(JsonElement elemento, string nombre)
     {
+        if (elemento.ValueKind != JsonValueKind.Object) return null;
         foreach (var propiedad in elemento.EnumerateObject())
             if (string.Equals(propiedad.Name, nombre, StringComparison.OrdinalIgnoreCase)) return propiedad.Value;
         return null;

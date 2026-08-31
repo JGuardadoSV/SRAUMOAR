@@ -56,6 +56,7 @@ public class EnviarContingenciaModel : PageModel
     {
         var factura = await _context.Facturas.FirstOrDefaultAsync(x => x.FacturaId == id);
         if (factura is null) return NotFound();
+        Factura = factura;
         if (factura.TipoDTE == 18 || factura.TipoDteCodigo == DteTipos.EventoRetorno)
         {
             TempData["Error"] = "Los ERET no se procesan mediante el flujo genérico de contingencia.";
@@ -72,6 +73,8 @@ public class EnviarContingenciaModel : PageModel
             return Page();
         }
 
+        var tieneReclamacion = false;
+        var jsonOriginalLeido = factura.JsonDte;
         try
         {
             var root = JObject.Parse(factura.JsonDte);
@@ -86,33 +89,61 @@ public class EnviarContingenciaModel : PageModel
                 identificacion.Value<string>("ambiente") ?? factura.AmbienteFiscal ?? string.Empty);
             var configuracion = await _configuracionFe.ObtenerAsync(ambienteFiscal);
 
-            var jsonEvento = _jsonFactory.CrearContingencia(
+            if (factura.Anulada || factura.EstadoTransmision != DteEstados.Preparado)
+                throw new InvalidOperationException("Solo puede reintentarse un documento preparado sin envío incierto. Los enviados, inciertos o rechazados requieren conciliación/corrección controlada.");
+
+            var previa = await _context.DteTransmisiones.AsNoTracking().SingleOrDefaultAsync(x =>
+                x.CodigoGeneracion == codigoGeneracion && x.AmbienteFiscal == ambienteFiscal && x.TipoOperacion == "EMISION");
+            if (previa is not null && (previa.Estado != DteEstados.Preparado || !JToken.DeepEquals(JObject.Parse(previa.JsonEnviado), root)))
+                throw new InvalidOperationException("Existe una transmisión previa. No puede alterarse ni reenviarse su JSON sin resolver primero su estado.");
+
+            // Un fallo previo a Hacienda se reintenta con EXACTAMENTE el JSON reservado.
+            // La contingencia solo se prepara si nunca se registró una emisión.
+            string? jsonEvento = null;
+            if (previa is null)
+            {
+                var eventoPrevio = await _context.DteEventos.AsNoTracking().Where(x => x.FacturaId == id
+                    && x.AmbienteFiscal == ambienteFiscal && x.TipoEvento == "CONTINGENCIA")
+                    .OrderByDescending(x => x.Id).FirstOrDefaultAsync();
+                jsonEvento = eventoPrevio?.JsonEvento ?? _jsonFactory.CrearContingencia(
                 factura.JsonDte,
                 4,
                 motivo,
                 User.Identity?.Name ?? "Administrador",
                 configuracion.Entidad.NitEmisor ?? string.Empty,
                 configuracion.Entidad);
-            var contingencia = await _dteTransmision.TransmitirContingenciaAsync(factura.FacturaId, jsonEvento);
-            if (!contingencia.Aceptado)
-            {
-                TempData["Error"] = $"La contingencia no fue aceptada: {contingencia.Error ?? contingencia.Respuesta}";
-                return Page();
+                if (eventoPrevio is null)
+                {
+                    identificacion["tipoModelo"] = 2;
+                    identificacion["tipoOperacion"] = 2;
+                    identificacion["tipoContingencia"] = 4;
+                    identificacion["motivoContin"] = motivo;
+                }
             }
-
-            identificacion["tipoModelo"] = 2;
-            identificacion["tipoOperacion"] = 2;
-            identificacion["tipoContingencia"] = 4;
-            identificacion["motivoContin"] = motivo;
             var jsonEnviado = root.ToString(Formatting.None);
+            _jsonFactory.ValidarDocumento(jsonEnviado, ambienteFiscal, tipoDte);
+            var reclamada = await _context.Facturas.Where(x => x.FacturaId == id && !x.Anulada
+                && x.EstadoTransmision == DteEstados.Preparado && (x.SelloRecepcion == null || x.SelloRecepcion == "")
+                && EF.Functions.Collate(x.JsonDte!, "Latin1_General_100_BIN2") == jsonOriginalLeido)
+                .ExecuteUpdateAsync(x => x.SetProperty(f => f.EstadoTransmision, DteEstados.Enviado)
+                    .SetProperty(f => f.JsonDte, jsonEnviado));
+            if (reclamada != 1) throw new InvalidOperationException("Otro proceso está trabajando con el documento.");
+            tieneReclamacion = true;
+            await _context.Entry(factura).ReloadAsync();
+            if (jsonEvento is not null)
+            {
+                var contingencia = await _dteTransmision.TransmitirContingenciaAsync(factura.FacturaId, jsonEvento);
+                if (!contingencia.Aceptado)
+                {
+                    factura.EstadoTransmision = contingencia.Estado == DteEstados.Preparado ? DteEstados.Preparado : DteEstados.Incierto;
+                    factura.RespuestaHacienda = contingencia.Respuesta;
+                    await _context.SaveChangesAsync();
+                    TempData["Error"] = $"La contingencia no fue aceptada: {contingencia.Error ?? contingencia.Respuesta}";
+                    return Page();
+                }
+            }
             var resultado = await _dteTransmision.TransmitirAsync(new DteTransmisionRequest(
                 jsonEnviado, tipoDte, codigoGeneracion, numeroControl, version, correo, factura.FacturaId));
-
-            if (!resultado.Aceptado)
-            {
-                TempData["Error"] = $"El DTE contingente no fue aceptado: {resultado.Error ?? resultado.Respuesta}";
-                return Page();
-            }
 
             factura.SelloRecepcion = resultado.SelloRecepcion;
             factura.JsonDte = jsonEnviado;
@@ -121,18 +152,39 @@ public class EnviarContingenciaModel : PageModel
             factura.EstadoTransmision = resultado.Estado;
             factura.IntentosTransmision = resultado.Intentos;
             factura.RespuestaHacienda = resultado.Respuesta;
-            factura.FechaAceptacion = DateTime.UtcNow;
+            factura.FechaAceptacion = resultado.Aceptado ? DateTime.UtcNow : null;
             factura.CorreoReceptor = correo;
             await _context.SaveChangesAsync();
 
+            if (!resultado.Aceptado)
+            {
+                TempData["Error"] = $"El resultado {resultado.Estado} quedó guardado: {resultado.Error ?? resultado.Respuesta}";
+                return Page();
+            }
+
             if (!string.IsNullOrWhiteSpace(correo) && !string.IsNullOrWhiteSpace(resultado.SelloRecepcion))
-                await _emailQueue.EncolarDteAsync(factura, tipoDte, jsonEnviado, resultado.SelloRecepcion, correo);
+            {
+                try { await _emailQueue.EncolarDteAsync(factura, tipoDte, jsonEnviado, resultado.SelloRecepcion, correo); }
+                catch { TempData["Error"] = "DTE aceptado y guardado; no se pudo encolar el correo. Reintente únicamente el correo."; }
+            }
 
             TempData["Success"] = $"DTE enviado en contingencia exitosamente en ambiente {resultado.AmbienteFiscal}.";
             return RedirectToPage("./Index");
         }
         catch (Exception ex)
         {
+            if (tieneReclamacion)
+            {
+                try
+                {
+                    // No degradar una aceptación ni reabrir automáticamente una operación incierta.
+                    await _context.Facturas.Where(x => x.FacturaId == id && x.EstadoTransmision == DteEstados.Enviado
+                        && (x.SelloRecepcion == null || x.SelloRecepcion == ""))
+                        .ExecuteUpdateAsync(x => x.SetProperty(f => f.EstadoTransmision, DteEstados.Incierto)
+                            .SetProperty(f => f.RespuestaHacienda, "Error durante reproceso; revisar historial de transmisión: " + ex.Message));
+                }
+                catch { /* No sustituir el error original si tampoco puede registrarse el resultado. */ }
+            }
             TempData["Error"] = $"Error durante el proceso de contingencia: {ex.Message}";
             return Page();
         }

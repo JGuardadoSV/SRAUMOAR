@@ -88,9 +88,10 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
             options.LogoutPath = "/salir";
         });
 builder.Services.AddHttpClient();
-builder.Services.AddHttpClient("HaciendaDte");
-builder.Services.AddHttpClient("FirmadorDte");
-builder.Services.AddHttpClient("ApiExternaDte");
+// No reenviar credenciales ni JSON fiscales a destinos indicados por una redirección.
+builder.Services.AddHttpClient("HaciendaDte").ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
+builder.Services.AddHttpClient("FirmadorDte").ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
+builder.Services.AddHttpClient("ApiExternaDte").ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
 builder.Services.AddMemoryCache();
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "storage", "keys")))

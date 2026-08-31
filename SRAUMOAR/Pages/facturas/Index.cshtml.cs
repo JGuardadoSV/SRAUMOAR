@@ -231,8 +231,7 @@ namespace SRAUMOAR.Pages.facturas
 
         public bool PuedeAnular(Factura factura)
             => !factura.Anulada
-                && (factura.EstadoTransmision == DteEstados.Aceptado
-                    || factura.EstadoTransmision == DteEstados.Anulando && !string.IsNullOrWhiteSpace(factura.JsonAnulacion))
+                && DteEstadoFiscal.EsAceptado(factura)
                 && !string.IsNullOrWhiteSpace(factura.SelloRecepcion)
                 && !FacturasConRetornosActivos.Contains(factura.FacturaId);
 

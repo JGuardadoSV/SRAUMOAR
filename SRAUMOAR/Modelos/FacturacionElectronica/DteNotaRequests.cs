@@ -4,7 +4,10 @@ public sealed record DteNotaRequest(
     int FacturaOriginalId,
     string TipoNota,
     decimal? Monto,
-    string? Motivo);
+    string? Motivo,
+    string? DepartamentoReceptor = null,
+    string? MunicipioReceptor = null,
+    string? DistritoReceptor = null);
 
 public sealed record DteNotaPreparada(
     int FacturaOriginalId,

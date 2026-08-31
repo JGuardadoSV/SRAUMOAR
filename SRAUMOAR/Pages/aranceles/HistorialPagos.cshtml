@@ -85,13 +85,7 @@ else
                         <span class="badge bg-success ms-2">Total: $@cobro.Total</span>
                         <span class="badge bg-info ms-2">Fecha: @cobro.Fecha.ToString("dd/MM/yyyy")</span>
                     </div>
-                    <form method="post" asp-page-handler="EliminarPago" style="display:inline;">
-                        <input type="hidden" name="codigoGeneracion" value="@cobro.CodigoGeneracion" />
-                        <input type="hidden" name="alumnoId" value="@alumno?.AlumnoId" />
-                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Está seguro de eliminar TODOS los pagos con este código de generación?');">
-                            <i class="bi bi-trash"></i> Eliminar grupo
-                        </button>
-                    </form>
+                    <a asp-page="/facturas/Index" class="btn btn-light btn-sm" title="Los pagos se conservan para auditoría; las correcciones se realizan en el documento fiscal.">Revisar documento fiscal</a>
                 </div>
                 <div class="card-body p-0">
                     <table class="table table-striped mb-0">
@@ -118,4 +112,4 @@ else
         }
     </div>
 }
-<a class="btn btn-secondary mt-3" asp-page="/aranceles/Cobrar" asp-route-id="@alumno?.AlumnoId">Regresar a cobro</a> 
+<a class="btn btn-secondary mt-3" asp-page="/aranceles/Cobrar" asp-route-id="@alumno?.AlumnoId">Regresar a cobro</a>

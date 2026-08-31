@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <None Include="wwwroot\js\site.js" />
-    <EmbeddedResource Include="Schemas\fe-eret-v1.json" />
+    <EmbeddedResource Include="Schemas\*.json" />
   </ItemGroup>
 
   <ItemGroup>

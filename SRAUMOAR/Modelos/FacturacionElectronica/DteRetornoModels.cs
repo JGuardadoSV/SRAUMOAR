@@ -6,7 +6,8 @@ public sealed record DteRetornoRequest(
     int FacturaOriginalId,
     string TipoRetorno,
     string Motivo,
-    IReadOnlyCollection<DteRetornoLineaRequest> Lineas);
+    IReadOnlyCollection<DteRetornoLineaRequest> Lineas,
+    Guid OperacionId = default);
 
 public sealed record DteRetornoLineaPreparada(
     int NumeroItemOriginal,

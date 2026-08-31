@@ -326,17 +326,29 @@ public sealed class DtePdfService : IDtePdfService
 
     private static string ObtenerMontoItem(JObject item)
     {
+        static decimal Numero(JToken? valor)
+        {
+            if (valor?.Type is JTokenType.Integer or JTokenType.Float)
+                return valor.Value<decimal>();
+            return decimal.TryParse(valor?.ToString(), System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture, out var numero) ? numero : 0m;
+        }
+
+        // Las clasificaciones pueden coexistir y una gravada presente con valor
+        // cero no debe ocultar una venta exenta/no sujeta ni una compra excluida.
         var nombres = new[] { "ventaGravada", "ventaExenta", "ventaNoSuj", "compra" };
+        decimal total = 0m;
+        var tieneClasificacion = false;
         foreach (var nombre in nombres)
         {
             var valor = item[nombre];
             if (valor is null || valor.Type == JTokenType.Null) continue;
-            if (decimal.TryParse(valor.ToString(), System.Globalization.NumberStyles.Any,
-                    System.Globalization.CultureInfo.InvariantCulture, out var numero) && numero != 0m)
-                return valor.ToString();
+            tieneClasificacion = true;
+            total += Numero(valor);
         }
 
-        return "0";
+        if (!tieneClasificacion) total = Numero(item["valor"]);
+        return total.ToString(System.Globalization.CultureInfo.InvariantCulture);
     }
 
     private static void AgregarDetalle(ColumnDescriptor column, JArray? items)
@@ -361,7 +373,7 @@ public sealed class DtePdfService : IDtePdfService
             foreach (var item in items.OfType<JObject>())
             {
                 var cantidad = ObtenerValor(item, "cantidad");
-                var valor = ObtenerValor(item, "ventaGravada", "ventaExenta", "valor", "compra");
+                var valor = ObtenerMontoItem(item);
                 table.Cell().Padding(4).Text(item.Value<string>("numItem") ?? "-");
                 table.Cell().Padding(4).Text(item.Value<string>("codigo") ?? "-");
                 table.Cell().Padding(4).Text(item.Value<string>("descripcion") ?? "-");
