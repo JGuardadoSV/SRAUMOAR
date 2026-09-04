@@ -293,7 +293,21 @@ namespace SRAUMOAR.Modelos
 
             modelBuilder.Entity<CatalogoFeItem>()
                 .HasIndex(x => new { x.CodigoCatalogo, x.Version, x.Codigo })
-                .IsUnique();
+                .IsUnique()
+                .HasFilter("[CodigoCatalogo] NOT IN ('CAT-008','CAT-013')");
+            modelBuilder.Entity<CatalogoFeItem>()
+                .HasIndex(x => new { x.CodigoCatalogo, x.Version, x.Codigo, x.AmbitoDepartamento })
+                .IsUnique()
+                .HasFilter("[CodigoCatalogo] = 'CAT-013'");
+            modelBuilder.Entity<CatalogoFeItem>()
+                .HasIndex(x => new { x.CodigoCatalogo, x.Version, x.Codigo, x.AmbitoDepartamento, x.AmbitoMunicipio })
+                .IsUnique()
+                .HasFilter("[CodigoCatalogo] = 'CAT-008'");
+            modelBuilder.Entity<CatalogoFeItem>().ToTable("CatalogosFe", tabla =>
+                tabla.HasCheckConstraint("CK_CatalogosFe_AmbitoTerritorial",
+                    "([CodigoCatalogo] = 'CAT-008' AND (([AmbitoDepartamento] = '' AND [AmbitoMunicipio] = '') OR ([AmbitoDepartamento] <> '' AND [AmbitoMunicipio] <> ''))) OR " +
+                    "([CodigoCatalogo] = 'CAT-013' AND (([AmbitoDepartamento] = '' AND [AmbitoMunicipio] = '') OR ([AmbitoDepartamento] <> '' AND [AmbitoMunicipio] = [Codigo]))) OR " +
+                    "([CodigoCatalogo] NOT IN ('CAT-008','CAT-013') AND [AmbitoDepartamento] = '' AND [AmbitoMunicipio] = '')"));
 
             modelBuilder.Entity<DteCorrelativo>()
                 .HasIndex(x => new { x.TipoDocumento, x.Ambiente, x.Establecimiento, x.PuntoVenta })
@@ -334,11 +348,17 @@ namespace SRAUMOAR.Modelos
             {
                 tabla.HasCheckConstraint("CK_DteRetornoDetalle_CantidadOriginal", "[CantidadOriginal] > 0");
                 tabla.HasCheckConstraint("CK_DteRetornoDetalle_CantidadRetornada", "[CantidadRetornada] > 0 AND [CantidadRetornada] <= [CantidadOriginal]");
-                tabla.HasCheckConstraint("CK_DteRetornoDetalle_PrecioUnitario", "[PrecioUnitario] > 0");
+                tabla.HasCheckConstraint("CK_DteRetornoDetalle_PrecioUnitario", "[PrecioUnitario] >= 0");
             });
 
             modelBuilder.Entity<Factura>().ToTable("Factura", tabla =>
-                tabla.HasCheckConstraint("CK_Factura_TipoRetorno", "[TipoRetorno] IS NULL OR [TipoRetorno] IN ('1','2','3','4')"));
+            {
+                tabla.HasCheckConstraint("CK_Factura_TipoRetorno", "[TipoRetorno] IS NULL OR [TipoRetorno] IN ('1','2','3','4')");
+                tabla.HasCheckConstraint("CK_Factura_EretTrazabilidad",
+                    "[TipoDteCodigo] IS NULL OR [TipoDteCodigo] <> '18' OR " +
+                    "([TipoRetorno] IS NOT NULL AND [TipoRetorno] IN ('1','2','3','4') AND " +
+                    "[MotivoRetorno] IS NOT NULL AND LEN(LTRIM(RTRIM([MotivoRetorno]))) > 0)");
+            });
 
             modelBuilder.Entity<DteCorrelativo>().Property(x => x.Establecimiento).HasDefaultValue("M001");
             modelBuilder.Entity<DteCorrelativo>().Property(x => x.PuntoVenta).HasDefaultValue("P001");

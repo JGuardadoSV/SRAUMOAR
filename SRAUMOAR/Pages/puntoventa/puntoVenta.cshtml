@@ -9,6 +9,7 @@
 
 <section class="pv-shell">
     <form method="post" id="puntoVentaForm" novalidate>
+        <input type="hidden" asp-for="OperacionEmisionId" />
         <div class="pv-header">
             <div>
                 <div class="pv-eyebrow">Punto de venta</div>
@@ -1056,8 +1057,8 @@
 
             var catalogosServidor = {
                 departamentos: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoDepartamentos.Where(x => x.Activo).Select(x => new { codigo = x.Codigo, nombre = x.Descripcion }))),
-                municipios: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoMunicipios.Where(x => x.Activo).Select(x => new { codigo = x.Codigo, nombre = x.Descripcion }))),
-                distritos: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoDistritos.Where(x => x.Activo).Select(x => new { id = x.Id.ToString(), codigo = x.Codigo, nombre = x.Descripcion }))),
+                municipios: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoMunicipios.Where(x => x.Activo).Select(x => new { codigo = x.Codigo, nombre = x.Descripcion, departamento = x.AmbitoDepartamento }))),
+                distritos: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoDistritos.Where(x => x.Activo).Select(x => new { id = x.Id.ToString(), codigo = x.Codigo, nombre = x.Descripcion, departamento = x.AmbitoDepartamento, municipio = x.AmbitoMunicipio }))),
                 paises: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoPaises.Select(x => new { codigo = x.Codigo, nombre = x.Descripcion }))),
                 donaciones: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoDonaciones.Select(x => new { codigo = x.Codigo, nombre = x.Descripcion })))
             };
@@ -1301,7 +1302,8 @@
                 }
 
                 inicializarTextoCatalogo('Factura_Receptor_CodigoDepartamento', 'Factura_Receptor_CodigoDepartamentoTexto', departamentos);
-                inicializarTextoCatalogo('Factura_Receptor_CodigoMunicipio', 'Factura_Receptor_CodigoMunicipioTexto', municipiosCatalogo);
+                inicializarTextoCatalogo('Factura_Receptor_CodigoMunicipio', 'Factura_Receptor_CodigoMunicipioTexto',
+                    obtenerItemsCatalogo('municipio'));
                 var distritoId = jQuery('#Factura_Receptor_DistritoId').val();
                 var distrito = catalogosLocales.distrito.find(function (item) { return item.id === distritoId; });
                 if (distrito) jQuery('#Factura_Receptor_DistritoTexto').val(distrito.codigo + ' - ' + distrito.nombre);
@@ -1404,7 +1406,12 @@
             }
 
             function obtenerItemsCatalogo(tipo) {
-                if (tipo === 'municipio') return municipiosCatalogo;
+                var departamento = jQuery('#Factura_Receptor_CodigoDepartamento').val();
+                var municipio = jQuery('#Factura_Receptor_CodigoMunicipio').val();
+                if (tipo === 'municipio') return municipiosCatalogo.filter(function (item) { return item.departamento === departamento; });
+                if (tipo === 'distrito') return (catalogosLocales.distrito || []).filter(function (item) {
+                    return item.departamento === departamento && item.municipio === municipio;
+                });
                 return catalogosLocales[tipo] || [];
             }
 

@@ -25,7 +25,11 @@ public sealed class CatalogoFeService : ICatalogoFeService
         version = string.IsNullOrWhiteSpace(version) ? "1.1" : version.Trim();
         var items = new List<CatalogoFeItem>();
 
-        using var workbook = new XLWorkbook(archivo);
+        using var copia = new MemoryStream();
+        await archivo.CopyToAsync(copia, cancellationToken);
+        copia.Position = 0;
+
+        using var workbook = new XLWorkbook(copia);
         var worksheet = workbook.Worksheets.FirstOrDefault()
             ?? throw new InvalidOperationException("El archivo no contiene hojas.");
         var rango = worksheet.RangeUsed()
@@ -54,20 +58,26 @@ public sealed class CatalogoFeService : ICatalogoFeService
             if (codigo.Equals("Código", StringComparison.OrdinalIgnoreCase) || codigo.Equals("Codigo", StringComparison.OrdinalIgnoreCase))
                 continue;
 
+            if (catalogoActual is "CAT-008" or "CAT-012" or "CAT-013")
+                codigo = TerritorioFiscalService.Normalizar(codigo);
+
             items.Add(new CatalogoFeItem
             {
                 CodigoCatalogo = catalogoActual,
                 Version = version,
                 Codigo = codigo,
                 Descripcion = descripcion,
+                AmbitoDepartamento = string.Empty,
+                AmbitoMunicipio = string.Empty,
                 ValorAuxiliar = string.IsNullOrWhiteSpace(auxiliar) ? null : auxiliar,
                 Activo = true,
                 Orden = orden++
             });
         }
 
+        TerritorioFiscalService.Enriquecer(items);
         var unicos = items
-            .GroupBy(x => $"{x.CodigoCatalogo}|{x.Version}|{x.Codigo}", StringComparer.OrdinalIgnoreCase)
+            .GroupBy(x => $"{x.CodigoCatalogo}|{x.Version}|{x.Codigo}|{x.AmbitoDepartamento}|{x.AmbitoMunicipio}", StringComparer.OrdinalIgnoreCase)
             .Select(x => x.First())
             .ToList();
         if (unicos.Count == 0)

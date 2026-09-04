@@ -458,6 +458,7 @@
         </div>
 
         <form method="post">
+            <input type="hidden" asp-for="OperacionEmisionId" />
             <div asp-validation-summary="ModelOnly" class="validation-error mb-3"></div>
             <input type="hidden" name="idalumno" value="@ViewData["AlumnoId"]" />
             <div class="payment-section">
@@ -476,21 +477,21 @@
                     </div>
                     <div class="form-group">
                         <label asp-for="CodigoMunicipioReceptor" class="form-label-professional">Municipio</label>
-                        <select asp-for="CodigoMunicipioReceptor" class="form-control-professional" required data-catalogo-modal="municipio">
+                        <select asp-for="CodigoMunicipioReceptor" class="form-control-professional" required data-catalogo-modal="municipio" data-departamento-select="CodigoDepartamentoReceptor">
                             <option value="">Seleccione municipio...</option>
                             @foreach (var item in Model.CatalogoMunicipios.Where(x => x.Activo))
                             {
-                                <option value="@item.Codigo">@item.Codigo - @item.Descripcion</option>
+                                <option value="@item.Codigo" data-departamento="@item.AmbitoDepartamento">@item.Codigo - @item.Descripcion</option>
                             }
                         </select>
                     </div>
                     <div class="form-group">
                         <label asp-for="DistritoReceptorId" class="form-label-professional">Distrito</label>
-                        <select asp-for="DistritoReceptorId" class="form-control-professional" required data-catalogo-modal="distrito">
+                        <select asp-for="DistritoReceptorId" class="form-control-professional" required data-catalogo-modal="distrito" data-departamento-select="CodigoDepartamentoReceptor" data-municipio-select="CodigoMunicipioReceptor">
                             <option value="">Seleccione distrito...</option>
                             @foreach (var item in Model.CatalogoDistritos.Where(x => x.Activo))
                             {
-                                <option value="@item.Id">@item.Codigo - @item.Descripcion</option>
+                                <option value="@item.Id" data-departamento="@item.AmbitoDepartamento" data-municipio="@item.AmbitoMunicipio">@item.Codigo - @item.Descripcion</option>
                             }
                         </select>
                     </div>

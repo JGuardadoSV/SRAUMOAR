@@ -17,6 +17,7 @@
   <ItemGroup>
     <None Include="wwwroot\js\site.js" />
     <EmbeddedResource Include="Schemas\*.json" />
+    <EmbeddedResource Include="Data\Catalogos\territorio-asamblea.json" LogicalName="SRAUMOAR.TerritorioAsamblea.json" />
   </ItemGroup>
 
   <ItemGroup>

@@ -125,6 +125,22 @@ public sealed class ConfiguracionFeService : IConfiguracionFeService
     public async Task GuardarAsync(ConfiguracionFeInput input, CancellationToken cancellationToken = default)
     {
         var ambiente = NormalizarAmbiente(input.AmbienteFiscal);
+        var geografia = await _contexto.CatalogosFe.AsNoTracking()
+            .Where(x => x.Activo && x.Version == "1.1"
+                && (x.CodigoCatalogo == "CAT-012" || x.CodigoCatalogo == "CAT-013" || x.CodigoCatalogo == "CAT-008"))
+            .ToListAsync(cancellationToken);
+        if (!TerritorioFiscalService.EsDireccionValida(input.CodigoDepartamento, input.CodigoMunicipio, input.CodigoDistrito,
+                geografia, geografia, geografia))
+            throw new InvalidOperationException("El departamento, municipio y distrito del emisor no forman una ubicación fiscal válida.");
+        var codigoDepartamento = TerritorioFiscalService.Normalizar(input.CodigoDepartamento);
+        var codigoMunicipio = TerritorioFiscalService.Normalizar(input.CodigoMunicipio);
+        var codigoDistrito = TerritorioFiscalService.Normalizar(input.CodigoDistrito);
+        var departamentoFiscal = geografia.Single(x => x.CodigoCatalogo == "CAT-012" && x.Codigo == codigoDepartamento);
+        var municipioFiscal = geografia.Single(x => x.CodigoCatalogo == "CAT-013" && x.Codigo == codigoMunicipio
+            && x.AmbitoDepartamento == codigoDepartamento);
+        var distritoFiscal = geografia.Single(x => x.CodigoCatalogo == "CAT-008" && x.Codigo == codigoDistrito
+            && x.AmbitoDepartamento == codigoDepartamento && x.AmbitoMunicipio == codigoMunicipio);
+
         var entidad = await _contexto.ConfiguracionesFacturacionElectronica
             .SingleOrDefaultAsync(x => x.AmbienteFiscal == ambiente, cancellationToken);
 
@@ -156,12 +172,12 @@ public sealed class ConfiguracionFeService : IConfiguracionFeService
         entidad.DescripcionActividad = input.DescripcionActividad?.Trim();
         entidad.TipoEstablecimiento = input.TipoEstablecimiento?.Trim();
         entidad.TipoEstablecimientoDescripcion = input.TipoEstablecimientoDescripcion?.Trim();
-        entidad.CodigoDepartamento = input.CodigoDepartamento?.Trim();
-        entidad.DepartamentoDescripcion = input.DepartamentoDescripcion?.Trim();
-        entidad.CodigoMunicipio = input.CodigoMunicipio?.Trim();
-        entidad.MunicipioDescripcion = input.MunicipioDescripcion?.Trim();
-        entidad.CodigoDistrito = input.CodigoDistrito?.Trim();
-        entidad.DistritoDescripcion = input.DistritoDescripcion?.Trim();
+        entidad.CodigoDepartamento = codigoDepartamento;
+        entidad.DepartamentoDescripcion = departamentoFiscal.Descripcion;
+        entidad.CodigoMunicipio = codigoMunicipio;
+        entidad.MunicipioDescripcion = municipioFiscal.Descripcion;
+        entidad.CodigoDistrito = codigoDistrito;
+        entidad.DistritoDescripcion = distritoFiscal.Descripcion;
         entidad.ComplementoDireccion = input.ComplementoDireccion?.Trim();
         entidad.TelefonoEmisor = input.TelefonoEmisor?.Trim();
         entidad.CorreoEmisor = input.CorreoEmisor?.Trim();

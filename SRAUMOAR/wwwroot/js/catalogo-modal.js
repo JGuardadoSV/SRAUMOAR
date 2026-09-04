@@ -11,10 +11,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function render() {
         list.replaceChildren();
         const term = query.value.trim().toLocaleLowerCase('es');
-        [...active.options].filter(o => o.value && !o.disabled && o.text.toLocaleLowerCase('es').includes(term)).slice(0, 100).forEach(o => {
+        const departamento = active.dataset.departamentoSelect ? document.getElementById(active.dataset.departamentoSelect)?.value : null;
+        const municipio = active.dataset.municipioSelect ? document.getElementById(active.dataset.municipioSelect)?.value : null;
+        [...active.options].filter(o => o.value && !o.disabled
+            && (!active.dataset.departamentoSelect || o.dataset.departamento === departamento)
+            && (!active.dataset.municipioSelect || o.dataset.municipio === municipio)
+            && o.text.toLocaleLowerCase('es').includes(term)).slice(0, 100).forEach(o => {
             const b = document.createElement('button'); b.type = 'button'; b.className = 'list-group-item list-group-item-action'; b.textContent = o.text;
             b.addEventListener('click', () => {
-                active.value = o.value;
+                // El código puede repetirse en otro ámbito; seleccionar la opción exacta pulsada.
+                active.selectedIndex = o.index;
                 // jQuery conserva también los manejadores de cascadas de las páginas legacy.
                 if (window.jQuery) window.jQuery(active).trigger('change');
                 else active.dispatchEvent(new Event('change', { bubbles: true }));
@@ -23,7 +29,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         if (!list.childElementCount) list.textContent = 'Sin resultados. Verifique los catálogos fiscales importados.';
     }
-    function open(select, button) { active = select; trigger = button; query.value = ''; render(); modal.show(); }
+    function open(select, button) {
+        const faltaDepartamento = select.dataset.departamentoSelect && !document.getElementById(select.dataset.departamentoSelect)?.value;
+        const faltaMunicipio = select.dataset.municipioSelect && !document.getElementById(select.dataset.municipioSelect)?.value;
+        if (faltaDepartamento || faltaMunicipio) {
+            window.alert(faltaDepartamento ? 'Seleccione primero el departamento.' : 'Seleccione primero el municipio.');
+            return;
+        }
+        active = select; trigger = button; query.value = ''; render(); modal.show();
+    }
     query.addEventListener('input', render);
     host.addEventListener('shown.bs.modal', () => query.focus());
     host.addEventListener('hidden.bs.modal', () => trigger?.focus());

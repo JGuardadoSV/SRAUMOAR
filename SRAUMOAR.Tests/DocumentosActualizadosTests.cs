@@ -194,10 +194,15 @@ public sealed class DocumentosActualizadosTests
     private static string Resolver(long? id, bool activo = true, string departamento = "04", string municipio = "35", string version = "1.1")
     {
         var distrito = Item(700, "CAT-008", "33");
+        distrito.AmbitoDepartamento = "04";
+        distrito.AmbitoMunicipio = "35";
         distrito.Activo = activo;
         distrito.Version = version;
+        var municipioFiscal = Item(2, "CAT-013", "35");
+        municipioFiscal.AmbitoDepartamento = "04";
+        municipioFiscal.AmbitoMunicipio = "35";
         return DteDocumentoActualizador.ResolverDistritoReceptor(departamento, municipio, id,
-            [Item(1, "CAT-012", "04")], [Item(2, "CAT-013", "35")], [distrito]);
+            [Item(1, "CAT-012", "04")], [municipioFiscal], [distrito]);
     }
 
     private static CatalogoFeItem Item(long id, string catalogo, string codigo) => new()

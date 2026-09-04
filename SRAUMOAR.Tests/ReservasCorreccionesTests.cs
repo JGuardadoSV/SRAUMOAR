@@ -188,6 +188,58 @@ public sealed class ReservasCorreccionesTests
     }
 
     [Fact]
+    public void EretAdmitePrecioCeroPeroNuncaNegativo()
+    {
+        var solicitud = Solicitud() with { Lineas = [new(1, 1m, 0m)] };
+        Invocar(typeof(DteRetornoService), "ValidarSolicitud", solicitud);
+        Assert.Throws<InvalidOperationException>(() => Invocar(typeof(DteRetornoService), "ValidarSolicitud",
+            solicitud with { Lineas = [new(1, 1m, -0.01m)] }));
+    }
+
+    [Fact]
+    public void EretBloqueaTotalesFueraDelRangoDelEsquema()
+    {
+        Invocar(typeof(DteRetornoService), "ValidarMontoFiscal", 99999999999.99m, "prueba", false);
+        Assert.Throws<InvalidOperationException>(() => Invocar(typeof(DteRetornoService),
+            "ValidarMontoFiscal", 100000000000m, "prueba", false));
+        Assert.Throws<InvalidOperationException>(() => Invocar(typeof(DteRetornoService),
+            "ValidarMontoFiscal", -0.01m, "prueba", false));
+    }
+
+    [Fact]
+    public void TributoRetornadoUsaSoloLaBaseDeLasLineasQueLoCausan()
+    {
+        var resumen = JObject.Parse("""{"tributos":[{"codigo":"20","descripcion":"Especial","valor":10}]}""");
+        var token = (JToken)Invocar(typeof(DteRetornoService), "CrearTributosResumen", resumen,
+            new[] { "20" },
+            new Dictionary<string, decimal> { ["20"] = 100m },
+            new Dictionary<string, decimal> { ["20"] = 100m })!;
+
+        Assert.Equal(10m, token[0]!["valor"]!.Value<decimal>());
+    }
+
+    [Fact]
+    public void TributoRetornadoRespetaLaBaseReducidaPorPrecioEditable()
+    {
+        var resumen = JObject.Parse("""{"tributos":[{"codigo":"20","descripcion":"Especial","valor":10}]}""");
+        var token = (JToken)Invocar(typeof(DteRetornoService), "CrearTributosResumen", resumen,
+            new[] { "20" },
+            new Dictionary<string, decimal> { ["20"] = 100m },
+            new Dictionary<string, decimal> { ["20"] = 50m })!;
+
+        Assert.Equal(5m, token[0]!["valor"]!.Value<decimal>());
+    }
+
+    [Fact]
+    public void LineaNoOnerosaNoSeConvierteEnVentaGravada()
+    {
+        var linea = JObject.Parse("""{"ventaGravada":0,"ventaExenta":0,"ventaNoSuj":0,"compra":0,"psv":5,"noGravado":5}""");
+        Assert.Equal("noOnerosa", Invocar(typeof(DteRetornoService), "Clasificacion", linea));
+        Assert.Equal(10m, Invocar(typeof(DteRetornoService), "TotalNoOnerosoLinea", linea, 2m, "noOnerosa"));
+        Assert.Equal(0m, Invocar(typeof(DteRetornoService), "TotalNoOnerosoLinea", linea, 2m, "ventaGravada"));
+    }
+
+    [Fact]
     public void DosRetornosParcialesConsumenSaldoAunqueTenganIgualContenido()
     {
         Invocar(typeof(DteRetornoService), "ValidarSaldoRetorno", 2m, 0m, 1m);
@@ -288,29 +340,6 @@ public sealed class ReservasCorreccionesTests
         var seleccion = ((string Catalogo, string Codigo)[])Invocar(typeof(DteNotaService),
             "SeleccionReceptorHistorico", original, " 06 ", "14", "01")!;
         Assert.Equal(new[] { ("CAT-012", "06"), ("CAT-013", "14"), ("CAT-008", "01") }, seleccion);
-    }
-
-    [Theory]
-    [InlineData("CAT-012")]
-    [InlineData("CAT-013")]
-    [InlineData("CAT-008")]
-    public void SeleccionSoloAdmiteCodigoImportadoActivoVersion11(string catalogo)
-    {
-        var predicado = ((Expression<Func<CatalogoFeItem, bool>>)Invocar(typeof(DteNotaService),
-            "CodigoCatalogoValido", catalogo, "01")!).Compile();
-        var item = new CatalogoFeItem { CodigoCatalogo = catalogo, Codigo = "01", Version = "1.1", Activo = true };
-        Assert.True(predicado(item));
-        item.Activo = false;
-        Assert.False(predicado(item));
-        item.Activo = true;
-        item.Version = "1.0";
-        Assert.False(predicado(item));
-        item.Version = "1.1";
-        item.Codigo = "99";
-        Assert.False(predicado(item));
-        item.Codigo = "01";
-        item.CodigoCatalogo = "LEGACY";
-        Assert.False(predicado(item));
     }
 
     [Theory]

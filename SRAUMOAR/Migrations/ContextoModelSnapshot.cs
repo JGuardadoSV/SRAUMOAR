@@ -504,7 +504,7 @@ namespace SRAUMOAR.Migrations
 
                             t.HasCheckConstraint("CK_DteRetornoDetalle_CantidadRetornada", "[CantidadRetornada] > 0 AND [CantidadRetornada] <= [CantidadOriginal]");
 
-                            t.HasCheckConstraint("CK_DteRetornoDetalle_PrecioUnitario", "[PrecioUnitario] > 0");
+                            t.HasCheckConstraint("CK_DteRetornoDetalle_PrecioUnitario", "[PrecioUnitario] >= 0");
                         });
                 });
 
@@ -624,6 +624,8 @@ namespace SRAUMOAR.Migrations
 
                     b.ToTable("Factura", null, t =>
                         {
+                            t.HasCheckConstraint("CK_Factura_EretTrazabilidad", "[TipoDteCodigo] IS NULL OR [TipoDteCodigo] <> '18' OR ([TipoRetorno] IS NOT NULL AND [TipoRetorno] IN ('1','2','3','4') AND [MotivoRetorno] IS NOT NULL AND LEN(LTRIM(RTRIM([MotivoRetorno]))) > 0)");
+
                             t.HasCheckConstraint("CK_Factura_TipoRetorno", "[TipoRetorno] IS NULL OR [TipoRetorno] IN ('1','2','3','4')");
                         });
                 });
@@ -698,6 +700,16 @@ namespace SRAUMOAR.Migrations
                     b.Property<bool>("Activo")
                         .HasColumnType("bit");
 
+                    b.Property<string>("AmbitoDepartamento")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("nvarchar(2)");
+
+                    b.Property<string>("AmbitoMunicipio")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("nvarchar(2)");
+
                     b.Property<string>("Codigo")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -728,9 +740,21 @@ namespace SRAUMOAR.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CodigoCatalogo", "Version", "Codigo")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[CodigoCatalogo] NOT IN ('CAT-008','CAT-013')");
 
-                    b.ToTable("CatalogosFe");
+                    b.HasIndex("CodigoCatalogo", "Version", "Codigo", "AmbitoDepartamento")
+                        .IsUnique()
+                        .HasFilter("[CodigoCatalogo] = 'CAT-013'");
+
+                    b.HasIndex("CodigoCatalogo", "Version", "Codigo", "AmbitoDepartamento", "AmbitoMunicipio")
+                        .IsUnique()
+                        .HasFilter("[CodigoCatalogo] = 'CAT-008'");
+
+                    b.ToTable("CatalogosFe", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_CatalogosFe_AmbitoTerritorial", "([CodigoCatalogo] = 'CAT-008' AND (([AmbitoDepartamento] = '' AND [AmbitoMunicipio] = '') OR ([AmbitoDepartamento] <> '' AND [AmbitoMunicipio] <> ''))) OR ([CodigoCatalogo] = 'CAT-013' AND (([AmbitoDepartamento] = '' AND [AmbitoMunicipio] = '') OR ([AmbitoDepartamento] <> '' AND [AmbitoMunicipio] = [Codigo]))) OR ([CodigoCatalogo] NOT IN ('CAT-008','CAT-013') AND [AmbitoDepartamento] = '' AND [AmbitoMunicipio] = '')");
+                        });
                 });
 
             modelBuilder.Entity("SRAUMOAR.Entidades.FacturacionElectronica.ColaCorreoDte", b =>

@@ -133,18 +133,10 @@
         (() => {
             const catalogos = {
                 DEPARTAMENTO: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoDepartamentos.Select(x => new { codigo = x.Codigo, descripcion = x.Descripcion }))),
-                MUNICIPIO: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoMunicipios.Select(x => new { codigo = x.Codigo, descripcion = x.Descripcion }))),
-                DISTRITO: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoDistritos.Select(x => new { codigo = x.Codigo, descripcion = x.Descripcion }))),
+                MUNICIPIO: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoMunicipios.Select(x => new { codigo = x.Codigo, descripcion = x.Descripcion, departamento = x.AmbitoDepartamento }))),
+                DISTRITO: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoDistritos.Select(x => new { codigo = x.Codigo, descripcion = x.Descripcion, departamento = x.AmbitoDepartamento, municipio = x.AmbitoMunicipio }))),
                 ACTIVIDAD: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoActividades.Select(x => new { codigo = x.Codigo, descripcion = x.Descripcion }))),
                 ESTABLECIMIENTO: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoEstablecimientos.Select(x => new { codigo = x.Codigo, descripcion = x.Descripcion })))
-            };
-            const municipiosPorDepartamento = {
-                '00': ['00'], '01': ['13', '14', '15'], '02': ['14', '15', '16', '17'],
-                '03': ['17', '18', '19', '20'], '04': ['34', '35', '36'],
-                '05': ['23', '24', '25', '26', '27', '28'], '06': ['20', '21', '22', '23', '24'],
-                '07': ['17', '18'], '08': ['23', '24', '25'], '09': ['10', '11'],
-                '10': ['14', '15'], '11': ['24', '25', '26'], '12': ['21', '22', '23'],
-                '13': ['27', '28'], '14': ['19', '20']
             };
             const modalElement = document.getElementById('catalogoBusquedaModal');
             if (!modalElement || typeof bootstrap === 'undefined') return;
@@ -168,6 +160,11 @@
                         estado = null;
                         return;
                     }
+                    if (estado.catalogo === 'DISTRITO' && !document.getElementById(`${prefijo}_CodigoMunicipio`)?.value) {
+                        alert('Seleccione primero el municipio.');
+                        estado = null;
+                        return;
+                    }
                     titulo.textContent = `Buscar ${estado.catalogo.toLowerCase()}`;
                     buscador.value = '';
                     renderizar();
@@ -182,11 +179,10 @@
                 if (!estado) return;
                 const prefijo = estado.codeTarget.split('_')[0];
                 const departamento = document.getElementById(`${prefijo}_CodigoDepartamento`)?.value;
+                const municipio = document.getElementById(`${prefijo}_CodigoMunicipio`)?.value;
                 let items = catalogos[estado.catalogo] || [];
-                if (estado.catalogo === 'MUNICIPIO' && departamento && municipiosPorDepartamento[departamento]) {
-                    const permitidos = municipiosPorDepartamento[departamento];
-                    items = items.filter(x => permitidos.includes(String(x.codigo).padStart(2, '0')));
-                }
+                if (estado.catalogo === 'MUNICIPIO') items = items.filter(x => x.departamento === departamento);
+                if (estado.catalogo === 'DISTRITO') items = items.filter(x => x.departamento === departamento && x.municipio === municipio);
                 const termino = buscador.value.trim().toLowerCase();
                 items = items.filter(x => !termino || `${x.codigo} ${x.descripcion}`.toLowerCase().includes(termino)).slice(0, 100);
                 resultados.innerHTML = items.map(x => `<button type="button" class="list-group-item list-group-item-action" data-codigo="${escapar(x.codigo)}" data-descripcion="${escapar(x.descripcion)}"><span class="badge text-bg-light me-2">${escapar(x.codigo)}</span>${escapar(x.descripcion)}</button>`).join('');

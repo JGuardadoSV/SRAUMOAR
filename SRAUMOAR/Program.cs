@@ -105,6 +105,7 @@ builder.Services.AddScoped<IFirmadorDteService, FirmadorDteService>();
 builder.Services.AddScoped<ITokenHaciendaService, TokenHaciendaService>();
 builder.Services.AddScoped<IHaciendaDteClient, HaciendaDteClient>();
 builder.Services.AddScoped<IDteTransmisionService, DteTransmisionService>();
+builder.Services.AddScoped<IDteEmisionRecuperacionService, DteEmisionRecuperacionService>();
 builder.Services.AddScoped<IDteNotaService, DteNotaService>();
 builder.Services.AddScoped<IDteRetornoService, DteRetornoService>();
 builder.Services.AddScoped<IDtePdfService, DtePdfService>();

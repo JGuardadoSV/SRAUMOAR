@@ -270,19 +270,18 @@ public sealed class DteNotaService : IDteNotaService
     {
         var seleccion = SeleccionReceptorHistorico(original, request.DepartamentoReceptor, request.MunicipioReceptor, request.DistritoReceptor);
         if (seleccion is null) return (JObject)original.DeepClone();
-        foreach (var (catalogo, codigo) in seleccion)
-        {
-            if (!await _contexto.CatalogosFe.AsNoTracking().AnyAsync(CodigoCatalogoValido(catalogo, codigo), ct))
-                throw new InvalidOperationException($"El código {codigo} no existe activo en el catálogo importado {catalogo}.");
-        }
+        var geografia = await _contexto.CatalogosFe.AsNoTracking()
+            .Where(x => x.Activo && x.Version == "1.1"
+                && (x.CodigoCatalogo == "CAT-012" || x.CodigoCatalogo == "CAT-013" || x.CodigoCatalogo == "CAT-008"))
+            .ToListAsync(ct);
+        if (!TerritorioFiscalService.EsDireccionValida(seleccion[0].Codigo, seleccion[1].Codigo, seleccion[2].Codigo,
+                geografia, geografia, geografia))
+            throw new InvalidOperationException("El departamento, municipio y distrito seleccionados no forman una ubicación fiscal válida.");
 
         // CrearNota aplica el esquema completo, incluida pertenencia geográfica. Nunca
         // se modifica JsonDte de la factura histórica ni la dirección de su emisor.
         return ClonarConDireccionReceptor(original, seleccion[0].Codigo, seleccion[1].Codigo, seleccion[2].Codigo);
     }
-
-    private static Expression<Func<CatalogoFeItem, bool>> CodigoCatalogoValido(string catalogo, string codigo) =>
-        x => x.Activo && x.Version == "1.1" && x.CodigoCatalogo == catalogo && x.Codigo == codigo;
 
     private static (string Catalogo, string Codigo)[]? SeleccionReceptorHistorico(
         JObject original, string? departamento, string? municipio, string? distrito)
@@ -291,7 +290,9 @@ public sealed class DteNotaService : IDteNotaService
             return null;
         if (string.IsNullOrWhiteSpace(departamento) || string.IsNullOrWhiteSpace(municipio) || string.IsNullOrWhiteSpace(distrito))
             throw new InvalidOperationException("El receptor histórico no tiene distrito. Seleccione departamento, municipio y distrito de los catálogos importados.");
-        return [("CAT-012", departamento.Trim()), ("CAT-013", municipio.Trim()), ("CAT-008", distrito.Trim())];
+        return [("CAT-012", TerritorioFiscalService.Normalizar(departamento)),
+            ("CAT-013", TerritorioFiscalService.Normalizar(municipio)),
+            ("CAT-008", TerritorioFiscalService.Normalizar(distrito))];
     }
 
     private static JObject ClonarConDireccionReceptor(JObject original, string departamento, string municipio, string distrito)

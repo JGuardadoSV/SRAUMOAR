@@ -80,11 +80,18 @@ public static class DteDocumentoActualizador
         IEnumerable<CatalogoFeItem> departamentos, IEnumerable<CatalogoFeItem> municipios,
         IEnumerable<CatalogoFeItem> distritos)
     {
-        var dep = departamentos.Where(x => x.Activo && x.CodigoCatalogo == "CAT-012" && x.Codigo == departamento).ToArray();
-        var mun = municipios.Where(x => x.Activo && x.CodigoCatalogo == "CAT-013" && x.Codigo == municipio).ToArray();
-        var dis = distritos.Where(x => x.Activo && x.CodigoCatalogo == "CAT-008" && x.Id == distritoId).ToArray();
+        departamento = TerritorioFiscalService.Normalizar(departamento);
+        municipio = TerritorioFiscalService.Normalizar(municipio);
+        var dep = departamentos.Where(x => x.Activo && x.Version == "1.1"
+            && x.CodigoCatalogo == "CAT-012" && x.Codigo == departamento).ToArray();
+        var mun = municipios.Where(x => x.Activo && x.Version == "1.1"
+            && x.CodigoCatalogo == "CAT-013" && x.Codigo == municipio
+            && x.AmbitoDepartamento == departamento).ToArray();
+        var dis = distritos.Where(x => x.Activo && x.Version == "1.1"
+            && x.CodigoCatalogo == "CAT-008" && x.Id == distritoId).ToArray();
         if (string.IsNullOrWhiteSpace(departamento) || string.IsNullOrWhiteSpace(municipio) || distritoId is null or <= 0
             || dep.Length != 1 || mun.Length != 1 || dis.Length != 1 || string.IsNullOrWhiteSpace(dis[0].Codigo)
+            || dis[0].AmbitoDepartamento != departamento || dis[0].AmbitoMunicipio != municipio
             || dep[0].Version != mun[0].Version || dep[0].Version != dis[0].Version)
             throw new InvalidOperationException("Seleccione departamento, municipio y distrito del receptor en los catálogos fiscales importados. No hay una geografía fiscal fiable para emitir.");
         return dis[0].Codigo;

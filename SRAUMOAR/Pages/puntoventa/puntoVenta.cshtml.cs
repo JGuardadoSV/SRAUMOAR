@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Options;
 using SRAUMOAR.Entidades;
 using SRAUMOAR.Entidades.Colecturia;
@@ -22,6 +23,7 @@ namespace SRAUMOAR.Pages.puntoventa
 
         [BindProperty]
         public FacturaViewModel Factura { get; set; } = new FacturaViewModel();
+        [BindProperty] public Guid OperacionEmisionId { get; set; }
         public IReadOnlyList<CatalogoFeItem> CatalogoDepartamentos { get; private set; } = Array.Empty<CatalogoFeItem>();
         public IReadOnlyList<CatalogoFeItem> CatalogoMunicipios { get; private set; } = Array.Empty<CatalogoFeItem>();
         public IReadOnlyList<CatalogoFeItem> CatalogoDistritos { get; private set; } = Array.Empty<CatalogoFeItem>();
@@ -35,12 +37,13 @@ namespace SRAUMOAR.Pages.puntoventa
         private readonly ICatalogoFeService _catalogos;
         private readonly IDteEmailQueueService _emailQueue;
         private readonly IDteJsonFactory _jsonFactory;
+        private readonly IDteEmisionRecuperacionService _recuperacionEmision;
         private string ambienteFiscal = "01";
         private string codigoEstablecimientoMh = "M001";
         private string codigoEstablecimiento = "M001";
         private string codigoPuntoVentaMh = "P001";
         private string codigoPuntoVenta = "P001";
-        public puntoVentaModel(SRAUMOAR.Modelos.Contexto context, IOptions<EmisorConfig> emisorOptions, ICorrelativoService correlativoService, IDteTransmisionService dteTransmision, IConfiguracionFeService configuracionFe, ICatalogoFeService catalogos, IDteEmailQueueService emailQueue, IDteJsonFactory jsonFactory)
+        public puntoVentaModel(SRAUMOAR.Modelos.Contexto context, IOptions<EmisorConfig> emisorOptions, ICorrelativoService correlativoService, IDteTransmisionService dteTransmision, IConfiguracionFeService configuracionFe, ICatalogoFeService catalogos, IDteEmailQueueService emailQueue, IDteJsonFactory jsonFactory, IDteEmisionRecuperacionService recuperacionEmision)
         {
             _context = context;
             _emisor = emisorOptions.Value;
@@ -50,9 +53,11 @@ namespace SRAUMOAR.Pages.puntoventa
             _catalogos = catalogos;
             _emailQueue = emailQueue;
             _jsonFactory = jsonFactory;
+            _recuperacionEmision = recuperacionEmision;
         }
         public async Task OnGetAsync(CancellationToken cancellationToken)
         {
+            OperacionEmisionId = Guid.NewGuid();
             await CargarCatalogosAsync(cancellationToken);
             try
             {
@@ -203,6 +208,19 @@ namespace SRAUMOAR.Pages.puntoventa
 
         public async Task<IActionResult> OnPostProcesarFacturaAsync()
         {
+            if (OperacionEmisionId == Guid.Empty)
+            {
+                ModelState.AddModelError(string.Empty, "La operación perdió su identificador seguro. Recargue el formulario antes de emitir.");
+                CargarDatosEmisor();
+                return Page();
+            }
+            var claveOperacion = $"EMISION-PV:{OperacionEmisionId:N}";
+            var recuperada = await _recuperacionEmision.ReanudarAsync(claveOperacion);
+            if (recuperada is not null)
+            {
+                TempData[recuperada.Aceptado ? "Success" : "Error"] = recuperada.Mensaje;
+                return RedirectToPage("../facturas/Index");
+            }
             await CargarCatalogosAsync(CancellationToken.None);
             ConfiguracionFeActiva configuracionFiscal;
             EmisorConfig _emisor;
@@ -587,38 +605,15 @@ namespace SRAUMOAR.Pages.puntoventa
 
 
                     if (!PrepararBorrador(ref dteJson)) return Page();
+                    var factura = await GuardarFacturaPreparadaAsync(dteJson, codigoGeneracion, numeroControl,
+                        identificacion.fecEmi, identificacion.horEmi, 1, "01", Factura.Receptor.Correo,
+                        totalVenta, totalVentaExenta, totalIva, totalPagar);
+                    if (factura is null) return OperacionYaProcesada();
                     var resultadoTransmision = await _dteTransmision.TransmitirAsync(
-                        new DteTransmisionRequest(dteJson, "01", codigoGeneracion.ToString().ToUpperInvariant(), numeroControl, 2, Factura.Receptor.Correo));
-                    var selloRecibido = resultadoTransmision.SelloRecepcion ?? string.Empty;
-
-                    // Persistir también los rechazos para conservar la respuesta y evitar éxito falso.
-                    {
-                        //guardar factura
-
-                        Factura factura = new Factura();
-                        factura.CodigoGeneracion = codigoGeneracion.ToString().ToUpper();
-                        factura.NumeroControl = numeroControl;
-                        factura.SelloRecepcion = selloRecibido;
-                        factura.JsonDte = dteJson;
-                        string fechaHoraString = $"{identificacion.fecEmi} {identificacion.horEmi}";
-                        DateTime fechaHora = DateTime.ParseExact(fechaHoraString, "yyyy-MM-dd HH:mm:ss", null);
-                        factura.Fecha = fechaHora;
-                        factura.TipoDTE = 1;
-                        factura.TipoDteCodigo = "01";
-                        factura.AmbienteFiscal = ambienteFiscal;
-                        factura.EstadoTransmision = resultadoTransmision.Estado;
-                        factura.IntentosTransmision = resultadoTransmision.Intentos;
-                        factura.RespuestaHacienda = resultadoTransmision.Respuesta;
-                        factura.FechaAceptacion = resultadoTransmision.Aceptado ? DateTime.UtcNow : null;
-                        factura.CorreoReceptor = Factura.Receptor.Correo;
-                        factura.TotalGravado = totalVenta;
-                        factura.TotalExento = totalVentaExenta;
-                        factura.TotalIva = totalIva;
-                        factura.TotalPagar = totalPagar;
-                        _context.Facturas.Add(factura);
-                        await _context.SaveChangesAsync();
-                        await NotificarResultadoAsync(factura, resultadoTransmision);
-                    }
+                        new DteTransmisionRequest(dteJson, "01", codigoGeneracion.ToString().ToUpperInvariant(), numeroControl, 2,
+                            Factura.Receptor.Correo, factura.FacturaId));
+                    await GuardarResultadoTransmisionAsync(factura, resultadoTransmision);
+                    await NotificarResultadoAsync(factura, resultadoTransmision);
                     //****************************************************
                     //FIN CREACION DEL DTE
                     //****************************************************
@@ -839,38 +834,15 @@ namespace SRAUMOAR.Pages.puntoventa
                     });
 
                     if (!PrepararBorrador(ref dteJson)) return Page();
+                    var factura = await GuardarFacturaPreparadaAsync(dteJson, codigoGeneracion, numeroControl,
+                        identificacion.fecEmi, identificacion.horEmi, 3, "03", Factura.Receptor.Correo,
+                        totalVenta, totalVentaExenta, totalIva, totalPagar);
+                    if (factura is null) return OperacionYaProcesada();
                     var resultadoTransmision = await _dteTransmision.TransmitirAsync(
-                        new DteTransmisionRequest(dteJson, "03", codigoGeneracion.ToString().ToUpperInvariant(), numeroControl, 4, Factura.Receptor.Correo));
-                    var selloRecibido = resultadoTransmision.SelloRecepcion ?? string.Empty;
-
-                    // Persistir también los rechazos para conservar la respuesta y evitar éxito falso.
-                    {
-                        //guardar la factura
-
-                        Factura factura = new Factura();
-                        factura.CodigoGeneracion = codigoGeneracion.ToString().ToUpper();
-                        factura.NumeroControl = numeroControl;
-                        factura.SelloRecepcion = selloRecibido;
-                        factura.JsonDte = dteJson;
-                        string fechaHoraString = $"{identificacion.fecEmi} {identificacion.horEmi}";
-                        DateTime fechaHora = DateTime.ParseExact(fechaHoraString, "yyyy-MM-dd HH:mm:ss", null);
-                        factura.Fecha = fechaHora;
-                        factura.TipoDTE = 3;
-                        factura.TipoDteCodigo = "03";
-                        factura.AmbienteFiscal = ambienteFiscal;
-                        factura.EstadoTransmision = resultadoTransmision.Estado;
-                        factura.IntentosTransmision = resultadoTransmision.Intentos;
-                        factura.RespuestaHacienda = resultadoTransmision.Respuesta;
-                        factura.FechaAceptacion = resultadoTransmision.Aceptado ? DateTime.UtcNow : null;
-                        factura.CorreoReceptor = Factura.Receptor.Correo;
-                        factura.TotalGravado = totalVenta;
-                        factura.TotalExento = totalVentaExenta;
-                        factura.TotalIva = totalIva;
-                        factura.TotalPagar = totalPagar;
-                        _context.Facturas.Add(factura);
-                        await _context.SaveChangesAsync();
-                        await NotificarResultadoAsync(factura, resultadoTransmision);
-                    }
+                        new DteTransmisionRequest(dteJson, "03", codigoGeneracion.ToString().ToUpperInvariant(), numeroControl, 4,
+                            Factura.Receptor.Correo, factura.FacturaId));
+                    await GuardarResultadoTransmisionAsync(factura, resultadoTransmision);
+                    await NotificarResultadoAsync(factura, resultadoTransmision);
                     //****************************************************
                     //FIN CREACION DEL DTE
                     //****************************************************
@@ -1030,38 +1002,15 @@ namespace SRAUMOAR.Pages.puntoventa
                     });
 
                     if (!PrepararBorrador(ref dteJson)) return Page();
+                    var factura = await GuardarFacturaPreparadaAsync(dteJson, codigoGeneracion, numeroControl,
+                        identificacion.fecEmi, identificacion.horEmi, 14, "14", Factura.Receptor.Correo,
+                        0m, 0m, 0m, totalPagar);
+                    if (factura is null) return OperacionYaProcesada();
                     var resultadoTransmision = await _dteTransmision.TransmitirAsync(
-                        new DteTransmisionRequest(dteJson, "14", codigoGeneracion.ToString().ToUpperInvariant(), numeroControl, 2, Factura.Receptor.Correo));
-                    var selloRecibido = resultadoTransmision.SelloRecepcion ?? string.Empty;
-
-                    // Persistir también los rechazos para conservar la respuesta y evitar éxito falso.
-                    {
-                        //guardar la factura
-
-                        Factura factura = new Factura();
-                        factura.CodigoGeneracion = codigoGeneracion.ToString().ToUpper();
-                        factura.NumeroControl = numeroControl;
-                        factura.SelloRecepcion = selloRecibido;
-                        factura.JsonDte = dteJson;
-                        string fechaHoraString = $"{identificacion.fecEmi} {identificacion.horEmi}";
-                        DateTime fechaHora = DateTime.ParseExact(fechaHoraString, "yyyy-MM-dd HH:mm:ss", null);
-                        factura.Fecha = fechaHora;
-                        factura.TipoDTE = 14;
-                        factura.TipoDteCodigo = "14";
-                        factura.AmbienteFiscal = ambienteFiscal;
-                        factura.EstadoTransmision = resultadoTransmision.Estado;
-                        factura.IntentosTransmision = resultadoTransmision.Intentos;
-                        factura.RespuestaHacienda = resultadoTransmision.Respuesta;
-                        factura.FechaAceptacion = resultadoTransmision.Aceptado ? DateTime.UtcNow : null;
-                        factura.CorreoReceptor = Factura.Receptor.Correo;
-                        factura.TotalGravado = 0;
-                        factura.TotalExento = 0;
-                        factura.TotalIva = 0;
-                        factura.TotalPagar = totalPagar;
-                        _context.Facturas.Add(factura);
-                        await _context.SaveChangesAsync();
-                        await NotificarResultadoAsync(factura, resultadoTransmision);
-                    }
+                        new DteTransmisionRequest(dteJson, "14", codigoGeneracion.ToString().ToUpperInvariant(), numeroControl, 2,
+                            Factura.Receptor.Correo, factura.FacturaId));
+                    await GuardarResultadoTransmisionAsync(factura, resultadoTransmision);
+                    await NotificarResultadoAsync(factura, resultadoTransmision);
                 }
                 else if (Factura.TipoDocumento == "15")
                 {
@@ -1220,42 +1169,76 @@ namespace SRAUMOAR.Pages.puntoventa
                     });
 
                     if (!PrepararBorrador(ref dteJson)) return Page();
+                    var factura = await GuardarFacturaPreparadaAsync(dteJson, codigoGeneracion, numeroControl,
+                        identificacion.fecEmi, identificacion.horEmi, 15, "15", Factura.Receptor.Correo,
+                        0m, 0m, 0m, valorTotal);
+                    if (factura is null) return OperacionYaProcesada();
                     var resultadoTransmision = await _dteTransmision.TransmitirAsync(
-                        new DteTransmisionRequest(dteJson, "15", codigoGeneracion.ToString().ToUpperInvariant(), numeroControl, 2, Factura.Receptor.Correo));
-                    var selloRecibido = resultadoTransmision.SelloRecepcion ?? string.Empty;
-
-                    // Persistir también los rechazos para conservar la respuesta y evitar éxito falso.
-                    {
-                        //guardar la factura
-                        Factura factura = new Factura();
-                        factura.CodigoGeneracion = codigoGeneracion.ToString().ToUpper();
-                        factura.NumeroControl = numeroControl;
-                        factura.SelloRecepcion = selloRecibido;
-                        factura.JsonDte = dteJson;
-                        string fechaHoraString = $"{identificacion.fecEmi} {identificacion.horEmi}";
-                        DateTime fechaHora = DateTime.ParseExact(fechaHoraString, "yyyy-MM-dd HH:mm:ss", null);
-                        factura.Fecha = fechaHora;
-                        factura.TipoDTE = 15;
-                        factura.TipoDteCodigo = "15";
-                        factura.AmbienteFiscal = ambienteFiscal;
-                        factura.EstadoTransmision = resultadoTransmision.Estado;
-                        factura.IntentosTransmision = resultadoTransmision.Intentos;
-                        factura.RespuestaHacienda = resultadoTransmision.Respuesta;
-                        factura.FechaAceptacion = resultadoTransmision.Aceptado ? DateTime.UtcNow : null;
-                        factura.CorreoReceptor = Factura.Receptor.Correo;
-                        factura.TotalGravado = 0;
-                        factura.TotalExento = 0;
-                        factura.TotalIva = 0;
-                        factura.TotalPagar = valorTotal;
-                        _context.Facturas.Add(factura);
-                        await _context.SaveChangesAsync();
-                        await NotificarResultadoAsync(factura, resultadoTransmision);
-                    }
+                        new DteTransmisionRequest(dteJson, "15", codigoGeneracion.ToString().ToUpperInvariant(), numeroControl, 2,
+                            Factura.Receptor.Correo, factura.FacturaId));
+                    await GuardarResultadoTransmisionAsync(factura, resultadoTransmision);
+                    await NotificarResultadoAsync(factura, resultadoTransmision);
                 }
                 return RedirectToPage("../facturas/Index");
             }
 
             return Page();
+        }
+
+        private async Task<Factura?> GuardarFacturaPreparadaAsync(string json, Guid codigoGeneracion, string numeroControl,
+            string fechaEmision, string horaEmision, int tipoDteLegacy, string tipoDte, string? correo,
+            decimal totalGravado, decimal totalExento, decimal totalIva, decimal totalPagar)
+        {
+            var claveOperacion = $"EMISION-PV:{OperacionEmisionId:N}";
+            if (await _context.Facturas.AsNoTracking().AnyAsync(x => x.ClaveIdempotencia == claveOperacion))
+                return null;
+            var factura = new Factura
+            {
+                CodigoGeneracion = codigoGeneracion.ToString().ToUpperInvariant(),
+                NumeroControl = numeroControl,
+                SelloRecepcion = string.Empty,
+                JsonDte = json,
+                Fecha = DateTime.ParseExact($"{fechaEmision} {horaEmision}", "yyyy-MM-dd HH:mm:ss", null),
+                TipoDTE = tipoDteLegacy,
+                TipoDteCodigo = tipoDte,
+                AmbienteFiscal = ambienteFiscal,
+                EstadoTransmision = DteEstados.Preparado,
+                IntentosTransmision = 0,
+                CorreoReceptor = correo,
+                TotalGravado = totalGravado,
+                TotalExento = totalExento,
+                TotalIva = totalIva,
+                TotalPagar = totalPagar,
+                ClaveIdempotencia = claveOperacion
+            };
+            _context.Facturas.Add(factura);
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is SqlException { Number: 2601 or 2627 })
+            {
+                _context.Entry(factura).State = EntityState.Detached;
+                return null;
+            }
+            return factura;
+        }
+
+        private IActionResult OperacionYaProcesada()
+        {
+            ModelState.AddModelError(string.Empty,
+                "Esta operación ya fue guardada. Revise el listado de facturas; no se generó un segundo DTE.");
+            return Page();
+        }
+
+        private async Task GuardarResultadoTransmisionAsync(Factura factura, DteTransmisionResult resultado)
+        {
+            factura.SelloRecepcion = resultado.SelloRecepcion ?? string.Empty;
+            factura.EstadoTransmision = resultado.Estado;
+            factura.IntentosTransmision = resultado.Intentos;
+            factura.RespuestaHacienda = resultado.Respuesta;
+            factura.FechaAceptacion = resultado.Aceptado ? DateTime.UtcNow : null;
+            await _context.SaveChangesAsync();
         }
 
         private bool PrepararBorrador(ref string json)

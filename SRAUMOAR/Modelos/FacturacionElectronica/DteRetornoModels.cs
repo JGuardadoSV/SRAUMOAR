@@ -31,6 +31,7 @@ public sealed record DteRetornoPreparado(
     string? CorreoReceptor,
     string TipoRetorno,
     string Motivo,
+    string HashJsonOriginal,
     IReadOnlyCollection<DteRetornoLineaPreparada> Lineas);
 
 public sealed record DteRetornoResultado(

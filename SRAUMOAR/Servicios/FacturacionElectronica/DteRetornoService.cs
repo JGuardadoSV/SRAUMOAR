@@ -71,7 +71,7 @@ public sealed class DteRetornoService : IDteRetornoService
                 throw new InvalidOperationException($"No existe el ítem original {linea.NumeroItemOriginal}.");
             if (linea.Cantidad <= 0m || linea.Cantidad > saldo.CantidadDisponible)
                 throw new InvalidOperationException($"La cantidad del ítem {linea.NumeroItemOriginal} supera el saldo disponible ({saldo.CantidadDisponible}).");
-            if (linea.PrecioUnitario is <= 0m) throw new InvalidOperationException("El precio unitario debe ser mayor que cero.");
+            if (linea.PrecioUnitario is < 0m) throw new InvalidOperationException("El precio unitario no puede ser negativo.");
             if (linea.PrecioUnitario > saldo.PrecioUnitario)
                 throw new InvalidOperationException($"El precio del ítem {linea.NumeroItemOriginal} no puede superar el precio unitario original.");
         }
@@ -84,12 +84,25 @@ public sealed class DteRetornoService : IDteRetornoService
         var preparadas = new List<DteRetornoLineaPreparada>();
         decimal gravada = 0, exenta = 0, noSujeta = 0, compra = 0, iva = 0;
         decimal seguroItems = 0, fleteItems = 0, noGravadoItems = 0, ivaReteItems = 0, reteRentaItems = 0;
+        decimal noOnerosasItems = 0;
+        bool haySeguroItems = false, hayFleteItems = false, hayNoGravadoItems = false,
+            hayIvaReteItems = false, hayReteRentaItems = false;
         var codigosTributo = new HashSet<string>(StringComparer.Ordinal);
+        var baseOriginalPorTributo = new Dictionary<string, decimal>(StringComparer.Ordinal);
+        var baseRetornadaPorTributo = new Dictionary<string, decimal>(StringComparer.Ordinal);
         var identificacionOriginal = Identificacion(root);
         var codigoOriginal = identificacionOriginal.Value<string>("codigoGeneracion")
             ?? throw new InvalidOperationException("El JSON original no contiene código de generación.");
         var resumenOriginal = (JObject?)root["resumen"] ?? new JObject();
         var baseOriginal = BaseOperacionOriginal(root, resumenOriginal);
+
+        foreach (var lineaOriginal in Cuerpo(root))
+        {
+            var numeroLinea = Entero(lineaOriginal, "numItem");
+            var baseTributable = BaseTributableOriginal(lineaOriginal);
+            foreach (var codigoTributo in CodigosTributoLinea(lineaOriginal))
+                baseOriginalPorTributo[codigoTributo] = baseOriginalPorTributo.GetValueOrDefault(codigoTributo) + baseTributable;
+        }
 
         foreach (var original in Cuerpo(root))
         {
@@ -101,11 +114,13 @@ public sealed class DteRetornoService : IDteRetornoService
             var descuento = Redondear2(Numero(original, "montoDescu") * proporcion);
             var baseLinea = Redondear2(solicitada.Cantidad * precio) - descuento;
             if (baseLinea < 0m) throw new InvalidOperationException($"El precio del ítem {numeroOriginal} no cubre su descuento proporcional.");
+            ValidarMontoFiscal(baseLinea, $"importe del ítem {numeroOriginal}");
             var clasificacion = Clasificacion(original);
             decimal lineaGravada = 0, lineaExenta = 0, lineaNoSujeta = 0, lineaCompra = 0, lineaIva = 0;
             if (clasificacion == "compra") lineaCompra = baseLinea;
             else if (clasificacion == "ventaExenta") lineaExenta = baseLinea;
             else if (clasificacion == "ventaNoSuj") lineaNoSujeta = baseLinea;
+            else if (clasificacion == "noOnerosa") { }
             else
             {
                 lineaGravada = baseLinea;
@@ -113,17 +128,25 @@ public sealed class DteRetornoService : IDteRetornoService
             }
             gravada += lineaGravada; exenta += lineaExenta; noSujeta += lineaNoSujeta; compra += lineaCompra; iva += lineaIva;
 
-            var tributosLinea = (original["tributos"] as JArray)?.Values<string>()
-                .Where(x => !string.IsNullOrWhiteSpace(x) && x != "20").Select(x => x!).Distinct(StringComparer.Ordinal).ToList() ?? [];
-            if (tipoRelacionado == "11" && !tributosLinea.Contains("C3", StringComparer.Ordinal)) tributosLinea.Add("C3");
-            foreach (var tributo in tributosLinea) codigosTributo.Add(tributo);
+            var tributosLinea = CodigosTributoLinea(original).ToList();
+            foreach (var tributo in tributosLinea)
+            {
+                codigosTributo.Add(tributo);
+                baseRetornadaPorTributo[tributo] = baseRetornadaPorTributo.GetValueOrDefault(tributo) + baseLinea;
+            }
             var seguroLinea = Redondear2(Numero(original, "seguro") * proporcion);
             var fleteLinea = Redondear2(Numero(original, "flete") * proporcion);
             var noGravadoLinea = Redondear2(Numero(original, "noGravado") * proporcion);
             var ivaReteLinea = Redondear2(Numero(original, "ivaRete") * proporcion);
             var reteRentaLinea = Redondear2(Numero(original, "reteRenta") * proporcion);
+            haySeguroItems |= TieneNumero(original, "seguro");
+            hayFleteItems |= TieneNumero(original, "flete");
+            hayNoGravadoItems |= TieneNumero(original, "noGravado");
+            hayIvaReteItems |= TieneNumero(original, "ivaRete");
+            hayReteRentaItems |= TieneNumero(original, "reteRenta");
             seguroItems += seguroLinea; fleteItems += fleteLinea; noGravadoItems += noGravadoLinea;
             ivaReteItems += ivaReteLinea; reteRentaItems += reteRentaLinea;
+            noOnerosasItems += TotalNoOnerosoLinea(original, solicitada.Cantidad, clasificacion);
             cuerpo.Add(new JObject
             {
                 ["numItem"] = cuerpo.Count + 1, ["tipoItem"] = original.Value<int?>("tipoItem") ?? 1,
@@ -133,7 +156,8 @@ public sealed class DteRetornoService : IDteRetornoService
                 ["montoDescu"] = descuento, ["codTributo"] = original["codTributo"]?.DeepClone() ?? JValue.CreateNull(),
                 ["ventaNoSuj"] = Redondear2(lineaNoSujeta), ["ventaExenta"] = Redondear2(lineaExenta),
                 ["ventaGravada"] = Redondear2(lineaGravada), ["compra"] = Redondear2(lineaCompra),
-                ["tributos"] = tributosLinea.Count == 0 ? JValue.CreateNull() : new JArray(tributosLinea), ["psv"] = 0m, ["ivaItem"] = Redondear2(lineaIva),
+                ["tributos"] = tributosLinea.Count == 0 ? JValue.CreateNull() : new JArray(tributosLinea),
+                ["psv"] = original["psv"]?.DeepClone() ?? new JValue(0m), ["ivaItem"] = Redondear2(lineaIva),
                 ["noGravado"] = noGravadoLinea, ["seguro"] = seguroLinea, ["flete"] = fleteLinea,
                 ["ivaRete"] = ivaReteLinea, ["reteRenta"] = reteRentaLinea
             });
@@ -144,18 +168,25 @@ public sealed class DteRetornoService : IDteRetornoService
         gravada = Redondear2(gravada); exenta = Redondear2(exenta); noSujeta = Redondear2(noSujeta); compra = Redondear2(compra); iva = Redondear2(iva);
         var subtotal = Redondear2(gravada + exenta + noSujeta + compra);
         var proporcionOperacion = baseOriginal > 0m ? Math.Min(1m, subtotal / baseOriginal) : 0m;
-        var seguro = CargoRetornado(resumenOriginal, tipoRelacionado, "seguro", "totalSeguro", seguroItems, proporcionOperacion);
-        var flete = CargoRetornado(resumenOriginal, tipoRelacionado, "flete", "totalFlete", fleteItems, proporcionOperacion);
-        var noGravado = noGravadoItems != 0m ? Redondear2(noGravadoItems) : Redondear2(Numero(resumenOriginal, "totalNoGravado") * proporcionOperacion);
-        var ivaRete = ivaReteItems != 0m ? Redondear2(ivaReteItems) : Redondear2(Numero(resumenOriginal, "ivaRete") * proporcionOperacion);
-        var reteRenta = reteRentaItems != 0m ? Redondear2(reteRentaItems) : Redondear2(Numero(resumenOriginal, "reteRenta") * proporcionOperacion);
-        var noOnerosas = Redondear2(Numero(resumenOriginal, "totalNoOnerosas") * proporcionOperacion);
-        var tributosResumen = CrearTributosResumen(resumenOriginal, codigosTributo, proporcionOperacion);
+        var seguro = CargoRetornadoConPresencia(resumenOriginal, tipoRelacionado, "seguro", "totalSeguro", seguroItems, proporcionOperacion, haySeguroItems);
+        var flete = CargoRetornadoConPresencia(resumenOriginal, tipoRelacionado, "flete", "totalFlete", fleteItems, proporcionOperacion, hayFleteItems);
+        var noGravado = hayNoGravadoItems ? Redondear2(noGravadoItems) : Redondear2(Numero(resumenOriginal, "totalNoGravado") * proporcionOperacion);
+        var ivaRete = hayIvaReteItems ? Redondear2(ivaReteItems) : Redondear2(Numero(resumenOriginal, "ivaRete") * proporcionOperacion);
+        var reteRenta = hayReteRentaItems ? Redondear2(reteRentaItems) : Redondear2(Numero(resumenOriginal, "reteRenta") * proporcionOperacion);
+        var noOnerosas = Redondear2(noOnerosasItems);
+        var tributosResumen = CrearTributosResumen(resumenOriginal, codigosTributo, baseOriginalPorTributo, baseRetornadaPorTributo);
         var totalTributos = tributosResumen is JArray tributosArray
             ? Redondear2(tributosArray.OfType<JObject>().Sum(x => Numero(x, "valor")))
             : 0m;
         var montoOperacion = Redondear2(subtotal + seguro + flete + noGravado + totalTributos);
         var total = Redondear2(Math.Max(0m, montoOperacion - ivaRete - reteRenta));
+        foreach (var (nombre, valor) in new[]
+        {
+            ("total gravado", gravada), ("total exento", exenta), ("total no sujeto", noSujeta),
+            ("total de compras", compra), ("IVA", iva), ("seguro", seguro), ("flete", flete),
+            ("total no gravado", noGravado), ("IVA retenido", ivaRete), ("renta retenida", reteRenta),
+            ("total no oneroso", noOnerosas), ("monto de operación", montoOperacion), ("total a pagar", total)
+        }) ValidarMontoFiscal(valor, nombre, nombre == "total no gravado");
         var receptorOriginal = (JObject?)(root["receptor"] ?? root["sujetoExcluido"] ?? root["documento"])
             ?? throw new InvalidOperationException("El documento original no contiene receptor.");
         var emisorOriginal = (JObject?)root["emisor"] ?? throw new InvalidOperationException("El documento original no contiene emisor.");
@@ -180,7 +211,8 @@ public sealed class DteRetornoService : IDteRetornoService
         }.ToString(Formatting.None);
 
         return new DteRetornoPreparado(factura.FacturaId, ambiente, json, codigo, numeroControl, gravada, exenta, total, iva,
-            Texto(receptorOriginal, "correo") ?? factura.CorreoReceptor, request.TipoRetorno, request.Motivo.Trim(), preparadas);
+            Texto(receptorOriginal, "correo") ?? factura.CorreoReceptor, request.TipoRetorno, request.Motivo.Trim(),
+            HashJson(factura.JsonDte ?? throw new InvalidOperationException("Falta el JSON original.")), preparadas);
     }
 
     public async Task<DteRetornoResultado> EmitirAsync(DteRetornoRequest request, CancellationToken cancellationToken = default)
@@ -354,6 +386,8 @@ public sealed class DteRetornoService : IDteRetornoService
         if (!DteReservaReglas.EsOriginalAceptadoVigente(original))
             throw new InvalidOperationException("El documento original dejó de estar aceptado y vigente antes de reservar el retorno.");
         var root = JObject.Parse(original.JsonDte ?? throw new InvalidOperationException("Falta el JSON original."));
+        if (!string.Equals(HashJson(original.JsonDte!), preparada.HashJsonOriginal, StringComparison.Ordinal))
+            throw new InvalidOperationException("El JSON fiscal original cambió antes de reservar el retorno.");
         var identificacion = Identificacion(root);
         if (ConfiguracionFeService.NormalizarAmbiente(identificacion.Value<string>("ambiente") ?? string.Empty) != preparada.AmbienteFiscal
             || !string.Equals(identificacion.Value<string>("codigoGeneracion"), original.CodigoGeneracion, StringComparison.OrdinalIgnoreCase))
@@ -381,7 +415,8 @@ public sealed class DteRetornoService : IDteRetornoService
         catch (Exception ex) { _logger.LogError(ex, "ERET {FacturaId} aceptado, pero no se pudo encolar su correo", factura.FacturaId); }
     }
 
-    private static JToken CrearTributosResumen(JObject resumenOriginal, IEnumerable<string> codigos, decimal proporcion)
+    private static JToken CrearTributosResumen(JObject resumenOriginal, IEnumerable<string> codigos,
+        IReadOnlyDictionary<string, decimal> basesOriginales, IReadOnlyDictionary<string, decimal> basesRetornadas)
     {
         var originales = (resumenOriginal["tributos"] as JArray)?.OfType<JObject>()
             .Where(x => !string.IsNullOrWhiteSpace(Texto(x, "codigo")))
@@ -392,6 +427,10 @@ public sealed class DteRetornoService : IDteRetornoService
             originales.TryGetValue(codigo, out var original);
             if (original is null && codigo != "C3")
                 throw new InvalidOperationException($"No se puede calcular el tributo {codigo} porque no aparece valorizado en el resumen original.");
+            var baseOriginal = basesOriginales.GetValueOrDefault(codigo);
+            var proporcion = baseOriginal > 0m
+                ? Math.Min(1m, basesRetornadas.GetValueOrDefault(codigo) / baseOriginal)
+                : 0m;
             resultado.Add(new JObject
             {
                 ["codigo"] = codigo,
@@ -411,8 +450,8 @@ public sealed class DteRetornoService : IDteRetornoService
         if (request.Lineas is null || request.Lineas.Count == 0) throw new InvalidOperationException("Seleccione al menos una línea para retornar.");
         if (request.Lineas.Count > 2000) throw new InvalidOperationException("El ERET admite como máximo 2000 líneas.");
         if (request.Lineas.GroupBy(x => x.NumeroItemOriginal).Any(x => x.Count() > 1)) throw new InvalidOperationException("No se puede repetir una línea original.");
-        if (request.Lineas.Any(x => x.NumeroItemOriginal <= 0 || x.Cantidad <= 0m || x.PrecioUnitario is <= 0m))
-            throw new InvalidOperationException("Los ítems, cantidades y precios deben ser mayores que cero.");
+        if (request.Lineas.Any(x => x.NumeroItemOriginal <= 0 || x.Cantidad <= 0m || x.PrecioUnitario is < 0m))
+            throw new InvalidOperationException("Los ítems y cantidades deben ser mayores que cero; el precio no puede ser negativo.");
         if (request.Lineas.Any(x => Escala(x.Cantidad) > 8 || x.PrecioUnitario.HasValue && Escala(x.PrecioUnitario.Value) > 8))
             throw new InvalidOperationException("Cantidades y precios admiten hasta ocho decimales.");
         if (request.Lineas.Any(x => x.Cantidad >= 100000000000m || x.PrecioUnitario >= 100000000000m))
@@ -421,17 +460,23 @@ public sealed class DteRetornoService : IDteRetornoService
 
     private static JObject CrearEmisor(JObject original, SRAUMOAR.Entidades.FacturacionElectronica.ConfiguracionFacturacionElectronica config)
     {
-        var nit = NormalizarDocumento(config.NitEmisor ?? Texto(original, "nit"));
+        var nit = NormalizarDocumento(Texto(original, "nit"));
+        var nombre = Texto(original, "nombre");
+        var codEstableMh = Texto(original, "codEstableMH") ?? config.CodigoEstablecimientoMh;
+        var codPuntoVentaMh = Texto(original, "codPuntoVentaMH") ?? config.CodigoPuntoVentaMh;
+        var codEstable = Texto(original, "codEstable");
+        var codPuntoVenta = Texto(original, "codPuntoVenta");
         if (nit.Length is < 9 or > 14) throw new InvalidOperationException("El NIT del emisor no cumple la longitud requerida para ERET.");
-        ValidarCodigoMh(config.CodigoEstablecimientoMh, "código de establecimiento MH");
-        ValidarCodigoMh(config.CodigoPuntoVentaMh, "código de punto de venta MH");
-        ValidarCodigoContribuyente(config.CodigoEstablecimiento, 10, "código de establecimiento");
-        ValidarCodigoContribuyente(config.CodigoPuntoVenta, 15, "código de punto de venta");
+        if (string.IsNullOrWhiteSpace(nombre)) throw new InvalidOperationException("El JSON original no contiene el nombre del emisor.");
+        ValidarCodigoMh(codEstableMh, "código de establecimiento MH");
+        ValidarCodigoMh(codPuntoVentaMh, "código de punto de venta MH");
+        ValidarCodigoContribuyente(codEstable, 10, "código de establecimiento");
+        ValidarCodigoContribuyente(codPuntoVenta, 15, "código de punto de venta");
         return new JObject
         {
-            ["nit"] = nit, ["nombre"] = config.NombreEmisor ?? Texto(original, "nombre"),
-            ["codEstableMH"] = config.CodigoEstablecimientoMh, ["codEstable"] = Nulo(config.CodigoEstablecimiento),
-            ["codPuntoVentaMH"] = config.CodigoPuntoVentaMh, ["codPuntoVenta"] = Nulo(config.CodigoPuntoVenta),
+            ["nit"] = nit, ["nombre"] = nombre,
+            ["codEstableMH"] = codEstableMh, ["codEstable"] = Nulo(codEstable),
+            ["codPuntoVentaMH"] = codPuntoVentaMh, ["codPuntoVenta"] = Nulo(codPuntoVenta),
             ["recintoFiscal"] = original["recintoFiscal"]?.DeepClone() ?? JValue.CreateNull(),
             ["tipoRegimen"] = original["tipoRegimen"]?.DeepClone() ?? JValue.CreateNull(),
             ["regimen"] = original["regimen"]?.DeepClone() ?? JValue.CreateNull(),
@@ -478,7 +523,26 @@ public sealed class DteRetornoService : IDteRetornoService
 
     private static JObject Identificacion(JObject root) => (JObject?)root["identificacion"] ?? throw new InvalidOperationException("Falta identificación.");
     private static IEnumerable<JObject> Cuerpo(JObject root) => ((JArray?)root["cuerpoDocumento"] ?? throw new InvalidOperationException("Falta cuerpoDocumento.")).OfType<JObject>();
-    private static string Clasificacion(JObject x) => Numero(x, "compra") > 0 ? "compra" : Numero(x, "ventaExenta") > 0 ? "ventaExenta" : Numero(x, "ventaNoSuj") > 0 ? "ventaNoSuj" : "ventaGravada";
+    private static IEnumerable<string> CodigosTributoLinea(JObject linea)
+        => (linea["tributos"] as JArray)?.Values<string>()
+            .Where(x => !string.IsNullOrWhiteSpace(x) && x != "20")
+            .Select(x => x!).Distinct(StringComparer.Ordinal) ?? [];
+
+    private static decimal BaseTributableOriginal(JObject linea)
+    {
+        var baseFiscal = Numero(linea, "ventaNoSuj") + Numero(linea, "ventaExenta")
+            + Numero(linea, "ventaGravada") + Numero(linea, "compra");
+        return baseFiscal > 0m
+            ? baseFiscal
+            : Math.Max(0m, Numero(linea, "cantidad") * Numero(linea, "precioUni") - Numero(linea, "montoDescu"));
+    }
+
+    private static string Clasificacion(JObject x) => Numero(x, "compra") > 0 ? "compra"
+        : Numero(x, "ventaExenta") > 0 ? "ventaExenta"
+        : Numero(x, "ventaNoSuj") > 0 ? "ventaNoSuj"
+        : Numero(x, "ventaGravada") > 0 ? "ventaGravada"
+        : Numero(x, "noGravado") > 0 || Numero(x, "psv") > 0 ? "noOnerosa"
+        : "ventaGravada";
     private static string? Texto(JObject x, string nombre) => x.Value<string>(nombre);
     private static int Entero(JObject x, string nombre) => x.Value<int?>(nombre) ?? throw new InvalidOperationException($"Falta {nombre}.");
     private static decimal Numero(JObject x, string nombre) => x[nombre]?.Type is JTokenType.Integer or JTokenType.Float
@@ -491,14 +555,37 @@ public sealed class DteRetornoService : IDteRetornoService
         try { return TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, "Central America Standard Time"); }
         catch (TimeZoneNotFoundException) { return DateTime.UtcNow.AddHours(-6); }
     }
-    private static decimal CargoRetornado(JObject resumen, string tipoOriginal, string campoExportacion,
-        string campoTotal, decimal sumaItems, decimal proporcion)
+    private static decimal CargoRetornadoConPresencia(JObject resumen, string tipoOriginal, string campoExportacion,
+        string campoTotal, decimal sumaItems, decimal proporcion, bool presenteEnItems = false)
     {
-        if (sumaItems != 0m) return Redondear2(sumaItems);
+        if (presenteEnItems || sumaItems != 0m) return Redondear2(sumaItems);
         var campo = tipoOriginal == "11" && resumen[campoExportacion] is { Type: not JTokenType.Null }
             ? campoExportacion : campoTotal;
         return Redondear2(Numero(resumen, campo) * proporcion);
     }
+
+    private static decimal CargoRetornado(JObject resumen, string tipoOriginal, string campoExportacion,
+        string campoTotal, decimal sumaItems, decimal proporcion)
+        => CargoRetornadoConPresencia(resumen, tipoOriginal, campoExportacion, campoTotal, sumaItems, proporcion, false);
+
+    private static bool TieneNumero(JObject objeto, string nombre)
+        => objeto[nombre]?.Type is JTokenType.Integer or JTokenType.Float;
+
+    private static decimal TotalNoOnerosoLinea(JObject linea, decimal cantidad, string clasificacion)
+    {
+        var total = clasificacion == "noOnerosa" ? Redondear2(Numero(linea, "psv") * cantidad) : 0m;
+        ValidarMontoFiscal(total, "total no oneroso de la línea");
+        return total;
+    }
+
+    private static void ValidarMontoFiscal(decimal valor, string nombre, bool permiteNegativo = false)
+    {
+        if ((!permiteNegativo && valor < 0m) || valor <= -100000000000m || valor >= 100000000000m)
+            throw new InvalidOperationException($"El {nombre} excede el rango admitido por el esquema ERET.");
+    }
+
+    private static string HashJson(string json)
+        => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(json)));
 
     private static string PrefijoOperacion(Guid operacionId) => $"18:{operacionId:N}:";
 

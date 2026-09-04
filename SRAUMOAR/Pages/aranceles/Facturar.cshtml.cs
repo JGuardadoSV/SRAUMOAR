@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Options;
 using SRAUMOAR.Entidades;
 using SRAUMOAR.Entidades.Alumnos;
@@ -34,11 +36,13 @@ namespace SRAUMOAR.Pages.aranceles
         private readonly IDteEmailQueueService _emailQueue;
         private readonly IDteJsonFactory _jsonFactory;
         private readonly ICatalogoFeService _catalogos;
+        private readonly IDteEmisionRecuperacionService _recuperacionEmision;
         // No existe correspondencia fiable con MunicipioId/DistritoId legacy.
         // La pantalla debe capturar los tres datos explícitamente en cada borrador.
         [BindProperty] public string? CodigoDepartamentoReceptor { get; set; }
         [BindProperty] public string? CodigoMunicipioReceptor { get; set; }
         [BindProperty] public long? DistritoReceptorId { get; set; }
+        [BindProperty] public Guid OperacionEmisionId { get; set; }
         public IReadOnlyList<CatalogoFeItem> CatalogoDepartamentos { get; private set; } = Array.Empty<CatalogoFeItem>();
         public IReadOnlyList<CatalogoFeItem> CatalogoMunicipios { get; private set; } = Array.Empty<CatalogoFeItem>();
         public IReadOnlyList<CatalogoFeItem> CatalogoDistritos { get; private set; } = Array.Empty<CatalogoFeItem>();
@@ -48,7 +52,7 @@ namespace SRAUMOAR.Pages.aranceles
         private string codigoEstablecimiento = "M001";
         private string codigoPuntoVentaMh = "P001";
         private string codigoPuntoVenta = "P001";
-        public FacturarModel(SRAUMOAR.Modelos.Contexto context, IOptions<EmisorConfig> emisorOptions, ICorrelativoService correlativoService, IDteTransmisionService dteTransmision, IConfiguracionFeService configuracionFe, IDteEmailQueueService emailQueue, IDteJsonFactory jsonFactory, ICatalogoFeService catalogos)
+        public FacturarModel(SRAUMOAR.Modelos.Contexto context, IOptions<EmisorConfig> emisorOptions, ICorrelativoService correlativoService, IDteTransmisionService dteTransmision, IConfiguracionFeService configuracionFe, IDteEmailQueueService emailQueue, IDteJsonFactory jsonFactory, ICatalogoFeService catalogos, IDteEmisionRecuperacionService recuperacionEmision)
         {
             _context = context;
             _emisor = emisorOptions.Value;
@@ -58,6 +62,7 @@ namespace SRAUMOAR.Pages.aranceles
             _emailQueue = emailQueue;
             _jsonFactory = jsonFactory;
             _catalogos = catalogos;
+            _recuperacionEmision = recuperacionEmision;
         }
         public List<Arancel> Aranceles { get; set; } = new();
 
@@ -149,6 +154,7 @@ namespace SRAUMOAR.Pages.aranceles
         //public async Task<IActionResult> OnGet(int alumnoId, int arancelId)
         public async Task<IActionResult> OnGetAsync(string arancelIds, int idalumno)
         {
+            OperacionEmisionId = Guid.NewGuid();
             var arancelIdsList = arancelIds.Split(',').Select(int.Parse).ToList();
             var alumno = await _context.Alumno.FirstOrDefaultAsync(m => m.AlumnoId == idalumno);
             
@@ -209,6 +215,18 @@ namespace SRAUMOAR.Pages.aranceles
         // For more information, see https://aka.ms/RazorPagesCRUD.
         public async Task<IActionResult> OnPostAsync(List<int> selectedAranceles, List<decimal> arancelescostos, int idalumno)
         {
+            if (OperacionEmisionId == Guid.Empty)
+            {
+                TempData["Error"] = "La operación perdió su identificador seguro. Recargue el formulario antes de emitir.";
+                return RedirectToPage("./Facturar", new { idalumno, arancelIds = string.Join(',', selectedAranceles ?? new List<int>()) });
+            }
+            var claveOperacion = $"EMISION-ARANCEL:{OperacionEmisionId:N}";
+            var recuperada = await _recuperacionEmision.ReanudarAsync(claveOperacion);
+            if (recuperada is not null)
+            {
+                TempData[recuperada.Aceptado ? "Success" : "Error"] = recuperada.Mensaje;
+                return RedirectToPage("./Facturas");
+            }
             ConfiguracionFeActiva configuracionFiscal;
             EmisorConfig _emisor;
             try
@@ -565,18 +583,11 @@ namespace SRAUMOAR.Pages.aranceles
                 return Page();
             }
 
-            var resultadoTransmision = await _dteTransmision.TransmitirAsync(
-                new DteTransmisionRequest(dteJson, "01", codigoGeneracion.ToString().ToUpperInvariant(), numeroControl, 2, alumno.Email));
-            var selloRecibido = resultadoTransmision.SelloRecepcion ?? string.Empty;
-
-           // if (ambiente == 1)
-          //  {
-                //guardar factura
-
+                // La factura y el cobro se reservan localmente antes de cualquier llamada fiscal.
                 Factura factura = new Factura();
                 factura.CodigoGeneracion = codigoGeneracion.ToString().ToUpper();
                 factura.NumeroControl = numeroControl;
-                factura.SelloRecepcion = selloRecibido;
+                factura.SelloRecepcion = string.Empty;
                 factura.JsonDte = dteJson;
                 string fechaHoraString = $"{identificacion.fecEmi} {identificacion.horEmi}";
                 DateTime fechaHora = DateTime.ParseExact(fechaHoraString, "yyyy-MM-dd HH:mm:ss", null);
@@ -584,11 +595,10 @@ namespace SRAUMOAR.Pages.aranceles
                  factura.TipoDTE = 1;
                  factura.TipoDteCodigo = "01";
                  factura.AmbienteFiscal = ambienteFiscal;
-                 factura.EstadoTransmision = resultadoTransmision.Estado;
-                 factura.IntentosTransmision = resultadoTransmision.Intentos;
-                 factura.RespuestaHacienda = resultadoTransmision.Respuesta;
-                 factura.FechaAceptacion = resultadoTransmision.Aceptado ? DateTime.UtcNow : null;
+                 factura.EstadoTransmision = DteEstados.Preparado;
+                 factura.IntentosTransmision = 0;
                  factura.CorreoReceptor = alumno.Email;
+                factura.ClaveIdempotencia = claveOperacion;
                 factura.TotalGravado = totalVenta;
                 factura.TotalExento = totalVentaExenta;
                 factura.TotalIva = totalIva;
@@ -643,8 +653,48 @@ namespace SRAUMOAR.Pages.aranceles
             {
                 CobroArancel.CicloId = cicloDeAranceles.Id;
             }
-            _context.CobrosArancel.Add(CobroArancel);
-            // Una sola unidad de guardado: factura, cobro y sus detalles.
+            // Reclamar los conceptos por alumno antes de guardar evita dos cobros/DTE
+            // simultáneos desde pestañas o formularios diferentes.
+            await using (var reserva = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable))
+            {
+                var recurso = $"COBRO-ARANCEL:{idalumno}";
+                await _context.Database.ExecuteSqlInterpolatedAsync($@"
+                    DECLARE @resultado int;
+                    EXEC @resultado = sys.sp_getapplock @Resource = {recurso}, @LockMode = 'Exclusive',
+                        @LockOwner = 'Transaction', @LockTimeout = 15000;
+                    IF @resultado < 0 THROW 50001, 'No se pudo reservar el cobro; reintente.', 1;");
+                var yaCobrados = await _context.DetallesCobrosArancel.AsNoTracking()
+                    .Where(x => x.CobroArancel!.AlumnoId == idalumno && selectedAranceles.Contains(x.ArancelId))
+                    .Select(x => x.ArancelId).Distinct().ToListAsync();
+                if (yaCobrados.Count > 0)
+                {
+                    TempData["Error"] = "Uno o más aranceles ya fueron cobrados. No se generó otro DTE.";
+                    return RedirectToPage("./Facturas");
+                }
+
+                _context.CobrosArancel.Add(CobroArancel);
+                // Primera unidad durable: factura preparada, cobro y detalles.
+                try
+                {
+                    await _context.SaveChangesAsync();
+                    await reserva.CommitAsync();
+                }
+                catch (DbUpdateException ex) when (ex.InnerException is SqlException { Number: 2601 or 2627 })
+                {
+                    TempData["Error"] = "Esta operación ya fue guardada por otra solicitud. No se generó un segundo DTE.";
+                    return RedirectToPage("./Facturas");
+                }
+            }
+
+            var resultadoTransmision = await _dteTransmision.TransmitirAsync(
+                new DteTransmisionRequest(dteJson, "01", codigoGeneracion.ToString().ToUpperInvariant(), numeroControl, 2,
+                    alumno.Email, factura.FacturaId));
+            var selloRecibido = resultadoTransmision.SelloRecepcion ?? string.Empty;
+            factura.SelloRecepcion = selloRecibido;
+            factura.EstadoTransmision = resultadoTransmision.Estado;
+            factura.IntentosTransmision = resultadoTransmision.Intentos;
+            factura.RespuestaHacienda = resultadoTransmision.Respuesta;
+            factura.FechaAceptacion = resultadoTransmision.Aceptado ? DateTime.UtcNow : null;
             await _context.SaveChangesAsync();
 
             TempData.Remove("Success");
