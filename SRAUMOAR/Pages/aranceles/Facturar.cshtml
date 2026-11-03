@@ -457,50 +457,14 @@
             </h2>
         </div>
 
+        @if (ViewData["Alumno"] is SRAUMOAR.Entidades.Alumnos.Alumno alumnoFiscal)
+        {
+            <partial name="_UbicacionAlumnoModal" model='new SRAUMOAR.Modelos.UbicacionAlumnoModalModel(alumnoFiscal.AlumnoId, alumnoFiscal.Nombres + " " + alumnoFiscal.Apellidos)' />
+        }
         <form method="post">
             <input type="hidden" asp-for="OperacionEmisionId" />
             <div asp-validation-summary="ModelOnly" class="validation-error mb-3"></div>
             <input type="hidden" name="idalumno" value="@ViewData["AlumnoId"]" />
-            <div class="payment-section">
-                <h3 class="section-title mb-2">Dirección fiscal del receptor</h3>
-                <p class="text-muted">Seleccione los tres valores del catálogo fiscal importado. No se deducen del municipio o distrito antiguo del alumno.</p>
-                <div class="payment-grid">
-                    <div class="form-group">
-                        <label asp-for="CodigoDepartamentoReceptor" class="form-label-professional">Departamento</label>
-                        <select asp-for="CodigoDepartamentoReceptor" class="form-control-professional" required data-catalogo-modal="departamento">
-                            <option value="">Seleccione departamento...</option>
-                            @foreach (var item in Model.CatalogoDepartamentos.Where(x => x.Activo))
-                            {
-                                <option value="@item.Codigo">@item.Codigo - @item.Descripcion</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label asp-for="CodigoMunicipioReceptor" class="form-label-professional">Municipio</label>
-                        <select asp-for="CodigoMunicipioReceptor" class="form-control-professional" required data-catalogo-modal="municipio" data-departamento-select="CodigoDepartamentoReceptor">
-                            <option value="">Seleccione municipio...</option>
-                            @foreach (var item in Model.CatalogoMunicipios.Where(x => x.Activo))
-                            {
-                                <option value="@item.Codigo" data-departamento="@item.AmbitoDepartamento">@item.Codigo - @item.Descripcion</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label asp-for="DistritoReceptorId" class="form-label-professional">Distrito</label>
-                        <select asp-for="DistritoReceptorId" class="form-control-professional" required data-catalogo-modal="distrito" data-departamento-select="CodigoDepartamentoReceptor" data-municipio-select="CodigoMunicipioReceptor">
-                            <option value="">Seleccione distrito...</option>
-                            @foreach (var item in Model.CatalogoDistritos.Where(x => x.Activo))
-                            {
-                                <option value="@item.Id" data-departamento="@item.AmbitoDepartamento" data-municipio="@item.AmbitoMunicipio">@item.Codigo - @item.Descripcion</option>
-                            }
-                        </select>
-                    </div>
-                </div>
-                @if (!Model.CatalogoDepartamentos.Any(x => x.Activo) || !Model.CatalogoMunicipios.Any(x => x.Activo) || !Model.CatalogoDistritos.Any(x => x.Activo))
-                {
-                    <p class="validation-error">Faltan catálogos fiscales activos. Deben importarse antes de emitir.</p>
-                }
-            </div>
             <!-- Lista de Aranceles -->
             <div class="aranceles-section">
                 <div class="section-header">
@@ -696,7 +660,6 @@
 </div>
 
 @section Scripts {
-    <script src="~/js/catalogo-modal.js" asp-append-version="true"></script>
     <partial name="_ValidationScriptsPartial" />
     <script>
         jQuery(document).ready(function() {

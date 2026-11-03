@@ -144,38 +144,8 @@
                         <input type="text" class="form-control" asp-for="Factura.Receptor.Direccion.Complemento" autocomplete="off" />
                     </div>
 
+                    <partial name="_SelectorTerritorioFiscal" model='new SRAUMOAR.Modelos.SelectorTerritorioFiscalModel("ReceptorFiscal", "Factura.Receptor.CodigoDepartamento", "Factura.Receptor.CodigoMunicipio", "Factura.Receptor.CodigoDistrito", Model.Factura.Receptor.CodigoDepartamento, Model.Factura.Receptor.CodigoMunicipio, Model.Factura.Receptor.CodigoDistrito)' />
                     <div class="pv-grid pv-grid-3">
-                        <div class="form-group">
-                            <label>Departamento</label>
-                            <div class="input-group">
-                                <input type="text" class="form-control catalogo-valor" id="Factura_Receptor_CodigoDepartamentoTexto" placeholder="Buscar departamento..." readonly />
-                                <button type="button" class="btn btn-outline-secondary btn-buscar-catalogo" data-catalogo="departamento" data-target-code="Factura_Receptor_CodigoDepartamento" data-target-text="Factura_Receptor_CodigoDepartamentoTexto" title="Buscar departamento">
-                                    <i class="bi bi-search"></i>
-                                </button>
-                            </div>
-                            <input type="hidden" asp-for="Factura.Receptor.CodigoDepartamento" id="Factura_Receptor_CodigoDepartamento" />
-                        </div>
-                        <div class="form-group">
-                            <label>Municipio</label>
-                            <div class="input-group">
-                                <input type="text" class="form-control catalogo-valor" id="Factura_Receptor_CodigoMunicipioTexto" placeholder="Seleccione departamento primero..." readonly />
-                                <button type="button" class="btn btn-outline-secondary btn-buscar-catalogo" data-catalogo="municipio" data-target-code="Factura_Receptor_CodigoMunicipio" data-target-text="Factura_Receptor_CodigoMunicipioTexto" title="Buscar municipio">
-                                    <i class="bi bi-search"></i>
-                                </button>
-                            </div>
-                            <input type="hidden" asp-for="Factura.Receptor.CodigoMunicipio" id="Factura_Receptor_CodigoMunicipio" />
-                        </div>
-                        <div class="form-group">
-                            <label>Distrito fiscal</label>
-                            <div class="input-group">
-                                <input type="text" class="form-control catalogo-valor" id="Factura_Receptor_DistritoTexto" placeholder="Seleccione municipio primero..." readonly />
-                                <button type="button" class="btn btn-outline-secondary btn-buscar-catalogo" data-catalogo="distrito" data-target-code="Factura_Receptor_DistritoId" data-target-text="Factura_Receptor_DistritoTexto" title="Buscar distrito fiscal">
-                                    <i class="bi bi-search"></i>
-                                </button>
-                            </div>
-                            <input type="hidden" asp-for="Factura.Receptor.DistritoId" id="Factura_Receptor_DistritoId" />
-                            <small>Seleccione explícitamente el distrito del receptor. No se deduce de la dirección legacy.</small>
-                        </div>
                         <div class="form-group">
                             <label>Telefono</label>
                             <input type="text" class="form-control" asp-for="Factura.Receptor.Telefono" autocomplete="off" />
@@ -1037,14 +1007,11 @@
             var form = jQuery('#puntoVentaForm');
             var tipoDocumento = jQuery('#tipoDocumentoSelect');
             var modalTipoDocumento = jQuery('#modalTipoDocumentoSelect');
-            var municipioGuardado = null;
             var documentoModal = null;
             var catalogoModal = null;
             var catalogoSeleccionActual = null;
             var catalogoBusquedaTimer = null;
 
-            // La geografía proviene exclusivamente del catálogo fiscal importado.
-            var departamentos = [];
 
             var paises = [
                 { codigo: 'BZ', nombre: 'Belice' }, { codigo: 'CR', nombre: 'Costa Rica' },
@@ -1056,19 +1023,12 @@
             ];
 
             var catalogosServidor = {
-                departamentos: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoDepartamentos.Where(x => x.Activo).Select(x => new { codigo = x.Codigo, nombre = x.Descripcion }))),
-                municipios: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoMunicipios.Where(x => x.Activo).Select(x => new { codigo = x.Codigo, nombre = x.Descripcion, departamento = x.AmbitoDepartamento }))),
-                distritos: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoDistritos.Where(x => x.Activo).Select(x => new { id = x.Id.ToString(), codigo = x.Codigo, nombre = x.Descripcion, departamento = x.AmbitoDepartamento, municipio = x.AmbitoMunicipio }))),
                 paises: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoPaises.Select(x => new { codigo = x.Codigo, nombre = x.Descripcion }))),
                 donaciones: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoDonaciones.Select(x => new { codigo = x.Codigo, nombre = x.Descripcion })))
             };
-            var municipiosCatalogo = catalogosServidor.municipios || [];
-            departamentos = catalogosServidor.departamentos || [];
             if (catalogosServidor.paises && catalogosServidor.paises.length) paises = catalogosServidor.paises;
 
             var catalogosLocales = {
-                departamento: departamentos,
-                distrito: catalogosServidor.distritos || [],
                 pais: paises,
                 donacion: catalogosServidor.donaciones && catalogosServidor.donaciones.length ? catalogosServidor.donaciones : [
                     { codigo: '1', nombre: 'Efectivo' },
@@ -1105,7 +1065,7 @@
                 var submitter = e.originalEvent && e.originalEvent.submitter ? e.originalEvent.submitter : document.activeElement;
                 var handler = submitter ? (submitter.getAttribute('formaction') || '') : '';
 
-                guardarScrollYMunicipio();
+                guardarScroll();
 
                 if (handler.indexOf('AgregarProducto') !== -1 && !validarAgregarProducto()) {
                     e.preventDefault();
@@ -1234,6 +1194,13 @@
                     enfocarConMensaje('#tipoDocumentoSelect', 'Seleccione el tipo de documento.');
                     return false;
                 }
+                var ubicacion = document.querySelector('[data-territorio-fiscal]');
+                var valores = window.TerritorioFiscal.iniciarSelector(ubicacion).valores();
+                if (!valores.departamento || !valores.municipio || !valores.distrito) {
+                    alert('Complete Departamento → Municipio → Distrito antes de emitir.');
+                    ubicacion.querySelector('select:not(:disabled)').focus();
+                    return false;
+                }
                 return true;
             }
 
@@ -1276,12 +1243,8 @@
                 return '$' + Number(value || 0).toFixed(2);
             }
 
-            function guardarScrollYMunicipio() {
+            function guardarScroll() {
                 sessionStorage.setItem('pvScrollPosition', String(jQuery(window).scrollTop()));
-                municipioGuardado = jQuery('#Factura_Receptor_CodigoMunicipio').val();
-                if (municipioGuardado) {
-                    sessionStorage.setItem('pvMunicipioSeleccionado', municipioGuardado);
-                }
             }
 
             function restaurarScroll() {
@@ -1301,12 +1264,6 @@
                     catalogoModal = new bootstrap.Modal(modalElement);
                 }
 
-                inicializarTextoCatalogo('Factura_Receptor_CodigoDepartamento', 'Factura_Receptor_CodigoDepartamentoTexto', departamentos);
-                inicializarTextoCatalogo('Factura_Receptor_CodigoMunicipio', 'Factura_Receptor_CodigoMunicipioTexto',
-                    obtenerItemsCatalogo('municipio'));
-                var distritoId = jQuery('#Factura_Receptor_DistritoId').val();
-                var distrito = catalogosLocales.distrito.find(function (item) { return item.id === distritoId; });
-                if (distrito) jQuery('#Factura_Receptor_DistritoTexto').val(distrito.codigo + ' - ' + distrito.nombre);
                 inicializarTextoCatalogo('Factura_CodigoPais', 'Factura_CodigoPaisTexto', paises);
                 inicializarTextoCatalogo('Factura_TipoDonacion', 'Factura_TipoDonacionTexto', catalogosLocales.donacion);
                 inicializarTextoCatalogo('Factura_TipoOperacion', 'Factura_TipoOperacionTexto', catalogosLocales.operacion);
@@ -1336,15 +1293,6 @@
             function abrirModalCatalogo() {
                 var boton = jQuery(this);
                 var tipo = boton.data('catalogo');
-                if (tipo === 'municipio' && !jQuery('#Factura_Receptor_CodigoDepartamento').val()) {
-                    enfocarConMensaje('#Factura_Receptor_CodigoDepartamentoTexto', 'Seleccione primero el departamento.');
-                    return;
-                }
-                if (tipo === 'distrito' && !jQuery('#Factura_Receptor_CodigoMunicipio').val()) {
-                    enfocarConMensaje('#Factura_Receptor_CodigoMunicipioTexto', 'Seleccione primero el municipio fiscal.');
-                    return;
-                }
-
                 catalogoSeleccionActual = {
                     tipo: tipo,
                     codigoId: boton.data('target-code'),
@@ -1406,12 +1354,6 @@
             }
 
             function obtenerItemsCatalogo(tipo) {
-                var departamento = jQuery('#Factura_Receptor_CodigoDepartamento').val();
-                var municipio = jQuery('#Factura_Receptor_CodigoMunicipio').val();
-                if (tipo === 'municipio') return municipiosCatalogo.filter(function (item) { return item.departamento === departamento; });
-                if (tipo === 'distrito') return (catalogosLocales.distrito || []).filter(function (item) {
-                    return item.departamento === departamento && item.municipio === municipio;
-                });
                 return catalogosLocales[tipo] || [];
             }
 
@@ -1430,16 +1372,9 @@
             function seleccionarCatalogo(item) {
                 if (!catalogoSeleccionActual) return;
                 var actual = catalogoSeleccionActual;
-                jQuery('#' + actual.codigoId).val(actual.tipo === 'distrito' ? item.id : item.codigo).trigger('change');
+                jQuery('#' + actual.codigoId).val(item.codigo).trigger('change');
                 jQuery('#' + actual.textoId).val(item.codigo + ' - ' + item.nombre);
 
-                if (actual.tipo === 'departamento') {
-                    limpiarCatalogo('#Factura_Receptor_CodigoMunicipio', '#Factura_Receptor_CodigoMunicipioTexto');
-                    sessionStorage.removeItem('pvMunicipioSeleccionado');
-                }
-                if (actual.tipo === 'departamento' || actual.tipo === 'municipio') {
-                    limpiarCatalogo('#Factura_Receptor_DistritoId', '#Factura_Receptor_DistritoTexto');
-                }
                 if (actual.tipo === 'actividad') {
                     jQuery('#Factura_Receptor_DescActividad').val(item.descripcion || item.nombre);
                 }

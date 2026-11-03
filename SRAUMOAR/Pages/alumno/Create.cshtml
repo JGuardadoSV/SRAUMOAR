@@ -1107,20 +1107,8 @@
                                                 <span asp-validation-for="Alumno.DireccionDeResidencia" class="text-danger validation-message"></span>
                                             </div>
                                         </div>
-                                        <div class="col-md-4">
-                                            <div class="form-group">
-                                                <label asp-for="Alumno.MunicipioId" class="form-label">
-                                                    <i class="bi bi-map"></i>
-                                                    Municipio
-                                                </label>
-                                                <div class="input-group">
-                                                    <span class="input-group-text"><i class="bi bi-map"></i></span>
-                                                    <select asp-for="Alumno.MunicipioId" class="form-control select2" asp-items="ViewBag.MunicipioId">
-                                                        <option value="">Seleccione un municipio</option>
-                                                    </select>
-                                                </div>
-                                                <span asp-validation-for="Alumno.MunicipioId" class="text-danger validation-message"></span>
-                                            </div>
+                                        <div class="col-12">
+                                            <partial name="_SelectorTerritorioFiscal" model='new SRAUMOAR.Modelos.SelectorTerritorioFiscalModel("AlumnoFiscal", "Alumno.CodigoDepartamentoFiscal", "Alumno.CodigoMunicipioFiscal", "Alumno.CodigoDistritoFiscal", Model.Alumno?.CodigoDepartamentoFiscal, Model.Alumno?.CodigoMunicipioFiscal, Model.Alumno?.CodigoDistritoFiscal)' />
                                         </div>
                                     </div>
                                 </div>

@@ -22,6 +22,10 @@
         </div>
     }
 
+    @if (Model.Resultado is not null)
+    {
+        <a asp-page="./Nota" asp-route-FacturaId="@Model.FacturaId" asp-route-TipoNota="@Model.TipoNota" class="btn btn-outline-primary mb-3">Iniciar otra operación de nota</a>
+    }
     @if (Model.Factura is not null)
     {
         <div class="card mb-4">
@@ -42,6 +46,8 @@
         <form method="post" class="card">
             <div class="card-body">
                 <input type="hidden" asp-for="FacturaId" />
+                <input type="hidden" asp-for="OperacionId" />
+                <div asp-validation-summary="All" class="text-danger"></div>
                 @if (Model.RequiereGeografia)
                 {
                     <div class="alert alert-info">El documento histórico no contiene distrito. Seleccione la ubicación fiscal actual del receptor para esta nota; el JSON original no será modificado.</div>

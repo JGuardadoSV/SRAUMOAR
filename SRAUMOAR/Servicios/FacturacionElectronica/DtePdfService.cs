@@ -1,3 +1,4 @@
+using QRCoder;
 using Newtonsoft.Json.Linq;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -34,6 +35,7 @@ public sealed class DtePdfService : IDtePdfService
 
         return Document.Create(document => document.Page(page =>
         {
+            page.Size(PageSizes.Letter);
             page.Margin(28);
             page.DefaultTextStyle(x => x.FontSize(9));
             page.Header().Column(column =>
@@ -53,7 +55,11 @@ public sealed class DtePdfService : IDtePdfService
                 });
                 AgregarBloque(column, "Emisor", new[]
                 {
-                    ("NIT", emisor.Value<string>("nit") ?? "-"),
+                    ("NIT", emisor.Value<string>("nit") ?? emisor.Value<string>("numDocumento") ?? "-"),
+                    ("NRC", emisor.Value<string>("nrc") ?? "-"),
+                    ("Actividad", ObtenerValor(emisor, "descActividad", "codActividad")),
+                    ("Dirección", Direccion(emisor)),
+                    ("Teléfono", emisor.Value<string>("telefono") ?? "-"),
                     ("Nombre", emisor.Value<string>("nombre") ?? "-"),
                     ("Correo", emisor.Value<string>("correo") ?? "-")
                 });
@@ -84,6 +90,10 @@ public sealed class DtePdfService : IDtePdfService
                     AgregarBloque(column, "Receptor", new[]
                     {
                         ("Documento", receptor.Value<string>("numDocumento") ?? receptor.Value<string>("nit") ?? "-"),
+                        ("NRC", receptor.Value<string>("nrc") ?? "-"),
+                        ("Actividad", ObtenerValor(receptor, "descActividad", "codActividad")),
+                        ("Dirección", Direccion(receptor)),
+                        ("Teléfono", receptor.Value<string>("telefono") ?? "-"),
                         ("Nombre", receptor.Value<string>("nombre") ?? "-"),
                         ("Correo", receptor.Value<string>("correo") ?? "-")
                     });
@@ -93,12 +103,25 @@ public sealed class DtePdfService : IDtePdfService
                     {
                         AgregarBloque(column, "Resumen", new[]
                         {
+                            ("No sujeto", ObtenerValor(resumen, "totalNoSuj")),
+                            ("Exento", ObtenerValor(resumen, "totalExenta")),
+                            ("Gravado", ObtenerValor(resumen, "totalGravada")),
+                            ("Compra", ObtenerValor(resumen, "totalCompra", "totalCompraExcluidos")),
+                            ("Descuento", ObtenerValor(resumen, "totalDescu")),
+                            ("Retención IVA", ObtenerValor(resumen, "ivaRete", "ivaRete1")),
+                            ("Percepción IVA", ObtenerValor(resumen, "ivaPerci", "ivaPerci1")),
+                            ("Retención renta", ObtenerValor(resumen, "reteRenta")),
                             ("Total", ObtenerValor(resumen, "totalPagar", "valorTotal", "totalCompra", "totalExenta")),
                             ("IVA", ObtenerValor(resumen, "totalIva", "totalIvaRetenido")),
                             ("Total en letras", resumen.Value<string>("totalLetras") ?? "-")
                         });
+                        if (resumen["tributos"] is JArray tributos)
+                            foreach (var tributo in tributos.OfType<JObject>())
+                                column.Item().Text($"Tributo {ObtenerValor(tributo, "codigo")}: {ObtenerValor(tributo, "descripcion")} — {ObtenerValor(tributo, "valor")}").FontSize(8);
                     }
                 }
+                AgregarQr(column, tipo == "INVALIDACION" ? root["documento"] as JObject ?? identificacion : identificacion,
+                    identificacion.Value<string>("ambiente"), sello);
                 column.Item().PaddingTop(10).Text($"Sello de recepción: {sello ?? "Pendiente"}").FontSize(8);
                 column.Item().PaddingTop(16).Text("Documento generado por SRAUMOAR. El JSON electrónico correspondiente se conserva como respaldo.").Italic().FontSize(8);
             });
@@ -133,6 +156,7 @@ public sealed class DtePdfService : IDtePdfService
             page.Content().PaddingTop(10).Column(column =>
             {
                 column.Spacing(6);
+                AgregarQr(column, identificacion, ambiente, sello);
                 column.Item().Background(Colors.Blue.Lighten5).Border(1).BorderColor(Colors.Blue.Lighten3).Padding(7).Column(info =>
                 {
                     info.Item().Text($"Código de generación: {codigo}").Bold().FontSize(8);
@@ -359,27 +383,58 @@ public sealed class DtePdfService : IDtePdfService
         {
             table.ColumnsDefinition(columns =>
             {
-                columns.ConstantColumn(28);
-                columns.RelativeColumn(2);
+                columns.ConstantColumn(20);
                 columns.RelativeColumn(4);
-                columns.RelativeColumn(2);
-                columns.RelativeColumn(2);
+                for (var i = 0; i < 9; i++) columns.RelativeColumn();
             });
             table.Header(header =>
             {
-                foreach (var titulo in new[] { "#", "Código", "Descripción", "Cantidad", "Valor" })
-                    header.Cell().Background(Colors.Blue.Darken2).Padding(4).Text(titulo).FontColor(Colors.White).FontSize(8);
+                foreach (var titulo in new[] { "#", "Descripción / código", "Cant.", "Precio", "Desc.", "No suj.", "Exento", "Gravado", "Compra", "IVA", "Valor" })
+                    header.Cell().Background(Colors.Blue.Darken2).Padding(2).Text(titulo).FontColor(Colors.White).FontSize(6);
             });
             foreach (var item in items.OfType<JObject>())
             {
-                var cantidad = ObtenerValor(item, "cantidad");
-                var valor = ObtenerMontoItem(item);
-                table.Cell().Padding(4).Text(item.Value<string>("numItem") ?? "-");
-                table.Cell().Padding(4).Text(item.Value<string>("codigo") ?? "-");
-                table.Cell().Padding(4).Text(item.Value<string>("descripcion") ?? "-");
-                table.Cell().Padding(4).Text(cantidad);
-                table.Cell().Padding(4).Text(valor);
+                var valores = new[] { ObtenerValor(item, "numItem"), $"{ObtenerValor(item, "descripcion")} / {ObtenerValor(item, "codigo")}",
+                    ObtenerValor(item, "cantidad"), ObtenerValor(item, "precioUni"), ObtenerValor(item, "montoDescu"),
+                    ObtenerValor(item, "ventaNoSuj"), ObtenerValor(item, "ventaExenta"), ObtenerValor(item, "ventaGravada"),
+                    ObtenerValor(item, "compra"), ObtenerValor(item, "totalIva", "ivaItem"), ObtenerMontoItem(item) };
+                foreach (var valor in valores) table.Cell().BorderBottom(0.25f).BorderColor(Colors.Grey.Lighten2).Padding(2).Text(valor).FontSize(6);
             }
+        });
+    }
+
+    internal static string Direccion(JObject persona)
+    {
+        if (persona["direccion"] is not JObject direccion) return "-";
+        return CatalogoTerritorialFiscal.Formatear(direccion);
+    }
+
+    internal static string? UrlConsulta(JObject identificacion, string? ambiente)
+    {
+        var codigo = identificacion.Value<string>("codigoGeneracion");
+        var fecha = identificacion.Value<string>("fecEmi");
+        if (ambiente is not ("00" or "01") || string.IsNullOrWhiteSpace(codigo) || string.IsNullOrWhiteSpace(fecha)) return null;
+        return $"https://admin.factura.gob.sv/consultaPublica?ambiente={ambiente}&codGen={Uri.EscapeDataString(codigo)}&fechaEmi={Uri.EscapeDataString(fecha)}";
+    }
+
+    private static void AgregarQr(ColumnDescriptor column, JObject identificacion, string? ambiente, string? sello)
+    {
+        var url = UrlConsulta(identificacion, ambiente);
+        if (url is null || string.IsNullOrWhiteSpace(sello))
+        {
+            column.Item().Text("Sin confirmación de recepción fiscal").Bold().FontColor(Colors.Orange.Darken3);
+            return;
+        }
+        using var datos = QRCodeGenerator.GenerateQrCode(url, QRCodeGenerator.ECCLevel.M);
+        using var qr = new PngByteQRCode(datos);
+        column.Item().PaddingTop(8).Row(row =>
+        {
+            row.ConstantItem(72).Image(qr.GetGraphic(4));
+            row.RelativeItem().PaddingLeft(8).AlignMiddle().Column(info =>
+            {
+                info.Item().Text("Consulte este documento en Hacienda").Bold().FontSize(8);
+                info.Item().Hyperlink(url).Text(url).FontSize(7).FontColor(Colors.Blue.Darken2);
+            });
         });
     }
 

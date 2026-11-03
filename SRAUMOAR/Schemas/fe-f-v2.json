@@ -87,7 +87,7 @@
                 "horEmi": {
                     "type": "string",
                     "description": "Hora de Generación",
-                    "pattern": "^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]?$"
+                    "pattern": "^(?!.*[\r\n])(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]?$"
                 },
                 "tipoMoneda": {
                     "type": "string",

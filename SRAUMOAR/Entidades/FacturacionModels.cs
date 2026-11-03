@@ -100,7 +100,9 @@ namespace SRAUMOAR.Entidades
 
             [Required(ErrorMessage = "El municipio es obligatorio.")]
             public string CodigoMunicipio { get; set; } = string.Empty;
-            // Selección explícita de CatalogosFe/CAT-008; no es el DistritoId legacy.
+            [Required(ErrorMessage = "El distrito es obligatorio.")]
+            public string CodigoDistrito { get; set; } = string.Empty;
+            // Compatibilidad de borradores antiguos; la emisión nueva usa CodigoDistrito.
             public long? DistritoId { get; set; }
             // En donaciones, país de nacionalidad y domicilio fiscal son datos distintos.
             public int? CodigoDomicilioFiscal { get; set; }

@@ -116,20 +116,21 @@ public sealed class DteNotaService : IDteNotaService
 
     public async Task<DteNotaResultado> EmitirAsync(DteNotaRequest request, CancellationToken cancellationToken = default)
     {
-        var preparada = await PrepararAsync(request, cancellationToken);
-        var claveIdempotencia = CrearClaveIdempotencia(
-            preparada.FacturaOriginalId,
-            preparada.TipoNota,
-            preparada.Monto,
-            preparada.Motivo);
-        var existente = await _contexto.Facturas.AsNoTracking()
-            .SingleOrDefaultAsync(x => x.ClaveIdempotencia == claveIdempotencia, cancellationToken);
+        var prefijo = PrefijoOperacion(request.OperacionId);
+        var claveIdempotencia = ClaveOperacion(request);
+        var existente = await _contexto.Facturas.AsNoTracking().SingleOrDefaultAsync(
+            x => x.ClaveIdempotencia != null && x.ClaveIdempotencia.StartsWith(prefijo), cancellationToken);
         if (existente is not null)
-            return await TransmitirNotaPersistidaAsync(existente.FacturaId, preparada, cancellationToken);
+        {
+            ValidarContenidoOperacion(existente.ClaveIdempotencia!, claveIdempotencia);
+            return await TransmitirNotaPersistidaAsync(existente.FacturaId, DesdePersistida(existente), cancellationToken);
+        }
+        var preparada = await PrepararAsync(request, cancellationToken);
 
         var nota = new Factura
         {
-            Fecha = DateTime.UtcNow,
+            Fecha = DateTime.ParseExact(JObject.Parse(preparada.Json)["identificacion"]!.Value<string>("fecEmi") + " "
+                + JObject.Parse(preparada.Json)["identificacion"]!.Value<string>("horEmi"), "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture),
             CodigoGeneracion = preparada.CodigoGeneracion,
             NumeroControl = preparada.NumeroControl,
             TipoDTE = int.Parse(preparada.TipoNota),
@@ -151,15 +152,21 @@ public sealed class DteNotaService : IDteNotaService
         try
         {
             await using var tx = await _contexto.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+            await _contexto.Database.ExecuteSqlInterpolatedAsync($@"
+                DECLARE @resultado int;
+                EXEC @resultado = sys.sp_getapplock @Resource = {prefijo}, @LockMode = 'Exclusive',
+                    @LockOwner = 'Transaction', @LockTimeout = 15000;
+                IF @resultado < 0 THROW 50001, 'No se pudo reservar la nota; reintente la misma operación.', 1;", cancellationToken);
             var original = await DteReservaReglas.BloquearOriginalAsync(_contexto, preparada.FacturaOriginalId, cancellationToken);
             if (!DteReservaReglas.EsOriginalAceptadoVigente(original))
                 throw new InvalidOperationException("La factura original dejó de estar aceptada y vigente antes de reservar la nota.");
 
             // Releer después del lock: un doble POST no consume saldo dos veces.
             existente = await _contexto.Facturas.AsNoTracking()
-                .SingleOrDefaultAsync(x => x.ClaveIdempotencia == claveIdempotencia, cancellationToken);
+                .SingleOrDefaultAsync(x => x.ClaveIdempotencia != null && x.ClaveIdempotencia.StartsWith(prefijo), cancellationToken);
             if (existente is not null)
             {
+                ValidarContenidoOperacion(existente.ClaveIdempotencia!, claveIdempotencia);
                 nota = existente;
             }
             else
@@ -185,9 +192,12 @@ public sealed class DteNotaService : IDteNotaService
         {
             _contexto.Entry(nota).State = EntityState.Detached;
             existente = await _contexto.Facturas.AsNoTracking()
-                .SingleOrDefaultAsync(x => x.ClaveIdempotencia == claveIdempotencia, cancellationToken);
+                .SingleOrDefaultAsync(x => x.ClaveIdempotencia != null && x.ClaveIdempotencia.StartsWith(prefijo), cancellationToken);
             if (existente is not null)
-                return await TransmitirNotaPersistidaAsync(existente.FacturaId, preparada, cancellationToken);
+            {
+                ValidarContenidoOperacion(existente.ClaveIdempotencia!, claveIdempotencia);
+                return await TransmitirNotaPersistidaAsync(existente.FacturaId, DesdePersistida(existente), cancellationToken);
+            }
             throw;
         }
 
@@ -216,7 +226,7 @@ public sealed class DteNotaService : IDteNotaService
                 tipoNota,
                 nota.CodigoGeneracion,
                 nota.NumeroControl,
-                4,
+                JObject.Parse(json)["identificacion"]!.Value<int>("version"),
                 nota.CorreoReceptor,
                 nota.FacturaId), ct);
         }
@@ -337,12 +347,31 @@ public sealed class DteNotaService : IDteNotaService
         return null;
     }
 
-    private static string CrearClaveIdempotencia(int facturaOriginalId, string tipoNota, decimal monto, string? motivo)
+    internal static string PrefijoOperacion(Guid operacionId)
+        => operacionId == Guid.Empty ? throw new InvalidOperationException("La nota requiere una identidad de operación.") : $"N:{operacionId:N}:";
+
+    internal static string ClaveOperacion(DteNotaRequest request)
     {
-        var material = string.Join("|", facturaOriginalId, tipoNota,
-            monto.ToString("0.00", CultureInfo.InvariantCulture), motivo?.Trim() ?? string.Empty);
-        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(material)));
+        var material = Newtonsoft.Json.JsonConvert.SerializeObject(new
+        {
+            request.FacturaOriginalId, Tipo = NormalizarTipoNota(request.TipoNota),
+            Monto = request.Monto.HasValue ? Math.Round(request.Monto.Value, 2, MidpointRounding.AwayFromZero).ToString("0.00", CultureInfo.InvariantCulture) : null,
+            Motivo = request.Motivo?.Trim(), request.DepartamentoReceptor, request.MunicipioReceptor, request.DistritoReceptor
+        });
+        return PrefijoOperacion(request.OperacionId) + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(material)));
     }
+
+    private static void ValidarContenidoOperacion(string existente, string solicitada)
+    {
+        if (existente != solicitada)
+            throw new InvalidOperationException("La operación ya existe con otros datos. Inicie otra operación para una nota distinta o corregida.");
+    }
+
+    private static DteNotaPreparada DesdePersistida(Factura nota)
+        => new(nota.FacturaOriginalId!.Value, nota.TipoDteCodigo!, nota.AmbienteFiscal!, nota.JsonDte!,
+            nota.CodigoGeneracion, nota.NumeroControl, JObject.Parse(nota.JsonDte!)["identificacion"]!.Value<int>("version"),
+            nota.MontoNota ?? nota.TotalPagar, nota.CorreoReceptor, nota.MotivoNota,
+            nota.TotalGravado, nota.TotalExento, nota.TotalIva);
 
     private static DteNotaResultado ConvertirResultado(Factura nota, DteNotaPreparada preparada)
         => new(
@@ -354,7 +383,9 @@ public sealed class DteNotaService : IDteNotaService
             DteReservaReglas.EsOriginalAceptadoVigente(nota) ? DteEstados.Aceptado : nota.EstadoTransmision,
             nota.AmbienteFiscal ?? preparada.AmbienteFiscal,
             nota.SelloRecepcion,
-            DteReservaReglas.EsOriginalAceptadoVigente(nota) ? null : nota.RespuestaHacienda);
+            DteReservaReglas.EsOriginalAceptadoVigente(nota) ? null : nota.EstadoTransmision == DteEstados.Rechazado
+                ? "La nota fue rechazada. Inicie otra operación con los datos corregidos; se conservará este rechazo."
+                : nota.RespuestaHacienda);
 }
 
 // Reglas compartidas por NC y ERET, evaluables sin contexto ni proveedor de BD.

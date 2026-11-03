@@ -143,6 +143,18 @@ namespace SRAUMOAR.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AlumnoId"));
 
+                    b.Property<string>("CodigoDepartamentoFiscal")
+                        .HasMaxLength(2)
+                        .HasColumnType("nvarchar(2)");
+
+                    b.Property<string>("CodigoMunicipioFiscal")
+                        .HasMaxLength(2)
+                        .HasColumnType("nvarchar(2)");
+
+                    b.Property<string>("CodigoDistritoFiscal")
+                        .HasMaxLength(2)
+                        .HasColumnType("nvarchar(2)");
+
                     b.Property<string>("Apellidos")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");

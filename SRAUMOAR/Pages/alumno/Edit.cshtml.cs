@@ -1,3 +1,4 @@
+using SRAUMOAR.Servicios.FacturacionElectronica;
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -35,7 +36,6 @@ namespace SRAUMOAR.Pages.alumno
                 return NotFound();
             }
             ViewData["CarreraId"] = new SelectList(_context.Carreras, "CarreraId", "NombreCarrera");
-            ViewData["MunicipioId"] = new SelectList(_context.Municipios, "MunicipioId", "NombreMunicipio");
             var alumno = await _context.Alumno
                 .Include(a => a.Carrera)
                 .Include(a => a.Municipio)
@@ -62,11 +62,15 @@ namespace SRAUMOAR.Pages.alumno
             ModelState.Remove("Alumno.Fotografia");
             ModelState.Remove("Alumno.Foto");
             ModelState.Remove("FotoUpload");
-            ModelState.Remove("Alumno.DireccionDeResidencia");
             ModelState.Remove("Alumno.MunicipioId");
 
+            if (!CatalogoTerritorialFiscal.EsValida(Alumno.CodigoDepartamentoFiscal, Alumno.CodigoMunicipioFiscal, Alumno.CodigoDistritoFiscal))
+                ModelState.AddModelError("Alumno.CodigoDistritoFiscal", "Seleccione Departamento → Municipio → Distrito de la misma ubicación fiscal.");
+            if (string.IsNullOrWhiteSpace(Alumno.DireccionDeResidencia) || Alumno.DireccionDeResidencia.Length > 200)
+                ModelState.AddModelError("Alumno.DireccionDeResidencia", "La dirección es obligatoria y admite hasta 200 caracteres.");
             if (!ModelState.IsValid)
             {
+                ViewData["CarreraId"] = new SelectList(_context.Carreras, "CarreraId", "NombreCarrera", Alumno.CarreraId);
                 return Page();
             }
 
@@ -112,7 +116,10 @@ namespace SRAUMOAR.Pages.alumno
             alumnoExistente.TelefonoSecundario = Alumno.TelefonoSecundario;
             alumnoExistente.ContactoDeEmergencia = Alumno.ContactoDeEmergencia;
             alumnoExistente.NumeroDeEmergencia = Alumno.NumeroDeEmergencia;
-            alumnoExistente.DireccionDeResidencia = Alumno.DireccionDeResidencia;
+            alumnoExistente.DireccionDeResidencia = Alumno.DireccionDeResidencia?.Trim();
+            alumnoExistente.CodigoDepartamentoFiscal = CatalogoTerritorialFiscal.Codigo(Alumno.CodigoDepartamentoFiscal);
+            alumnoExistente.CodigoMunicipioFiscal = CatalogoTerritorialFiscal.Codigo(Alumno.CodigoMunicipioFiscal);
+            alumnoExistente.CodigoDistritoFiscal = CatalogoTerritorialFiscal.Codigo(Alumno.CodigoDistritoFiscal);
             alumnoExistente.Carnet = Alumno.Carnet;
             alumnoExistente.MunicipioNacimiento = Alumno.MunicipioNacimiento;
             alumnoExistente.DepartamentoNacimiento = Alumno.DepartamentoNacimiento;

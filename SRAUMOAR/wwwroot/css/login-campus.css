@@ -1,0 +1,29 @@
+* { box-sizing: border-box; }
+body { margin: 0; font: 1rem/1.5 system-ui, sans-serif; color: #153729; background: #faf7ef; }
+.campus { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); grid-template-areas: "image access"; min-height: 100vh; min-height: 100svh; }
+.access { grid-area: access; display: grid; place-items: center; padding: clamp(1.5rem, 5vw, 5rem); }
+.access-inner { width: min(100%, 26rem); }
+.brand { display: flex; gap: .9rem; align-items: center; margin-bottom: 2rem; }
+.brand img { object-fit: contain; }
+.brand strong { font-size: 1.25rem; letter-spacing: .05em; }
+.brand span { display: block; font-size: .875rem; color: #43584d; }
+h1 { border-left: 5px solid #b77910; padding-left: .75rem; font-size: clamp(1.9rem, 4vw, 3rem); letter-spacing: -.04em; line-height: 1.1; margin: 0; }
+.intro { margin: .8rem 0 1.6rem; color: #43584d; }
+label { display: block; font-weight: 650; margin: 1rem 0 .35rem; }
+input, button { font: inherit; }
+input { width: 100%; min-height: 48px; border: 1px solid #87938a; border-radius: .45rem; padding: .65rem .8rem; color: inherit; background: #fff; }
+.password { display: flex; gap: .4rem; }
+.password input { min-width: 0; }
+.password button { background: #fff; border: 1px solid #87938a; border-radius: .45rem; color: inherit; padding: 0 .65rem; }
+button { cursor: pointer; }
+.sign-in { width: 100%; min-height: 48px; margin-top: 1.4rem; border: 0; border-radius: .45rem; background: #dba02d; color: #172819; font-weight: 750; }
+.sign-in:hover { background: #e7b54e; }
+:focus-visible { outline: 3px solid #236c50; outline-offset: 3px; }
+.login-error { padding: .75rem; background: #fbe8e4; color: #862b21; border-radius: .35rem; }
+.campus-image { grid-area: image; display: grid; place-items: center; min-width: 0; padding: clamp(1rem, 3vw, 3rem); background: #103a2b; }
+.campus-image img { display: block; width: 100%; max-width: 68rem; max-height: 88vh; object-fit: contain; }
+@media (max-width: 760px) {
+    .campus { grid-template-columns: minmax(0, 1fr); grid-template-areas: "access" "image"; }
+    .access { padding-block: 2rem; }
+    .campus-image img { max-width: 38rem; max-height: none; height: auto; }
+}

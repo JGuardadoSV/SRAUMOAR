@@ -17,7 +17,13 @@ public sealed class EditarJsonModel : PageModel
 {
     private readonly Contexto _context;
 
-    public EditarJsonModel(Contexto context) => _context = context;
+    private readonly IDteConciliacionService _conciliacion;
+
+    public EditarJsonModel(Contexto context, IDteConciliacionService conciliacion)
+    {
+        _context = context;
+        _conciliacion = conciliacion;
+    }
 
     public Factura Factura { get; set; } = default!;
 
@@ -111,6 +117,7 @@ public sealed class EditarJsonModel : PageModel
             }
         try
         {
+            DteEdicionReglas.ValidarSinCambiosFinancieros(original, editado);
             new DteJsonFactory().ValidarDocumento(JsonEditado, editado["identificacion"]!.Value<string>("ambiente")!);
         }
         catch (InvalidOperationException ex)
@@ -119,6 +126,8 @@ public sealed class EditarJsonModel : PageModel
             return RedirectToPage("./Index");
         }
         factura.JsonDte = JsonEditado;
+        factura.CorreoReceptor = editado["receptor"]?.Value<string>("correo")
+            ?? editado["sujetoExcluido"]?.Value<string>("correo") ?? editado["donante"]?.Value<string>("correo");
         await _context.SaveChangesAsync(cancellationToken);
         await transaccion.CommitAsync(cancellationToken);
         TempData["Success"] = "JSON actualizado. Revise el DTE antes de procesar la contingencia.";
@@ -129,8 +138,11 @@ public sealed class EditarJsonModel : PageModel
     {
         try
         {
+            var mensaje = await _conciliacion.ConciliarAsync(id, cancellationToken);
+            _context.ChangeTracker.Clear();
             var factura = await _context.Facturas.FirstOrDefaultAsync(x => x.FacturaId == id, cancellationToken);
             if (factura is null) return NotFound();
+            TempData["Success"] = mensaje;
 
             var transmision = await _context.DteTransmisiones
                 .AsNoTracking()
@@ -140,7 +152,7 @@ public sealed class EditarJsonModel : PageModel
 
             ConsultaEstado = transmision?.Estado ?? factura.EstadoTransmision;
             ConsultaSello = transmision?.SelloRecepcion ?? factura.SelloRecepcion ?? string.Empty;
-            ConsultaMensaje = transmision?.Error ?? "Estado consultado desde el historial local.";
+            ConsultaMensaje = mensaje;
             ConsultaResultado = transmision?.Respuesta ?? factura.RespuestaHacienda ?? "Sin respuesta registrada.";
             if (!string.IsNullOrWhiteSpace(transmision?.Error)) ConsultaErrores.Add(transmision.Error);
 

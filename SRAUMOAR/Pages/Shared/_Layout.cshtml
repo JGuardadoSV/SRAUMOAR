@@ -983,6 +983,7 @@
                                             <p>Notas Duplicadas</p>
                                         </a>
                                     </li>
+                                    <li class="nav-item"><a asp-page="/administracion/ImagenLogin" class="nav-link"><i class="nav-icon bi bi-image"></i><p>Imagen del inicio de sesión</p></a></li>
                                     <li class="nav-item">
                                         <a asp-area="" asp-page="/administracion/AjustesReportes" class="nav-link">
                                             <i class="nav-icon bi bi-gear-wide-connected"></i>
@@ -1454,6 +1455,12 @@
         });
     </script>
    
+    <style>
+        .ubicacion-fiscal-dialog { width: min(760px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow: auto; border: 0; border-radius: 12px; padding: 0; box-shadow: 0 20px 70px #0005; }
+        .ubicacion-fiscal-dialog::backdrop { background: #10251bc0; }
+        .ubicacion-fiscal-dialog:not([open]) { display: none; }
+    </style>
+    <script src="~/js/ubicacion-fiscal.js" asp-append-version="true" defer></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -99,6 +99,60 @@
                     ]
                 }
             },
+            "allOf": [
+                {
+                    "if": {
+                        "properties": {
+                            "tipoOperacion": {
+                                "const": 1
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "tipoContingencia": {
+                                "type": "null"
+                            },
+                            "motivoContin": {
+                                "type": "null"
+                            }
+                        }
+                    },
+                    "else": {
+                        "properties": {
+                            "tipoModelo": {
+                                "const": 2
+                            },
+                            "tipoContingencia": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "tipoContingencia": {
+                                "const": 5
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "motivoContin": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "else": {
+                        "properties": {
+                            "motivoContin": {
+                                "type": "null"
+                            }
+                        }
+                    }
+                }
+            ],
             "additionalProperties": false,
             "required": [
                 "version",

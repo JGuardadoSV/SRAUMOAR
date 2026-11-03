@@ -33,6 +33,9 @@ public sealed class NotaModel : PageModel
     public decimal? Monto { get; set; }
 
     [BindProperty]
+    public Guid OperacionId { get; set; }
+
+    [BindProperty]
     public string? Motivo { get; set; }
 
     [BindProperty] public string? DepartamentoReceptor { get; set; }
@@ -51,6 +54,7 @@ public sealed class NotaModel : PageModel
         if (!await CargarFacturaAsync(cancellationToken)) return NotFound();
         TipoNota = NormalizarTipoNota(TipoNota);
         Monto ??= MontoOperacionOriginal;
+        OperacionId = Guid.NewGuid();
         return Page();
     }
 
@@ -59,13 +63,15 @@ public sealed class NotaModel : PageModel
         TipoNota = NormalizarTipoNota(TipoNota);
         if (!await CargarFacturaAsync(cancellationToken)) return NotFound();
 
+        if (OperacionId == Guid.Empty)
+            ModelState.AddModelError(nameof(OperacionId), "Falta la identidad de la operación. Abra nuevamente el formulario.");
         if (!ModelState.IsValid)
             return Page();
 
         try
         {
             Resultado = await _notas.EmitirAsync(new DteNotaRequest(FacturaId, TipoNota, Monto, Motivo,
-                DepartamentoReceptor, MunicipioReceptor, DistritoReceptor), cancellationToken);
+                DepartamentoReceptor, MunicipioReceptor, DistritoReceptor, OperacionId), cancellationToken);
             if (!Resultado.Aceptado)
                 Error = Resultado.Error ?? "La nota no fue aceptada por Hacienda.";
         }

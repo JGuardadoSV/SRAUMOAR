@@ -35,24 +35,17 @@ namespace SRAUMOAR.Pages.aranceles
         private readonly IConfiguracionFeService _configuracionFe;
         private readonly IDteEmailQueueService _emailQueue;
         private readonly IDteJsonFactory _jsonFactory;
-        private readonly ICatalogoFeService _catalogos;
         private readonly IDteEmisionRecuperacionService _recuperacionEmision;
-        // No existe correspondencia fiable con MunicipioId/DistritoId legacy.
-        // La pantalla debe capturar los tres datos explícitamente en cada borrador.
-        [BindProperty] public string? CodigoDepartamentoReceptor { get; set; }
-        [BindProperty] public string? CodigoMunicipioReceptor { get; set; }
-        [BindProperty] public long? DistritoReceptorId { get; set; }
+        private string? CodigoDepartamentoReceptor { get; set; }
+        private string? CodigoMunicipioReceptor { get; set; }
         [BindProperty] public Guid OperacionEmisionId { get; set; }
-        public IReadOnlyList<CatalogoFeItem> CatalogoDepartamentos { get; private set; } = Array.Empty<CatalogoFeItem>();
-        public IReadOnlyList<CatalogoFeItem> CatalogoMunicipios { get; private set; } = Array.Empty<CatalogoFeItem>();
-        public IReadOnlyList<CatalogoFeItem> CatalogoDistritos { get; private set; } = Array.Empty<CatalogoFeItem>();
         private string ambienteFiscal = "01";
         private int ambiente = 1;
         private string codigoEstablecimientoMh = "M001";
         private string codigoEstablecimiento = "M001";
         private string codigoPuntoVentaMh = "P001";
         private string codigoPuntoVenta = "P001";
-        public FacturarModel(SRAUMOAR.Modelos.Contexto context, IOptions<EmisorConfig> emisorOptions, ICorrelativoService correlativoService, IDteTransmisionService dteTransmision, IConfiguracionFeService configuracionFe, IDteEmailQueueService emailQueue, IDteJsonFactory jsonFactory, ICatalogoFeService catalogos, IDteEmisionRecuperacionService recuperacionEmision)
+        public FacturarModel(SRAUMOAR.Modelos.Contexto context, IOptions<EmisorConfig> emisorOptions, ICorrelativoService correlativoService, IDteTransmisionService dteTransmision, IConfiguracionFeService configuracionFe, IDteEmailQueueService emailQueue, IDteJsonFactory jsonFactory, IDteEmisionRecuperacionService recuperacionEmision)
         {
             _context = context;
             _emisor = emisorOptions.Value;
@@ -61,32 +54,13 @@ namespace SRAUMOAR.Pages.aranceles
             _configuracionFe = configuracionFe;
             _emailQueue = emailQueue;
             _jsonFactory = jsonFactory;
-            _catalogos = catalogos;
             _recuperacionEmision = recuperacionEmision;
         }
         public List<Arancel> Aranceles { get; set; } = new();
 
-        private async Task CargarCatalogosReceptorAsync()
-        {
-            try
-            {
-                CatalogoDepartamentos = await _catalogos.ObtenerAsync("CAT-012", "1.1");
-                CatalogoMunicipios = await _catalogos.ObtenerAsync("CAT-013", "1.1");
-                CatalogoDistritos = await _catalogos.ObtenerAsync("CAT-008", "1.1");
-            }
-            catch (Exception)
-            {
-                CatalogoDepartamentos = Array.Empty<CatalogoFeItem>();
-                CatalogoMunicipios = Array.Empty<CatalogoFeItem>();
-                CatalogoDistritos = Array.Empty<CatalogoFeItem>();
-                ModelState.AddModelError(string.Empty, "No se pudieron cargar los catálogos fiscales. La emisión está bloqueada.");
-            }
-        }
-        
         // M�todo para cargar datos de la vista (reutilizable)
         private async Task CargarDatosParaVista(int idalumno)
         {
-            await CargarCatalogosReceptorAsync();
             var alumno = await _context.Alumno.FirstOrDefaultAsync(m => m.AlumnoId == idalumno);
             if (alumno != null)
             {
@@ -261,19 +235,14 @@ namespace SRAUMOAR.Pages.aranceles
                 return Page();
             }
 
-            string distritoReceptor;
-            try
+            if (!UbicacionAlumnoFiscal.EsCompleta(alumno))
             {
-                await CargarCatalogosReceptorAsync();
-                distritoReceptor = DteDocumentoActualizador.ResolverDistritoReceptor(
-                    CodigoDepartamentoReceptor, CodigoMunicipioReceptor, DistritoReceptorId,
-                    CatalogoDepartamentos, CatalogoMunicipios, CatalogoDistritos);
-            }
-            catch (InvalidOperationException ex)
-            {
-                TempData["Error"] = ex.Message + " Complete la selección fiscal explícita del alumno antes de facturar.";
+                TempData["Error"] = "Complete la ubicación fiscal y dirección del estudiante antes de facturar.";
                 return RedirectToPage("./Facturar", new { idalumno, arancelIds = string.Join(',', selectedAranceles) });
             }
+            CodigoDepartamentoReceptor = CatalogoTerritorialFiscal.Codigo(alumno.CodigoDepartamentoFiscal);
+            CodigoMunicipioReceptor = CatalogoTerritorialFiscal.Codigo(alumno.CodigoMunicipioFiscal);
+            var distritoReceptor = CatalogoTerritorialFiscal.Codigo(alumno.CodigoDistritoFiscal);
 
             // Verificar si el alumno tiene beca parcial y obtener precios personalizados
             var arancelesSeleccionadosDb = await _context.Aranceles

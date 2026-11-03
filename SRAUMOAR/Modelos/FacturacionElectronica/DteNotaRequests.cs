@@ -7,7 +7,8 @@ public sealed record DteNotaRequest(
     string? Motivo,
     string? DepartamentoReceptor = null,
     string? MunicipioReceptor = null,
-    string? DistritoReceptor = null);
+    string? DistritoReceptor = null,
+    Guid OperacionId = default);
 
 public sealed record DteNotaPreparada(
     int FacturaOriginalId,

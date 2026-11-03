@@ -68,6 +68,9 @@ namespace SRAUMOAR.Pages.facturas
         public string? EstadoFiltro { get; set; }
 
         [BindProperty(SupportsGet = true)]
+        public string AmbienteFiltro { get; set; } = "01";
+
+        [BindProperty(SupportsGet = true)]
         public int PaginaActual { get; set; } = 1;
 
         public int TotalPaginas { get; set; }
@@ -76,45 +79,12 @@ namespace SRAUMOAR.Pages.facturas
 
         public async Task OnGetAsync()
         {
-            var query = _context.Facturas.AsQueryable();
-
-            // Filtro por fechas - por defecto muestra solo las del día actual
-            if (FechaInicio.HasValue)
-            {
-                query = query.Where(f => f.Fecha >= FechaInicio.Value);
-            }
-
-            if (FechaFin.HasValue)
-            {
-                query = query.Where(f => f.Fecha <= FechaFin.Value.AddDays(1).AddSeconds(-1));
-            }
-
-            // Filtro por estado
-            if (!string.IsNullOrEmpty(EstadoFiltro))
-            {
-                switch (EstadoFiltro.ToLower())
-                {
-                    case "activa":
-                        query = query.Where(f => !f.Anulada);
-                        break;
-                    case "anulada":
-                        query = query.Where(f => f.Anulada);
-                        break;
-                }
-            }
-
-            // Calcular total de registros
+            var query = await ObtenerConsultaFiltradaAsync();
             TotalRegistros = await query.CountAsync();
             TotalPaginas = (int)Math.Ceiling((double)TotalRegistros / RegistrosPorPagina);
-
-            // Aplicar paginación
-            var facturasPaginadas = await query
-                .OrderByDescending(f => f.Fecha)
-                .Skip((PaginaActual - 1) * RegistrosPorPagina)
-                .Take(RegistrosPorPagina)
-                .ToListAsync();
-
-            Factura = facturasPaginadas;
+            PaginaActual = Math.Clamp(PaginaActual, 1, Math.Max(1, TotalPaginas));
+            Factura = await query.OrderByDescending(f => f.Fecha).ThenByDescending(f => f.FacturaId)
+                .Skip((PaginaActual - 1) * RegistrosPorPagina).Take(RegistrosPorPagina).ToListAsync();
 
             var idsPagina = Factura.Select(x => x.FacturaId).ToArray();
             if (idsPagina.Length > 0)
@@ -178,8 +148,13 @@ namespace SRAUMOAR.Pages.facturas
 
         // Método para obtener todas las facturas filtradas (sin paginación)
         private async Task<List<Factura>> ObtenerFacturasFiltradasAsync()
+            => await (await ObtenerConsultaFiltradaAsync()).OrderByDescending(f => f.Fecha).ThenByDescending(f => f.FacturaId).ToListAsync();
+
+        private async Task<IQueryable<Factura>> ObtenerConsultaFiltradaAsync()
         {
-            var query = _context.Facturas.AsQueryable();
+            AmbienteFiltro = ConfiguracionFeService.NormalizarAmbiente(AmbienteFiltro);
+            var query = _context.Facturas.AsNoTracking()
+                .Where(f => f.AmbienteFiscal == AmbienteFiltro || f.AmbienteFiscal == null || f.AmbienteFiscal == "");
 
             if (FechaInicio.HasValue)
             {
@@ -204,7 +179,13 @@ namespace SRAUMOAR.Pages.facturas
                 }
             }
 
-            return await query.OrderByDescending(f => f.Fecha).ToListAsync();
+            // Solo los históricos sin ambiente requieren leer el JSON. La paginación de los
+            // documentos actuales permanece en SQL; no cargar todos los DTE de cada página.
+            var historicas = await query.Where(f => f.AmbienteFiscal == null || f.AmbienteFiscal == "")
+                .Select(f => new Factura { FacturaId = f.FacturaId, JsonDte = f.JsonDte }).ToListAsync();
+            var idsHistoricos = historicas.Where(f => DteReporteReglas.Ambiente(f) == AmbienteFiltro)
+                .Select(f => f.FacturaId).ToArray();
+            return query.Where(f => f.AmbienteFiscal == AmbienteFiltro || idsHistoricos.Contains(f.FacturaId));
         }
 
         // Método para obtener el texto del tipo DTE
@@ -331,7 +312,7 @@ namespace SRAUMOAR.Pages.facturas
                 document.Add(linea);
 
                 // Información del filtro con estilo profesional
-                var filtroInfo = new Paragraph($"Período de Consulta: {FechaInicio?.ToString("dd/MM/yyyy")} - {FechaFin?.ToString("dd/MM/yyyy")}")
+                var filtroInfo = new Paragraph($"Ambiente: {AmbienteFiltro} | Período de Consulta: {FechaInicio?.ToString("dd/MM/yyyy")} - {FechaFin?.ToString("dd/MM/yyyy")}")
                     .SetFontSize(11)
                     .SetTextAlignment(TextAlignment.CENTER)
                     .SetFontColor(ColorConstants.DARK_GRAY)
@@ -508,17 +489,17 @@ namespace SRAUMOAR.Pages.facturas
                 document.Add(table);
 
                 // Sección de totales con estilo profesional
-                var documentosVenta = facturas.Where(f => !f.Anulada && f.TipoDTE != 18 && f.TipoDteCodigo != DteTipos.EventoRetorno);
-                var totalGravado = documentosVenta.Sum(f => f.TotalGravado);
-                var totalExento = documentosVenta.Sum(f => f.TotalExento);
-                var totalIva = documentosVenta.Sum(f => f.TotalIva);
-                var totalGeneral = documentosVenta.Sum(f => f.TotalPagar);
+                var documentosVenta = facturas.Where(f => DteReporteReglas.SignoVenta(f) != 0);
+                var totalGravado = documentosVenta.Sum(f => DteReporteReglas.SignoVenta(f) * f.TotalGravado);
+                var totalExento = documentosVenta.Sum(f => DteReporteReglas.SignoVenta(f) * f.TotalExento);
+                var totalIva = documentosVenta.Sum(f => DteReporteReglas.SignoVenta(f) * f.TotalIva);
+                var totalGeneral = documentosVenta.Sum(f => DteReporteReglas.SignoVenta(f) * f.TotalPagar);
 
                 // Espaciado antes de totales
                 document.Add(new Paragraph("").SetMarginTop(15));
 
                 // Título de resumen
-                var tituloResumen = new Paragraph("RESUMEN FINANCIERO")
+                var tituloResumen = new Paragraph("RESUMEN DE VENTAS NETAS ACEPTADAS")
                     .SetFontSize(12)
                     .SetTextAlignment(TextAlignment.CENTER)
                     .SetFontColor(ColorConstants.DARK_GRAY)
@@ -699,11 +680,11 @@ namespace SRAUMOAR.Pages.facturas
 
                 // Agregar totales
                 var lastRow = facturas.Count + 2;
-                var documentosVenta = facturas.Where(f => !f.Anulada && f.TipoDTE != 18 && f.TipoDteCodigo != DteTipos.EventoRetorno);
-                var totalGravado = documentosVenta.Sum(f => f.TotalGravado);
-                var totalExento = documentosVenta.Sum(f => f.TotalExento);
-                var totalIva = documentosVenta.Sum(f => f.TotalIva);
-                var totalGeneral = documentosVenta.Sum(f => f.TotalPagar);
+                var documentosVenta = facturas.Where(f => DteReporteReglas.SignoVenta(f) != 0);
+                var totalGravado = documentosVenta.Sum(f => DteReporteReglas.SignoVenta(f) * f.TotalGravado);
+                var totalExento = documentosVenta.Sum(f => DteReporteReglas.SignoVenta(f) * f.TotalExento);
+                var totalIva = documentosVenta.Sum(f => DteReporteReglas.SignoVenta(f) * f.TotalIva);
+                var totalGeneral = documentosVenta.Sum(f => DteReporteReglas.SignoVenta(f) * f.TotalPagar);
 
                 worksheet.Cells[lastRow + 1, 8].Value = "Total Gravado:";
                 worksheet.Cells[lastRow + 1, 8].Style.Font.Bold = true;
@@ -720,7 +701,7 @@ namespace SRAUMOAR.Pages.facturas
                 worksheet.Cells[lastRow + 3, 9].Value = totalIva;
                 worksheet.Cells[lastRow + 3, 9].Style.Numberformat.Format = "#,##0.00";
 
-                worksheet.Cells[lastRow + 4, 8].Value = "TOTAL GENERAL:";
+                worksheet.Cells[lastRow + 4, 8].Value = "VENTAS NETAS ACEPTADAS:";
                 worksheet.Cells[lastRow + 4, 8].Style.Font.Bold = true;
                 worksheet.Cells[lastRow + 4, 9].Value = totalGeneral;
                 worksheet.Cells[lastRow + 4, 9].Style.Font.Bold = true;
@@ -730,7 +711,7 @@ namespace SRAUMOAR.Pages.facturas
                 worksheet.Cells.AutoFitColumns();
 
                 // Agregar información del filtro
-                worksheet.Cells[lastRow + 6, 1].Value = $"Período: {FechaInicio?.ToString("dd/MM/yyyy")} - {FechaFin?.ToString("dd/MM/yyyy")}";
+                worksheet.Cells[lastRow + 6, 1].Value = $"Ambiente: {AmbienteFiltro} | Período: {FechaInicio?.ToString("dd/MM/yyyy")} - {FechaFin?.ToString("dd/MM/yyyy")}";
                 worksheet.Cells[lastRow + 7, 1].Value = $"Reporte generado el: {DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss")}";
 
                 // =============================
@@ -751,7 +732,7 @@ namespace SRAUMOAR.Pages.facturas
                     wsAnexoCF.Cells[1, i + 1].Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
                 }
                 var cfValidas = facturas
-                    .Where(f => f.TipoDTE == 1 && !f.Anulada && !string.IsNullOrEmpty(f.SelloRecepcion))
+                    .Where(f => DteReporteReglas.Tipo(f) == "01" && DteEstadoFiscal.EsAceptado(f))
                     .ToList();
                 var consolidadoCF = cfValidas
                     .GroupBy(f => f.Fecha.Date)
@@ -837,7 +818,7 @@ namespace SRAUMOAR.Pages.facturas
                     wsAnexoCCF.Cells[1, i + 1].Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
                 }
                 var ccfValidas = facturas
-                    .Where(f => (f.TipoDTE == 2 || f.TipoDTE == 3) && !f.Anulada && !string.IsNullOrEmpty(f.SelloRecepcion))
+                    .Where(f => DteReporteReglas.Tipo(f) == "03" && DteEstadoFiscal.EsAceptado(f))
                     .OrderBy(f => f.Fecha)
                     .ToList();
                 var rowCCF = 2;
@@ -934,7 +915,7 @@ namespace SRAUMOAR.Pages.facturas
                     // Hipervínculo para verificación pública si hay código de generación
                     if (!string.IsNullOrEmpty(f.CodigoGeneracion))
                     {
-                        var url = $"https://admin.factura.gob.sv/consultaPublica?ambiente=01&codGen={f.CodigoGeneracion}&fechaEmi={f.Fecha:yyyy-MM-dd}";
+                        var url = DteReporteReglas.UrlConsulta(f);
                         wsExcluidasCF.Cells[rowExCF, 12].Value = "VERIFICAR";
                         wsExcluidasCF.Cells[rowExCF, 12].Hyperlink = new Uri(url);
                     }
@@ -1012,7 +993,7 @@ namespace SRAUMOAR.Pages.facturas
 
                     if (!string.IsNullOrEmpty(f.CodigoGeneracion))
                     {
-                        var url = $"https://admin.factura.gob.sv/consultaPublica?ambiente=01&codGen={f.CodigoGeneracion}&fechaEmi={f.Fecha:yyyy-MM-dd}";
+                        var url = DteReporteReglas.UrlConsulta(f);
                         wsExcluidasCCF.Cells[rowExCCF, 12].Value = "VERIFICAR";
                         wsExcluidasCCF.Cells[rowExCCF, 12].Hyperlink = new Uri(url);
                     }
@@ -1072,7 +1053,7 @@ namespace SRAUMOAR.Pages.facturas
                     wsAnexoDON.Cells[1, i + 1].Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
                 }
                 var donValidas = facturas
-                    .Where(f => f.TipoDTE == 15 && !f.Anulada && !string.IsNullOrEmpty(f.SelloRecepcion))
+                    .Where(f => DteReporteReglas.Tipo(f) == "15" && DteEstadoFiscal.EsAceptado(f))
                     .OrderBy(f => f.Fecha)
                     .ToList();
                 var rowDON = 2;
@@ -1164,7 +1145,7 @@ namespace SRAUMOAR.Pages.facturas
 
                     if (!string.IsNullOrEmpty(f.CodigoGeneracion))
                     {
-                        var url = $"https://admin.factura.gob.sv/consultaPublica?ambiente=01&codGen={f.CodigoGeneracion}&fechaEmi={f.Fecha:yyyy-MM-dd}";
+                        var url = DteReporteReglas.UrlConsulta(f);
                         wsExcluidasDON.Cells[rowExDON, 12].Value = "VERIFICAR";
                         wsExcluidasDON.Cells[rowExDON, 12].Hyperlink = new Uri(url);
                     }
@@ -1218,6 +1199,14 @@ namespace SRAUMOAR.Pages.facturas
                 TempData["Error"] = $"Error al generar reporte Excel: {ex.Message}";
                 return RedirectToPage();
             }
+        }
+
+        public async Task<IActionResult> OnPostConciliarAsync(int id,
+            [FromServices] IDteConciliacionService conciliacion, CancellationToken cancellationToken)
+        {
+            try { TempData["Success"] = await conciliacion.ConciliarAsync(id, cancellationToken); }
+            catch (Exception) { TempData["Error"] = "No pudo completarse la consulta fiscal. Se conserva el documento sin retransmitirlo."; }
+            return RedirectToPage(new { FechaInicio, FechaFin, EstadoFiltro, AmbienteFiltro, PaginaActual });
         }
 
         public async Task<IActionResult> OnPostEnviarCorreoAsync(int id, string correo)

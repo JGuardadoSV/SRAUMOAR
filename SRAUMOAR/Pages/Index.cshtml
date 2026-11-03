@@ -1,421 +1,55 @@
 @page
 @model SRAUMOAR.Pages.IndexModel
-@{
-    Layout = null;
-}
+@{ Layout = null; }
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Iniciar Sesión - SRAUMOAR</title>
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/SRAUMOAR.styles.css" asp-append-version="true" />
-    @Html.Raw("<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css\" crossorigin=\"anonymous\">")
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.min.css" crossorigin="anonymous">
-    <link rel="stylesheet" href="~/css/adminlte.css">
-    
-    <style>
-        :root {
-            --primary-green: #1B5E20;
-            --secondary-green: #2E7D32;
-            --light-green: #4CAF50;
-            --accent-green: #81C784;
-        }
-
-        body {
-            background-color: #f8fafc;
-            min-height: 100vh;
-            margin: 0;
-            font-family: 'Source Sans 3', sans-serif;
-            overflow-x: hidden;
-        }
-
-        .login-container {
-            display: flex;
-            min-height: 100vh;
-            width: 100vw;
-        }
-
-        /* Lado Izquierdo (Aesthetic) */
-        .login-left {
-            flex: 0 0 60%;
-            background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 50%, #0d3811 100%);
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 3rem;
-            color: white;
-            overflow: hidden;
-        }
-
-        /* Orbes brillantes animados en el fondo izquierdo */
-        .login-left::before {
-            content: '';
-            position: absolute;
-            width: 350px;
-            height: 350px;
-            background: rgba(76, 175, 80, 0.25);
-            border-radius: 50%;
-            filter: blur(80px);
-            top: 15%;
-            left: 10%;
-            animation: float1 15s ease-in-out infinite alternate;
-        }
-
-        .login-left::after {
-            content: '';
-            position: absolute;
-            width: 450px;
-            height: 450px;
-            background: rgba(129, 199, 132, 0.18);
-            border-radius: 50%;
-            filter: blur(100px);
-            bottom: 15%;
-            right: 10%;
-            animation: float2 20s ease-in-out infinite alternate;
-        }
-
-        @@keyframes float1 {
-            0% { transform: translateY(0) scale(1); }
-            100% { transform: translateY(40px) scale(1.1); }
-        }
-
-        @@keyframes float2 {
-            0% { transform: translateY(0) scale(1); }
-            100% { transform: translateY(-50px) scale(1.15); }
-        }
-
-        .brand-content {
-            position: relative;
-            z-index: 2;
-            text-align: center;
-            max-width: 550px;
-            animation: fadeIn 0.8s ease-out;
-        }
-
-        @@keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .brand-logo-container {
-            display: inline-block;
-            background: white;
-            padding: 1.25rem;
-            border-radius: 24px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-            margin-bottom: 2.5rem;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .brand-logo-container:hover {
-            transform: scale(1.04) rotate(1deg);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.25);
-        }
-
-        .brand-logo-container img {
-            max-height: 120px;
-            width: auto;
-        }
-
-        .brand-title {
-            font-size: 2.5rem;
-            font-weight: 800;
-            margin-bottom: 1.25rem;
-            letter-spacing: 0.5px;
-            line-height: 1.2;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.15);
-        }
-
-        .brand-subtitle {
-            font-size: 1.15rem;
-            opacity: 0.9;
-            font-weight: 300;
-            line-height: 1.6;
-            margin: 0 auto;
-            max-width: 420px;
-        }
-
-        /* Lado Derecho (Formulario) */
-        .login-right {
-            flex: 0 0 40%;
-            background: white;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding: 4rem 3.5rem;
-            box-shadow: -15px 0 40px rgba(0,0,0,0.03);
-            position: relative;
-            z-index: 10;
-            animation: slideIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        @@keyframes slideIn {
-            from { transform: translateX(100%); }
-            to { transform: translateX(0); }
-        }
-
-        .login-form-container {
-            max-width: 380px;
-            width: 100%;
-            margin: 0 auto;
-        }
-
-        .form-header {
-            margin-bottom: 3rem;
-        }
-
-        .form-title {
-            font-size: 1.9rem;
-            font-weight: 800;
-            color: var(--primary-green);
-            margin-bottom: 0.5rem;
-        }
-
-        .form-subtitle {
-            color: #64748b;
-            font-size: 0.95rem;
-        }
-
-        /* Inputs Estilizados */
-        .input-group-custom {
-            margin-bottom: 1.5rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-            border-radius: 12px;
-            overflow: hidden;
-            border: 1.5px solid #e2e8f0;
-            transition: all 0.25s ease;
-        }
-
-        .input-group-custom:hover {
-            border-color: var(--accent-green);
-        }
-
-        .input-group-custom:focus-within {
-            border-color: var(--light-green);
-            box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.12);
-        }
-
-        .form-floating-custom {
-            flex-grow: 1;
-            position: relative;
-        }
-
-        .form-control-custom {
-            border: none;
-            width: 100%;
-            padding: 1.5rem 1rem 0.5rem 1rem;
-            font-size: 0.95rem;
-            background-color: #f8fafc;
-            color: #1e293b;
-            outline: none;
-            height: 58px;
-            transition: background-color 0.2s;
-        }
-
-        .form-control-custom:focus {
-            background-color: white;
-        }
-
-        .form-floating-custom label {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #64748b;
-            font-size: 0.95rem;
-            pointer-events: none;
-            transition: all 0.2s ease;
-        }
-
-        /* Float label behavior */
-        .form-control-custom:focus + label,
-        .form-control-custom:not(:placeholder-shown) + label {
-            top: 30%;
-            font-size: 0.75rem;
-            color: var(--primary-green);
-            font-weight: 600;
-        }
-
-        .input-group-text-custom {
-            background: #f8fafc;
-            border: none;
-            color: #64748b;
-            padding: 0 1.25rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.15rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .form-control-custom:focus ~ .input-group-text-custom,
-        .input-group-custom:focus-within .input-group-text-custom {
-            background: white;
-            color: var(--primary-green);
-        }
-
-        /* Botón Iniciar Sesión */
-        .btn-login-custom {
-            background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%);
-            border: none;
-            padding: 0.95rem;
-            font-weight: 700;
-            font-size: 1rem;
-            border-radius: 12px;
-            color: white;
-            transition: all 0.25s ease;
-            box-shadow: 0 4px 12px rgba(27, 94, 32, 0.15);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            width: 100%;
-        }
-
-        .btn-login-custom:hover {
-            background: linear-gradient(135deg, var(--secondary-green) 0%, var(--light-green) 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(27, 94, 32, 0.25);
-        }
-
-        .btn-login-custom:active {
-            transform: translateY(0);
-        }
-
-        /* Alertas de error */
-        .alert-danger-custom {
-            background: #fef2f2;
-            border: 1.5px solid #fecaca;
-            color: #991b1b;
-            padding: 1rem;
-            border-radius: 12px;
-            margin-bottom: 1.5rem;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: flex-start;
-            gap: 0.5rem;
-            animation: shake 0.4s ease;
-        }
-
-        @@keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-
-        /* Responsive */
-        @@media (max-width: 992px) {
-            .login-left {
-                display: none;
-            }
-            .login-right {
-                flex: 0 0 100%;
-                padding: 3rem 2rem;
-                animation: fadeIn 0.6s ease-out;
-            }
-            .login-form-container {
-                max-width: 400px;
-            }
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Iniciar sesión · UMOAR</title>
+    <link rel="stylesheet" href="~/css/login-campus.css" asp-append-version="true" />
 </head>
 <body>
-    <div class="login-container">
-        
-        <!-- Panel Izquierdo (Diseño e Identidad) -->
-        <div class="login-left">
-            <div class="brand-content">
-                <div class="brand-logo-container">
-                    <img src="~/assets/img/logo1.jpg" alt="Logo UMOAR" />
+    <main class="campus">
+        <section class="access" aria-labelledby="login-title">
+            <div class="access-inner">
+                <div class="brand">
+                    <img src="~/images/logoUmoar.jpg" width="56" height="56" alt="" />
+                    <div><strong>UMOAR</strong><span>Sistema de Registro Académico</span></div>
                 </div>
-                <h1 class="brand-title">Universidad Monseñor Oscar Arnulfo Romero</h1>
-                <p class="brand-subtitle">
-                    Sistema de Registro Académico. Educación con valores hacia la excelencia académica.
-                </p>
-            </div>
-        </div>
-
-        <!-- Panel Derecho (Formulario de Inicio de Sesión) -->
-        <div class="login-right">
-            <div class="login-form-container">
-                
-                <div class="form-header">
-                    <h2 class="form-title">Bienvenido</h2>
-                    <p class="form-subtitle">Ingresa tus credenciales para acceder al sistema</p>
-                </div>
-
-                @if (TempData["ErrorMessage"] is string errorMessage && !string.IsNullOrWhiteSpace(errorMessage))
+                <h1 id="login-title">Iniciar sesión</h1>
+                <p class="intro">Ingresa con tu correo institucional.</p>
+                @if (TempData["ErrorMessage"] is string error && !string.IsNullOrWhiteSpace(error))
                 {
-                    <div class="alert-danger-custom">
-                        <i class="bi bi-exclamation-triangle-fill fs-5"></i>
-                        <div>@errorMessage</div>
-                    </div>
+                    <div class="login-error" role="alert">@error</div>
                 }
-
                 @if (!ViewData.ModelState.IsValid)
                 {
-                    <div class="alert-danger-custom">
-                        <i class="bi bi-exclamation-triangle-fill fs-5"></i>
-                        <div asp-validation-summary="All" class="small"></div>
-                    </div>
+                    <div asp-validation-summary="All" class="login-error" role="alert"></div>
                 }
-
                 <form method="post">
-                    
-                    <!-- Campo Correo -->
-                    <div class="input-group-custom">
-                        <div class="form-floating-custom">
-                            <input name="NombreUsuario" required id="loginEmail" type="email" class="form-control-custom" placeholder=" " />
-                            <label for="loginEmail">Correo Electrónico</label>
-                        </div>
-                        <div class="input-group-text-custom">
-                            <span class="bi bi-envelope"></span>
-                        </div>
+                    <label for="loginEmail">Correo electrónico</label>
+                    <input name="NombreUsuario" id="loginEmail" type="email" autocomplete="username" required />
+                    <label for="loginPassword">Contraseña</label>
+                    <div class="password">
+                        <input name="Clave" id="loginPassword" type="password" autocomplete="current-password" required />
+                        <button type="button" id="togglePassword" aria-controls="loginPassword">Mostrar</button>
                     </div>
-
-                    <!-- Campo Contraseña -->
-                    <div class="input-group-custom">
-                        <div class="form-floating-custom">
-                            <input name="Clave" required id="loginPassword" type="password" class="form-control-custom" placeholder=" " />
-                            <label for="loginPassword">Contraseña</label>
-                        </div>
-                        <button type="button" class="input-group-text-custom" id="togglePassword">
-                            <span class="bi bi-eye"></span>
-                        </button>
-                    </div>
-
-                    <!-- Botón de Ingreso -->
-                    <button type="submit" class="btn-login-custom mt-4">
-                        <i class="bi bi-box-arrow-in-right"></i>Iniciar Sesión
-                    </button>
-
+                    <button class="sign-in" type="submit">Ingresar</button>
                 </form>
-
             </div>
-        </div>
-
-    </div>
-
-    <!-- Scripts -->
-    <script src="~/js/bootstrap.min.js" crossorigin="anonymous"></script>
+        </section>
+        <aside class="campus-image" aria-label="Información de la universidad">
+            <img src="@Url.RouteUrl("ImagenCampusLogin")" alt="Aviso institucional de UMOAR" />
+        </aside>
+    </main>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const togglePassword = document.querySelector('#togglePassword');
-            const password = document.querySelector('#loginPassword');
-
-            togglePassword.addEventListener('click', function() {
-                const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
-                password.setAttribute('type', type);
-                
-                const icon = this.querySelector('span');
-                icon.classList.toggle('bi-eye');
-                icon.classList.toggle('bi-eye-slash');
-            });
+        const toggle = document.getElementById('togglePassword');
+        const password = document.getElementById('loginPassword');
+        toggle.addEventListener('click', () => {
+            const mostrar = password.type === 'password';
+            password.type = mostrar ? 'text' : 'password';
+            toggle.textContent = mostrar ? 'Ocultar' : 'Mostrar';
         });
     </script>
 </body>

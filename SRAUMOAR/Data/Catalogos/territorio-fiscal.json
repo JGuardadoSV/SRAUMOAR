@@ -1,0 +1,2592 @@
+{
+  "archivo": "Catálogos - Facturación Electrónica (3).xlsx",
+  "sha256": "e86d7edc503d876564cd2bf9b251fb100f838199330c0c513048f4075669b2c6",
+  "version": "1.1",
+  "fuenteTerritorial": "https://www.asamblea.gob.sv/node/12806",
+  "entradas": [
+    {
+      "catalogo": "008",
+      "codigo": "00",
+      "valor": "Otro (Para extranjeros)",
+      "ambito": "00",
+      "municipioCodigo": "00",
+      "fila": 59
+    },
+    {
+      "catalogo": "008",
+      "codigo": "01",
+      "valor": "AHUACHAPÁN",
+      "ambito": "01",
+      "municipioCodigo": "14",
+      "fila": 60
+    },
+    {
+      "catalogo": "008",
+      "codigo": "02",
+      "valor": "APANECA",
+      "ambito": "01",
+      "municipioCodigo": "14",
+      "fila": 61
+    },
+    {
+      "catalogo": "008",
+      "codigo": "03",
+      "valor": "ATIQUIZAYA",
+      "ambito": "01",
+      "municipioCodigo": "13",
+      "fila": 62
+    },
+    {
+      "catalogo": "008",
+      "codigo": "04",
+      "valor": "CONCEPCIÓN DE ATACO",
+      "ambito": "01",
+      "municipioCodigo": "14",
+      "fila": 63
+    },
+    {
+      "catalogo": "008",
+      "codigo": "05",
+      "valor": "EL REFUGIO",
+      "ambito": "01",
+      "municipioCodigo": "13",
+      "fila": 64
+    },
+    {
+      "catalogo": "008",
+      "codigo": "06",
+      "valor": "GUAYMANGO",
+      "ambito": "01",
+      "municipioCodigo": "15",
+      "fila": 65
+    },
+    {
+      "catalogo": "008",
+      "codigo": "07",
+      "valor": "JUJUTLA",
+      "ambito": "01",
+      "municipioCodigo": "15",
+      "fila": 66
+    },
+    {
+      "catalogo": "008",
+      "codigo": "08",
+      "valor": "SAN FRANCISCO MENÉNDEZ",
+      "ambito": "01",
+      "municipioCodigo": "15",
+      "fila": 67
+    },
+    {
+      "catalogo": "008",
+      "codigo": "09",
+      "valor": "SAN LORENZO",
+      "ambito": "01",
+      "municipioCodigo": "13",
+      "fila": 68
+    },
+    {
+      "catalogo": "008",
+      "codigo": "10",
+      "valor": "SAN PEDRO PUXTLA",
+      "ambito": "01",
+      "municipioCodigo": "15",
+      "fila": 69
+    },
+    {
+      "catalogo": "008",
+      "codigo": "11",
+      "valor": "TACUBA",
+      "ambito": "01",
+      "municipioCodigo": "14",
+      "fila": 70
+    },
+    {
+      "catalogo": "008",
+      "codigo": "12",
+      "valor": "TURÍN",
+      "ambito": "01",
+      "municipioCodigo": "13",
+      "fila": 71
+    },
+    {
+      "catalogo": "008",
+      "codigo": "01",
+      "valor": "CANDELARIA DE LA FRONTERA",
+      "ambito": "02",
+      "municipioCodigo": "17",
+      "fila": 72
+    },
+    {
+      "catalogo": "008",
+      "codigo": "02",
+      "valor": "COATEPEQUE",
+      "ambito": "02",
+      "municipioCodigo": "16",
+      "fila": 73
+    },
+    {
+      "catalogo": "008",
+      "codigo": "03",
+      "valor": "CHALCHUAPA",
+      "ambito": "02",
+      "municipioCodigo": "17",
+      "fila": 74
+    },
+    {
+      "catalogo": "008",
+      "codigo": "04",
+      "valor": "EL CONGO",
+      "ambito": "02",
+      "municipioCodigo": "16",
+      "fila": 75
+    },
+    {
+      "catalogo": "008",
+      "codigo": "05",
+      "valor": "EL PORVENIR",
+      "ambito": "02",
+      "municipioCodigo": "17",
+      "fila": 76
+    },
+    {
+      "catalogo": "008",
+      "codigo": "06",
+      "valor": "MASAHUAT",
+      "ambito": "02",
+      "municipioCodigo": "14",
+      "fila": 77
+    },
+    {
+      "catalogo": "008",
+      "codigo": "07",
+      "valor": "METAPÁN",
+      "ambito": "02",
+      "municipioCodigo": "14",
+      "fila": 78
+    },
+    {
+      "catalogo": "008",
+      "codigo": "08",
+      "valor": "SAN ANTONIO PAJONAL",
+      "ambito": "02",
+      "municipioCodigo": "17",
+      "fila": 79
+    },
+    {
+      "catalogo": "008",
+      "codigo": "09",
+      "valor": "SAN SEBASTIÁN SALITRILLO",
+      "ambito": "02",
+      "municipioCodigo": "17",
+      "fila": 80
+    },
+    {
+      "catalogo": "008",
+      "codigo": "10",
+      "valor": "SANTA ANA",
+      "ambito": "02",
+      "municipioCodigo": "15",
+      "fila": 81
+    },
+    {
+      "catalogo": "008",
+      "codigo": "11",
+      "valor": "STA ROSA GUACHI",
+      "ambito": "02",
+      "municipioCodigo": "14",
+      "fila": 82
+    },
+    {
+      "catalogo": "008",
+      "codigo": "12",
+      "valor": "STGO D LA FRONT",
+      "ambito": "02",
+      "municipioCodigo": "17",
+      "fila": 83
+    },
+    {
+      "catalogo": "008",
+      "codigo": "13",
+      "valor": "TEXISTEPEQUE",
+      "ambito": "02",
+      "municipioCodigo": "14",
+      "fila": 84
+    },
+    {
+      "catalogo": "008",
+      "codigo": "01",
+      "valor": "ACAJUTLA",
+      "ambito": "03",
+      "municipioCodigo": "20",
+      "fila": 85
+    },
+    {
+      "catalogo": "008",
+      "codigo": "02",
+      "valor": "ARMENIA",
+      "ambito": "03",
+      "municipioCodigo": "19",
+      "fila": 86
+    },
+    {
+      "catalogo": "008",
+      "codigo": "03",
+      "valor": "CALUCO",
+      "ambito": "03",
+      "municipioCodigo": "19",
+      "fila": 87
+    },
+    {
+      "catalogo": "008",
+      "codigo": "04",
+      "valor": "CUISNAHUAT",
+      "ambito": "03",
+      "municipioCodigo": "19",
+      "fila": 88
+    },
+    {
+      "catalogo": "008",
+      "codigo": "05",
+      "valor": "STA I ISHUATAN",
+      "ambito": "03",
+      "municipioCodigo": "19",
+      "fila": 89
+    },
+    {
+      "catalogo": "008",
+      "codigo": "06",
+      "valor": "IZALCO",
+      "ambito": "03",
+      "municipioCodigo": "19",
+      "fila": 90
+    },
+    {
+      "catalogo": "008",
+      "codigo": "07",
+      "valor": "JUAYÚA",
+      "ambito": "03",
+      "municipioCodigo": "17",
+      "fila": 91
+    },
+    {
+      "catalogo": "008",
+      "codigo": "08",
+      "valor": "NAHUIZALCO",
+      "ambito": "03",
+      "municipioCodigo": "17",
+      "fila": 92
+    },
+    {
+      "catalogo": "008",
+      "codigo": "09",
+      "valor": "NAHULINGO",
+      "ambito": "03",
+      "municipioCodigo": "18",
+      "fila": 93
+    },
+    {
+      "catalogo": "008",
+      "codigo": "10",
+      "valor": "SALCOATITÁN",
+      "ambito": "03",
+      "municipioCodigo": "17",
+      "fila": 94
+    },
+    {
+      "catalogo": "008",
+      "codigo": "11",
+      "valor": "SAN ANTONIO DEL MONTE",
+      "ambito": "03",
+      "municipioCodigo": "18",
+      "fila": 95
+    },
+    {
+      "catalogo": "008",
+      "codigo": "12",
+      "valor": "SAN JULIÁN",
+      "ambito": "03",
+      "municipioCodigo": "19",
+      "fila": 96
+    },
+    {
+      "catalogo": "008",
+      "codigo": "13",
+      "valor": "STA C MASAHUAT",
+      "ambito": "03",
+      "municipioCodigo": "17",
+      "fila": 97
+    },
+    {
+      "catalogo": "008",
+      "codigo": "14",
+      "valor": "SANTO DOMINGO GUZMÁN",
+      "ambito": "03",
+      "municipioCodigo": "18",
+      "fila": 98
+    },
+    {
+      "catalogo": "008",
+      "codigo": "15",
+      "valor": "SONSONATE",
+      "ambito": "03",
+      "municipioCodigo": "18",
+      "fila": 99
+    },
+    {
+      "catalogo": "008",
+      "codigo": "16",
+      "valor": "SONZACATE",
+      "ambito": "03",
+      "municipioCodigo": "18",
+      "fila": 100
+    },
+    {
+      "catalogo": "008",
+      "codigo": "01",
+      "valor": "AGUA CALIENTE",
+      "ambito": "04",
+      "municipioCodigo": "35",
+      "fila": 101
+    },
+    {
+      "catalogo": "008",
+      "codigo": "02",
+      "valor": "ARCATAO",
+      "ambito": "04",
+      "municipioCodigo": "36",
+      "fila": 102
+    },
+    {
+      "catalogo": "008",
+      "codigo": "03",
+      "valor": "AZACUALPA",
+      "ambito": "04",
+      "municipioCodigo": "36",
+      "fila": 103
+    },
+    {
+      "catalogo": "008",
+      "codigo": "04",
+      "valor": "CITALÁ",
+      "ambito": "04",
+      "municipioCodigo": "34",
+      "fila": 104
+    },
+    {
+      "catalogo": "008",
+      "codigo": "05",
+      "valor": "COMALAPA",
+      "ambito": "04",
+      "municipioCodigo": "36",
+      "fila": 105
+    },
+    {
+      "catalogo": "008",
+      "codigo": "06",
+      "valor": "CONCEPCIÓN QUEZALTEPEQUE",
+      "ambito": "04",
+      "municipioCodigo": "36",
+      "fila": 106
+    },
+    {
+      "catalogo": "008",
+      "codigo": "07",
+      "valor": "CHALATENANGO",
+      "ambito": "04",
+      "municipioCodigo": "36",
+      "fila": 107
+    },
+    {
+      "catalogo": "008",
+      "codigo": "08",
+      "valor": "DULCE NOM MARÍA",
+      "ambito": "04",
+      "municipioCodigo": "35",
+      "fila": 108
+    },
+    {
+      "catalogo": "008",
+      "codigo": "09",
+      "valor": "EL CARRIZAL",
+      "ambito": "04",
+      "municipioCodigo": "36",
+      "fila": 109
+    },
+    {
+      "catalogo": "008",
+      "codigo": "10",
+      "valor": "EL PARAÍSO",
+      "ambito": "04",
+      "municipioCodigo": "35",
+      "fila": 110
+    },
+    {
+      "catalogo": "008",
+      "codigo": "11",
+      "valor": "LA LAGUNA",
+      "ambito": "04",
+      "municipioCodigo": "36",
+      "fila": 111
+    },
+    {
+      "catalogo": "008",
+      "codigo": "12",
+      "valor": "LA PALMA",
+      "ambito": "04",
+      "municipioCodigo": "34",
+      "fila": 112
+    },
+    {
+      "catalogo": "008",
+      "codigo": "13",
+      "valor": "LA REINA",
+      "ambito": "04",
+      "municipioCodigo": "35",
+      "fila": 113
+    },
+    {
+      "catalogo": "008",
+      "codigo": "14",
+      "valor": "LAS VUELTAS",
+      "ambito": "04",
+      "municipioCodigo": "36",
+      "fila": 114
+    },
+    {
+      "catalogo": "008",
+      "codigo": "15",
+      "valor": "NOMBRE DE JESUS",
+      "ambito": "04",
+      "municipioCodigo": "36",
+      "fila": 115
+    },
+    {
+      "catalogo": "008",
+      "codigo": "16",
+      "valor": "NVA CONCEPCIÓN",
+      "ambito": "04",
+      "municipioCodigo": "35",
+      "fila": 116
+    },
+    {
+      "catalogo": "008",
+      "codigo": "17",
+      "valor": "NUEVA TRINIDAD",
+      "ambito": "04",
+      "municipioCodigo": "36",
+      "fila": 117
+    },
+    {
+      "catalogo": "008",
+      "codigo": "18",
+      "valor": "OJOS DE AGUA",
+      "ambito": "04",
+      "municipioCodigo": "36",
+      "fila": 118
+    },
+    {
+      "catalogo": "008",
+      "codigo": "19",
+      "valor": "POTONICO",
+      "ambito": "04",
+      "municipioCodigo": "36",
+      "fila": 119
+    },
+    {
+      "catalogo": "008",
+      "codigo": "20",
+      "valor": "SAN ANT LA CRUZ",
+      "ambito": "04",
+      "municipioCodigo": "36",
+      "fila": 120
+    },
+    {
+      "catalogo": "008",
+      "codigo": "21",
+      "valor": "SAN ANT RANCHOS",
+      "ambito": "04",
+      "municipioCodigo": "36",
+      "fila": 121
+    },
+    {
+      "catalogo": "008",
+      "codigo": "22",
+      "valor": "SAN FERNANDO",
+      "ambito": "04",
+      "municipioCodigo": "35",
+      "fila": 122
+    },
+    {
+      "catalogo": "008",
+      "codigo": "23",
+      "valor": "SAN FRANCISCO LEMPA",
+      "ambito": "04",
+      "municipioCodigo": "36",
+      "fila": 123
+    },
+    {
+      "catalogo": "008",
+      "codigo": "24",
+      "valor": "SAN FRANCISCO MORAZÁN",
+      "ambito": "04",
+      "municipioCodigo": "35",
+      "fila": 124
+    },
+    {
+      "catalogo": "008",
+      "codigo": "25",
+      "valor": "SAN IGNACIO",
+      "ambito": "04",
+      "municipioCodigo": "34",
+      "fila": 125
+    },
+    {
+      "catalogo": "008",
+      "codigo": "26",
+      "valor": "SAN I LABRADOR",
+      "ambito": "04",
+      "municipioCodigo": "36",
+      "fila": 126
+    },
+    {
+      "catalogo": "008",
+      "codigo": "27",
+      "valor": "SAN J CANCASQUE",
+      "ambito": "04",
+      "municipioCodigo": "36",
+      "fila": 127
+    },
+    {
+      "catalogo": "008",
+      "codigo": "28",
+      "valor": "SAN JOSE FLORES",
+      "ambito": "04",
+      "municipioCodigo": "36",
+      "fila": 128
+    },
+    {
+      "catalogo": "008",
+      "codigo": "29",
+      "valor": "SAN LUIS CARMEN",
+      "ambito": "04",
+      "municipioCodigo": "36",
+      "fila": 129
+    },
+    {
+      "catalogo": "008",
+      "codigo": "30",
+      "valor": "SN MIG MERCEDES",
+      "ambito": "04",
+      "municipioCodigo": "36",
+      "fila": 130
+    },
+    {
+      "catalogo": "008",
+      "codigo": "31",
+      "valor": "SAN RAFAEL",
+      "ambito": "04",
+      "municipioCodigo": "35",
+      "fila": 131
+    },
+    {
+      "catalogo": "008",
+      "codigo": "32",
+      "valor": "SANTA RITA",
+      "ambito": "04",
+      "municipioCodigo": "35",
+      "fila": 132
+    },
+    {
+      "catalogo": "008",
+      "codigo": "33",
+      "valor": "TEJUTLA",
+      "ambito": "04",
+      "municipioCodigo": "35",
+      "fila": 133
+    },
+    {
+      "catalogo": "008",
+      "codigo": "01",
+      "valor": "ANTGO CUSCATLÁN",
+      "ambito": "05",
+      "municipioCodigo": "26",
+      "fila": 134
+    },
+    {
+      "catalogo": "008",
+      "codigo": "02",
+      "valor": "CIUDAD ARCE",
+      "ambito": "05",
+      "municipioCodigo": "24",
+      "fila": 135
+    },
+    {
+      "catalogo": "008",
+      "codigo": "03",
+      "valor": "COLON",
+      "ambito": "05",
+      "municipioCodigo": "25",
+      "fila": 136
+    },
+    {
+      "catalogo": "008",
+      "codigo": "04",
+      "valor": "COMASAGUA",
+      "ambito": "05",
+      "municipioCodigo": "28",
+      "fila": 137
+    },
+    {
+      "catalogo": "008",
+      "codigo": "05",
+      "valor": "CHILTIUPAN",
+      "ambito": "05",
+      "municipioCodigo": "27",
+      "fila": 138
+    },
+    {
+      "catalogo": "008",
+      "codigo": "06",
+      "valor": "HUIZÚCAR",
+      "ambito": "05",
+      "municipioCodigo": "26",
+      "fila": 139
+    },
+    {
+      "catalogo": "008",
+      "codigo": "07",
+      "valor": "JAYAQUE",
+      "ambito": "05",
+      "municipioCodigo": "25",
+      "fila": 140
+    },
+    {
+      "catalogo": "008",
+      "codigo": "08",
+      "valor": "JICALAPA",
+      "ambito": "05",
+      "municipioCodigo": "27",
+      "fila": 141
+    },
+    {
+      "catalogo": "008",
+      "codigo": "09",
+      "valor": "LA LIBERTAD",
+      "ambito": "05",
+      "municipioCodigo": "27",
+      "fila": 142
+    },
+    {
+      "catalogo": "008",
+      "codigo": "10",
+      "valor": "NUEVO CUSCATLÁN",
+      "ambito": "05",
+      "municipioCodigo": "26",
+      "fila": 143
+    },
+    {
+      "catalogo": "008",
+      "codigo": "11",
+      "valor": "SANTA TECLA",
+      "ambito": "05",
+      "municipioCodigo": "28",
+      "fila": 144
+    },
+    {
+      "catalogo": "008",
+      "codigo": "12",
+      "valor": "QUEZALTEPEQUE",
+      "ambito": "05",
+      "municipioCodigo": "23",
+      "fila": 145
+    },
+    {
+      "catalogo": "008",
+      "codigo": "13",
+      "valor": "SACACOYO",
+      "ambito": "05",
+      "municipioCodigo": "25",
+      "fila": 146
+    },
+    {
+      "catalogo": "008",
+      "codigo": "14",
+      "valor": "SN J VILLANUEVA",
+      "ambito": "05",
+      "municipioCodigo": "26",
+      "fila": 147
+    },
+    {
+      "catalogo": "008",
+      "codigo": "15",
+      "valor": "SAN JUAN OPICO",
+      "ambito": "05",
+      "municipioCodigo": "24",
+      "fila": 148
+    },
+    {
+      "catalogo": "008",
+      "codigo": "16",
+      "valor": "SAN MATÍAS",
+      "ambito": "05",
+      "municipioCodigo": "23",
+      "fila": 149
+    },
+    {
+      "catalogo": "008",
+      "codigo": "17",
+      "valor": "SAN P TACACHICO",
+      "ambito": "05",
+      "municipioCodigo": "23",
+      "fila": 150
+    },
+    {
+      "catalogo": "008",
+      "codigo": "18",
+      "valor": "TAMANIQUE",
+      "ambito": "05",
+      "municipioCodigo": "27",
+      "fila": 151
+    },
+    {
+      "catalogo": "008",
+      "codigo": "19",
+      "valor": "TALNIQUE",
+      "ambito": "05",
+      "municipioCodigo": "25",
+      "fila": 152
+    },
+    {
+      "catalogo": "008",
+      "codigo": "20",
+      "valor": "TEOTEPEQUE",
+      "ambito": "05",
+      "municipioCodigo": "27",
+      "fila": 153
+    },
+    {
+      "catalogo": "008",
+      "codigo": "21",
+      "valor": "TEPECOYO",
+      "ambito": "05",
+      "municipioCodigo": "25",
+      "fila": 154
+    },
+    {
+      "catalogo": "008",
+      "codigo": "22",
+      "valor": "ZARAGOZA",
+      "ambito": "05",
+      "municipioCodigo": "26",
+      "fila": 155
+    },
+    {
+      "catalogo": "008",
+      "codigo": "01",
+      "valor": "AGUILARES",
+      "ambito": "06",
+      "municipioCodigo": "20",
+      "fila": 156
+    },
+    {
+      "catalogo": "008",
+      "codigo": "02",
+      "valor": "APOPA",
+      "ambito": "06",
+      "municipioCodigo": "21",
+      "fila": 157
+    },
+    {
+      "catalogo": "008",
+      "codigo": "03",
+      "valor": "AYUTUXTEPEQUE",
+      "ambito": "06",
+      "municipioCodigo": "23",
+      "fila": 158
+    },
+    {
+      "catalogo": "008",
+      "codigo": "04",
+      "valor": "CUSCATANCINGO",
+      "ambito": "06",
+      "municipioCodigo": "23",
+      "fila": 159
+    },
+    {
+      "catalogo": "008",
+      "codigo": "05",
+      "valor": "EL PAISNAL",
+      "ambito": "06",
+      "municipioCodigo": "20",
+      "fila": 160
+    },
+    {
+      "catalogo": "008",
+      "codigo": "06",
+      "valor": "GUAZAPA",
+      "ambito": "06",
+      "municipioCodigo": "20",
+      "fila": 161
+    },
+    {
+      "catalogo": "008",
+      "codigo": "07",
+      "valor": "ILOPANGO",
+      "ambito": "06",
+      "municipioCodigo": "22",
+      "fila": 162
+    },
+    {
+      "catalogo": "008",
+      "codigo": "08",
+      "valor": "MEJICANOS",
+      "ambito": "06",
+      "municipioCodigo": "23",
+      "fila": 163
+    },
+    {
+      "catalogo": "008",
+      "codigo": "09",
+      "valor": "NEJAPA",
+      "ambito": "06",
+      "municipioCodigo": "21",
+      "fila": 164
+    },
+    {
+      "catalogo": "008",
+      "codigo": "10",
+      "valor": "PANCHIMALCO",
+      "ambito": "06",
+      "municipioCodigo": "24",
+      "fila": 165
+    },
+    {
+      "catalogo": "008",
+      "codigo": "11",
+      "valor": "ROSARIO DE MORA",
+      "ambito": "06",
+      "municipioCodigo": "24",
+      "fila": 166
+    },
+    {
+      "catalogo": "008",
+      "codigo": "12",
+      "valor": "SAN MARCOS",
+      "ambito": "06",
+      "municipioCodigo": "24",
+      "fila": 167
+    },
+    {
+      "catalogo": "008",
+      "codigo": "13",
+      "valor": "SAN MARTIN",
+      "ambito": "06",
+      "municipioCodigo": "22",
+      "fila": 168
+    },
+    {
+      "catalogo": "008",
+      "codigo": "14",
+      "valor": "SAN SALVADOR",
+      "ambito": "06",
+      "municipioCodigo": "23",
+      "fila": 169
+    },
+    {
+      "catalogo": "008",
+      "codigo": "15",
+      "valor": "STG TEXACUANGOS",
+      "ambito": "06",
+      "municipioCodigo": "24",
+      "fila": 170
+    },
+    {
+      "catalogo": "008",
+      "codigo": "16",
+      "valor": "SANTO TOMAS",
+      "ambito": "06",
+      "municipioCodigo": "24",
+      "fila": 171
+    },
+    {
+      "catalogo": "008",
+      "codigo": "17",
+      "valor": "SOYAPANGO",
+      "ambito": "06",
+      "municipioCodigo": "22",
+      "fila": 172
+    },
+    {
+      "catalogo": "008",
+      "codigo": "18",
+      "valor": "TONACATEPEQUE",
+      "ambito": "06",
+      "municipioCodigo": "22",
+      "fila": 173
+    },
+    {
+      "catalogo": "008",
+      "codigo": "19",
+      "valor": "CIUDAD DELGADO",
+      "ambito": "06",
+      "municipioCodigo": "23",
+      "fila": 174
+    },
+    {
+      "catalogo": "008",
+      "codigo": "01",
+      "valor": "CANDELARIA",
+      "ambito": "07",
+      "municipioCodigo": "18",
+      "fila": 175
+    },
+    {
+      "catalogo": "008",
+      "codigo": "02",
+      "valor": "COJUTEPEQUE",
+      "ambito": "07",
+      "municipioCodigo": "18",
+      "fila": 176
+    },
+    {
+      "catalogo": "008",
+      "codigo": "03",
+      "valor": "EL CARMEN",
+      "ambito": "07",
+      "municipioCodigo": "18",
+      "fila": 177
+    },
+    {
+      "catalogo": "008",
+      "codigo": "04",
+      "valor": "EL ROSARIO",
+      "ambito": "07",
+      "municipioCodigo": "18",
+      "fila": 178
+    },
+    {
+      "catalogo": "008",
+      "codigo": "05",
+      "valor": "MONTE SAN JUAN",
+      "ambito": "07",
+      "municipioCodigo": "18",
+      "fila": 179
+    },
+    {
+      "catalogo": "008",
+      "codigo": "06",
+      "valor": "ORAT CONCEPCIÓN",
+      "ambito": "07",
+      "municipioCodigo": "17",
+      "fila": 180
+    },
+    {
+      "catalogo": "008",
+      "codigo": "07",
+      "valor": "SAN B PERULAPIA",
+      "ambito": "07",
+      "municipioCodigo": "17",
+      "fila": 181
+    },
+    {
+      "catalogo": "008",
+      "codigo": "08",
+      "valor": "SAN CRISTÓBAL",
+      "ambito": "07",
+      "municipioCodigo": "18",
+      "fila": 182
+    },
+    {
+      "catalogo": "008",
+      "codigo": "09",
+      "valor": "SAN J GUAYABAL",
+      "ambito": "07",
+      "municipioCodigo": "17",
+      "fila": 183
+    },
+    {
+      "catalogo": "008",
+      "codigo": "10",
+      "valor": "SAN P PERULAPÁN",
+      "ambito": "07",
+      "municipioCodigo": "17",
+      "fila": 184
+    },
+    {
+      "catalogo": "008",
+      "codigo": "11",
+      "valor": "SAN RAF CEDROS",
+      "ambito": "07",
+      "municipioCodigo": "18",
+      "fila": 185
+    },
+    {
+      "catalogo": "008",
+      "codigo": "12",
+      "valor": "SAN RAMON",
+      "ambito": "07",
+      "municipioCodigo": "18",
+      "fila": 186
+    },
+    {
+      "catalogo": "008",
+      "codigo": "13",
+      "valor": "STA C ANALQUITO",
+      "ambito": "07",
+      "municipioCodigo": "18",
+      "fila": 187
+    },
+    {
+      "catalogo": "008",
+      "codigo": "14",
+      "valor": "STA C MICHAPA",
+      "ambito": "07",
+      "municipioCodigo": "18",
+      "fila": 188
+    },
+    {
+      "catalogo": "008",
+      "codigo": "15",
+      "valor": "SUCHITOTO",
+      "ambito": "07",
+      "municipioCodigo": "17",
+      "fila": 189
+    },
+    {
+      "catalogo": "008",
+      "codigo": "16",
+      "valor": "TENANCINGO",
+      "ambito": "07",
+      "municipioCodigo": "18",
+      "fila": 190
+    },
+    {
+      "catalogo": "008",
+      "codigo": "01",
+      "valor": "CUYULTITÁN",
+      "ambito": "08",
+      "municipioCodigo": "23",
+      "fila": 191
+    },
+    {
+      "catalogo": "008",
+      "codigo": "02",
+      "valor": "EL ROSARIO",
+      "ambito": "08",
+      "municipioCodigo": "24",
+      "fila": 192
+    },
+    {
+      "catalogo": "008",
+      "codigo": "03",
+      "valor": "JERUSALÉN",
+      "ambito": "08",
+      "municipioCodigo": "24",
+      "fila": 193
+    },
+    {
+      "catalogo": "008",
+      "codigo": "04",
+      "valor": "MERCED LA CEIBA",
+      "ambito": "08",
+      "municipioCodigo": "24",
+      "fila": 194
+    },
+    {
+      "catalogo": "008",
+      "codigo": "05",
+      "valor": "OLOCUILTA",
+      "ambito": "08",
+      "municipioCodigo": "23",
+      "fila": 195
+    },
+    {
+      "catalogo": "008",
+      "codigo": "06",
+      "valor": "PARAÍSO OSORIO",
+      "ambito": "08",
+      "municipioCodigo": "24",
+      "fila": 196
+    },
+    {
+      "catalogo": "008",
+      "codigo": "07",
+      "valor": "SN ANT MASAHUAT",
+      "ambito": "08",
+      "municipioCodigo": "24",
+      "fila": 197
+    },
+    {
+      "catalogo": "008",
+      "codigo": "08",
+      "valor": "SAN EMIGDIO",
+      "ambito": "08",
+      "municipioCodigo": "24",
+      "fila": 198
+    },
+    {
+      "catalogo": "008",
+      "codigo": "09",
+      "valor": "SN FCO CHINAMEC",
+      "ambito": "08",
+      "municipioCodigo": "23",
+      "fila": 199
+    },
+    {
+      "catalogo": "008",
+      "codigo": "10",
+      "valor": "SAN J NONUALCO",
+      "ambito": "08",
+      "municipioCodigo": "25",
+      "fila": 200
+    },
+    {
+      "catalogo": "008",
+      "codigo": "11",
+      "valor": "SAN JUAN TALPA",
+      "ambito": "08",
+      "municipioCodigo": "23",
+      "fila": 201
+    },
+    {
+      "catalogo": "008",
+      "codigo": "12",
+      "valor": "SAN JUAN TEPEZONTES",
+      "ambito": "08",
+      "municipioCodigo": "24",
+      "fila": 202
+    },
+    {
+      "catalogo": "008",
+      "codigo": "13",
+      "valor": "SAN LUIS TALPA",
+      "ambito": "08",
+      "municipioCodigo": "23",
+      "fila": 203
+    },
+    {
+      "catalogo": "008",
+      "codigo": "14",
+      "valor": "SAN MIGUEL TEPEZONTES",
+      "ambito": "08",
+      "municipioCodigo": "24",
+      "fila": 204
+    },
+    {
+      "catalogo": "008",
+      "codigo": "15",
+      "valor": "SAN PEDRO MASAHUAT",
+      "ambito": "08",
+      "municipioCodigo": "23",
+      "fila": 205
+    },
+    {
+      "catalogo": "008",
+      "codigo": "16",
+      "valor": "SAN PEDRO NONUALCO",
+      "ambito": "08",
+      "municipioCodigo": "24",
+      "fila": 206
+    },
+    {
+      "catalogo": "008",
+      "codigo": "17",
+      "valor": "SAN R OBRAJUELO",
+      "ambito": "08",
+      "municipioCodigo": "25",
+      "fila": 207
+    },
+    {
+      "catalogo": "008",
+      "codigo": "18",
+      "valor": "STA MA OSTUMA",
+      "ambito": "08",
+      "municipioCodigo": "24",
+      "fila": 208
+    },
+    {
+      "catalogo": "008",
+      "codigo": "19",
+      "valor": "STGO NONUALCO",
+      "ambito": "08",
+      "municipioCodigo": "24",
+      "fila": 209
+    },
+    {
+      "catalogo": "008",
+      "codigo": "20",
+      "valor": "TAPALHUACA",
+      "ambito": "08",
+      "municipioCodigo": "23",
+      "fila": 210
+    },
+    {
+      "catalogo": "008",
+      "codigo": "21",
+      "valor": "ZACATECOLUCA",
+      "ambito": "08",
+      "municipioCodigo": "25",
+      "fila": 211
+    },
+    {
+      "catalogo": "008",
+      "codigo": "22",
+      "valor": "SN LUIS LA HERR",
+      "ambito": "08",
+      "municipioCodigo": "24",
+      "fila": 212
+    },
+    {
+      "catalogo": "008",
+      "codigo": "01",
+      "valor": "CINQUERA",
+      "ambito": "09",
+      "municipioCodigo": "11",
+      "fila": 213
+    },
+    {
+      "catalogo": "008",
+      "codigo": "02",
+      "valor": "GUACOTECTI",
+      "ambito": "09",
+      "municipioCodigo": "10",
+      "fila": 214
+    },
+    {
+      "catalogo": "008",
+      "codigo": "03",
+      "valor": "ILOBASCO",
+      "ambito": "09",
+      "municipioCodigo": "11",
+      "fila": 215
+    },
+    {
+      "catalogo": "008",
+      "codigo": "04",
+      "valor": "JUTIAPA",
+      "ambito": "09",
+      "municipioCodigo": "11",
+      "fila": 216
+    },
+    {
+      "catalogo": "008",
+      "codigo": "05",
+      "valor": "SAN ISIDRO",
+      "ambito": "09",
+      "municipioCodigo": "10",
+      "fila": 217
+    },
+    {
+      "catalogo": "008",
+      "codigo": "06",
+      "valor": "SENSUNTEPEQUE",
+      "ambito": "09",
+      "municipioCodigo": "10",
+      "fila": 218
+    },
+    {
+      "catalogo": "008",
+      "codigo": "07",
+      "valor": "TEJUTEPEQUE",
+      "ambito": "09",
+      "municipioCodigo": "11",
+      "fila": 219
+    },
+    {
+      "catalogo": "008",
+      "codigo": "08",
+      "valor": "VICTORIA",
+      "ambito": "09",
+      "municipioCodigo": "10",
+      "fila": 220
+    },
+    {
+      "catalogo": "008",
+      "codigo": "09",
+      "valor": "DOLORES",
+      "ambito": "09",
+      "municipioCodigo": "10",
+      "fila": 221
+    },
+    {
+      "catalogo": "008",
+      "codigo": "01",
+      "valor": "APASTEPEQUE",
+      "ambito": "10",
+      "municipioCodigo": "14",
+      "fila": 222
+    },
+    {
+      "catalogo": "008",
+      "codigo": "02",
+      "valor": "GUADALUPE",
+      "ambito": "10",
+      "municipioCodigo": "15",
+      "fila": 223
+    },
+    {
+      "catalogo": "008",
+      "codigo": "03",
+      "valor": "SAN CAY ISTEPEQ",
+      "ambito": "10",
+      "municipioCodigo": "15",
+      "fila": 224
+    },
+    {
+      "catalogo": "008",
+      "codigo": "04",
+      "valor": "SANTA CLARA",
+      "ambito": "10",
+      "municipioCodigo": "14",
+      "fila": 225
+    },
+    {
+      "catalogo": "008",
+      "codigo": "05",
+      "valor": "SANTO DOMINGO",
+      "ambito": "10",
+      "municipioCodigo": "14",
+      "fila": 226
+    },
+    {
+      "catalogo": "008",
+      "codigo": "06",
+      "valor": "SN EST CATARINA",
+      "ambito": "10",
+      "municipioCodigo": "14",
+      "fila": 227
+    },
+    {
+      "catalogo": "008",
+      "codigo": "07",
+      "valor": "SAN ILDEFONSO",
+      "ambito": "10",
+      "municipioCodigo": "14",
+      "fila": 228
+    },
+    {
+      "catalogo": "008",
+      "codigo": "08",
+      "valor": "SAN LORENZO",
+      "ambito": "10",
+      "municipioCodigo": "14",
+      "fila": 229
+    },
+    {
+      "catalogo": "008",
+      "codigo": "09",
+      "valor": "SAN SEBASTIÁN",
+      "ambito": "10",
+      "municipioCodigo": "14",
+      "fila": 230
+    },
+    {
+      "catalogo": "008",
+      "codigo": "10",
+      "valor": "SAN VICENTE",
+      "ambito": "10",
+      "municipioCodigo": "15",
+      "fila": 231
+    },
+    {
+      "catalogo": "008",
+      "codigo": "11",
+      "valor": "TECOLUCA",
+      "ambito": "10",
+      "municipioCodigo": "15",
+      "fila": 232
+    },
+    {
+      "catalogo": "008",
+      "codigo": "12",
+      "valor": "TEPETITÁN",
+      "ambito": "10",
+      "municipioCodigo": "15",
+      "fila": 233
+    },
+    {
+      "catalogo": "008",
+      "codigo": "13",
+      "valor": "VERAPAZ",
+      "ambito": "10",
+      "municipioCodigo": "15",
+      "fila": 234
+    },
+    {
+      "catalogo": "008",
+      "codigo": "01",
+      "valor": "ALEGRÍA",
+      "ambito": "11",
+      "municipioCodigo": "24",
+      "fila": 235
+    },
+    {
+      "catalogo": "008",
+      "codigo": "02",
+      "valor": "BERLÍN",
+      "ambito": "11",
+      "municipioCodigo": "24",
+      "fila": 236
+    },
+    {
+      "catalogo": "008",
+      "codigo": "03",
+      "valor": "CALIFORNIA",
+      "ambito": "11",
+      "municipioCodigo": "25",
+      "fila": 237
+    },
+    {
+      "catalogo": "008",
+      "codigo": "04",
+      "valor": "CONCEP BATRES",
+      "ambito": "11",
+      "municipioCodigo": "25",
+      "fila": 238
+    },
+    {
+      "catalogo": "008",
+      "codigo": "05",
+      "valor": "EL TRIUNFO",
+      "ambito": "11",
+      "municipioCodigo": "24",
+      "fila": 239
+    },
+    {
+      "catalogo": "008",
+      "codigo": "06",
+      "valor": "EREGUAYQUÍN",
+      "ambito": "11",
+      "municipioCodigo": "25",
+      "fila": 240
+    },
+    {
+      "catalogo": "008",
+      "codigo": "07",
+      "valor": "ESTANZUELAS",
+      "ambito": "11",
+      "municipioCodigo": "24",
+      "fila": 241
+    },
+    {
+      "catalogo": "008",
+      "codigo": "08",
+      "valor": "JIQUILISCO",
+      "ambito": "11",
+      "municipioCodigo": "26",
+      "fila": 242
+    },
+    {
+      "catalogo": "008",
+      "codigo": "09",
+      "valor": "JUCUAPA",
+      "ambito": "11",
+      "municipioCodigo": "24",
+      "fila": 243
+    },
+    {
+      "catalogo": "008",
+      "codigo": "10",
+      "valor": "JUCUARÁN",
+      "ambito": "11",
+      "municipioCodigo": "25",
+      "fila": 244
+    },
+    {
+      "catalogo": "008",
+      "codigo": "11",
+      "valor": "MERCEDES UMAÑA",
+      "ambito": "11",
+      "municipioCodigo": "24",
+      "fila": 245
+    },
+    {
+      "catalogo": "008",
+      "codigo": "12",
+      "valor": "NUEVA GRANADA",
+      "ambito": "11",
+      "municipioCodigo": "24",
+      "fila": 246
+    },
+    {
+      "catalogo": "008",
+      "codigo": "13",
+      "valor": "OZATLÁN",
+      "ambito": "11",
+      "municipioCodigo": "25",
+      "fila": 247
+    },
+    {
+      "catalogo": "008",
+      "codigo": "14",
+      "valor": "PTO EL TRIUNFO",
+      "ambito": "11",
+      "municipioCodigo": "26",
+      "fila": 248
+    },
+    {
+      "catalogo": "008",
+      "codigo": "15",
+      "valor": "SAN AGUSTÍN",
+      "ambito": "11",
+      "municipioCodigo": "26",
+      "fila": 249
+    },
+    {
+      "catalogo": "008",
+      "codigo": "16",
+      "valor": "SN BUENAVENTURA",
+      "ambito": "11",
+      "municipioCodigo": "24",
+      "fila": 250
+    },
+    {
+      "catalogo": "008",
+      "codigo": "17",
+      "valor": "SAN DIONISIO",
+      "ambito": "11",
+      "municipioCodigo": "25",
+      "fila": 251
+    },
+    {
+      "catalogo": "008",
+      "codigo": "18",
+      "valor": "SANTA ELENA",
+      "ambito": "11",
+      "municipioCodigo": "25",
+      "fila": 252
+    },
+    {
+      "catalogo": "008",
+      "codigo": "19",
+      "valor": "SAN FCO JAVIER",
+      "ambito": "11",
+      "municipioCodigo": "26",
+      "fila": 253
+    },
+    {
+      "catalogo": "008",
+      "codigo": "20",
+      "valor": "SANTA MARÍA",
+      "ambito": "11",
+      "municipioCodigo": "25",
+      "fila": 254
+    },
+    {
+      "catalogo": "008",
+      "codigo": "21",
+      "valor": "STGO DE MARÍA",
+      "ambito": "11",
+      "municipioCodigo": "24",
+      "fila": 255
+    },
+    {
+      "catalogo": "008",
+      "codigo": "22",
+      "valor": "TECAPÁN",
+      "ambito": "11",
+      "municipioCodigo": "25",
+      "fila": 256
+    },
+    {
+      "catalogo": "008",
+      "codigo": "23",
+      "valor": "USULUTÁN",
+      "ambito": "11",
+      "municipioCodigo": "25",
+      "fila": 257
+    },
+    {
+      "catalogo": "008",
+      "codigo": "01",
+      "valor": "CAROLINA",
+      "ambito": "12",
+      "municipioCodigo": "21",
+      "fila": 258
+    },
+    {
+      "catalogo": "008",
+      "codigo": "02",
+      "valor": "CIUDAD BARRIOS",
+      "ambito": "12",
+      "municipioCodigo": "21",
+      "fila": 259
+    },
+    {
+      "catalogo": "008",
+      "codigo": "03",
+      "valor": "COMACARÁN",
+      "ambito": "12",
+      "municipioCodigo": "22",
+      "fila": 260
+    },
+    {
+      "catalogo": "008",
+      "codigo": "04",
+      "valor": "CHAPELTIQUE",
+      "ambito": "12",
+      "municipioCodigo": "21",
+      "fila": 261
+    },
+    {
+      "catalogo": "008",
+      "codigo": "05",
+      "valor": "CHINAMECA",
+      "ambito": "12",
+      "municipioCodigo": "23",
+      "fila": 262
+    },
+    {
+      "catalogo": "008",
+      "codigo": "06",
+      "valor": "CHIRILAGUA",
+      "ambito": "12",
+      "municipioCodigo": "22",
+      "fila": 263
+    },
+    {
+      "catalogo": "008",
+      "codigo": "07",
+      "valor": "EL TRANSITO",
+      "ambito": "12",
+      "municipioCodigo": "23",
+      "fila": 264
+    },
+    {
+      "catalogo": "008",
+      "codigo": "08",
+      "valor": "LOLOTIQUE",
+      "ambito": "12",
+      "municipioCodigo": "23",
+      "fila": 265
+    },
+    {
+      "catalogo": "008",
+      "codigo": "09",
+      "valor": "MONCAGUA",
+      "ambito": "12",
+      "municipioCodigo": "22",
+      "fila": 266
+    },
+    {
+      "catalogo": "008",
+      "codigo": "10",
+      "valor": "NUEVA GUADALUPE",
+      "ambito": "12",
+      "municipioCodigo": "23",
+      "fila": 267
+    },
+    {
+      "catalogo": "008",
+      "codigo": "11",
+      "valor": "NVO EDÉN S JUAN",
+      "ambito": "12",
+      "municipioCodigo": "21",
+      "fila": 268
+    },
+    {
+      "catalogo": "008",
+      "codigo": "12",
+      "valor": "QUELEPA",
+      "ambito": "12",
+      "municipioCodigo": "22",
+      "fila": 269
+    },
+    {
+      "catalogo": "008",
+      "codigo": "13",
+      "valor": "SAN ANT D MOSCO",
+      "ambito": "12",
+      "municipioCodigo": "21",
+      "fila": 270
+    },
+    {
+      "catalogo": "008",
+      "codigo": "14",
+      "valor": "SAN GERARDO",
+      "ambito": "12",
+      "municipioCodigo": "21",
+      "fila": 271
+    },
+    {
+      "catalogo": "008",
+      "codigo": "15",
+      "valor": "SAN JORGE",
+      "ambito": "12",
+      "municipioCodigo": "23",
+      "fila": 272
+    },
+    {
+      "catalogo": "008",
+      "codigo": "16",
+      "valor": "SAN LUIS REINA",
+      "ambito": "12",
+      "municipioCodigo": "21",
+      "fila": 273
+    },
+    {
+      "catalogo": "008",
+      "codigo": "17",
+      "valor": "SAN MIGUEL",
+      "ambito": "12",
+      "municipioCodigo": "22",
+      "fila": 274
+    },
+    {
+      "catalogo": "008",
+      "codigo": "18",
+      "valor": "SAN RAF ORIENTE",
+      "ambito": "12",
+      "municipioCodigo": "23",
+      "fila": 275
+    },
+    {
+      "catalogo": "008",
+      "codigo": "19",
+      "valor": "SESORI",
+      "ambito": "12",
+      "municipioCodigo": "21",
+      "fila": 276
+    },
+    {
+      "catalogo": "008",
+      "codigo": "20",
+      "valor": "ULUAZAPA",
+      "ambito": "12",
+      "municipioCodigo": "22",
+      "fila": 277
+    },
+    {
+      "catalogo": "008",
+      "codigo": "01",
+      "valor": "ARAMBALA",
+      "ambito": "13",
+      "municipioCodigo": "27",
+      "fila": 278
+    },
+    {
+      "catalogo": "008",
+      "codigo": "02",
+      "valor": "CACAOPERA",
+      "ambito": "13",
+      "municipioCodigo": "27",
+      "fila": 279
+    },
+    {
+      "catalogo": "008",
+      "codigo": "03",
+      "valor": "CORINTO",
+      "ambito": "13",
+      "municipioCodigo": "27",
+      "fila": 280
+    },
+    {
+      "catalogo": "008",
+      "codigo": "04",
+      "valor": "CHILANGA",
+      "ambito": "13",
+      "municipioCodigo": "28",
+      "fila": 281
+    },
+    {
+      "catalogo": "008",
+      "codigo": "05",
+      "valor": "DELIC DE CONCEP",
+      "ambito": "13",
+      "municipioCodigo": "28",
+      "fila": 282
+    },
+    {
+      "catalogo": "008",
+      "codigo": "06",
+      "valor": "EL DIVISADERO",
+      "ambito": "13",
+      "municipioCodigo": "28",
+      "fila": 283
+    },
+    {
+      "catalogo": "008",
+      "codigo": "07",
+      "valor": "EL ROSARIO",
+      "ambito": "13",
+      "municipioCodigo": "27",
+      "fila": 284
+    },
+    {
+      "catalogo": "008",
+      "codigo": "08",
+      "valor": "GUALOCOCTI",
+      "ambito": "13",
+      "municipioCodigo": "28",
+      "fila": 285
+    },
+    {
+      "catalogo": "008",
+      "codigo": "09",
+      "valor": "GUATAJIAGUA",
+      "ambito": "13",
+      "municipioCodigo": "28",
+      "fila": 286
+    },
+    {
+      "catalogo": "008",
+      "codigo": "10",
+      "valor": "JOATECA",
+      "ambito": "13",
+      "municipioCodigo": "27",
+      "fila": 287
+    },
+    {
+      "catalogo": "008",
+      "codigo": "11",
+      "valor": "JOCOAITIQUE",
+      "ambito": "13",
+      "municipioCodigo": "27",
+      "fila": 288
+    },
+    {
+      "catalogo": "008",
+      "codigo": "12",
+      "valor": "JOCORO",
+      "ambito": "13",
+      "municipioCodigo": "28",
+      "fila": 289
+    },
+    {
+      "catalogo": "008",
+      "codigo": "13",
+      "valor": "LOLOTIQUILLO",
+      "ambito": "13",
+      "municipioCodigo": "28",
+      "fila": 290
+    },
+    {
+      "catalogo": "008",
+      "codigo": "14",
+      "valor": "MEANGUERA",
+      "ambito": "13",
+      "municipioCodigo": "27",
+      "fila": 291
+    },
+    {
+      "catalogo": "008",
+      "codigo": "15",
+      "valor": "OSICALA",
+      "ambito": "13",
+      "municipioCodigo": "28",
+      "fila": 292
+    },
+    {
+      "catalogo": "008",
+      "codigo": "16",
+      "valor": "PERQUÍN",
+      "ambito": "13",
+      "municipioCodigo": "27",
+      "fila": 293
+    },
+    {
+      "catalogo": "008",
+      "codigo": "17",
+      "valor": "SAN CARLOS",
+      "ambito": "13",
+      "municipioCodigo": "28",
+      "fila": 294
+    },
+    {
+      "catalogo": "008",
+      "codigo": "18",
+      "valor": "SAN FERNANDO",
+      "ambito": "13",
+      "municipioCodigo": "27",
+      "fila": 295
+    },
+    {
+      "catalogo": "008",
+      "codigo": "19",
+      "valor": "SAN FCO GOTERA",
+      "ambito": "13",
+      "municipioCodigo": "28",
+      "fila": 296
+    },
+    {
+      "catalogo": "008",
+      "codigo": "20",
+      "valor": "SAN ISIDRO",
+      "ambito": "13",
+      "municipioCodigo": "27",
+      "fila": 297
+    },
+    {
+      "catalogo": "008",
+      "codigo": "21",
+      "valor": "SAN SIMÓN",
+      "ambito": "13",
+      "municipioCodigo": "28",
+      "fila": 298
+    },
+    {
+      "catalogo": "008",
+      "codigo": "22",
+      "valor": "SENSEMBRA",
+      "ambito": "13",
+      "municipioCodigo": "28",
+      "fila": 299
+    },
+    {
+      "catalogo": "008",
+      "codigo": "23",
+      "valor": "SOCIEDAD",
+      "ambito": "13",
+      "municipioCodigo": "28",
+      "fila": 300
+    },
+    {
+      "catalogo": "008",
+      "codigo": "24",
+      "valor": "TOROLA",
+      "ambito": "13",
+      "municipioCodigo": "27",
+      "fila": 301
+    },
+    {
+      "catalogo": "008",
+      "codigo": "25",
+      "valor": "YAMABAL",
+      "ambito": "13",
+      "municipioCodigo": "28",
+      "fila": 302
+    },
+    {
+      "catalogo": "008",
+      "codigo": "26",
+      "valor": "YOLOAIQUÍN",
+      "ambito": "13",
+      "municipioCodigo": "28",
+      "fila": 303
+    },
+    {
+      "catalogo": "008",
+      "codigo": "01",
+      "valor": "ANAMOROS",
+      "ambito": "14",
+      "municipioCodigo": "19",
+      "fila": 304
+    },
+    {
+      "catalogo": "008",
+      "codigo": "02",
+      "valor": "BOLÍVAR",
+      "ambito": "14",
+      "municipioCodigo": "19",
+      "fila": 305
+    },
+    {
+      "catalogo": "008",
+      "codigo": "03",
+      "valor": "CONCEP DE OTE",
+      "ambito": "14",
+      "municipioCodigo": "19",
+      "fila": 306
+    },
+    {
+      "catalogo": "008",
+      "codigo": "04",
+      "valor": "CONCHAGUA",
+      "ambito": "14",
+      "municipioCodigo": "20",
+      "fila": 307
+    },
+    {
+      "catalogo": "008",
+      "codigo": "05",
+      "valor": "EL CARMEN",
+      "ambito": "14",
+      "municipioCodigo": "20",
+      "fila": 308
+    },
+    {
+      "catalogo": "008",
+      "codigo": "06",
+      "valor": "EL SAUCE",
+      "ambito": "14",
+      "municipioCodigo": "19",
+      "fila": 309
+    },
+    {
+      "catalogo": "008",
+      "codigo": "07",
+      "valor": "INTIPUCÁ",
+      "ambito": "14",
+      "municipioCodigo": "20",
+      "fila": 310
+    },
+    {
+      "catalogo": "008",
+      "codigo": "08",
+      "valor": "LA UNIÓN",
+      "ambito": "14",
+      "municipioCodigo": "20",
+      "fila": 311
+    },
+    {
+      "catalogo": "008",
+      "codigo": "09",
+      "valor": "LISLIQUE",
+      "ambito": "14",
+      "municipioCodigo": "19",
+      "fila": 312
+    },
+    {
+      "catalogo": "008",
+      "codigo": "10",
+      "valor": "MEANG DEL GOLFO",
+      "ambito": "14",
+      "municipioCodigo": "20",
+      "fila": 313
+    },
+    {
+      "catalogo": "008",
+      "codigo": "11",
+      "valor": "NUEVA ESPARTA",
+      "ambito": "14",
+      "municipioCodigo": "19",
+      "fila": 314
+    },
+    {
+      "catalogo": "008",
+      "codigo": "12",
+      "valor": "PASAQUINA",
+      "ambito": "14",
+      "municipioCodigo": "19",
+      "fila": 315
+    },
+    {
+      "catalogo": "008",
+      "codigo": "13",
+      "valor": "POLORÓS",
+      "ambito": "14",
+      "municipioCodigo": "19",
+      "fila": 316
+    },
+    {
+      "catalogo": "008",
+      "codigo": "14",
+      "valor": "SAN ALEJO",
+      "ambito": "14",
+      "municipioCodigo": "20",
+      "fila": 317
+    },
+    {
+      "catalogo": "008",
+      "codigo": "15",
+      "valor": "SAN JOSE",
+      "ambito": "14",
+      "municipioCodigo": "19",
+      "fila": 318
+    },
+    {
+      "catalogo": "008",
+      "codigo": "16",
+      "valor": "SANTA ROSA LIMA",
+      "ambito": "14",
+      "municipioCodigo": "19",
+      "fila": 319
+    },
+    {
+      "catalogo": "008",
+      "codigo": "17",
+      "valor": "YAYANTIQUE",
+      "ambito": "14",
+      "municipioCodigo": "20",
+      "fila": 320
+    },
+    {
+      "catalogo": "008",
+      "codigo": "18",
+      "valor": "YUCUAIQUÍN",
+      "ambito": "14",
+      "municipioCodigo": "20",
+      "fila": 321
+    },
+    {
+      "catalogo": "012",
+      "codigo": "00",
+      "valor": "Otro (Para extranjeros)",
+      "ambito": "",
+      "municipioCodigo": null,
+      "fila": 349
+    },
+    {
+      "catalogo": "012",
+      "codigo": "01",
+      "valor": "Ahuachapán",
+      "ambito": "",
+      "municipioCodigo": null,
+      "fila": 350
+    },
+    {
+      "catalogo": "012",
+      "codigo": "02",
+      "valor": "Santa Ana",
+      "ambito": "",
+      "municipioCodigo": null,
+      "fila": 351
+    },
+    {
+      "catalogo": "012",
+      "codigo": "03",
+      "valor": "Sonsonate",
+      "ambito": "",
+      "municipioCodigo": null,
+      "fila": 352
+    },
+    {
+      "catalogo": "012",
+      "codigo": "04",
+      "valor": "Chalatenango",
+      "ambito": "",
+      "municipioCodigo": null,
+      "fila": 353
+    },
+    {
+      "catalogo": "012",
+      "codigo": "05",
+      "valor": "La Libertad",
+      "ambito": "",
+      "municipioCodigo": null,
+      "fila": 354
+    },
+    {
+      "catalogo": "012",
+      "codigo": "06",
+      "valor": "San Salvador",
+      "ambito": "",
+      "municipioCodigo": null,
+      "fila": 355
+    },
+    {
+      "catalogo": "012",
+      "codigo": "07",
+      "valor": "Cuscatlán",
+      "ambito": "",
+      "municipioCodigo": null,
+      "fila": 356
+    },
+    {
+      "catalogo": "012",
+      "codigo": "08",
+      "valor": "La Paz",
+      "ambito": "",
+      "municipioCodigo": null,
+      "fila": 357
+    },
+    {
+      "catalogo": "012",
+      "codigo": "09",
+      "valor": "Cabañas",
+      "ambito": "",
+      "municipioCodigo": null,
+      "fila": 358
+    },
+    {
+      "catalogo": "012",
+      "codigo": "10",
+      "valor": "San Vicente",
+      "ambito": "",
+      "municipioCodigo": null,
+      "fila": 359
+    },
+    {
+      "catalogo": "012",
+      "codigo": "11",
+      "valor": "Usulután",
+      "ambito": "",
+      "municipioCodigo": null,
+      "fila": 360
+    },
+    {
+      "catalogo": "012",
+      "codigo": "12",
+      "valor": "San Miguel",
+      "ambito": "",
+      "municipioCodigo": null,
+      "fila": 361
+    },
+    {
+      "catalogo": "012",
+      "codigo": "13",
+      "valor": "Morazán",
+      "ambito": "",
+      "municipioCodigo": null,
+      "fila": 362
+    },
+    {
+      "catalogo": "012",
+      "codigo": "14",
+      "valor": "La Unión",
+      "ambito": "",
+      "municipioCodigo": null,
+      "fila": 363
+    },
+    {
+      "catalogo": "013",
+      "codigo": "00",
+      "valor": "Otro (Para extranjeros)",
+      "ambito": "00",
+      "municipioCodigo": null,
+      "fila": 367
+    },
+    {
+      "catalogo": "013",
+      "codigo": "13",
+      "valor": "AHUACHAPAN NORTE",
+      "ambito": "01",
+      "municipioCodigo": null,
+      "fila": 368
+    },
+    {
+      "catalogo": "013",
+      "codigo": "14",
+      "valor": "AHUACHAPAN CENTRO",
+      "ambito": "01",
+      "municipioCodigo": null,
+      "fila": 369
+    },
+    {
+      "catalogo": "013",
+      "codigo": "15",
+      "valor": "AHUACHAPAN SUR",
+      "ambito": "01",
+      "municipioCodigo": null,
+      "fila": 370
+    },
+    {
+      "catalogo": "013",
+      "codigo": "14",
+      "valor": "SANTA ANA NORTE",
+      "ambito": "02",
+      "municipioCodigo": null,
+      "fila": 371
+    },
+    {
+      "catalogo": "013",
+      "codigo": "15",
+      "valor": "SANTA ANA CENTRO",
+      "ambito": "02",
+      "municipioCodigo": null,
+      "fila": 372
+    },
+    {
+      "catalogo": "013",
+      "codigo": "16",
+      "valor": "SANTA ANA ESTE",
+      "ambito": "02",
+      "municipioCodigo": null,
+      "fila": 373
+    },
+    {
+      "catalogo": "013",
+      "codigo": "17",
+      "valor": "SANTA ANA OESTE",
+      "ambito": "02",
+      "municipioCodigo": null,
+      "fila": 374
+    },
+    {
+      "catalogo": "013",
+      "codigo": "17",
+      "valor": "SONSONATE NORTE",
+      "ambito": "03",
+      "municipioCodigo": null,
+      "fila": 375
+    },
+    {
+      "catalogo": "013",
+      "codigo": "18",
+      "valor": "SONSONATE CENTRO",
+      "ambito": "03",
+      "municipioCodigo": null,
+      "fila": 376
+    },
+    {
+      "catalogo": "013",
+      "codigo": "19",
+      "valor": "SONSONATE ESTE",
+      "ambito": "03",
+      "municipioCodigo": null,
+      "fila": 377
+    },
+    {
+      "catalogo": "013",
+      "codigo": "20",
+      "valor": "SONSONATE OESTE",
+      "ambito": "03",
+      "municipioCodigo": null,
+      "fila": 378
+    },
+    {
+      "catalogo": "013",
+      "codigo": "34",
+      "valor": "CHALATENANGO NORTE",
+      "ambito": "04",
+      "municipioCodigo": null,
+      "fila": 379
+    },
+    {
+      "catalogo": "013",
+      "codigo": "35",
+      "valor": "CHALATENANGO CENTRO",
+      "ambito": "04",
+      "municipioCodigo": null,
+      "fila": 380
+    },
+    {
+      "catalogo": "013",
+      "codigo": "36",
+      "valor": "CHALATENANGO SUR",
+      "ambito": "04",
+      "municipioCodigo": null,
+      "fila": 381
+    },
+    {
+      "catalogo": "013",
+      "codigo": "23",
+      "valor": "LA LIBERTAD NORTE",
+      "ambito": "05",
+      "municipioCodigo": null,
+      "fila": 382
+    },
+    {
+      "catalogo": "013",
+      "codigo": "24",
+      "valor": "LA LIBERTAD CENTRO",
+      "ambito": "05",
+      "municipioCodigo": null,
+      "fila": 383
+    },
+    {
+      "catalogo": "013",
+      "codigo": "25",
+      "valor": "LA LIBERTAD OESTE",
+      "ambito": "05",
+      "municipioCodigo": null,
+      "fila": 384
+    },
+    {
+      "catalogo": "013",
+      "codigo": "26",
+      "valor": "LA LIBERTAD ESTE",
+      "ambito": "05",
+      "municipioCodigo": null,
+      "fila": 385
+    },
+    {
+      "catalogo": "013",
+      "codigo": "27",
+      "valor": "LA LIBERTAD COSTA",
+      "ambito": "05",
+      "municipioCodigo": null,
+      "fila": 386
+    },
+    {
+      "catalogo": "013",
+      "codigo": "28",
+      "valor": "LA LIBERTAD SUR",
+      "ambito": "05",
+      "municipioCodigo": null,
+      "fila": 387
+    },
+    {
+      "catalogo": "013",
+      "codigo": "20",
+      "valor": "SAN SALVADOR NORTE",
+      "ambito": "06",
+      "municipioCodigo": null,
+      "fila": 388
+    },
+    {
+      "catalogo": "013",
+      "codigo": "21",
+      "valor": "SAN SALVADOR OESTE",
+      "ambito": "06",
+      "municipioCodigo": null,
+      "fila": 389
+    },
+    {
+      "catalogo": "013",
+      "codigo": "22",
+      "valor": "SAN SALVADOR ESTE",
+      "ambito": "06",
+      "municipioCodigo": null,
+      "fila": 390
+    },
+    {
+      "catalogo": "013",
+      "codigo": "23",
+      "valor": "SAN SALVADOR CENTRO",
+      "ambito": "06",
+      "municipioCodigo": null,
+      "fila": 391
+    },
+    {
+      "catalogo": "013",
+      "codigo": "24",
+      "valor": "SAN SALVADOR SUR",
+      "ambito": "06",
+      "municipioCodigo": null,
+      "fila": 392
+    },
+    {
+      "catalogo": "013",
+      "codigo": "17",
+      "valor": "CUSCATLAN NORTE",
+      "ambito": "07",
+      "municipioCodigo": null,
+      "fila": 393
+    },
+    {
+      "catalogo": "013",
+      "codigo": "18",
+      "valor": "CUSCATLAN SUR",
+      "ambito": "07",
+      "municipioCodigo": null,
+      "fila": 394
+    },
+    {
+      "catalogo": "013",
+      "codigo": "23",
+      "valor": "LA PAZ OESTE",
+      "ambito": "08",
+      "municipioCodigo": null,
+      "fila": 395
+    },
+    {
+      "catalogo": "013",
+      "codigo": "24",
+      "valor": "LA PAZ CENTRO",
+      "ambito": "08",
+      "municipioCodigo": null,
+      "fila": 396
+    },
+    {
+      "catalogo": "013",
+      "codigo": "25",
+      "valor": "LA PAZ ESTE",
+      "ambito": "08",
+      "municipioCodigo": null,
+      "fila": 397
+    },
+    {
+      "catalogo": "013",
+      "codigo": "10",
+      "valor": "CABAÑAS ESTE",
+      "ambito": "09",
+      "municipioCodigo": null,
+      "fila": 398
+    },
+    {
+      "catalogo": "013",
+      "codigo": "11",
+      "valor": "CABAÑAS OESTE",
+      "ambito": "09",
+      "municipioCodigo": null,
+      "fila": 399
+    },
+    {
+      "catalogo": "013",
+      "codigo": "14",
+      "valor": "SAN VICENTE NORTE",
+      "ambito": "10",
+      "municipioCodigo": null,
+      "fila": 400
+    },
+    {
+      "catalogo": "013",
+      "codigo": "15",
+      "valor": "SAN VICENTE SUR",
+      "ambito": "10",
+      "municipioCodigo": null,
+      "fila": 401
+    },
+    {
+      "catalogo": "013",
+      "codigo": "24",
+      "valor": "USULUTAN NORTE",
+      "ambito": "11",
+      "municipioCodigo": null,
+      "fila": 402
+    },
+    {
+      "catalogo": "013",
+      "codigo": "25",
+      "valor": "USULUTAN ESTE",
+      "ambito": "11",
+      "municipioCodigo": null,
+      "fila": 403
+    },
+    {
+      "catalogo": "013",
+      "codigo": "26",
+      "valor": "USULUTAN OESTE",
+      "ambito": "11",
+      "municipioCodigo": null,
+      "fila": 404
+    },
+    {
+      "catalogo": "013",
+      "codigo": "21",
+      "valor": "SAN MIGUEL NORTE",
+      "ambito": "12",
+      "municipioCodigo": null,
+      "fila": 405
+    },
+    {
+      "catalogo": "013",
+      "codigo": "22",
+      "valor": "SAN MIGUEL CENTRO",
+      "ambito": "12",
+      "municipioCodigo": null,
+      "fila": 406
+    },
+    {
+      "catalogo": "013",
+      "codigo": "23",
+      "valor": "SAN MIGUEL OESTE",
+      "ambito": "12",
+      "municipioCodigo": null,
+      "fila": 407
+    },
+    {
+      "catalogo": "013",
+      "codigo": "27",
+      "valor": "MORAZAN NORTE",
+      "ambito": "13",
+      "municipioCodigo": null,
+      "fila": 408
+    },
+    {
+      "catalogo": "013",
+      "codigo": "28",
+      "valor": "MORAZAN SUR",
+      "ambito": "13",
+      "municipioCodigo": null,
+      "fila": 409
+    },
+    {
+      "catalogo": "013",
+      "codigo": "19",
+      "valor": "LA UNION NORTE",
+      "ambito": "14",
+      "municipioCodigo": null,
+      "fila": 410
+    },
+    {
+      "catalogo": "013",
+      "codigo": "20",
+      "valor": "LA UNION SUR",
+      "ambito": "14",
+      "municipioCodigo": null,
+      "fila": 411
+    }
+  ]
+}

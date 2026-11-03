@@ -30,14 +30,14 @@
                     "description": "Número de Control",
                     "maxLength": 31,
                     "minLength": 31,
-                    "pattern": "^DTE-05-(M|B|S|P)([0-9]{3})(P)([0-9]{3})-[0-9]{15}$"
+                    "pattern": "^(?!.*[\r\n])DTE-05-(M|B|S|P)([0-9]{3})(P)([0-9]{3})-[0-9]{15}$"
                 },
                 "codigoGeneracion": {
                     "type": "string",
                     "description": "Código de Generación",
                     "maxLength": 36,
                     "minLength": 36,
-                    "pattern": "^[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}$"
+                    "pattern": "^(?!.*[\r\n])[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}$"
                 },
                 "tipoModelo": {
                     "type": "number",
@@ -87,7 +87,7 @@
                 "horEmi": {
                     "type": "string",
                     "description": "Hora de Generación",
-                    "pattern": "^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]?$"
+                    "pattern": "^(?!.*[\r\n])(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]?$"
                 },
                 "tipoMoneda": {
                     "type": "string",
@@ -102,7 +102,7 @@
                         "null"
                     ],
                     "description": "Fusiónes y otros",
-                    "pattern": "^(?!([0-9])\\1+$)(?!0{7})([0-9]{14}|[0-9]{9})$"
+                    "pattern": "^(?!.*[\r\n])(?!([0-9])\\1+$)(?!0{7})([0-9]{14}|[0-9]{9})$"
                 }
             },
             "additionalProperties": false,

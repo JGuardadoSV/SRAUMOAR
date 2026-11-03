@@ -19,19 +19,22 @@ public sealed class DeleteModel : PageModel
     private readonly IDteJsonFactory _jsonFactory;
     private readonly IDteTransmisionService _dteTransmision;
     private readonly IDteEmailQueueService _emailQueue;
+    private readonly IDteConciliacionService _conciliacion;
 
     public DeleteModel(
         Contexto context,
         IConfiguracionFeService configuracionFe,
         IDteJsonFactory jsonFactory,
         IDteTransmisionService dteTransmision,
-        IDteEmailQueueService emailQueue)
+        IDteEmailQueueService emailQueue,
+        IDteConciliacionService conciliacion)
     {
         _context = context;
         _configuracionFe = configuracionFe;
         _jsonFactory = jsonFactory;
         _dteTransmision = dteTransmision;
         _emailQueue = emailQueue;
+        _conciliacion = conciliacion;
     }
 
     [BindProperty]
@@ -72,7 +75,13 @@ public sealed class DeleteModel : PageModel
             var configuracion = await _configuracionFe.ObtenerAsync(ambienteFiscal, cancellationToken);
             var reanudando = factura.EstadoTransmision == DteEstados.Anulando && !string.IsNullOrWhiteSpace(factura.JsonAnulacion);
             if (reanudando)
-                throw new InvalidOperationException("La invalidación ya fue enviada o quedó incierta. Debe conciliarse con Hacienda usando el mismo código; no se retransmitirá automáticamente.");
+            {
+                var mensajeConciliacion = await _conciliacion.ConciliarAsync(factura.FacturaId, cancellationToken);
+                var anulada = await _context.Facturas.AsNoTracking().AnyAsync(x => x.FacturaId == factura.FacturaId && x.Anulada, cancellationToken);
+                if (!anulada) throw new InvalidOperationException(mensajeConciliacion);
+                TempData["Success"] = mensajeConciliacion;
+                return esAjax ? new JsonResult(new { ok = true, mensaje = mensajeConciliacion }) : RedirectToPage("./Index");
+            }
             if (!reanudando && !DteEstadoFiscal.EsAceptado(factura))
                 throw new InvalidOperationException("El documento no está aceptado o ya tiene una invalidación en proceso.");
             var jsonInvalidacion = _jsonFactory.CrearInvalidacion(

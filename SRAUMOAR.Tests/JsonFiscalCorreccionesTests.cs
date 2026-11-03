@@ -11,6 +11,8 @@ public sealed class JsonFiscalCorreccionesTests
     [Theory]
     [InlineData("05", "00")]
     [InlineData("05", "01")]
+    [InlineData("06", "00")]
+    [InlineData("06", "01")]
     public void NotaParcialCumpleEsquemaYNoEscalaIvaDosVeces(string tipo, string ambiente)
     {
         var original = Original(ambiente);
@@ -51,11 +53,15 @@ public sealed class JsonFiscalCorreccionesTests
     }
 
     [Fact]
-    public void EsquemaDebitoCorruptoSeBloqueaSinInventarCamposFiscales()
+    public void DebitoConEsquemaOficialCorregidoNoInventaCampos()
     {
-        var error = Assert.Throws<InvalidOperationException>(() => new DteJsonFactory().CrearNota(Original("00").ToString(), "06",
-            "DTE-06-M001P001-000000000000001", Guid.NewGuid().ToString(), 56.5m, "Ajuste"));
-        Assert.Contains("nombre vacío", error.Message);
+        var json = new DteJsonFactory().CrearNota(Original("00").ToString(), "06",
+            "DTE-06-M001P001-000000000000001", Guid.NewGuid().ToString(), 56.5m, "Ajuste");
+        var root = JObject.Parse(json);
+        Assert.NotNull(root["resumen"]!["tributos"]);
+        Assert.NotNull(root["cuerpoDocumento"]![0]!["tributos"]);
+        Assert.Null(((JObject)root["resumen"]!).Property(""));
+        Assert.Null(((JObject)root["cuerpoDocumento"]![0]!).Property(""));
     }
 
     [Theory]

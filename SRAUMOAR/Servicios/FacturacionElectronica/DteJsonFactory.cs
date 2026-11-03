@@ -179,7 +179,7 @@ public sealed class DteJsonFactory : IDteJsonFactory
         return json;
     }
 
-    // Esquema vigente de FacturaME: contingencia v4.
+    // Esquema oficial: contingencia v4.
     public string CrearContingencia(string jsonDte, int tipoContingencia, string motivo, string nombreResponsable, string nitResponsable, ConfiguracionFacturacionElectronica? configuracion = null)
     {
         if (tipoContingencia is < 1 or > 5)
@@ -240,7 +240,7 @@ public sealed class DteJsonFactory : IDteJsonFactory
         return evento.ToString(Formatting.None);
     }
 
-    // Esquema vigente de FacturaME: invalidación v3.
+    // Esquema oficial: invalidación v3.
     public string CrearInvalidacion(string jsonDte, string selloRecepcion, string motivoAnulacion, string nombreResponsable, string nitResponsable, ConfiguracionFacturacionElectronica? configuracion = null)
     {
         if (string.IsNullOrWhiteSpace(selloRecepcion))

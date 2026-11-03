@@ -5,6 +5,11 @@
     var alumno = ViewData["Alumno"] as SRAUMOAR.Entidades.Alumnos.Alumno;
 }
 
+@if (alumno is not null)
+{
+    <partial name="_UbicacionAlumnoModal" model='new SRAUMOAR.Modelos.UbicacionAlumnoModalModel(alumno.AlumnoId, alumno.Nombres + " " + alumno.Apellidos)' />
+}
+
 <style>
     :root {
         --primary-color: #195e2c;

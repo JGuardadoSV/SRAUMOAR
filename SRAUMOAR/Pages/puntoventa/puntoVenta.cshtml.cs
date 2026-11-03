@@ -24,9 +24,6 @@ namespace SRAUMOAR.Pages.puntoventa
         [BindProperty]
         public FacturaViewModel Factura { get; set; } = new FacturaViewModel();
         [BindProperty] public Guid OperacionEmisionId { get; set; }
-        public IReadOnlyList<CatalogoFeItem> CatalogoDepartamentos { get; private set; } = Array.Empty<CatalogoFeItem>();
-        public IReadOnlyList<CatalogoFeItem> CatalogoMunicipios { get; private set; } = Array.Empty<CatalogoFeItem>();
-        public IReadOnlyList<CatalogoFeItem> CatalogoDistritos { get; private set; } = Array.Empty<CatalogoFeItem>();
         public IReadOnlyList<CatalogoFeItem> CatalogoPaises { get; private set; } = Array.Empty<CatalogoFeItem>();
         public IReadOnlyList<CatalogoFeItem> CatalogoDonaciones { get; private set; } = Array.Empty<CatalogoFeItem>();
         private readonly ICorrelativoService _correlativoService;
@@ -361,9 +358,10 @@ namespace SRAUMOAR.Pages.puntoventa
             }
             try
             {
-                distritoReceptor = DteDocumentoActualizador.ResolverDistritoReceptor(
-                    Factura.Receptor.CodigoDepartamento, Factura.Receptor.CodigoMunicipio, Factura.Receptor.DistritoId,
-                    CatalogoDepartamentos, CatalogoMunicipios, CatalogoDistritos);
+                CatalogoTerritorialFiscal.Exigir(Factura.Receptor.CodigoDepartamento, Factura.Receptor.CodigoMunicipio, Factura.Receptor.CodigoDistrito);
+                Factura.Receptor.CodigoDepartamento = CatalogoTerritorialFiscal.Codigo(Factura.Receptor.CodigoDepartamento);
+                Factura.Receptor.CodigoMunicipio = CatalogoTerritorialFiscal.Codigo(Factura.Receptor.CodigoMunicipio);
+                distritoReceptor = CatalogoTerritorialFiscal.Codigo(Factura.Receptor.CodigoDistrito);
                 Factura.Receptor.Direccion.Departamento = Factura.Receptor.CodigoDepartamento;
                 Factura.Receptor.Direccion.Municipio = Factura.Receptor.CodigoMunicipio;
                 ModelState.Remove("Factura.Receptor.Direccion.Departamento");
@@ -1324,18 +1322,12 @@ namespace SRAUMOAR.Pages.puntoventa
         {
             try
             {
-                CatalogoDepartamentos = await _catalogos.ObtenerAsync("CAT-012", "1.1", cancellationToken);
-                CatalogoMunicipios = await _catalogos.ObtenerAsync("CAT-013", "1.1", cancellationToken);
-                CatalogoDistritos = await _catalogos.ObtenerAsync("CAT-008", "1.1", cancellationToken);
                 CatalogoPaises = await _catalogos.ObtenerAsync("CAT-020", "1.1", cancellationToken);
                 CatalogoDonaciones = await _catalogos.ObtenerAsync("CAT-026", "1.1", cancellationToken);
             }
             catch
             {
-                CatalogoDepartamentos = Array.Empty<CatalogoFeItem>();
-                CatalogoMunicipios = Array.Empty<CatalogoFeItem>();
-                CatalogoDistritos = Array.Empty<CatalogoFeItem>();
-                // La emisión se bloquea sin catálogos fiscales; no se usa geografía legacy.
+                // Estos catálogos complementarios no sustituyen la fuente territorial incorporada.
             }
         }
 

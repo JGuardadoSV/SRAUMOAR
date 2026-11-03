@@ -1,0 +1,31 @@
+@model SRAUMOAR.Modelos.SelectorTerritorioFiscalModel
+@using SRAUMOAR.Servicios.FacturacionElectronica
+@{
+    var id = Model.Prefijo.Replace('.', '_');
+    var datos = CatalogoTerritorialFiscal.Entradas.Select(e => new { catalogo = e.Catalogo, codigo = e.Codigo,
+        nombre = e.Valor, departamento = e.Ambito, municipio = e.MunicipioCodigo });
+}
+<div class="row g-3 mb-3" data-territorio-fiscal data-departamento="@Model.Departamento" data-municipio="@Model.Municipio" data-distrito="@Model.Distrito">
+    <script type="application/json" data-territorio-datos>@Html.Raw(System.Text.Json.JsonSerializer.Serialize(datos))</script>
+    <div class="col-md-4">
+        <label for="@(id)_Departamento" class="form-label">Departamento <span class="text-danger">*</span></label>
+        <select id="@(id)_Departamento" name="@Model.CampoDepartamento" class="form-select form-control" data-territorio-departamento required>
+            <option value="">Seleccione departamento</option>
+        </select>
+        @Html.ValidationMessage(Model.CampoDepartamento, null, new { @class = "text-danger" })
+    </div>
+    <div class="col-md-4">
+        <label for="@(id)_Municipio" class="form-label">Municipio <span class="text-danger">*</span></label>
+        <select id="@(id)_Municipio" name="@Model.CampoMunicipio" class="form-select form-control" data-territorio-municipio required disabled>
+            <option value="">Seleccione departamento primero</option>
+        </select>
+        @Html.ValidationMessage(Model.CampoMunicipio, null, new { @class = "text-danger" })
+    </div>
+    <div class="col-md-4">
+        <label for="@(id)_Distrito" class="form-label">Distrito <span class="text-danger">*</span></label>
+        <select id="@(id)_Distrito" name="@Model.CampoDistrito" class="form-select form-control" data-territorio-distrito required disabled>
+            <option value="">Seleccione municipio primero</option>
+        </select>
+        @Html.ValidationMessage(Model.CampoDistrito, null, new { @class = "text-danger" })
+    </div>
+</div>

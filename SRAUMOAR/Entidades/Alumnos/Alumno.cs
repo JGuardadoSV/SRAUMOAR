@@ -87,6 +87,19 @@ namespace SRAUMOAR.Entidades.Alumnos
 
         public virtual Municipio? Municipio { get; set; }
 
+        // Códigos fiscales oficiales; MunicipioId pertenece a la jerarquía histórica.
+        [StringLength(2)]
+        [Display(Name = "Departamento fiscal")]
+        public string? CodigoDepartamentoFiscal { get; set; }
+
+        [StringLength(2)]
+        [Display(Name = "Municipio fiscal")]
+        public string? CodigoMunicipioFiscal { get; set; }
+
+        [StringLength(2)]
+        [Display(Name = "Distrito fiscal")]
+        public string? CodigoDistritoFiscal { get; set; }
+
 
 
         [Display(Name = "Carrera")]

@@ -546,6 +546,7 @@
                asp-route-FechaInicio="@Model.FechaInicio?.ToString("yyyy-MM-dd")" 
                asp-route-FechaFin="@Model.FechaFin?.ToString("yyyy-MM-dd")" 
                asp-route-EstadoFiltro="@Model.EstadoFiltro"
+               asp-route-AmbienteFiltro="@Model.AmbienteFiltro"
                class="btn btn-danger me-2" title="Exportar a PDF"
                onclick="return confirmarGeneracionReporte('pdf')">
                 <i class="fas fa-file-pdf me-2"></i>PDF
@@ -554,6 +555,7 @@
                asp-route-FechaInicio="@Model.FechaInicio?.ToString("yyyy-MM-dd")" 
                asp-route-FechaFin="@Model.FechaFin?.ToString("yyyy-MM-dd")" 
                asp-route-EstadoFiltro="@Model.EstadoFiltro"
+               asp-route-AmbienteFiltro="@Model.AmbienteFiltro"
                class="btn btn-success" title="Exportar a Excel"
                onclick="return confirmarGeneracionReporte('excel')">
                 <i class="fas fa-file-excel me-2"></i>Excel
@@ -592,6 +594,13 @@
     <!-- Filtros -->
     <div class="filters-container" style="background: white; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid var(--border-color);">
         <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label asp-for="AmbienteFiltro" class="form-label">Ambiente fiscal</label>
+                <select asp-for="AmbienteFiltro" class="form-select">
+                    <option value="01">Producción</option>
+                    <option value="00">Pruebas</option>
+                </select>
+            </div>
             <div class="col-md-3">
                 <label for="FechaInicio" class="form-label fw-semibold text-muted">
                     <i class="fas fa-calendar-alt me-2"></i>Fecha Inicio
@@ -772,6 +781,14 @@
                                 
                                 
                                         <div class="d-flex gap-1 flex-wrap">
+                                        @if (!item.Anulada && !SRAUMOAR.Servicios.FacturacionElectronica.DteEstadoFiscal.EsAceptado(item))
+                                        {
+                                            <form method="post" asp-page-handler="Conciliar" asp-route-id="@item.FacturaId"
+                                                  asp-route-AmbienteFiltro="@Model.AmbienteFiltro" asp-route-FechaInicio="@Model.FechaInicio?.ToString("yyyy-MM-dd")"
+                                                  asp-route-FechaFin="@Model.FechaFin?.ToString("yyyy-MM-dd")">
+                                                <button type="submit" class="btn btn-outline-secondary btn-sm">Conciliar</button>
+                                            </form>
+                                        }
                                         <button class="btn btn-outline-danger btn-sm" onclick="verPDF(@item.FacturaId, this)" title="Ver PDF">
                                                 PDF
                                             </button>
@@ -835,7 +852,8 @@
                                             <a class="page-link" href="@Url.Page("./Index", new { 
                                                 FechaInicio = Model.FechaInicio?.ToString("yyyy-MM-dd"), 
                                                 FechaFin = Model.FechaFin?.ToString("yyyy-MM-dd"), 
-                                                EstadoFiltro = Model.EstadoFiltro, 
+                                                EstadoFiltro = Model.EstadoFiltro,
+                                                AmbienteFiltro = Model.AmbienteFiltro,
                                                 PaginaActual = Model.PaginaActual - 1 
                                             })">
                                                 <i class="fas fa-chevron-left"></i>
@@ -863,7 +881,8 @@
                                             <a class="page-link" href="@Url.Page("./Index", new { 
                                                 FechaInicio = Model.FechaInicio?.ToString("yyyy-MM-dd"), 
                                                 FechaFin = Model.FechaFin?.ToString("yyyy-MM-dd"), 
-                                                EstadoFiltro = Model.EstadoFiltro, 
+                                                EstadoFiltro = Model.EstadoFiltro,
+                                                AmbienteFiltro = Model.AmbienteFiltro,
                                                 PaginaActual = 1 
                                             })">1</a>
                                         </li>
@@ -881,7 +900,8 @@
                                             <a class="page-link" href="@Url.Page("./Index", new { 
                                                 FechaInicio = Model.FechaInicio?.ToString("yyyy-MM-dd"), 
                                                 FechaFin = Model.FechaFin?.ToString("yyyy-MM-dd"), 
-                                                EstadoFiltro = Model.EstadoFiltro, 
+                                                EstadoFiltro = Model.EstadoFiltro,
+                                                AmbienteFiltro = Model.AmbienteFiltro,
                                                 PaginaActual = i 
                                             })">@i</a>
                                         </li>
@@ -899,7 +919,8 @@
                                             <a class="page-link" href="@Url.Page("./Index", new { 
                                                 FechaInicio = Model.FechaInicio?.ToString("yyyy-MM-dd"), 
                                                 FechaFin = Model.FechaFin?.ToString("yyyy-MM-dd"), 
-                                                EstadoFiltro = Model.EstadoFiltro, 
+                                                EstadoFiltro = Model.EstadoFiltro,
+                                                AmbienteFiltro = Model.AmbienteFiltro,
                                                 PaginaActual = Model.TotalPaginas 
                                             })">@Model.TotalPaginas</a>
                                         </li>
@@ -912,7 +933,8 @@
                                             <a class="page-link" href="@Url.Page("./Index", new { 
                                                 FechaInicio = Model.FechaInicio?.ToString("yyyy-MM-dd"), 
                                                 FechaFin = Model.FechaFin?.ToString("yyyy-MM-dd"), 
-                                                EstadoFiltro = Model.EstadoFiltro, 
+                                                EstadoFiltro = Model.EstadoFiltro,
+                                                AmbienteFiltro = Model.AmbienteFiltro,
                                                 PaginaActual = Model.PaginaActual + 1 
                                             })">
                                                 <i class="fas fa-chevron-right"></i>
@@ -1044,7 +1066,7 @@
             button.disabled = true;
 
             // Hacer la llamada al método para generar el PDF
-            const pdfUrl = '@Url.Page("./Facturas")' + '?handler=GenerarPdf&id=' + id;
+            const pdfUrl = '@Url.Page("./Index")' + '?handler=GenerarPdf&id=' + id;
             window.open(pdfUrl, '_blank');
 
             // Restaurar el botón después de un breve delay

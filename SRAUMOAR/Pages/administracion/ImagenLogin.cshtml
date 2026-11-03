@@ -1,0 +1,18 @@
+@page
+@model SRAUMOAR.Pages.administracion.ImagenLoginModel
+@{ ViewData["Title"] = "Imagen del inicio de sesión"; }
+<section class="container py-4">
+    <h1 class="h3">Imagen del inicio de sesión</h1>
+    @if (TempData["ImagenLoginGuardada"] is string mensaje)
+    {
+        <p class="alert alert-success" role="status">@mensaje</p>
+    }
+    <img src="@Url.RouteUrl("ImagenCampusLogin")" alt="Imagen actual del inicio de sesión" class="img-fluid rounded mb-3" style="max-height: 350px" />
+    <form method="post" enctype="multipart/form-data">
+        <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+        <label for="imagen" class="form-label">Cambiar imagen</label>
+        <input id="imagen" name="imagen" class="form-control mb-2" type="file" accept="image/jpeg,image/png" required />
+        <p class="text-muted">JPEG o PNG, hasta 5 MB. La imagen se muestra completa en el portal público.</p>
+        <button type="submit" class="btn btn-success">Guardar imagen</button>
+    </form>
+</section>

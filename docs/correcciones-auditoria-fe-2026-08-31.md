@@ -1,5 +1,7 @@
 # Correcciones de auditoría de facturación electrónica
 
+> Actualización 2026-11-02: el bloqueo de nota de débito descrito aquí quedó resuelto con el esquema descargado de Hacienda. Consulte [el seguimiento](correcciones-auditoria-fe-2026-11-02.md) para el estado actual.
+
 ## Alcance y restricciones
 
 Revisión sobre las integraciones recientes de facturación electrónica y ERET. Trabajo exclusivamente en código, esquemas locales y pruebas aisladas. No se inició la aplicación, no se utilizó EF CLI, no se abrió una base de datos y no se transmitieron documentos a Hacienda ni se usaron certificados o credenciales reales. Los clientes HTTP de pruebas utilizan respuestas simuladas; los certificados de pruebas se generan temporalmente y no pertenecen al contribuyente.

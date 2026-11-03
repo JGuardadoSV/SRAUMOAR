@@ -1,0 +1,31 @@
+@model SRAUMOAR.Modelos.UbicacionAlumnoModalModel
+<section class="card border-0 shadow-sm my-3" data-ubicacion-alumno="@Model.AlumnoId" data-abrir-si-falta="@Model.AbrirSiFalta.ToString().ToLowerInvariant()">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center gap-3">
+            <div>
+                <strong>Ubicación fiscal del estudiante</strong>
+                <p class="mb-0 text-muted" data-ubicacion-resumen aria-live="polite">Comprobando departamento, municipio y distrito…</p>
+            </div>
+            <button type="button" class="btn btn-outline-primary" data-ubicacion-abrir>Actualizar ubicación</button>
+        </div>
+        <dialog class="ubicacion-fiscal-dialog" aria-labelledby="ubicacionFiscalTitulo">
+            <form data-ubicacion-form>
+                @Html.AntiForgeryToken()
+                <div class="p-4">
+                    <h2 class="h5" id="ubicacionFiscalTitulo">Actualizar ubicación de @Model.Nombre</h2>
+                    <p>Seleccione la ubicación de residencia para los documentos del estudiante.</p>
+                    <partial name="_SelectorTerritorioFiscal" model='new SRAUMOAR.Modelos.SelectorTerritorioFiscalModel("ModalFiscal", "departamento", "municipio", "distrito")' />
+                    <label for="ubicacionComplemento" class="form-label">Dirección de residencia <span class="text-danger">*</span></label>
+                    <input id="ubicacionComplemento" name="complemento" class="form-control" required maxlength="200" autocomplete="street-address" />
+                    <p class="text-danger mt-3 mb-0" data-ubicacion-error role="alert"></p>
+                </div>
+                <div class="p-3 border-top d-flex gap-2 justify-content-end">
+                    <a href="/alumno/Busqueda" class="btn btn-outline-secondary" data-ubicacion-cancelar>Elegir otro estudiante</a>
+                    <button type="button" class="btn btn-outline-secondary" data-ubicacion-cerrar hidden>Cerrar</button>
+                    <button type="button" class="btn btn-outline-secondary" data-ubicacion-recargar>Recargar datos</button>
+                    <button type="submit" class="btn btn-primary" data-ubicacion-guardar>Guardar y continuar</button>
+                </div>
+            </form>
+        </dialog>
+    </div>
+</section>

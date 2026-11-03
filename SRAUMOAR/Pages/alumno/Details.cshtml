@@ -6,6 +6,7 @@
 }
 
 <div class="container-fluid py-4">
+    <partial name="_UbicacionAlumnoModal" model='new SRAUMOAR.Modelos.UbicacionAlumnoModalModel(Model.Alumno.AlumnoId, Model.Alumno.Nombres + " " + Model.Alumno.Apellidos)' />
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -159,9 +160,9 @@
                         </div>
                         <div class="card-body px-4 py-4">
                              <div class="mb-4">
-                                <p class="text-muted mb-1 small text-uppercase fw-semibold"><i class="bi bi-building me-2"></i>@Html.DisplayNameFor(model => model.Alumno.MunicipioId)</p>
+                                <p class="text-muted mb-1 small text-uppercase fw-semibold"><i class="bi bi-building me-2"></i>Departamento · Municipio · Distrito</p>
                                 <div class="p-3 border border-warning border-opacity-25 rounded-3 bg-warning bg-opacity-10">
-                                    <h6 class="mb-0 fw-bold text-dark fs-5">@Html.DisplayFor(model => model.Alumno.Municipio.NombreMunicipio)</h6>
+                                    <h6 class="mb-0 fw-bold text-dark fs-5">@SRAUMOAR.Servicios.FacturacionElectronica.CatalogoTerritorialFiscal.Formatear(Model.Alumno.CodigoDepartamentoFiscal, Model.Alumno.CodigoMunicipioFiscal, Model.Alumno.CodigoDistritoFiscal, null)</h6>
                                 </div>
                             </div>
                             <div>
