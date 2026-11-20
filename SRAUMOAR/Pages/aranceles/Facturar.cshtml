@@ -710,10 +710,9 @@
                 // Actualizar el campo de cambio
                 jQuery('#CambioCalculado').val(cambio.toFixed(2));
                 
-                // Habilitar/deshabilitar el botón de procesar
-                var geografiaCompleta = jQuery('#CodigoDepartamentoReceptor').val()
-                    && jQuery('#CodigoMunicipioReceptor').val() && jQuery('#DistritoReceptorId').val();
-                isValid = isValid && !!geografiaCompleta;
+                // La dirección fiscal es opcional para un DTE 01. El backend
+                // la envía únicamente cuando está completa, por lo que no debe
+                // bloquear el cobro desde este formulario.
                 if (isValid && efectivoRecibido >= montoArancel) {
                     jQuery('#btnProcesarCobro').prop('disabled', false);
                     jQuery('#btnProcesarCobro').removeClass('btn-secondary').addClass('btn-save-invoice');
@@ -740,7 +739,8 @@
 
             // Prevenir doble clic y mostrar ventana de espera
             jQuery('form').on('submit', function(e) {
-                // Validar antes de enviar
+                // Validar antes de enviar. La validación de ubicación se realiza
+                // en el backend cuando corresponde; no bloquear aquí un DTE 01.
                 if (!validarEfectivoRecibido()) {
                     e.preventDefault();
                     return false;

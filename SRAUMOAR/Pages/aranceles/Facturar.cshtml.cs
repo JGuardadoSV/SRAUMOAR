@@ -509,7 +509,6 @@ namespace SRAUMOAR.Pages.aranceles
                 tributos = (string)null,
                 subTotal = subTotal,
                 ivaRete = 0.00,
-                reteRenta = 0.0,
                 montoTotalOperacion = montoTotalOperacion,
                 totalNoGravado = 0.0,
                 totalPagar = totalPagar,
@@ -517,6 +516,9 @@ namespace SRAUMOAR.Pages.aranceles
                 totalIva = totalIva,
                 saldoFavor = 0.0,
                 condicionOperacion = 1,
+                observaciones = string.IsNullOrWhiteSpace(CobroArancel.nota)
+                    ? "Cobro de aranceles"
+                    : CobroArancel.nota.Trim(),
                 pagos = new[]
                 {
                      new
