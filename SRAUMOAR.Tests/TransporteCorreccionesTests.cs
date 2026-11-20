@@ -23,53 +23,6 @@ public sealed class TransporteCorreccionesTests
     private const string Codigo = "12345678-1234-4234-8234-123456789ABC";
     private const string Jws = "e30.e30.c2ln";
 
-    [Fact]
-    public async Task FirmadorExternoEnviaPasswordPriYObjetoYLeeBodyString()
-    {
-        string? enviado = null;
-        using var http = new HttpSimulado(async (request, ct) =>
-        {
-            Assert.Equal("/firmardocumento/", request.RequestUri!.AbsolutePath);
-            enviado = await request.Content!.ReadAsStringAsync(ct);
-            return Respuesta(200, JsonSerializer.Serialize(new { status = "OK", body = Jws }));
-        });
-        var config = Configuracion();
-        config.Entidad.UsarFirmadorExterno = true;
-        var servicio = Servicio(http);
-
-        var firmado = await InvocarAsync<string>(servicio, "FirmarAsync", config, Documento(), CancellationToken.None);
-
-        Assert.Equal(Jws, firmado);
-        using var body = JsonDocument.Parse(enviado!);
-        Assert.Equal("password-sintetico", body.RootElement.GetProperty("passwordPri").GetString());
-        Assert.Equal(Nit, body.RootElement.GetProperty("nit").GetString());
-        Assert.True(body.RootElement.GetProperty("activo").GetBoolean());
-        Assert.Equal(JsonValueKind.Object, body.RootElement.GetProperty("dteJson").ValueKind);
-        Assert.False(body.RootElement.TryGetProperty("documento", out _));
-        Assert.Equal(1, http.Llamadas);
-    }
-
-    [Theory]
-    [InlineData("{\"body\":{\"documento\":\"e30.e30.c2ln\"}}")]
-    [InlineData("{\"body\":null}")]
-    [InlineData("{\"body\":\"\"}")]
-    [InlineData("{\"body\":\"no-es-jws\"}")]
-    [InlineData("{\"status\":\"ERROR\",\"body\":\"e30.e30.c2ln\"}")]
-    [InlineData("[]")]
-    public async Task RespuestaFirmadorInvalidaEsPreparadoSinRecepcion(string body)
-    {
-        using var http = new HttpSimulado((_, _) => Task.FromResult(Respuesta(200, body)));
-        var config = Configuracion();
-        config.Entidad.UsarFirmadorExterno = true;
-        var token = new TokenSimulado();
-        var servicio = Servicio(http, token: token);
-
-        var resultado = await EvaluarEmision(servicio, config);
-
-        Assert.Equal(DteEstados.Preparado, resultado.Estado);
-        Assert.Equal(1, http.Llamadas);
-        Assert.Equal(0, token.Obtenciones);
-    }
 
     [Theory]
     [InlineData("firma")]
@@ -233,48 +186,6 @@ public sealed class TransporteCorreccionesTests
         Assert.True(respuesta.Exito);
     }
 
-    [Theory]
-    [InlineData("INVALIDACION", 3, false)]
-    [InlineData("CONTINGENCIA", 4, false)]
-    [InlineData("INVALIDACION", 3, true)]
-    [InlineData("CONTINGENCIA", 4, true)]
-    public async Task EventoInvalidoValidaEsquemaAntesDeFirmarOUsarApi(string tipo, int version, bool api)
-    {
-        using var http = SinHttp();
-        var firmador = new FirmadorSimulado();
-        var config = Configuracion();
-        config.Entidad.UsarApiExterna = api;
-        var servicio = Servicio(http, firmador);
-        var resultado = await Evaluar(servicio, () => InvocarAsync<HaciendaRespuesta>(servicio,
-            "EjecutarEventoAsync", config, Documento(version: version), tipo, CancellationToken.None));
-        Assert.Equal(DteEstados.Preparado, resultado.Estado);
-        Assert.Contains("no cumple", resultado.Error);
-        Assert.Equal(0, firmador.Llamadas);
-        Assert.Equal(0, http.Llamadas);
-    }
-
-    [Fact]
-    public async Task ApiExternaSinUrlEsPreparado()
-    {
-        using var http = SinHttp();
-        var config = Configuracion();
-        config.Entidad.UsarApiExterna = true;
-        config.Entidad.UrlApiExterna = null;
-        var resultado = await EvaluarEmision(Servicio(http), config);
-        Assert.Equal(DteEstados.Preparado, resultado.Estado);
-        Assert.Equal(0, http.Llamadas);
-    }
-
-    [Fact]
-    public async Task ApiExternaConCorteTrasEnviarEsIncierto()
-    {
-        using var http = new HttpSimulado((_, _) => Task.FromException<HttpResponseMessage>(new HttpRequestException("Corte")));
-        var config = Configuracion();
-        config.Entidad.UsarApiExterna = true;
-        var resultado = await EvaluarEmision(Servicio(http), config);
-        Assert.Equal(DteEstados.Incierto, resultado.Estado);
-        Assert.Equal(1, http.Llamadas);
-    }
 
     [Fact]
     public async Task TokenSeComparteEntreScopesY401TardioNoInvalidaTokenNuevo()
@@ -524,7 +435,7 @@ public sealed class TransporteCorreccionesTests
     private static DteTransmisionService Servicio(HttpSimulado http, FirmadorSimulado? firmador = null,
         ITokenHaciendaService? token = null, IConfiguracionFeService? configuracion = null)
         => new(null!, configuracion ?? new ConfiguracionSimulada(), new JsonSimulado(), firmador ?? new FirmadorSimulado(),
-            token ?? new TokenSimulado(), new HaciendaDteClient(http), http, NullLogger<DteTransmisionService>.Instance);
+            token ?? new TokenSimulado(), new HaciendaDteClient(http), NullLogger<DteTransmisionService>.Instance);
 
     private static Task<DteTransmisionResult> EvaluarEmision(DteTransmisionService servicio, ConfiguracionFeActiva config, CancellationToken ct = default)
         => Evaluar(servicio, () => InvocarAsync<HaciendaRespuesta>(servicio, "EjecutarEmisionAsync", config,
@@ -542,10 +453,9 @@ public sealed class TransporteCorreccionesTests
     private static ConfiguracionFeActiva Configuracion(string ambiente = "00") => new(new ConfiguracionFacturacionElectronica
     {
         AmbienteFiscal = ambiente, Habilitado = true, NitEmisor = Nit, UsuarioHacienda = "usuario-sintetico",
-        RutaCertificado = "ruta-no-leida-por-el-mock.crt", UrlFirmador = "https://transporte.invalid",
+        RutaCertificado = "ruta-no-leida-por-el-mock.crt",
         UrlRecepcion = "https://transporte.invalid/recepcion", UrlAutenticacion = "https://transporte.invalid/auth",
-        UrlAnulacion = "https://transporte.invalid/invalidacion", UrlContingencia = "https://transporte.invalid/contingencia",
-        UrlApiExterna = "https://transporte.invalid"
+        UrlAnulacion = "https://transporte.invalid/invalidacion", UrlContingencia = "https://transporte.invalid/contingencia"
     }, "credencial-sintetica", "password-sintetico");
 
     private static string Documento(string ambiente = "00", string tipo = "01", int version = 1)
@@ -592,6 +502,8 @@ public sealed class TransporteCorreccionesTests
             Llamadas++;
             return Error is null ? Task.FromResult(Jws) : Task.FromException<string>(Error);
         }
+        public Task<string> FirmarAsync(byte[] certificadoCrt, string password, string json, CancellationToken cancellationToken = default)
+            => FirmarAsync("memoria.crt", password, json, cancellationToken);
         public void LimpiarCache(string? rutaCertificado = null) { }
     }
 

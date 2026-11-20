@@ -149,30 +149,26 @@ public sealed class AuditoriaSeguimientoTests
     public void UnaConsultaAmbiguaNoLiberaReservas(string body)
         => Assert.False(DteConsultaClient.Interpretar(body, Codigo, "00").Aceptado);
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task ClienteSoloConsultaSinFirmarNiEmitir(bool externa)
+    [Fact]
+    public async Task ClienteSoloConsultaSinFirmarNiEmitir()
     {
         using var http = new HttpDoble(async (request, _) =>
         {
-            Assert.EndsWith(externa ? "/api/consulta-dte" : "/fesv/recepcion/consultadte/", request.RequestUri!.AbsolutePath);
+            Assert.EndsWith("/fesv/recepcion/consultadte/", request.RequestUri!.AbsolutePath);
             var body = JObject.Parse(await request.Content!.ReadAsStringAsync());
             Assert.Equal(Codigo, body.Value<string>("codigoGeneracion"));
             Assert.Equal("03", body.Value<string>("tdte"));
             Assert.Null(body["documento"]);
             Assert.Null(body["dteJson"]);
             Assert.Null(body["passwordPrivado"]);
-            if (externa) Assert.Equal("00", body.Value<string>("ambiente"));
-            else Assert.Equal("Bearer", request.Headers.Authorization!.Scheme);
+            Assert.Equal("Bearer", request.Headers.Authorization!.Scheme);
             return Respuesta(200, Evidencia());
         });
         var token = new TokenDoble();
-        var config = Configuracion(externa);
-        var resultado = await new DteConsultaClient(http, token).ConsultarAsync(config, "06140101231010", "03", Codigo);
+        var resultado = await new DteConsultaClient(http, token).ConsultarAsync(Configuracion(), "06140101231010", "03", Codigo);
         Assert.True(resultado.Aceptado);
         Assert.Equal(1, http.Llamadas);
-        Assert.Equal(externa ? 0 : 1, token.Obtenciones);
+        Assert.Equal(1, token.Obtenciones);
     }
 
     [Fact]
@@ -249,10 +245,10 @@ public sealed class AuditoriaSeguimientoTests
         ["resumen"] = new JObject { ["totalPagar"] = 11.30m, ["totalGravada"] = 11.30m, ["totalIva"] = 1.30m, ["ivaRete"] = 0, ["reteRenta"] = 0 }
     };
 
-    private static ConfiguracionFeActiva Configuracion(bool externa = false) => new(new ConfiguracionFacturacionElectronica
+    private static ConfiguracionFeActiva Configuracion() => new(new ConfiguracionFacturacionElectronica
     {
-        AmbienteFiscal = "00", Habilitado = true, UsuarioHacienda = "sintetico", UsarApiExterna = externa,
-        UrlConsulta = "https://transporte.invalid/fesv/recepcion/consultadte/", UrlApiExterna = "https://transporte.invalid"
+        AmbienteFiscal = "00", Habilitado = true, UsuarioHacienda = "sintetico",
+        UrlConsulta = "https://transporte.invalid/fesv/recepcion/consultadte/"
     }, "credencial-sintetica", "password-sintetico");
 
     private static string Evidencia() => new JObject { ["estado"] = "PROCESADO", ["codigoGeneracion"] = Codigo, ["ambiente"] = "00", ["selloRecibido"] = "SELLO-SINTETICO" }.ToString();

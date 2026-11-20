@@ -1,6 +1,6 @@
 using System.Net.Mail;
 using System.Net;
-using Microsoft.Extensions.Configuration;
+using SRAUMOAR.Servicios.FacturacionElectronica;
 
 namespace SRAUMOAR.Servicios
 {
@@ -12,64 +12,50 @@ namespace SRAUMOAR.Servicios
 
     public class EmailService : IEmailService
     {
-        private readonly IConfiguration _configuration;
-        private readonly string _servidor;
-        private readonly int _puerto;
-        private readonly string _usuario;
-        private readonly string _contrasena;
-        private readonly string _emailRemitente;
-        private readonly string _nombreRemitente;
-        private readonly string _opcionesSeguridad;
+        private readonly ISmtpConfigurationService _smtpConfiguration;
 
-        public EmailService(IConfiguration configuration)
+        public EmailService(ISmtpConfigurationService smtpConfiguration)
         {
-            _configuration = configuration;
-            _servidor = _configuration["SMTP_SERVIDOR"] ?? "smtp.devselsalvador.com";
-            _puerto = int.Parse(_configuration["SMTP_PUERTO"] ?? "587");
-            _usuario = _configuration["SMTP_USUARIO"] ?? "facturas@devselsalvador.com";
-            _contrasena = _configuration["SMTP_CONTRASENA"] ?? "tcGa$S!T6";
-            _emailRemitente = _configuration["SMTP_EMAIL_REMITENTE"] ?? "facturas@devselsalvador.com";
-            _nombreRemitente = _configuration["SMTP_NOMBRE_REMITENTE"] ?? "Seguridad UMOAR";
-            _opcionesSeguridad = _configuration["SMTP_OPCIONES_SEGURIDAD"] ?? "None";
+            _smtpConfiguration = smtpConfiguration;
         }
 
         public async Task<bool> EnviarEmailAsync(string destinatario, string asunto, string cuerpo, string nombreDestinatario = null)
         {
             try
             {
-                using (var cliente = new SmtpClient(_servidor, _puerto))
+                var configuracion = await _smtpConfiguration.ObtenerAsync();
+                var entidad = configuracion.Entidad
+                    ?? throw new InvalidOperationException("No existe una configuración SMTP activa.");
+                var contrasena = await _smtpConfiguration.ObtenerPasswordAsync()
+                    ?? throw new InvalidOperationException("La configuración SMTP activa no tiene contraseña.");
+
+                using var cliente = new SmtpClient(entidad.Servidor, entidad.Puerto)
                 {
-                    cliente.UseDefaultCredentials = false;
-                    cliente.Credentials = new NetworkCredential(_usuario, _contrasena);
-                    
-                    // Configurar opciones de seguridad según la configuración
-                    if (_opcionesSeguridad.Equals("SSL", StringComparison.OrdinalIgnoreCase))
-                    {
-                        cliente.EnableSsl = true;
-                    }
-                    else if (_opcionesSeguridad.Equals("TLS", StringComparison.OrdinalIgnoreCase))
-                    {
-                        cliente.EnableSsl = true;
-                    }
-                    // Si es "None", no se habilita SSL
+                    UseDefaultCredentials = false,
+                    Credentials = new NetworkCredential(entidad.Usuario, contrasena),
+                    EnableSsl = entidad.UsarSsl || entidad.UsarTls
+                };
 
-                    var mensaje = new MailMessage
-                    {
-                        From = new MailAddress(_emailRemitente, _nombreRemitente),
-                        Subject = asunto,
-                        Body = cuerpo,
-                        IsBodyHtml = true
-                    };
+                using var mensaje = new MailMessage
+                {
+                    From = new MailAddress(entidad.EmailRemitente, entidad.NombreRemitente),
+                    Subject = asunto,
+                    Body = cuerpo,
+                    IsBodyHtml = true
+                };
+                mensaje.To.Add(new MailAddress(destinatario, nombreDestinatario ?? destinatario));
 
-                    mensaje.To.Add(new MailAddress(destinatario, nombreDestinatario ?? destinatario));
-
-                    await cliente.SendMailAsync(mensaje);
-                    return true;
+                if (!string.IsNullOrWhiteSpace(entidad.CopiaOculta))
+                {
+                    foreach (var copia in entidad.CopiaOculta.Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                        mensaje.Bcc.Add(copia);
                 }
+
+                await cliente.SendMailAsync(mensaje);
+                return true;
             }
             catch (Exception ex)
             {
-                // Log del error (en producción usar ILogger)
                 Console.WriteLine($"Error enviando email: {ex.Message}");
                 return false;
             }

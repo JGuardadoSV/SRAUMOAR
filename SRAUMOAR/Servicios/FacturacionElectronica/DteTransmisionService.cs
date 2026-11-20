@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.Json;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -24,7 +23,6 @@ public sealed class DteTransmisionService : IDteTransmisionService
     private readonly IFirmadorDteService _firmador;
     private readonly ITokenHaciendaService _tokenService;
     private readonly IHaciendaDteClient _haciendaClient;
-    private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<DteTransmisionService> _logger;
 
     public DteTransmisionService(
@@ -34,7 +32,6 @@ public sealed class DteTransmisionService : IDteTransmisionService
         IFirmadorDteService firmador,
         ITokenHaciendaService tokenService,
         IHaciendaDteClient haciendaClient,
-        IHttpClientFactory httpClientFactory,
         ILogger<DteTransmisionService> logger)
     {
         _contexto = contexto;
@@ -43,7 +40,6 @@ public sealed class DteTransmisionService : IDteTransmisionService
         _firmador = firmador;
         _tokenService = tokenService;
         _haciendaClient = haciendaClient;
-        _httpClientFactory = httpClientFactory;
         _logger = logger;
     }
 
@@ -140,7 +136,7 @@ public sealed class DteTransmisionService : IDteTransmisionService
         }
         catch (Exception ex) { throw new DteEnvioNoRealizadoException(ex); }
         return await EjecutarEmisionAsync(configuracion, request.Json, tipoDte, request.Version, request.CodigoGeneracion,
-            request.NumeroControl, request.CorreoReceptor, cancellationToken);
+            cancellationToken);
     }
 
     private async Task VincularFacturaAsync(DteTransmisionRequest request, DteTransmision transmision, CancellationToken cancellationToken)
@@ -183,14 +179,10 @@ public sealed class DteTransmisionService : IDteTransmisionService
         return await EjecutarEventoAsync(configuracion, json, tipo, cancellationToken);
     }
 
-    private async Task<HaciendaRespuesta> EjecutarEmisionAsync(ConfiguracionFeActiva configuracion, string json, string tipoDte, int version, string codigoGeneracion, string numeroControl, string? correo, CancellationToken cancellationToken)
-    {
-        if (configuracion.Entidad.UsarApiExterna)
-            return await EnviarApiExternaAsync(configuracion, json, tipoDte, version, codigoGeneracion, numeroControl, correo, cancellationToken);
-
-        return await EnviarFirmadoAsync(configuracion, json,
+    private Task<HaciendaRespuesta> EjecutarEmisionAsync(ConfiguracionFeActiva configuracion, string json, string tipoDte, int version, string codigoGeneracion,
+        CancellationToken cancellationToken)
+        => EnviarFirmadoAsync(configuracion, json,
             (token, firmado) => _haciendaClient.EnviarDteAsync(configuracion, token, firmado, tipoDte, version, codigoGeneracion, cancellationToken), cancellationToken);
-    }
 
     private async Task<HaciendaRespuesta> EjecutarEventoAsync(ConfiguracionFeActiva configuracion, string json, string tipoEvento, CancellationToken cancellationToken)
     {
@@ -201,9 +193,6 @@ public sealed class DteTransmisionService : IDteTransmisionService
             DteSchemaValidator.Validar(json, tipoEvento.ToLowerInvariant(), version);
         }
         catch (Exception ex) { throw new DteEnvioNoRealizadoException(ex); }
-        if (configuracion.Entidad.UsarApiExterna)
-            return await EnviarApiExternaEventoAsync(configuracion, json, tipoEvento, cancellationToken);
-
         return await EnviarFirmadoAsync(configuracion, json, (token, firmado) => tipoEvento == "INVALIDACION"
             ? _haciendaClient.EnviarInvalidacionAsync(configuracion, token, firmado, ExtraerCodigoEvento(json), cancellationToken)
             : _haciendaClient.EnviarContingenciaAsync(configuracion, token, firmado, cancellationToken), cancellationToken);
@@ -245,106 +234,15 @@ public sealed class DteTransmisionService : IDteTransmisionService
 
     private async Task<string> FirmarAsync(ConfiguracionFeActiva configuracion, string json, CancellationToken cancellationToken)
     {
-        if (configuracion.Entidad.UsarFirmadorExterno)
-        {
-            if (string.IsNullOrWhiteSpace(configuracion.Entidad.UrlFirmador))
-                throw new InvalidOperationException("El firmador externo no tiene URL configurada.");
-            if (string.IsNullOrWhiteSpace(configuracion.PasswordCertificado))
-                throw new InvalidOperationException("Falta contraseña de la clave privada para el firmador externo.");
-            using var dte = JsonDocument.Parse(json);
-            if (dte.RootElement.ValueKind != JsonValueKind.Object)
-                throw new InvalidOperationException("dteJson debe ser un objeto JSON.");
-            using var client = _httpClientFactory.CreateClient("FirmadorDte");
-            using var response = await client.PostAsJsonAsync(HaciendaDteClient.ValidarUrl(configuracion.Entidad.UrlFirmador.TrimEnd('/') + "/firmardocumento/",
-                configuracion.Entidad.AmbienteFiscal, permitirHttpLoopback: true),
-                new { nit = configuracion.Entidad.NitEmisor, activo = true, passwordPri = configuracion.PasswordCertificado, dteJson = dte.RootElement }, cancellationToken);
-            var body = await response.Content.ReadAsStringAsync(cancellationToken);
-            if (!response.IsSuccessStatusCode) throw new HttpRequestException("El firmador externo rechazó el documento.");
-            using var document = JsonDocument.Parse(body);
-            if (document.RootElement.ValueKind != JsonValueKind.Object ||
-                (document.RootElement.TryGetProperty("status", out var status) &&
-                 (status.ValueKind != JsonValueKind.String || !string.Equals(status.GetString(), "OK", StringComparison.OrdinalIgnoreCase))) ||
-                !document.RootElement.TryGetProperty("body", out var bodyNode) || bodyNode.ValueKind != JsonValueKind.String)
-                throw new InvalidOperationException("Respuesta inválida del firmador externo: se esperaba body como JWS.");
-            var firmado = bodyNode.GetString()!.Trim();
-            var partes = firmado.Split('.');
-            if (partes.Length != 3 || partes.Any(p => p.Length == 0 || p.Any(c =>
-                !(char.IsAsciiLetterOrDigit(c) || c is '-' or '_'))))
-                throw new InvalidOperationException("El firmador externo no devolvió un JWS compacto válido.");
-            return firmado;
-        }
+        if (string.IsNullOrWhiteSpace(configuracion.PasswordCertificado))
+            throw new InvalidOperationException("Falta la contraseña del certificado para la firma interna.");
 
-        if (string.IsNullOrWhiteSpace(configuracion.Entidad.RutaCertificado) || string.IsNullOrWhiteSpace(configuracion.PasswordCertificado))
-            throw new InvalidOperationException("Falta certificado o contraseña para la firma interna.");
+        if (configuracion.Entidad.CertificadoCrt is { Length: > 0 } certificado)
+            return await _firmador.FirmarAsync(certificado, configuracion.PasswordCertificado, json, cancellationToken);
+
+        if (string.IsNullOrWhiteSpace(configuracion.Entidad.RutaCertificado))
+            throw new InvalidOperationException("Falta el certificado .crt para la firma interna.");
         return await _firmador.FirmarAsync(configuracion.Entidad.RutaCertificado, configuracion.PasswordCertificado, json, cancellationToken);
-    }
-
-    private async Task<HaciendaRespuesta> EnviarApiExternaAsync(ConfiguracionFeActiva configuracion, string json, string tipoDte, int version, string codigoGeneracion, string numeroControl, string? correo, CancellationToken cancellationToken)
-    {
-        return await PostApiExternaAsync(configuracion, "procesar-dte", new
-        {
-            Usuario = configuracion.Entidad.UsuarioHacienda,
-            Password = configuracion.CredencialApi,
-            Ambiente = configuracion.Entidad.AmbienteFiscal,
-            DteJson = json,
-            Nit = configuracion.Entidad.NitEmisor,
-            PasswordPrivado = configuracion.PasswordCertificado,
-            TipoDte = tipoDte,
-            CodigoGeneracion = codigoGeneracion,
-            NumControl = numeroControl,
-            VersionDte = version,
-            CorreoCliente = correo,
-            sincorreos = 1,
-            UsarFirmadorInterno = !configuracion.Entidad.UsarFirmadorExterno
-        }, cancellationToken);
-    }
-
-    private async Task<HaciendaRespuesta> EnviarApiExternaEventoAsync(ConfiguracionFeActiva configuracion, string json, string tipoEvento, CancellationToken cancellationToken)
-    {
-        var endpoint = tipoEvento == "INVALIDACION" ? "anular-dte" : "contingencia";
-        return await PostApiExternaAsync(configuracion, endpoint, new
-        {
-            Usuario = configuracion.Entidad.UsuarioHacienda,
-            Password = configuracion.CredencialApi,
-            Ambiente = configuracion.Entidad.AmbienteFiscal,
-            DteJson = json,
-            Nit = configuracion.Entidad.NitEmisor,
-            PasswordPrivado = configuracion.PasswordCertificado,
-            UsarFirmadorInterno = !configuracion.Entidad.UsarFirmadorExterno
-        }, cancellationToken);
-    }
-
-    private async Task<HaciendaRespuesta> PostApiExternaAsync(ConfiguracionFeActiva configuracion, string endpoint, object payload, CancellationToken cancellationToken)
-    {
-        HttpClient? client = null;
-        HttpRequestMessage? request = null;
-        try
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            if (string.IsNullOrWhiteSpace(configuracion.Entidad.UrlApiExterna))
-                throw new InvalidOperationException("La API externa está habilitada pero no tiene URL configurada.");
-            var url = HaciendaDteClient.ValidarUrl(configuracion.Entidad.UrlApiExterna.TrimEnd('/') + "/api/" + endpoint, configuracion.Entidad.AmbienteFiscal);
-            client = _httpClientFactory.CreateClient("ApiExternaDte");
-            request = new HttpRequestMessage(HttpMethod.Post, url)
-            {
-                Content = new StringContent(System.Text.Json.JsonSerializer.Serialize(payload,
-                    new JsonSerializerOptions(JsonSerializerDefaults.Web)), Encoding.UTF8, "application/json")
-            };
-        }
-        catch (Exception ex)
-        {
-            request?.Dispose(); client?.Dispose();
-            throw new DteEnvioNoRealizadoException(ex);
-        }
-        using var clientLifetime = client;
-        using var requestLifetime = request;
-        using var envio = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        envio.CancelAfter(client.Timeout);
-        using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, envio.Token);
-        var body = await response.Content.ReadAsStringAsync(envio.Token);
-        if (!response.IsSuccessStatusCode)
-            return new(false, null, body, "La API externa no confirmó la recepción.", HaciendaDteClient.EsRechazoFiscalExplicito(body));
-        return ParsearRespuesta(body);
     }
 
     private async Task<DteEvento> RegistrarEventoAsync(int facturaId, string tipo, string codigo, string json, string ambiente, CancellationToken cancellationToken)
@@ -453,25 +351,6 @@ public sealed class DteTransmisionService : IDteTransmisionService
         return ConfiguracionFeService.NormalizarAmbiente(ambiente ?? string.Empty);
     }
 
-    private static HaciendaRespuesta ParsearRespuesta(string body)
-    {
-        try
-        {
-            using var document = JsonDocument.Parse(body);
-            var root = document.RootElement;
-            string? sello = null;
-            if (root.ValueKind == JsonValueKind.Object)
-            {
-                if (root.TryGetProperty("selloRecibido", out var direct) && direct.ValueKind == JsonValueKind.String) sello = direct.GetString();
-                if (string.IsNullOrWhiteSpace(sello) && root.TryGetProperty("resultado", out var resultado) && resultado.ValueKind == JsonValueKind.Object &&
-                    resultado.TryGetProperty("selloRecibido", out var nested) && nested.ValueKind == JsonValueKind.String) sello = nested.GetString();
-            }
-            return new HaciendaRespuesta(!string.IsNullOrWhiteSpace(sello), sello, body, string.IsNullOrWhiteSpace(sello) ? "No se recibió sello." : null,
-                string.IsNullOrWhiteSpace(sello) && HaciendaDteClient.EsRechazoFiscalExplicito(body));
-        }
-        catch (System.Text.Json.JsonException ex)
-        {
-            return new HaciendaRespuesta(false, null, body, ex.Message);
-        }
-    }
 }
+
+

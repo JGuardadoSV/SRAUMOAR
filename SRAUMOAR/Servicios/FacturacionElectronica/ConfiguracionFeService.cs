@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
@@ -8,7 +9,7 @@ namespace SRAUMOAR.Servicios.FacturacionElectronica;
 
 public sealed record ConfiguracionFeActiva(
     ConfiguracionFacturacionElectronica Entidad,
-    string? CredencialApi,
+    string? CredencialHacienda,
     string? PasswordCertificado);
 
 public sealed record ConfiguracionFeInput(
@@ -19,18 +20,14 @@ public sealed record ConfiguracionFeInput(
     string? UrlAnulacion,
     string? UrlContingencia,
     string? UrlConsulta,
-    string? UrlApiExterna,
-    string? UrlFirmador,
     string? UsuarioHacienda,
-    string? CredencialApi,
+    string? CredencialHacienda,
     string? PasswordCertificado,
     string? RutaCertificado,
     string CodigoEstablecimientoMh,
     string CodigoEstablecimiento,
     string CodigoPuntoVentaMh,
     string CodigoPuntoVenta,
-    bool UsarFirmadorExterno,
-    bool UsarApiExterna,
     int TimeoutSegundos,
     int MaxReintentos,
     bool EsAmbienteFiscalActivo,
@@ -50,7 +47,8 @@ public sealed record ConfiguracionFeInput(
     string? DistritoDescripcion = null,
     string? ComplementoDireccion = null,
     string? TelefonoEmisor = null,
-    string? CorreoEmisor = null);
+    string? CorreoEmisor = null,
+    byte[]? CertificadoCrt = null);
 
 public interface IConfiguracionFeService
 {
@@ -64,6 +62,8 @@ public interface IConfiguracionFeService
 
 public sealed class ConfiguracionFeService : IConfiguracionFeService
 {
+    private static readonly ConcurrentDictionary<string, ConfiguracionFeActiva> ConfiguracionEnMemoria = new(StringComparer.Ordinal);
+    private static string? AmbienteActivoEnMemoria;
     private readonly Contexto _contexto;
     private readonly IDataProtector _protector;
 
@@ -75,6 +75,9 @@ public sealed class ConfiguracionFeService : IConfiguracionFeService
 
     public async Task<ConfiguracionFeActiva> ObtenerActivaAsync(CancellationToken cancellationToken = default)
     {
+        if (AmbienteActivoEnMemoria is not null && ConfiguracionEnMemoria.TryGetValue(AmbienteActivoEnMemoria, out var cacheada))
+            return cacheada;
+
         var entidad = await _contexto.ConfiguracionesFacturacionElectronica
             .AsNoTracking()
             .SingleOrDefaultAsync(x => x.EsAmbienteFiscalActivo && x.Habilitado, cancellationToken);
@@ -83,12 +86,18 @@ public sealed class ConfiguracionFeService : IConfiguracionFeService
             throw new InvalidOperationException("No existe un ambiente fiscal activo. Configure 00 o 01 antes de transmitir.");
 
         ValidarDatosEmisor(entidad);
-        return Convertir(entidad);
+        var activa = Convertir(entidad);
+        ConfiguracionEnMemoria[entidad.AmbienteFiscal] = activa;
+        AmbienteActivoEnMemoria = entidad.AmbienteFiscal;
+        return activa;
     }
 
     public async Task<ConfiguracionFeActiva> ObtenerAsync(string ambienteFiscal, CancellationToken cancellationToken = default)
     {
         var ambiente = NormalizarAmbiente(ambienteFiscal);
+        if (ConfiguracionEnMemoria.TryGetValue(ambiente, out var cacheada))
+            return cacheada;
+
         var entidad = await _contexto.ConfiguracionesFacturacionElectronica
             .AsNoTracking()
             .SingleOrDefaultAsync(x => x.AmbienteFiscal == ambiente, cancellationToken);
@@ -97,7 +106,9 @@ public sealed class ConfiguracionFeService : IConfiguracionFeService
             throw new InvalidOperationException($"No existe configuración para el ambiente fiscal {ambiente}.");
 
         ValidarDatosEmisor(entidad);
-        return Convertir(entidad);
+        var configuracion = Convertir(entidad);
+        ConfiguracionEnMemoria[ambiente] = configuracion;
+        return configuracion;
     }
 
     public async Task<ConfiguracionFeActiva> ObtenerParaEdicionAsync(string ambienteFiscal, CancellationToken cancellationToken = default)
@@ -156,10 +167,10 @@ public sealed class ConfiguracionFeService : IConfiguracionFeService
         entidad.UrlAnulacion = input.UrlAnulacion?.Trim();
         entidad.UrlContingencia = input.UrlContingencia?.Trim();
         entidad.UrlConsulta = input.UrlConsulta?.Trim();
-        entidad.UrlApiExterna = input.UrlApiExterna?.Trim();
-        entidad.UrlFirmador = input.UrlFirmador?.Trim();
         entidad.UsuarioHacienda = input.UsuarioHacienda?.Trim();
         entidad.RutaCertificado = input.RutaCertificado?.Trim();
+        if (input.CertificadoCrt is { Length: > 0 })
+            entidad.CertificadoCrt = input.CertificadoCrt;
         entidad.CodigoEstablecimientoMh = input.CodigoEstablecimientoMh.Trim();
         entidad.CodigoEstablecimiento = input.CodigoEstablecimiento.Trim();
         entidad.CodigoPuntoVentaMh = input.CodigoPuntoVentaMh.Trim();
@@ -181,14 +192,19 @@ public sealed class ConfiguracionFeService : IConfiguracionFeService
         entidad.ComplementoDireccion = input.ComplementoDireccion?.Trim();
         entidad.TelefonoEmisor = input.TelefonoEmisor?.Trim();
         entidad.CorreoEmisor = input.CorreoEmisor?.Trim();
-        entidad.UsarFirmadorExterno = input.UsarFirmadorExterno;
-        entidad.UsarApiExterna = input.UsarApiExterna;
         entidad.TimeoutSegundos = Math.Clamp(input.TimeoutSegundos, 10, 300);
         entidad.MaxReintentos = Math.Clamp(input.MaxReintentos, 1, 10);
         entidad.EsAmbienteFiscalActivo = input.EsAmbienteFiscalActivo;
 
-        if (!string.IsNullOrWhiteSpace(input.CredencialApi))
-            entidad.CredencialApiCifrada = _protector.Protect(input.CredencialApi);
+        var otroAmbiente = await _contexto.ConfiguracionesFacturacionElectronica
+            .SingleOrDefaultAsync(x => x.AmbienteFiscal != ambiente, cancellationToken);
+        if (ambiente == "01" && otroAmbiente is not null)
+            CopiarDatosGenerales(otroAmbiente, entidad);
+        else if (ambiente == "00" && otroAmbiente is not null)
+            CopiarDatosGenerales(otroAmbiente, entidad);
+
+        if (!string.IsNullOrWhiteSpace(input.CredencialHacienda))
+            entidad.CredencialHaciendaCifrada = _protector.Protect(input.CredencialHacienda);
         if (!string.IsNullOrWhiteSpace(input.PasswordCertificado))
             entidad.PasswordCertificadoCifrada = _protector.Protect(input.PasswordCertificado);
 
@@ -201,6 +217,8 @@ public sealed class ConfiguracionFeService : IConfiguracionFeService
 
         entidad.FechaActualizacion = DateTime.UtcNow;
         await _contexto.SaveChangesAsync(cancellationToken);
+        ConfiguracionEnMemoria.TryRemove(ambiente, out _);
+        if (AmbienteActivoEnMemoria == ambiente) AmbienteActivoEnMemoria = null;
     }
 
     public async Task SeleccionarAmbienteActivoAsync(string ambienteFiscal, CancellationToken cancellationToken = default)
@@ -217,6 +235,35 @@ public sealed class ConfiguracionFeService : IConfiguracionFeService
         seleccionado.EsAmbienteFiscalActivo = true;
         seleccionado.FechaActualizacion = DateTime.UtcNow;
         await _contexto.SaveChangesAsync(cancellationToken);
+        AmbienteActivoEnMemoria = null;
+        ConfiguracionEnMemoria.Clear();
+    }
+
+    private static void CopiarDatosGenerales(ConfiguracionFacturacionElectronica destino, ConfiguracionFacturacionElectronica origen)
+    {
+        destino.NitEmisor = origen.NitEmisor;
+        destino.NrcEmisor = origen.NrcEmisor;
+        destino.NombreEmisor = origen.NombreEmisor;
+        destino.NombreComercial = origen.NombreComercial;
+        destino.CodigoActividad = origen.CodigoActividad;
+        destino.DescripcionActividad = origen.DescripcionActividad;
+        destino.TipoEstablecimiento = origen.TipoEstablecimiento;
+        destino.TipoEstablecimientoDescripcion = origen.TipoEstablecimientoDescripcion;
+        destino.CodigoDepartamento = origen.CodigoDepartamento;
+        destino.DepartamentoDescripcion = origen.DepartamentoDescripcion;
+        destino.CodigoMunicipio = origen.CodigoMunicipio;
+        destino.MunicipioDescripcion = origen.MunicipioDescripcion;
+        destino.CodigoDistrito = origen.CodigoDistrito;
+        destino.DistritoDescripcion = origen.DistritoDescripcion;
+        destino.ComplementoDireccion = origen.ComplementoDireccion;
+        destino.TelefonoEmisor = origen.TelefonoEmisor;
+        destino.CorreoEmisor = origen.CorreoEmisor;
+        destino.CodigoEstablecimientoMh = origen.CodigoEstablecimientoMh;
+        destino.CodigoEstablecimiento = origen.CodigoEstablecimiento;
+        destino.CodigoPuntoVentaMh = origen.CodigoPuntoVentaMh;
+        destino.CodigoPuntoVenta = origen.CodigoPuntoVenta;
+        destino.TimeoutSegundos = origen.TimeoutSegundos;
+        destino.MaxReintentos = origen.MaxReintentos;
     }
 
     public static void ValidarDatosEmisor(ConfiguracionFacturacionElectronica entidad)
@@ -245,7 +292,7 @@ public sealed class ConfiguracionFeService : IConfiguracionFeService
     }
 
     private ConfiguracionFeActiva Convertir(ConfiguracionFacturacionElectronica entidad)
-        => new(entidad, Desproteger(entidad.CredencialApiCifrada), Desproteger(entidad.PasswordCertificadoCifrada));
+        => new(entidad, Desproteger(entidad.CredencialHaciendaCifrada), Desproteger(entidad.PasswordCertificadoCifrada));
 
     private string? Desproteger(string? valor)
     {

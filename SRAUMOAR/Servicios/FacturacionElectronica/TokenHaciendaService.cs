@@ -35,7 +35,7 @@ public sealed class TokenHaciendaService : ITokenHaciendaService
     private async Task<string> ObtenerORenovarAsync(ConfiguracionFeActiva configuracion, string? tokenRechazado, CancellationToken cancellationToken)
     {
         var usuario = configuracion.Entidad.UsuarioHacienda;
-        var password = configuracion.CredencialApi;
+        var password = configuracion.CredencialHacienda;
         if (string.IsNullOrWhiteSpace(usuario) || string.IsNullOrWhiteSpace(password))
             throw new InvalidOperationException($"Falta usuario o credencial de Hacienda para {configuracion.Entidad.AmbienteFiscal}.");
 

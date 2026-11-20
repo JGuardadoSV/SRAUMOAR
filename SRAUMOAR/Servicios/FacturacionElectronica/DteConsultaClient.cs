@@ -21,29 +21,23 @@ public sealed class DteConsultaClient(IHttpClientFactory http, ITokenHaciendaSer
         string codigo, CancellationToken cancellationToken = default)
     {
         var entidad = configuracion.Entidad;
-        var externa = entidad.UsarApiExterna;
-        var url = externa
-            ? (entidad.UrlApiExterna ?? throw new InvalidOperationException("Falta la URL de la API externa.")).TrimEnd('/') + "/api/consulta-dte"
-            : entidad.UrlConsulta ?? (entidad.AmbienteFiscal == "01" ? "https://api.dtes.mh.gob.sv" : "https://apitest.dtes.mh.gob.sv") + "/fesv/recepcion/consultadte/";
+        var url = entidad.UrlConsulta ?? (entidad.AmbienteFiscal == "01" ? "https://api.dtes.mh.gob.sv" : "https://apitest.dtes.mh.gob.sv") + "/fesv/recepcion/consultadte/";
         var destino = HaciendaDteClient.ValidarUrl(url, entidad.AmbienteFiscal);
-        var token = externa ? null : await tokens.ObtenerAsync(configuracion, cancellationToken);
+        var token = await tokens.ObtenerAsync(configuracion, cancellationToken);
         for (var intento = 0; intento < 2; intento++)
         {
-            using var client = http.CreateClient(externa ? "ApiExternaDte" : "HaciendaDte");
+            using var client = http.CreateClient("HaciendaDte");
             client.Timeout = TimeSpan.FromSeconds(Math.Clamp(entidad.TimeoutSegundos, 10, 300));
             using var request = new HttpRequestMessage(HttpMethod.Post, destino);
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            if (!externa) request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", TokenHaciendaService.NormalizarToken(token!));
-            object payload = externa
-                ? new { nitEmisor = nit, tdte = tipo, codigoGeneracion = codigo, usuario = entidad.UsuarioHacienda,
-                    password = configuracion.CredencialApi, ambiente = entidad.AmbienteFiscal }
-                : new { nitEmisor = nit, tdte = tipo, codigoGeneracion = codigo };
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", TokenHaciendaService.NormalizarToken(token));
+            var payload = new { nitEmisor = nit, tdte = tipo, codigoGeneracion = codigo };
             request.Content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
             using var limite = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             limite.CancelAfter(client.Timeout);
             using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, limite.Token);
             var body = await response.Content.ReadAsStringAsync(limite.Token);
-            if (!externa && response.StatusCode == HttpStatusCode.Unauthorized && intento == 0)
+            if (response.StatusCode == HttpStatusCode.Unauthorized && intento == 0)
             {
                 tokens.Invalidar(entidad.AmbienteFiscal, entidad.UsuarioHacienda);
                 token = await tokens.ObtenerAsync(configuracion, cancellationToken);

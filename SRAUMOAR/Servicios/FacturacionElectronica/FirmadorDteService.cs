@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -29,19 +30,36 @@ public sealed class LlaveCertificado
 public interface IFirmadorDteService
 {
     Task<string> FirmarAsync(string rutaCertificado, string password, string json, CancellationToken cancellationToken = default);
+    Task<string> FirmarAsync(byte[] certificadoCrt, string password, string json, CancellationToken cancellationToken = default);
     void LimpiarCache(string? rutaCertificado = null);
 }
 
 public sealed class FirmadorDteService : IFirmadorDteService
 {
+    private static readonly ConcurrentDictionary<string, CertificadoMh> CertificadosEnMemoria = new(StringComparer.Ordinal);
+
     public async Task<string> FirmarAsync(string rutaCertificado, string password, string json, CancellationToken cancellationToken = default)
     {
         if (!File.Exists(rutaCertificado))
             throw new FileNotFoundException("No se encontró el certificado .crt.", rutaCertificado);
+        var bytes = await File.ReadAllBytesAsync(rutaCertificado, cancellationToken);
+        return await FirmarAsync(bytes, password, json, cancellationToken);
+    }
+
+    public Task<string> FirmarAsync(byte[] certificadoCrt, string password, string json, CancellationToken cancellationToken = default)
+    {
+        if (certificadoCrt is not { Length: > 0 })
+            throw new InvalidOperationException("No se encontró el certificado .crt en la configuración.");
         if (string.IsNullOrWhiteSpace(password))
             throw new UnauthorizedAccessException("La contraseña del certificado está vacía.");
 
-        var certificado = await ObtenerCertificadoAsync(rutaCertificado, cancellationToken);
+        var clave = Convert.ToHexString(SHA256.HashData(certificadoCrt));
+        var certificado = CertificadosEnMemoria.GetOrAdd(clave, _ =>
+        {
+            using var stream = new MemoryStream(certificadoCrt, writable: false);
+            return LeerCertificadoValidado(stream);
+        });
+
         ValidarNitDocumento(certificado, json);
         var hashGuardado = certificado.privateKey?.clave ?? certificado.clavePri;
         if (!VerificarPassword(password, hashGuardado))
@@ -52,12 +70,12 @@ public sealed class FirmadorDteService : IFirmadorDteService
         using var rsa = RSA.Create();
         rsa.ImportPkcs8PrivateKey(clavePrivada, out var leidos);
         if (leidos != clavePrivada.Length) throw new InvalidOperationException("La clave privada contiene datos sobrantes.");
-        return await Task.Run(() => JWT.Encode(json, rsa, JwsAlgorithm.RS512), cancellationToken);
+        return Task.Run(() => JWT.Encode(json, rsa, JwsAlgorithm.RS512), cancellationToken);
     }
 
     public void LimpiarCache(string? rutaCertificado = null)
     {
-        // No se retienen llaves por ruta: una sustitución atómica debe verse en la siguiente firma.
+        // La clave de caché es la huella del contenido: un certificado nuevo genera otra entrada.
     }
 
     private async Task<CertificadoMh> ObtenerCertificadoAsync(string ruta, CancellationToken cancellationToken)

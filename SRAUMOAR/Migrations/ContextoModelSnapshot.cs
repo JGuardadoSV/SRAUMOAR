@@ -143,18 +143,6 @@ namespace SRAUMOAR.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AlumnoId"));
 
-                    b.Property<string>("CodigoDepartamentoFiscal")
-                        .HasMaxLength(2)
-                        .HasColumnType("nvarchar(2)");
-
-                    b.Property<string>("CodigoMunicipioFiscal")
-                        .HasMaxLength(2)
-                        .HasColumnType("nvarchar(2)");
-
-                    b.Property<string>("CodigoDistritoFiscal")
-                        .HasMaxLength(2)
-                        .HasColumnType("nvarchar(2)");
-
                     b.Property<string>("Apellidos")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -167,6 +155,18 @@ namespace SRAUMOAR.Migrations
 
                     b.Property<bool>("Casado")
                         .HasColumnType("bit");
+
+                    b.Property<string>("CodigoDepartamentoFiscal")
+                        .HasMaxLength(2)
+                        .HasColumnType("nvarchar(2)");
+
+                    b.Property<string>("CodigoDistritoFiscal")
+                        .HasMaxLength(2)
+                        .HasColumnType("nvarchar(2)");
+
+                    b.Property<string>("CodigoMunicipioFiscal")
+                        .HasMaxLength(2)
+                        .HasColumnType("nvarchar(2)");
 
                     b.Property<string>("ContactoDeEmergencia")
                         .IsRequired()
@@ -878,6 +878,9 @@ namespace SRAUMOAR.Migrations
                         .HasMaxLength(2)
                         .HasColumnType("nvarchar(2)");
 
+                    b.Property<byte[]>("CertificadoCrt")
+                        .HasColumnType("varbinary(max)");
+
                     b.Property<string>("CodigoActividad")
                         .HasMaxLength(10)
                         .HasColumnType("nvarchar(10)");
@@ -922,7 +925,7 @@ namespace SRAUMOAR.Migrations
                         .HasMaxLength(320)
                         .HasColumnType("nvarchar(320)");
 
-                    b.Property<string>("CredencialApiCifrada")
+                    b.Property<string>("CredencialHaciendaCifrada")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("DepartamentoDescripcion")
@@ -995,10 +998,6 @@ namespace SRAUMOAR.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<string>("UrlApiExterna")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
                     b.Property<string>("UrlAutenticacion")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -1011,19 +1010,9 @@ namespace SRAUMOAR.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<string>("UrlFirmador")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
                     b.Property<string>("UrlRecepcion")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
-
-                    b.Property<bool>("UsarApiExterna")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("UsarFirmadorExterno")
-                        .HasColumnType("bit");
 
                     b.Property<string>("UsuarioHacienda")
                         .HasMaxLength(200)
@@ -1070,9 +1059,7 @@ namespace SRAUMOAR.Migrations
                             TelefonoEmisor = "23021800",
                             TimeoutSegundos = 60,
                             TipoEstablecimiento = "02",
-                            TipoEstablecimientoDescripcion = "Casa Matriz",
-                            UsarApiExterna = false,
-                            UsarFirmadorExterno = false
+                            TipoEstablecimientoDescripcion = "Casa Matriz"
                         },
                         new
                         {
@@ -1103,9 +1090,7 @@ namespace SRAUMOAR.Migrations
                             TelefonoEmisor = "23021800",
                             TimeoutSegundos = 60,
                             TipoEstablecimiento = "02",
-                            TipoEstablecimientoDescripcion = "Casa Matriz",
-                            UsarApiExterna = false,
-                            UsarFirmadorExterno = false
+                            TipoEstablecimientoDescripcion = "Casa Matriz"
                         });
                 });
 

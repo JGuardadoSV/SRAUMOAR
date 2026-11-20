@@ -99,6 +99,32 @@ public sealed class CatalogoFeService : ICatalogoFeService
         var consulta = _contexto.CatalogosFe.AsNoTracking().AsQueryable();
         if (!string.IsNullOrWhiteSpace(codigoCatalogo)) consulta = consulta.Where(x => x.CodigoCatalogo == codigoCatalogo.Trim());
         if (!string.IsNullOrWhiteSpace(version)) consulta = consulta.Where(x => x.Version == version.Trim());
-        return await consulta.OrderBy(x => x.CodigoCatalogo).ThenBy(x => x.Orden).ToListAsync(cancellationToken);
+        var resultado = await consulta.OrderBy(x => x.CodigoCatalogo).ThenBy(x => x.Orden).ToListAsync(cancellationToken);
+
+        // Punto de Venta ya utiliza este catálogo legado como respaldo. Mantener el
+        // mismo comportamiento evita que Administración quede sin actividades cuando
+        // aún no se ha importado CAT-019 al repositorio nuevo.
+        if (!string.Equals(codigoCatalogo?.Trim(), "CAT-019", StringComparison.OrdinalIgnoreCase))
+            return resultado;
+
+        // El catálogo administrable de actividades económicas es la fuente
+        // única para CAT-019; no duplicar sus filas en CatalogosFe.
+        var actividades = await _contexto.CodigosActividadEconomica
+            .AsNoTracking()
+            .OrderBy(x => x.Codigo)
+            .ToListAsync(cancellationToken);
+        if (actividades.Count == 0)
+            return resultado;
+
+        return actividades.Select((x, indice) => new CatalogoFeItem
+        {
+            Id = x.Id,
+            CodigoCatalogo = "CAT-019",
+            Version = version?.Trim() ?? "1.1",
+            Codigo = x.Codigo?.Trim() ?? string.Empty,
+            Descripcion = x.Descripcion?.Trim() ?? string.Empty,
+            Activo = true,
+            Orden = indice
+        }).ToList();
     }
 }

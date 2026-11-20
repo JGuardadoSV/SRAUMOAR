@@ -90,8 +90,6 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 builder.Services.AddHttpClient();
 // No reenviar credenciales ni JSON fiscales a destinos indicados por una redirección.
 builder.Services.AddHttpClient("HaciendaDte").ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
-builder.Services.AddHttpClient("FirmadorDte").ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
-builder.Services.AddHttpClient("ApiExternaDte").ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
 builder.Services.AddMemoryCache();
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "storage", "keys")))
@@ -100,6 +98,7 @@ builder.Services.AddDataProtection()
 builder.Services.AddScoped<IConfiguracionFeService, ConfiguracionFeService>();
 builder.Services.AddScoped<ICertificadoStorageService, CertificadoStorageService>();
 builder.Services.AddScoped<ICatalogoFeService, CatalogoFeService>();
+builder.Services.AddScoped<CatalogoFeSeeder>();
 builder.Services.AddScoped<IDteJsonFactory, DteJsonFactory>();
 builder.Services.AddScoped<IFirmadorDteService, FirmadorDteService>();
 builder.Services.AddScoped<ITokenHaciendaService, TokenHaciendaService>();
@@ -132,6 +131,13 @@ builder.Services.AddAuthorization(options =>
 
 var app = builder.Build();
 
+// El territorio fiscal se comparte con alumnos y facturación; mantener la tabla
+// disponible evita que una base nueva dependa de una importación manual.
+using (var scope = app.Services.CreateScope())
+{
+    var seeder = scope.ServiceProvider.GetRequiredService<CatalogoFeSeeder>();
+    await seeder.SembrarTerritorioAsync();
+}
 
 //qu� otras configuraciones hacen falta
 

@@ -815,6 +815,12 @@
                                             <p>Facturar</p>
                                         </a>
                                     </li>
+                                    <li class="nav-item">
+                                        <a asp-area="" asp-page="/administracion/facturacion/Index" class="nav-link">
+                                            <i class="nav-icon bi bi-gear"></i>
+                                            <p>Configuración DTE y SMTP</p>
+                                        </a>
+                                    </li>
                                 </ul>
                             </li>
                             <li class="nav-item">
@@ -1464,4 +1470,5 @@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
+
 

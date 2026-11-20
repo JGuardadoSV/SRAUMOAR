@@ -13,15 +13,13 @@ namespace SRAUMOAR.Pages.administracion.facturacion;
 public class IndexModel : PageModel
 {
     private readonly IConfiguracionFeService _configuracion;
-    private readonly ICertificadoStorageService _certificados;
     private readonly ISmtpConfigurationService _smtp;
     private readonly ICatalogoFeService _catalogos;
     private readonly IOptions<EmisorConfig> _emisor;
 
-    public IndexModel(IConfiguracionFeService configuracion, ICertificadoStorageService certificados, ISmtpConfigurationService smtp, ICatalogoFeService catalogos, IOptions<EmisorConfig> emisor)
+    public IndexModel(IConfiguracionFeService configuracion, ISmtpConfigurationService smtp, ICatalogoFeService catalogos, IOptions<EmisorConfig> emisor)
     {
         _configuracion = configuracion;
-        _certificados = certificados;
         _smtp = smtp;
         _catalogos = catalogos;
         _emisor = emisor;
@@ -53,6 +51,7 @@ public class IndexModel : PageModel
         try
         {
             string? ruta = null;
+            byte[]? certificadoCrt = null;
             try
             {
                 var actual = await _configuracion.ObtenerParaEdicionAsync(ambiente, cancellationToken);
@@ -63,19 +62,38 @@ public class IndexModel : PageModel
                 // Primera configuración: la migración deja filas base sin secretos.
             }
             if (certificado is { Length: > 0 })
-                ruta = await _certificados.GuardarAsync(ambiente, form.NitEmisor ?? _emisor.Value.NIT, certificado.OpenReadStream(), certificado.FileName, cancellationToken);
+            {
+                await using var contenido = new MemoryStream();
+                await certificado.CopyToAsync(contenido, cancellationToken);
+                certificadoCrt = contenido.ToArray();
+                await using var validacion = new MemoryStream(certificadoCrt, writable: false);
+                FirmadorDteService.LeerCertificadoValidado(validacion, form.NitEmisor ?? _emisor.Value.NIT);
+                ruta = null;
+            }
+
+            if (!string.IsNullOrWhiteSpace(form.CodigoActividad))
+            {
+                var actividades = await _catalogos.ObtenerAsync("CAT-019", "1.1", cancellationToken);
+                var codigoActividad = form.CodigoActividad.Trim();
+                var actividad = actividades.FirstOrDefault(x => x.Activo
+                    && string.Equals(x.Codigo?.Trim(), codigoActividad, StringComparison.OrdinalIgnoreCase));
+                if (actividad is null)
+                    throw new InvalidOperationException("La actividad económica seleccionada no existe en el catálogo fiscal.");
+                form.CodigoActividad = actividad.Codigo.Trim();
+                form.DescripcionActividad = actividad.Descripcion;
+            }
 
             await _configuracion.GuardarAsync(new ConfiguracionFeInput(
-                ambiente, form.Habilitado, form.UrlAutenticacion, form.UrlRecepcion, form.UrlAnulacion, form.UrlContingencia,
-                form.UrlConsulta, form.UrlApiExterna, form.UrlFirmador, form.UsuarioHacienda, form.CredencialApi,
+                ambiente, form.Habilitado, null, null, null, null,
+                null, form.UsuarioHacienda, form.CredencialHacienda,
                 form.PasswordCertificado, ruta, form.CodigoEstablecimientoMh, form.CodigoEstablecimiento,
-                form.CodigoPuntoVentaMh, form.CodigoPuntoVenta, form.UsarFirmadorExterno, form.UsarApiExterna,
+                form.CodigoPuntoVentaMh, form.CodigoPuntoVenta,
                 form.TimeoutSegundos, form.MaxReintentos, form.EsAmbienteFiscalActivo,
                 form.NitEmisor, form.NrcEmisor, form.NombreEmisor, form.NombreComercial,
                 form.CodigoActividad, form.DescripcionActividad, form.TipoEstablecimiento,
                 form.TipoEstablecimientoDescripcion, form.CodigoDepartamento, form.DepartamentoDescripcion,
                 form.CodigoMunicipio, form.MunicipioDescripcion, form.CodigoDistrito, form.DistritoDescripcion,
-                form.ComplementoDireccion, form.TelefonoEmisor, form.CorreoEmisor), cancellationToken);
+                form.ComplementoDireccion, form.TelefonoEmisor, form.CorreoEmisor, certificadoCrt), cancellationToken);
             Mensaje = $"Configuración del ambiente fiscal {ambiente} guardada.";
         }
         catch (Exception ex)
@@ -125,13 +143,7 @@ public class IndexModel : PageModel
             form.AmbienteFiscal = ambiente.Entidad.AmbienteFiscal;
             form.Habilitado = ambiente.Entidad.Habilitado;
             form.EsAmbienteFiscalActivo = ambiente.Entidad.EsAmbienteFiscalActivo;
-            form.UrlAutenticacion = ambiente.Entidad.UrlAutenticacion;
-            form.UrlRecepcion = ambiente.Entidad.UrlRecepcion;
-            form.UrlAnulacion = ambiente.Entidad.UrlAnulacion;
-            form.UrlContingencia = ambiente.Entidad.UrlContingencia;
-            form.UrlConsulta = ambiente.Entidad.UrlConsulta;
-            form.UrlApiExterna = ambiente.Entidad.UrlApiExterna;
-            form.UrlFirmador = ambiente.Entidad.UrlFirmador;
+
             form.UsuarioHacienda = ambiente.Entidad.UsuarioHacienda;
             form.CodigoEstablecimientoMh = ambiente.Entidad.CodigoEstablecimientoMh;
             form.CodigoEstablecimiento = ambiente.Entidad.CodigoEstablecimiento;
@@ -154,8 +166,6 @@ public class IndexModel : PageModel
             form.ComplementoDireccion = ambiente.Entidad.ComplementoDireccion;
             form.TelefonoEmisor = ambiente.Entidad.TelefonoEmisor;
             form.CorreoEmisor = ambiente.Entidad.CorreoEmisor;
-            form.UsarFirmadorExterno = ambiente.Entidad.UsarFirmadorExterno;
-            form.UsarApiExterna = ambiente.Entidad.UsarApiExterna;
             form.TimeoutSegundos = ambiente.Entidad.TimeoutSegundos;
             form.MaxReintentos = ambiente.Entidad.MaxReintentos;
             form.TieneCertificado = !string.IsNullOrWhiteSpace(ambiente.Entidad.RutaCertificado);
@@ -183,15 +193,9 @@ public class IndexModel : PageModel
         public string AmbienteFiscal { get; set; } = string.Empty;
         public bool Habilitado { get; set; } = true;
         public bool EsAmbienteFiscalActivo { get; set; }
-        public string? UrlAutenticacion { get; set; }
-        public string? UrlRecepcion { get; set; }
-        public string? UrlAnulacion { get; set; }
-        public string? UrlContingencia { get; set; }
-        public string? UrlConsulta { get; set; }
-        public string? UrlApiExterna { get; set; }
-        public string? UrlFirmador { get; set; }
+
         public string? UsuarioHacienda { get; set; }
-        public string? CredencialApi { get; set; }
+        public string? CredencialHacienda { get; set; }
         public string? PasswordCertificado { get; set; }
         public string? CodigoEstablecimientoMh { get; set; } = "M001";
         public string? CodigoEstablecimiento { get; set; } = "M001";
@@ -214,8 +218,6 @@ public class IndexModel : PageModel
         public string? ComplementoDireccion { get; set; }
         public string? TelefonoEmisor { get; set; }
         public string? CorreoEmisor { get; set; }
-        public bool UsarFirmadorExterno { get; set; }
-        public bool UsarApiExterna { get; set; }
         public int TimeoutSegundos { get; set; } = 60;
         public int MaxReintentos { get; set; } = 3;
         public bool TieneCertificado { get; set; }

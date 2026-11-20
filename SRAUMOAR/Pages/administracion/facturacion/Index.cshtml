@@ -7,7 +7,7 @@
 
 <div class="container-fluid py-4">
     <h1>Facturación Electrónica</h1>
-    <p class="text-muted">El ambiente fiscal utilizado depende de esta configuración, no del ambiente de ASP.NET.</p>
+
     @if (!string.IsNullOrWhiteSpace(Model.Mensaje))
     {
         <div class="alert alert-success">@Model.Mensaje</div>
@@ -25,9 +25,13 @@
         @foreach (var ambiente in new[] { ("00", Model.Form00), ("01", Model.Form01) })
         {
             <div class="col-xl-6">
-                <div class="card h-100">
+                <div class="card h-100 @(ambiente.Item1 == "01" ? "ambiente-secundario" : "")">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <strong>Ambiente fiscal @ambiente.Item1</strong>
+                        @if (ambiente.Item1 == "01")
+                        {
+                            <small class="text-muted ms-2">Datos generales compartidos con el ambiente 00</small>
+                        }
                         @if (ambiente.Item2.EsAmbienteFiscalActivo)
                         {
                             <span class="badge bg-success">Activo</span>
@@ -37,6 +41,8 @@
                         <form method="post" enctype="multipart/form-data" asp-page-handler="GuardarAmbiente">
                             <input type="hidden" name="ambienteFiscal" value="@ambiente.Item1" />
                             <div class="row g-2">
+                                @if (ambiente.Item1 == "00")
+                                {
                                 <div class="col-12">
                                     <div class="alert alert-light border mb-1">
                                         <strong>Datos fiscales del emisor</strong>
@@ -56,27 +62,23 @@
                                 <div class="col-md-4"><label class="form-label">Municipio</label><div class="input-group"><input class="form-control" readonly id="@($"Form{ambiente.Item1}_MunicipioDescripcion")" name="@($"Form{ambiente.Item1}.MunicipioDescripcion")" value="@ambiente.Item2.MunicipioDescripcion" placeholder="Seleccione en Buscar" /><input type="hidden" id="@($"Form{ambiente.Item1}_CodigoMunicipio")" name="@($"Form{ambiente.Item1}.CodigoMunicipio")" value="@ambiente.Item2.CodigoMunicipio" /><button type="button" class="btn btn-outline-secondary btn-buscar-catalogo" data-catalogo="MUNICIPIO" data-code-target="@($"Form{ambiente.Item1}_CodigoMunicipio")" data-text-target="@($"Form{ambiente.Item1}_MunicipioDescripcion")">Buscar</button></div></div>
                                 <div class="col-md-4"><label class="form-label">Distrito</label><div class="input-group"><input class="form-control" readonly id="@($"Form{ambiente.Item1}_DistritoDescripcion")" name="@($"Form{ambiente.Item1}.DistritoDescripcion")" value="@ambiente.Item2.DistritoDescripcion" placeholder="Seleccione en Buscar" /><input type="hidden" id="@($"Form{ambiente.Item1}_CodigoDistrito")" name="@($"Form{ambiente.Item1}.CodigoDistrito")" value="@ambiente.Item2.CodigoDistrito" /><button type="button" class="btn btn-outline-secondary btn-buscar-catalogo" data-catalogo="DISTRITO" data-code-target="@($"Form{ambiente.Item1}_CodigoDistrito")" data-text-target="@($"Form{ambiente.Item1}_DistritoDescripcion")">Buscar</button></div></div>
                                 <div class="col-12"><small class="text-muted">Si no aparecen resultados, importe primero el Excel en la sección Catálogos.</small></div>
+                                }
                                 <div class="col-md-6"><label class="form-label">Usuario Hacienda</label><input class="form-control" name="@($"Form{ambiente.Item1}.UsuarioHacienda")" value="@ambiente.Item2.UsuarioHacienda" /></div>
-                                <div class="col-md-6"><label class="form-label">Credencial/API</label><input class="form-control" type="password" name="@($"Form{ambiente.Item1}.CredencialApi")" autocomplete="new-password" /></div>
+                                <div class="col-md-6"><label class="form-label">Contraseña de usuario de Hacienda</label><input class="form-control" type="password" name="@($"Form{ambiente.Item1}.CredencialHacienda")" autocomplete="new-password" /><small class="text-muted">Se usa para autenticarse directamente con Hacienda. Déjela vacía para conservar la guardada.</small></div>
                                 <div class="col-md-6"><label class="form-label">Contraseña certificado</label><input class="form-control" type="password" name="@($"Form{ambiente.Item1}.PasswordCertificado")" autocomplete="new-password" /></div>
                                 <div class="col-md-6"><label class="form-label">Certificado .crt</label><input class="form-control" type="file" name="certificado" accept=".crt" /></div>
-                                <div class="col-md-6"><label class="form-label">URL recepción</label><input class="form-control" name="@($"Form{ambiente.Item1}.UrlRecepcion")" value="@ambiente.Item2.UrlRecepcion" /></div>
-                                <div class="col-md-6"><label class="form-label">URL autenticación</label><input class="form-control" name="@($"Form{ambiente.Item1}.UrlAutenticacion")" value="@ambiente.Item2.UrlAutenticacion" /></div>
-                                <div class="col-md-6"><label class="form-label">URL anulación</label><input class="form-control" name="@($"Form{ambiente.Item1}.UrlAnulacion")" value="@ambiente.Item2.UrlAnulacion" /></div>
-                                 <div class="col-md-6"><label class="form-label">URL contingencia</label><input class="form-control" name="@($"Form{ambiente.Item1}.UrlContingencia")" value="@ambiente.Item2.UrlContingencia" /></div>
-                                 <div class="col-md-6"><label class="form-label">URL consulta</label><input class="form-control" name="@($"Form{ambiente.Item1}.UrlConsulta")" value="@ambiente.Item2.UrlConsulta" /></div>
-                                 <div class="col-md-6"><label class="form-label">URL API externa</label><input class="form-control" name="@($"Form{ambiente.Item1}.UrlApiExterna")" value="@ambiente.Item2.UrlApiExterna" /></div>
-                                 <div class="col-md-6"><label class="form-label">URL firmador externo</label><input class="form-control" name="@($"Form{ambiente.Item1}.UrlFirmador")" value="@ambiente.Item2.UrlFirmador" /></div>
+                                @if (ambiente.Item1 == "00")
+                                {
+                                 <div class="col-12"><small class="text-muted">Los endpoints oficiales de Hacienda se seleccionan automáticamente según el ambiente fiscal.</small></div>
                                  <div class="col-md-3"><label class="form-label">Código establecimiento MH</label><input class="form-control" name="@($"Form{ambiente.Item1}.CodigoEstablecimientoMh")" value="@ambiente.Item2.CodigoEstablecimientoMh" /></div>
                                  <div class="col-md-3"><label class="form-label">Establecimiento</label><input class="form-control" name="@($"Form{ambiente.Item1}.CodigoEstablecimiento")" value="@ambiente.Item2.CodigoEstablecimiento" /></div>
                                  <div class="col-md-3"><label class="form-label">Código punto de venta MH</label><input class="form-control" name="@($"Form{ambiente.Item1}.CodigoPuntoVentaMh")" value="@ambiente.Item2.CodigoPuntoVentaMh" /></div>
                                  <div class="col-md-3"><label class="form-label">Punto de venta</label><input class="form-control" name="@($"Form{ambiente.Item1}.CodigoPuntoVenta")" value="@ambiente.Item2.CodigoPuntoVenta" /></div>
                                 <div class="col-md-3"><label class="form-label">Timeout</label><input class="form-control" type="number" name="@($"Form{ambiente.Item1}.TimeoutSegundos")" value="@ambiente.Item2.TimeoutSegundos" /></div>
                                 <div class="col-md-3"><label class="form-label">Reintentos</label><input class="form-control" type="number" name="@($"Form{ambiente.Item1}.MaxReintentos")" value="@ambiente.Item2.MaxReintentos" /></div>
+                                }
                             </div>
                             <div class="form-check mt-3"><input class="form-check-input" type="checkbox" name="@($"Form{ambiente.Item1}.Habilitado")" value="true" checked="@(ambiente.Item2.Habilitado ? "checked" : null)" /><label class="form-check-label">Ambiente habilitado</label></div>
-                            <div class="form-check"><input class="form-check-input" type="checkbox" name="@($"Form{ambiente.Item1}.UsarFirmadorExterno")" value="true" checked="@(ambiente.Item2.UsarFirmadorExterno ? "checked" : null)" /><label class="form-check-label">Usar firmador externo</label></div>
-                            <div class="form-check"><input class="form-check-input" type="checkbox" name="@($"Form{ambiente.Item1}.UsarApiExterna")" value="true" checked="@(ambiente.Item2.UsarApiExterna ? "checked" : null)" /><label class="form-check-label">Usar API externa compatible</label></div>
                             <button class="btn btn-primary mt-3" type="submit">Guardar ambiente @ambiente.Item1</button>
                         </form>
                         <form method="post" asp-page-handler="ActivarAmbiente" class="mt-2">
@@ -131,6 +133,7 @@
 @section Scripts {
     <script>
         (() => {
+
             const catalogos = {
                 DEPARTAMENTO: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoDepartamentos.Select(x => new { codigo = x.Codigo, descripcion = x.Descripcion }))),
                 MUNICIPIO: @Html.Raw(JsonSerializer.Serialize(Model.CatalogoMunicipios.Select(x => new { codigo = x.Codigo, descripcion = x.Descripcion, departamento = x.AmbitoDepartamento }))),

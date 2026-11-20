@@ -15,12 +15,11 @@ public class ConfiguracionFacturacionElectronica
     [StringLength(500)] public string? UrlAnulacion { get; set; }
     [StringLength(500)] public string? UrlContingencia { get; set; }
     [StringLength(500)] public string? UrlConsulta { get; set; }
-    [StringLength(500)] public string? UrlApiExterna { get; set; }
-    [StringLength(500)] public string? UrlFirmador { get; set; }
     [StringLength(200)] public string? UsuarioHacienda { get; set; }
-    public string? CredencialApiCifrada { get; set; }
+    public string? CredencialHaciendaCifrada { get; set; }
     public string? PasswordCertificadoCifrada { get; set; }
     [StringLength(500)] public string? RutaCertificado { get; set; }
+    public byte[]? CertificadoCrt { get; set; }
     [StringLength(20)] public string CodigoEstablecimientoMh { get; set; } = "M001";
     [StringLength(20)] public string CodigoEstablecimiento { get; set; } = "M001";
     [StringLength(20)] public string CodigoPuntoVentaMh { get; set; } = "P001";
@@ -45,8 +44,6 @@ public class ConfiguracionFacturacionElectronica
     [StringLength(30)] public string? TelefonoEmisor { get; set; }
     [StringLength(320)] public string? CorreoEmisor { get; set; }
 
-    public bool UsarFirmadorExterno { get; set; }
-    public bool UsarApiExterna { get; set; }
     public int TimeoutSegundos { get; set; } = 60;
     public int MaxReintentos { get; set; } = 3;
     public DateTime FechaActualizacion { get; set; } = DateTime.UtcNow;
