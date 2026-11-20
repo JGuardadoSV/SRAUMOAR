@@ -13,6 +13,7 @@ using SRAUMOAR.Servicios.FacturacionElectronica;
 using SRAUMOAR.Modelos.FacturacionElectronica;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json.Linq;
 
 namespace SRAUMOAR.Pages.puntoventa
 {
@@ -484,12 +485,8 @@ namespace SRAUMOAR.Pages.puntoventa
                                     : nitLimpio.Length == 14
                                         ? "36"
                                         : "37",
-                            numDocumento = nitLimpio is null
-                                ? null
-                                : nitLimpio.Length == 9
-                                    ? nitLimpio.Insert(8, "-")
-                                    : nitLimpio,
-                            nrc = (string?)null,
+                            numDocumento = nitLimpio,
+                            nrc = NullIfWhiteSpace(Factura.Receptor.Nrc),
                             nombre = NullIfWhiteSpace(Factura.Receptor.Nombre),
                             codActividad = NullIfWhiteSpace(Factura.Receptor.CodActividad),
                             descActividad = NullIfWhiteSpace(Factura.Receptor.DescActividad),
@@ -535,11 +532,16 @@ namespace SRAUMOAR.Pages.puntoventa
                     //   decimal totalVenta = 0;
                     decimal subTotalVentas = totalVenta + totalVentaExenta;
                     decimal subTotal = totalVenta + totalVentaExenta;
-                    decimal montoTotalOperacion = totalVenta + totalVentaExenta;
-                    decimal totalPagar = totalVenta + totalVentaExenta;
+                    decimal baseGravada = Math.Round(totalVenta / 1.13m, 2);
+                    decimal totalIva = Math.Round(totalVenta - baseGravada, 2);
+                    decimal ivaRete = Factura.Receptor.GranContribuyente && baseGravada >= 100m
+                        ? Math.Round(baseGravada * 0.01m, 2)
+                        : 0m;
+                    // La retención solo se descuenta del total a pagar;
+                    // montoTotalOperacion representa la operación completa.
+                    decimal montoTotalOperacion = Math.Round(totalVenta + totalVentaExenta, 2);
+                    decimal totalPagar = Math.Round(montoTotalOperacion - ivaRete, 2);
                     string totalLetras = new Conversor().ConvertirNumeroALetras(totalPagar);
-                    decimal totalIva = cuerpoDocumento.Sum(item => item.ivaItem);
-                    //decimal totalIva = Math.Round(totalVenta - (totalVenta / 1.13m), 2);
 
                     // Crear el objeto resumen con las variables
                     var resumen = new
@@ -555,7 +557,7 @@ namespace SRAUMOAR.Pages.puntoventa
                         totalDescu = 0.0,
                         tributos = (string)null,
                         subTotal = subTotal,
-                        ivaRete = 0.00,
+                        ivaRete = ivaRete,
                         montoTotalOperacion = montoTotalOperacion,
                         totalNoGravado = 0.0,
                         totalPagar = totalPagar,
@@ -737,15 +739,19 @@ namespace SRAUMOAR.Pages.puntoventa
                         .Where(p => p.EsExento)
                         .Sum(p => Math.Round(p.SubTotal, 2));
 
-                    decimal totalIva = Factura.Productos
-                        .Where(p => !p.EsExento)
-                        // IVA por línea: redondeamos a 2 decimales antes de sumar.
-                        .Sum(p => Math.Round(Math.Round(p.SubTotal, 2) * 0.13m, 2));
-
                     decimal subTotalVentas = Math.Round(totalVenta + totalVentaExenta, 2);
                     decimal subTotal = subTotalVentas;
+                    // En DTE 03, ventaGravada/precioUni son la base sin IVA.
+                    // Por eso 100.00 genera 13.00 de IVA, no 11.50.
+                    decimal baseGravada = totalVenta;
+                    decimal totalIva = Math.Round(baseGravada * 0.13m, 2);
+                    decimal ivaRete = Factura.Receptor.GranContribuyente && baseGravada >= 100m
+                        ? Math.Round(baseGravada * 0.01m, 2)
+                        : 0m;
+                    // La retención no reduce el monto total de la operación;
+                    // únicamente se descuenta al calcular el total a pagar.
                     decimal montoTotalOperacion = Math.Round(subTotalVentas + totalIva, 2);
-                    decimal totalPagar = montoTotalOperacion;
+                    decimal totalPagar = Math.Round(montoTotalOperacion - ivaRete, 2);
                     string totalLetras = new Conversor().ConvertirNumeroALetras(totalPagar);
 
                     // Crear el objeto resumen
@@ -770,7 +776,7 @@ namespace SRAUMOAR.Pages.puntoventa
                             }
                         },
                         subTotal = subTotal,
-                        ivaRete = 0.00,
+                        ivaRete = ivaRete,
                         ivaPerci = Math.Round(0.00, 2),
                         montoTotalOperacion = montoTotalOperacion,
                         totalNoGravado = 0.0,
@@ -1073,16 +1079,17 @@ namespace SRAUMOAR.Pages.puntoventa
                         codPais = Factura.CodigoPais
                     };
 
-                    // Crear otros documentos (opcional)
+                    // Hacienda exige identificar el documento asociado en el DTE 15.
+                    // El código 1 corresponde al documento de donación.
                     var otrosDocumentos = new[]
-     {
-        new
-        {
-            codDocAsociado = (int?)null,
-            descDocumento = (string)null,
-            detalleDocumento = (string)null
-        }
-    };
+                    {
+                        new
+                        {
+                            codDocAsociado = 1,
+                            descDocumento = "DOCUMENTO DE DONACION",
+                            detalleDocumento = "DONACION"
+                        }
+                    };
 
                     // Crear el cuerpo del documento
                     var cuerpoDocumento = Factura.Productos
@@ -1178,6 +1185,7 @@ namespace SRAUMOAR.Pages.puntoventa
                 TotalGravado = totalGravado,
                 TotalExento = totalExento,
                 TotalIva = totalIva,
+                IvaRetenido = JObject.Parse(json)["resumen"]?.Value<decimal?>("ivaRete") ?? 0m,
                 TotalPagar = totalPagar,
                 ClaveIdempotencia = claveOperacion
             };

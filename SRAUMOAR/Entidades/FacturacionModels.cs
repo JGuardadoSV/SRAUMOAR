@@ -107,6 +107,7 @@ namespace SRAUMOAR.Entidades
             // En donaciones, país de nacionalidad y domicilio fiscal son datos distintos.
             public int? CodigoDomicilioFiscal { get; set; }
             public bool Retencion { get; set; } = false;
+            public bool GranContribuyente { get; set; }
         }
 
         public class ProductoVenta
@@ -167,8 +168,8 @@ namespace SRAUMOAR.Entidades
             { 
                 get 
                 {
-                    // Solo calcular IVA si el documento es Crédito Fiscal (02)
-                    if (TipoDocumento != "02")
+                    // DTE 03 usa precios/base gravada sin IVA; DTE 01 ya recibe precios con IVA incluido.
+                    if (TipoDocumento is not ("02" or "03"))
                     {
                         return 0;
                     }
@@ -180,6 +181,16 @@ namespace SRAUMOAR.Entidades
             
             public decimal TotalGeneral => TotalExento + TotalGravado + IVA;
 
+            public decimal BaseGravadaRetencion => TipoDocumento == "01"
+                ? Math.Round(TotalGravado / 1.13m, 2)
+                : TotalGravado;
+
+            public decimal IvaRetenido => TipoDocumento is "01" or "03"
+                && Receptor.GranContribuyente
+                && BaseGravadaRetencion >= 100m
+                    ? Math.Round(BaseGravadaRetencion * 0.01m, 2)
+                    : 0m;
+
             public bool Retencion { get; set; } = false;
 
             [Required(ErrorMessage = "El tipo de operacion es obligatorio.")]
@@ -189,13 +200,15 @@ namespace SRAUMOAR.Entidades
             {
                 get
                 {
+                    var totalSinRetencion = TotalExento + TotalGravado + IVA;
+                    if (TipoDocumento is "01" or "03")
+                        return totalSinRetencion - IvaRetenido;
                     if (TipoDocumento == "14" && Retencion)
                     {
-                        var totalSinRetencion = TotalExento + TotalGravado + IVA;
                         var retencionMonto = Productos.Sum(p => p.Cantidad * p.PrecioUnitario) * 0.10m;
                         return totalSinRetencion - retencionMonto;
                     }
-                    return TotalExento + TotalGravado + IVA;
+                    return totalSinRetencion;
                 }
             }
         }

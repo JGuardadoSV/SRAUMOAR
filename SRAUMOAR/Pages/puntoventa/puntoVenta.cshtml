@@ -122,6 +122,7 @@
                         </div>
                         <div class="form-group campos-credito-fiscal" style="display: none;">
                             <label>NRC</label>
+                            <small class="text-muted d-block">Requerido si el receptor es contribuyente.</small>
                             <input type="text" class="form-control" asp-for="Factura.Receptor.Nrc" autocomplete="off" />
                             <span asp-validation-for="Factura.Receptor.Nrc" class="text-danger"></span>
                         </div>
@@ -204,6 +205,13 @@
                     </div>
 
                     <div class="pv-grid pv-grid-2">
+                        <div class="form-group campos-gran-contribuyente" style="display: none;">
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" asp-for="Factura.Receptor.GranContribuyente" />
+                                <label class="form-check-label" asp-for="Factura.Receptor.GranContribuyente">Receptor gran contribuyente</label>
+                            </div>
+                            <small class="text-muted">Si se marca, aplica retención de IVA del 1% cuando la base gravada sea igual o mayor a $100.</small>
+                        </div>
                         <div class="form-group campo-tipo-donacion" style="display: none;">
                             <label>Tipo de donacion</label>
                             <div class="input-group">
@@ -355,8 +363,12 @@
                             <span>IVA (13%)</span>
                             <strong id="ivaValue">$@Model.Factura.IVA.ToString("N2")</strong>
                         </div>
+                        <div class="pv-total-row retencion-iva-row" style="@(Model.Factura.IvaRetenido > 0 ? "" : "display: none;")">
+                            <span>Retención IVA (1%)</span>
+                            <strong class="text-danger" id="retencionIvaValue">-$@Model.Factura.IvaRetenido.ToString("N2")</strong>
+                        </div>
                         <div class="pv-total-row retencion-row" style="@(Model.Factura.TipoDocumento == "14" && Model.Factura.Retencion ? "" : "display: none;")">
-                            <span>Retencion renta (10%)</span>
+                            <span>Retención renta (10%)</span>
                             <strong class="text-danger" id="retencionValue">-$@((Model.Factura.Productos.Sum(p => p.Cantidad * p.PrecioUnitario) * 0.10M).ToString("N2"))</strong>
                         </div>
                         <div class="pv-total-row pv-grand-total">
@@ -1125,8 +1137,9 @@
 
                 jQuery('#alertaTipoDocumento').toggle(!hayTipo);
                 jQuery('.btn-agregar-producto').prop('disabled', !hayTipo);
-                jQuery('.iva-row').toggle(tipoDoc === '02');
-                jQuery('.campos-credito-fiscal').toggle(tipoDoc === '02' || tipoDoc === '15');
+                jQuery('.iva-row').toggle(tipoDoc === '02' || tipoDoc === '03');
+                jQuery('.campos-credito-fiscal').toggle(tipoDoc === '01' || tipoDoc === '02' || tipoDoc === '03' || tipoDoc === '15');
+                jQuery('.campos-gran-contribuyente').toggle(tipoDoc === '01' || tipoDoc === '03');
                 jQuery('.campo-pais, .campo-tipo-donacion').toggle(tipoDoc === '15');
                 jQuery('.campo-sujeto-excluido').toggle(tipoDoc === '14');
 
@@ -1136,6 +1149,9 @@
                     limpiarCatalogo('#Factura_TipoDonacion', '#Factura_TipoDonacionTexto');
                 }
 
+                if (tipoDoc !== '01' && tipoDoc !== '03') {
+                    jQuery('#Factura_Receptor_GranContribuyente').prop('checked', false);
+                }
                 if (tipoDoc !== '14') {
                     limpiarCatalogo('#Factura_TipoOperacion', '#Factura_TipoOperacionTexto');
                     jQuery('#retencionRentaCheck').prop('checked', false);
@@ -1225,8 +1241,9 @@
                 var tipoDoc = tipoDocumento.val();
                 var totalExento = 0;
                 var totalGravado = 0;
-                var iva = tipoDoc === '02' ? totalGravado * 0.13 : 0;
+                var iva = tipoDoc === '02' || tipoDoc === '03' ? totalGravado * 0.13 : 0;
                 var retencion = 0;
+                var retencionIva = 0;
 
                 jQuery('.pv-cart-item').each(function () {
                     var subtotal = parseFloat(jQuery(this).data('subtotal')) || 0;
@@ -1237,8 +1254,13 @@
                     }
                 });
 
-                iva = tipoDoc === '02' ? totalGravado * 0.13 : 0;
+                iva = tipoDoc === '02' || tipoDoc === '03' ? totalGravado * 0.13 : 0;
 
+                var granContribuyente = jQuery('#Factura_Receptor_GranContribuyente').is(':checked');
+                var baseRetencionIva = tipoDoc === '01' ? totalGravado / 1.13 : totalGravado;
+                if ((tipoDoc === '01' || tipoDoc === '03') && granContribuyente && baseRetencionIva >= 100) {
+                    retencionIva = Math.round(baseRetencionIva * 0.01 * 100) / 100;
+                }
                 if (tipoDoc === '14' && jQuery('#retencionRentaCheck').is(':checked')) {
                     retencion = (totalExento + totalGravado) * 0.10;
                 }
@@ -1246,9 +1268,11 @@
                 jQuery('#totalExentoValue').text(formatCurrency(totalExento));
                 jQuery('#totalGravadoValue').text(formatCurrency(totalGravado));
                 jQuery('#ivaValue').text(formatCurrency(iva));
+                jQuery('#retencionIvaValue').text('-' + formatCurrency(retencionIva));
+                jQuery('.retencion-iva-row').toggle(retencionIva > 0);
                 jQuery('#retencionValue').text('-' + formatCurrency(retencion));
                 jQuery('.retencion-row').toggle(retencion > 0);
-                jQuery('#totalGeneralValue').text(formatCurrency(totalExento + totalGravado + iva - retencion));
+                jQuery('#totalGeneralValue').text(formatCurrency(totalExento + totalGravado + iva - retencionIva - retencion));
             }
 
             function formatCurrency(value) {
