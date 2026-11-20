@@ -772,6 +772,84 @@ namespace SRAUMOAR.Migrations
                         });
                 });
 
+            modelBuilder.Entity("SRAUMOAR.Entidades.FacturacionElectronica.ClienteRecurrente", b =>
+                {
+                    b.Property<int>("ClienteRecurrenteId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ClienteRecurrenteId"));
+
+                    b.Property<string>("CodActividad")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("CodigoDepartamento")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("CodigoDistrito")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<int?>("CodigoDomicilioFiscal")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CodigoMunicipio")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("Complemento")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("Correo")
+                        .HasMaxLength(320)
+                        .HasColumnType("nvarchar(320)");
+
+                    b.Property<string>("DescActividad")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<DateTime>("FechaActualizacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("GranContribuyente")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Nit")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("NombreComercial")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Nrc")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<bool>("RetencionRenta")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Telefono")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.HasKey("ClienteRecurrenteId");
+
+                    b.ToTable("ClientesRecurrentes");
+                });
+
             modelBuilder.Entity("SRAUMOAR.Entidades.FacturacionElectronica.ColaCorreoDte", b =>
                 {
                     b.Property<long>("Id")

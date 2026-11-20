@@ -1,0 +1,113 @@
+@page "{id:int?}"
+@model SRAUMOAR.Pages.clientesrecurrentes.EditModel
+@{
+    ViewData["Title"] = Model.EsNuevo ? "Nuevo cliente recurrente" : "Editar cliente recurrente";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">@ViewData["Title"]</h1>
+            <p class="text-muted mb-0">Datos fiscales reutilizables en DTE 01, 03, 14 y 15.</p>
+        </div>
+        <a asp-page="./Index" class="btn btn-outline-secondary">Volver</a>
+    </div>
+
+    <form method="post" class="card shadow-sm p-4">
+        <input type="hidden" asp-for="Cliente.ClienteRecurrenteId" />
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label asp-for="Cliente.Nombre" class="form-label">Nombre / razón social *</label>
+                <input asp-for="Cliente.Nombre" class="form-control" />
+                <span asp-validation-for="Cliente.Nombre" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Cliente.Nit" class="form-label">NIT / DUI / documento *</label>
+                <input asp-for="Cliente.Nit" class="form-control" inputmode="numeric" />
+                <span class="form-text">Se guarda sin guiones.</span>
+                <span asp-validation-for="Cliente.Nit" class="text-danger d-block"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Cliente.Nrc" class="form-label">NRC</label>
+                <input asp-for="Cliente.Nrc" class="form-control" inputmode="numeric" />
+                <span asp-validation-for="Cliente.Nrc" class="text-danger"></span>
+            </div>
+            <div class="col-md-8">
+                <label asp-for="Cliente.NombreComercial" class="form-label">Nombre comercial</label>
+                <input asp-for="Cliente.NombreComercial" class="form-control" />
+            </div>
+        </div>
+
+        <hr class="my-4" />
+        <h2 class="h5">Actividad económica</h2>
+        <div class="row g-3 mb-3">
+            <div class="col-md-5">
+                <label asp-for="Cliente.CodActividad" class="form-label">Código de actividad</label>
+                <select asp-for="Cliente.CodActividad" id="actividadSelect" class="form-select">
+                    <option value="">Seleccione del catálogo de Hacienda</option>
+                    @foreach (var actividad in Model.Actividades)
+                    {
+                        <option value="@actividad.Codigo" data-descripcion="@actividad.Descripcion">@actividad.Codigo - @actividad.Descripcion</option>
+                    }
+                </select>
+                <span asp-validation-for="Cliente.CodActividad" class="text-danger"></span>
+            </div>
+            <div class="col-md-7">
+                <label asp-for="Cliente.DescActividad" class="form-label">Descripción</label>
+                <input asp-for="Cliente.DescActividad" id="actividadDescripcion" class="form-control" readonly />
+            </div>
+        </div>
+
+        <h2 class="h5">Dirección fiscal</h2>
+        <partial name="_SelectorTerritorioFiscal" model='new SRAUMOAR.Modelos.SelectorTerritorioFiscalModel("ClienteFiscal", "Cliente.CodigoDepartamento", "Cliente.CodigoMunicipio", "Cliente.CodigoDistrito", Model.Cliente.CodigoDepartamento, Model.Cliente.CodigoMunicipio, Model.Cliente.CodigoDistrito)' />
+        <div class="mb-3">
+            <label asp-for="Cliente.Complemento" class="form-label">Complemento *</label>
+            <input asp-for="Cliente.Complemento" class="form-control" />
+            <span asp-validation-for="Cliente.Complemento" class="text-danger"></span>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label asp-for="Cliente.Telefono" class="form-label">Teléfono</label>
+                <input asp-for="Cliente.Telefono" class="form-control" inputmode="numeric" />
+                <span class="form-text">Solo dígitos, sin guiones.</span>
+                <span asp-validation-for="Cliente.Telefono" class="text-danger d-block"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Cliente.Correo" class="form-label">Correo *</label>
+                <input asp-for="Cliente.Correo" type="email" class="form-control" />
+                <span asp-validation-for="Cliente.Correo" class="text-danger"></span>
+            </div>
+        </div>
+
+        <hr class="my-4" />
+        <div class="row g-3">
+            <div class="col-md-6 form-check ms-2">
+                <input asp-for="Cliente.GranContribuyente" class="form-check-input" />
+                <label asp-for="Cliente.GranContribuyente" class="form-check-label">Receptor gran contribuyente</label>
+                <small class="text-muted d-block">Aplica retención de IVA del 1% cuando la base gravada sea igual o mayor a $100.</small>
+            </div>
+            <div class="col-md-5 form-check ms-2">
+                <input asp-for="Cliente.RetencionRenta" class="form-check-input" />
+                <label asp-for="Cliente.RetencionRenta" class="form-check-label">Retención de renta (DTE 14)</label>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-4">
+            <a asp-page="./Index" class="btn btn-outline-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Guardar cliente</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.getElementById('actividadSelect')?.addEventListener('change', function () {
+            const option = this.options[this.selectedIndex];
+            document.getElementById('actividadDescripcion').value = option?.dataset.descripcion || '';
+        });
+    </script>
+}

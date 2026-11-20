@@ -23,6 +23,9 @@ namespace SRAUMOAR.Pages.puntoventa
         [BindProperty]
         public FacturaViewModel Factura { get; set; } = new FacturaViewModel();
         [BindProperty] public Guid OperacionEmisionId { get; set; }
+        [BindProperty] public int? ClienteRecurrenteId { get; set; }
+        [BindProperty] public bool GuardarClienteRecurrente { get; set; }
+        public IReadOnlyList<ClienteRecurrente> ClientesRecurrentes { get; private set; } = Array.Empty<ClienteRecurrente>();
         public IReadOnlyList<CatalogoFeItem> CatalogoPaises { get; private set; } = Array.Empty<CatalogoFeItem>();
         public IReadOnlyList<CatalogoFeItem> CatalogoDonaciones { get; private set; } = Array.Empty<CatalogoFeItem>();
         private readonly ICorrelativoService _correlativoService;
@@ -55,6 +58,7 @@ namespace SRAUMOAR.Pages.puntoventa
         {
             OperacionEmisionId = Guid.NewGuid();
             await CargarCatalogosAsync(cancellationToken);
+            await CargarClientesRecurrentesAsync(cancellationToken);
             try
             {
                 var configuracion = await _configuracionFe.ObtenerActivaAsync(cancellationToken);
@@ -76,9 +80,49 @@ namespace SRAUMOAR.Pages.puntoventa
             if (nitLimpio.Length == 14) return "36"; // NIT
             return "37"; // Otro
         }
+        public async Task<IActionResult> OnPostCargarClienteAsync(CancellationToken cancellationToken)
+        {
+            await CargarCatalogosAsync(cancellationToken);
+            await CargarClientesRecurrentesAsync(cancellationToken);
+            if (ClienteRecurrenteId is null)
+                return Page();
+
+            var cliente = await _context.ClientesRecurrentes
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.ClienteRecurrenteId == ClienteRecurrenteId.Value, cancellationToken);
+            if (cliente is null)
+            {
+                ModelState.AddModelError(string.Empty, "El cliente recurrente seleccionado no existe.");
+                return Page();
+            }
+
+            Factura.Retencion = cliente.RetencionRenta;
+            Factura.Receptor = new Receptor
+            {
+                Nit = cliente.Nit,
+                Nrc = cliente.Nrc,
+                Nombre = cliente.Nombre,
+                NombreComercial = cliente.NombreComercial,
+                CodActividad = cliente.CodActividad,
+                DescActividad = cliente.DescActividad,
+                CodigoDepartamento = cliente.CodigoDepartamento ?? string.Empty,
+                CodigoMunicipio = cliente.CodigoMunicipio ?? string.Empty,
+                CodigoDistrito = cliente.CodigoDistrito ?? string.Empty,
+                Direccion = new Direccion { Complemento = cliente.Complemento ?? string.Empty },
+                Telefono = cliente.Telefono ?? string.Empty,
+                Correo = cliente.Correo ?? string.Empty,
+                CodigoDomicilioFiscal = cliente.CodigoDomicilioFiscal,
+                GranContribuyente = cliente.GranContribuyente,
+                Retencion = cliente.RetencionRenta
+            };
+            ModelState.Clear();
+            return Page();
+        }
+
         public async Task<IActionResult> OnPostAgregarProducto()
         {
             await CargarCatalogosAsync(CancellationToken.None);
+            await CargarClientesRecurrentesAsync(CancellationToken.None);
             // Verificar que se haya seleccionado un tipo de documento
             if (string.IsNullOrEmpty(Factura.TipoDocumento))
             {
@@ -173,6 +217,7 @@ namespace SRAUMOAR.Pages.puntoventa
         public async Task<IActionResult> OnPostEliminarProducto(int id)
         {
             await CargarCatalogosAsync(CancellationToken.None);
+            await CargarClientesRecurrentesAsync(CancellationToken.None);
             // Preservar datos del receptor
             var receptorActual = Factura.Receptor;
 
@@ -207,6 +252,7 @@ namespace SRAUMOAR.Pages.puntoventa
                 return RedirectToPage("../facturas/Index");
             }
             await CargarCatalogosAsync(CancellationToken.None);
+            await CargarClientesRecurrentesAsync(CancellationToken.None);
             ConfiguracionFeActiva configuracionFiscal;
             EmisorConfig _emisor;
             try
@@ -383,6 +429,8 @@ namespace SRAUMOAR.Pages.puntoventa
             {
                 //se corrige si viene @gmail o @umoar y no terminan en .com o .edu.sv respectivamente
                 Factura.Receptor.Correo = CorregirCorreo(Factura.Receptor.Correo);
+                if (GuardarClienteRecurrente)
+                    await GuardarClienteRecurrenteAsync();
                 if (Factura.TipoDocumento == "01")
                 {
                     // CONSUMIDOR FINAL
@@ -1200,6 +1248,48 @@ namespace SRAUMOAR.Pages.puntoventa
                 return null;
             }
             return factura;
+        }
+
+        private async Task CargarClientesRecurrentesAsync(CancellationToken cancellationToken)
+        {
+            ClientesRecurrentes = await _context.ClientesRecurrentes
+                .AsNoTracking()
+                .OrderBy(x => x.Nombre)
+                .ToListAsync(cancellationToken);
+        }
+
+        private async Task GuardarClienteRecurrenteAsync()
+        {
+            var nit = Regex.Replace(Factura.Receptor.Nit ?? string.Empty, @"[^\d]", string.Empty);
+            if (string.IsNullOrWhiteSpace(nit) || string.IsNullOrWhiteSpace(Factura.Receptor.Nombre))
+                return;
+
+            var cliente = ClienteRecurrenteId is int id
+                ? await _context.ClientesRecurrentes.FirstOrDefaultAsync(x => x.ClienteRecurrenteId == id)
+                : await _context.ClientesRecurrentes.FirstOrDefaultAsync(x => x.Nit == nit);
+            if (cliente is null)
+            {
+                cliente = new ClienteRecurrente { Nit = nit };
+                _context.ClientesRecurrentes.Add(cliente);
+            }
+
+            cliente.Nit = nit;
+            cliente.Nombre = Factura.Receptor.Nombre.Trim();
+            cliente.Nrc = NullIfWhiteSpace(Factura.Receptor.Nrc);
+            cliente.NombreComercial = NullIfWhiteSpace(Factura.Receptor.NombreComercial);
+            cliente.CodActividad = NullIfWhiteSpace(Factura.Receptor.CodActividad);
+            cliente.DescActividad = NullIfWhiteSpace(Factura.Receptor.DescActividad);
+            cliente.CodigoDepartamento = NullIfWhiteSpace(Factura.Receptor.CodigoDepartamento);
+            cliente.CodigoMunicipio = NullIfWhiteSpace(Factura.Receptor.CodigoMunicipio);
+            cliente.CodigoDistrito = NullIfWhiteSpace(Factura.Receptor.CodigoDistrito);
+            cliente.Complemento = NullIfWhiteSpace(Factura.Receptor.Direccion.Complemento);
+            cliente.Telefono = NullIfWhiteSpace(Factura.Receptor.Telefono);
+            cliente.Correo = NullIfWhiteSpace(Factura.Receptor.Correo);
+            cliente.CodigoDomicilioFiscal = Factura.Receptor.CodigoDomicilioFiscal;
+            cliente.GranContribuyente = Factura.Receptor.GranContribuyente;
+            cliente.RetencionRenta = Factura.Retencion;
+            cliente.FechaActualizacion = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
         }
 
         private IActionResult OperacionYaProcesada()

@@ -72,6 +72,7 @@ namespace SRAUMOAR.Modelos
         public DbSet<DteEvento> DteEventos { get; set; } = null!;
         public DbSet<ColaCorreoDte> ColaCorreosDte { get; set; } = null!;
         public DbSet<CatalogoFeItem> CatalogosFe { get; set; } = null!;
+        public DbSet<ClienteRecurrente> ClientesRecurrentes { get; set; } = null!;
         
         // DbSets para Historial Académico
         public DbSet<HistorialAcademico> HistorialAcademico { get; set; } = null!;

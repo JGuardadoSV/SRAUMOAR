@@ -42,6 +42,20 @@
             </div>
         </div>
 
+        <div class="pv-recurrent-client mb-3">
+            <div class="input-group">
+                <select class="form-control" asp-for="ClienteRecurrenteId">
+                    <option value="">Cliente recurrente (opcional)</option>
+                    @foreach (var cliente in Model.ClientesRecurrentes)
+                    {
+                        <option value="@cliente.ClienteRecurrenteId">@cliente.Nombre - @cliente.Nit</option>
+                    }
+                </select>
+                <button type="submit" asp-page-handler="CargarCliente" class="btn btn-outline-primary">Usar cliente</button>
+            </div>
+            <small class="text-muted">Seleccione un cliente guardado para cargar sus datos fiscales.</small>
+        </div>
+
         <div id="alertaTipoDocumento" class="pv-inline-warning" style="display: none;">
             <i class="bi bi-exclamation-triangle"></i>
             <span>Debe seleccionar un tipo de documento antes de continuar con la facturacion.</span>
@@ -207,7 +221,7 @@
                     <div class="pv-grid pv-grid-2">
                         <div class="form-group campos-gran-contribuyente" style="display: none;">
                             <div class="form-check mt-2">
-                                <input class="form-check-input" asp-for="Factura.Receptor.GranContribuyente" />
+                                <input type="checkbox" class="form-check-input" asp-for="Factura.Receptor.GranContribuyente" />
                                 <label class="form-check-label" asp-for="Factura.Receptor.GranContribuyente">Receptor gran contribuyente</label>
                             </div>
                             <small class="text-muted">Si se marca, aplica retención de IVA del 1% cuando la base gravada sea igual o mayor a $100.</small>
@@ -398,6 +412,7 @@
             <input type="hidden" asp-for="Factura.Productos[i].EsExento" />
         }
 
+        <input type="hidden" asp-for="GuardarClienteRecurrente" id="guardarClienteRecurrente" />
         <input type="hidden" asp-for="Factura.Emisor.Nit" />
         <input type="hidden" asp-for="Factura.Emisor.Nrc" />
         <input type="hidden" asp-for="Factura.Emisor.Nombre" />
@@ -1084,7 +1099,11 @@
                     return false;
                 }
 
-                if (handler.indexOf('ProcesarFactura') !== -1) {
+                if (handler.indexOf('ProcesarFactura') !== -1 || (submitter && submitter.classList.contains('pv-process-button'))) {
+                    if (!confirmarProcesarFactura()) {
+                        e.preventDefault();
+                        return false;
+                    }
                     if (!validarProcesarFactura()) {
                         e.preventDefault();
                         return false;
@@ -1235,6 +1254,24 @@
             function enfocarConMensaje(selector, mensaje) {
                 alert(mensaje);
                 jQuery(selector).trigger('focus');
+            }
+
+            function confirmarProcesarFactura() {
+                if (!window.confirm('¿Emitir factura?')) {
+                    return false;
+                }
+
+                // Si se está usando un cliente ya guardado, no volver a preguntar
+                // ni crear/actualizar el registro recurrente.
+                var clienteSeleccionado = jQuery('#ClienteRecurrenteId').val();
+                if (clienteSeleccionado) {
+                    jQuery('#guardarClienteRecurrente').val('false');
+                    return true;
+                }
+
+                var guardar = window.confirm('¿Desea guardar estos datos del receptor para usarlos posteriormente?');
+                jQuery('#guardarClienteRecurrente').val(guardar ? 'true' : 'false');
+                return true;
             }
 
             function actualizarTotalesVisuales() {
