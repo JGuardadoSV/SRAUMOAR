@@ -355,7 +355,7 @@ namespace SRAUMOAR.Pages.aranceles
 
             var identificacion = new
             {
-                version = 1,
+                version = 2,
                 ambiente = ambiente == 1 ? "01" : "00",
                 tipoDte = "01",
                 numeroControl = numeroControl,
@@ -378,7 +378,6 @@ namespace SRAUMOAR.Pages.aranceles
                 codActividad = _emisor.CODACTIVIDAD,
                 descActividad = _emisor.GIRO,
                 nombreComercial = _emisor.NOMBRECOMERCIAL,
-                tipoEstablecimiento = configuracionFiscal.Entidad.TipoEstablecimiento,
                 direccion = new
                 {
                     departamento = _emisor.DEPARTAMENTO,
@@ -387,9 +386,7 @@ namespace SRAUMOAR.Pages.aranceles
                     complemento = _emisor.DIRECCION
                 },
                 telefono = _emisor.TELEFONO,
-                codEstableMH = codigoEstablecimientoMh,
                 codEstable = codigoEstablecimiento,
-                codPuntoVentaMH = codigoPuntoVentaMh,
                 codPuntoVenta = codigoPuntoVenta,
                 correo = _emisor.EMAIL
             };
@@ -491,7 +488,7 @@ namespace SRAUMOAR.Pages.aranceles
                 totalDescu = 0.0,
                 tributos = (string)null,
                 subTotal = subTotal,
-                ivaRete1 = 0.00,
+                ivaRete = 0.00,
                 reteRenta = 0.0,
                 montoTotalOperacion = montoTotalOperacion,
                 totalNoGravado = 0.0,
@@ -514,16 +511,6 @@ namespace SRAUMOAR.Pages.aranceles
                 numPagoElectronico = "0"
             };
 
-            // Crear la extensi�n
-            var extension = new
-            {
-                nombEntrega = "ENCARGADO 1",
-                docuEntrega = "00000000-0",
-                nombRecibe = (string)null,
-                docuRecibe = (string)null,
-                observaciones = (string)null,
-                placaVehiculo = (string)null
-            };
 
             // Serializar el objeto JSON completo
             dteJson = JsonSerializer.Serialize(new
@@ -535,22 +522,12 @@ namespace SRAUMOAR.Pages.aranceles
                 ventaTercero = (string)null,
                 cuerpoDocumento,
                 resumen,
-                extension,
                 otrosDocumentos = (string)null,
                 apendice = (string)null
             });
 
 
-            try
-            {
-                dteJson = DteDocumentoActualizador.ActualizarBorrador(dteJson, ambienteFiscal, _jsonFactory);
-            }
-            catch (Exception ex) when (ex is InvalidOperationException or ArgumentException or Newtonsoft.Json.JsonException)
-            {
-                ModelState.AddModelError(string.Empty, $"No se transmitió el borrador: {ex.Message}");
-                await CargarDatosParaVista(idalumno);
-                return Page();
-            }
+                _jsonFactory.ValidarDocumento(dteJson, ambienteFiscal, "01");
 
                 // La factura y el cobro se reservan localmente antes de cualquier llamada fiscal.
                 Factura factura = new Factura();

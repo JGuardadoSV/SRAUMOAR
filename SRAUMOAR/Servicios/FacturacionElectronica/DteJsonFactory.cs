@@ -251,7 +251,7 @@ public sealed class DteJsonFactory : IDteJsonFactory
             ?? throw new InvalidOperationException("El DTE no contiene identificación.");
         var emisorOriginal = (JObject?)(root["emisor"] ?? root["donatario"])
             ?? throw new InvalidOperationException("El DTE no contiene emisor/donatario.");
-        var receptor = root["receptor"] as JObject ?? root["sujetoExcluido"] as JObject
+        var receptor = root["receptor"] as JObject
             ?? root["donante"] as JObject ?? root["documento"] as JObject ?? new JObject();
         var fecha = ObtenerFechaElSalvador();
         var tipoDte = ObtenerTipoCanonico(original.Value<string>("tipoDte") ?? original.Value<string>("tipoEvento") ?? "01");

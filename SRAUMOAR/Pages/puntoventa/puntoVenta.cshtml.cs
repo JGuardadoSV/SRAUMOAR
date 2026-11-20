@@ -426,7 +426,7 @@ namespace SRAUMOAR.Pages.puntoventa
 
                     var identificacion = new
                     {
-                        version = 1,
+                        version = 2,
                         ambiente = ambiente == 1 ? "01" : "00",
                         tipoDte = "01",
                         numeroControl = numeroControl,
@@ -449,7 +449,6 @@ namespace SRAUMOAR.Pages.puntoventa
                         codActividad = _emisor.CODACTIVIDAD,
                         descActividad = _emisor.GIRO,
                         nombreComercial = _emisor.NOMBRECOMERCIAL,
-                        tipoEstablecimiento = configuracionFiscal.Entidad.TipoEstablecimiento,
                         direccion = new
                         {
                             departamento = _emisor.DEPARTAMENTO,
@@ -458,9 +457,7 @@ namespace SRAUMOAR.Pages.puntoventa
                             complemento = _emisor.DIRECCION
                         },
                         telefono = _emisor.TELEFONO,
-                        codEstableMH = codigoEstablecimientoMh,
                         codEstable = codigoEstablecimiento,
-                        codPuntoVentaMH = codigoPuntoVentaMh,
                         codPuntoVenta = codigoPuntoVenta,
                         correo = _emisor.EMAIL
                     };
@@ -552,7 +549,7 @@ namespace SRAUMOAR.Pages.puntoventa
                         totalDescu = 0.0,
                         tributos = (string)null,
                         subTotal = subTotal,
-                        ivaRete1 = 0.00,
+                        ivaRete = 0.00,
                         reteRenta = 0.0,
                         montoTotalOperacion = montoTotalOperacion,
                         totalNoGravado = 0.0,
@@ -575,17 +572,6 @@ namespace SRAUMOAR.Pages.puntoventa
                         numPagoElectronico = "0"
                     };
 
-                    // Crear la extensión
-                    var extension = new
-                    {
-                        nombEntrega = "ENCARGADO 1",
-                        docuEntrega = "00000000-0",
-                        nombRecibe = (string)null,
-                        docuRecibe = (string)null,
-                        observaciones = (string)null,
-                        placaVehiculo = (string)null
-                    };
-
                     // Serializar el objeto JSON completo
                     dteJson = JsonSerializer.Serialize(new
                     {
@@ -596,13 +582,12 @@ namespace SRAUMOAR.Pages.puntoventa
                         ventaTercero = (string)null,
                         cuerpoDocumento,
                         resumen,
-                        extension,
                         otrosDocumentos = (string)null,
                         apendice = (string)null
                     });
 
 
-                    if (!PrepararBorrador(ref dteJson)) return Page();
+                    _jsonFactory.ValidarDocumento(dteJson, ambiente == 1 ? "01" : "00", "01");
                     var factura = await GuardarFacturaPreparadaAsync(dteJson, codigoGeneracion, numeroControl,
                         identificacion.fecEmi, identificacion.horEmi, 1, "01", Factura.Receptor.Correo,
                         totalVenta, totalVentaExenta, totalIva, totalPagar);
@@ -653,7 +638,7 @@ namespace SRAUMOAR.Pages.puntoventa
 
                     var identificacion = new
                     {
-                        version = 3,
+                        version = 4,
                         ambiente = ambiente == 1 ? "01" : "00",
                         tipoDte = "03",
                         numeroControl = numeroControl,
@@ -676,7 +661,6 @@ namespace SRAUMOAR.Pages.puntoventa
                         codActividad = _emisor.CODACTIVIDAD,
                         descActividad = _emisor.GIRO,
                         nombreComercial = _emisor.NOMBRECOMERCIAL,
-                        tipoEstablecimiento = configuracionFiscal.Entidad.TipoEstablecimiento,
                         direccion = new
                         {
                             departamento = _emisor.DEPARTAMENTO,
@@ -685,9 +669,7 @@ namespace SRAUMOAR.Pages.puntoventa
                             complemento = _emisor.DIRECCION
                         },
                         telefono = _emisor.TELEFONO,
-                        codEstableMH = codigoEstablecimientoMh,
                         codEstable = codigoEstablecimiento,
-                        codPuntoVentaMH = codigoPuntoVentaMh,
                         codPuntoVenta = codigoPuntoVenta,
                         correo = _emisor.EMAIL
                     };
@@ -782,8 +764,8 @@ namespace SRAUMOAR.Pages.puntoventa
                             }
                         },
                         subTotal = subTotal,
-                        ivaRete1 = 0.00,
-                        ivaPerci1 = Math.Round(0.00, 2),
+                        ivaRete = 0.00,
+                        ivaPerci = Math.Round(0.00, 2),
                         reteRenta = 0.0,
                         montoTotalOperacion = montoTotalOperacion,
                         totalNoGravado = 0.0,
@@ -805,17 +787,6 @@ namespace SRAUMOAR.Pages.puntoventa
                         numPagoElectronico = "0"
                     };
 
-                    // Crear la extensión
-                    var extension = new
-                    {
-                        nombEntrega = "ENCARGADO 1",
-                        docuEntrega = "00000000-0",
-                        nombRecibe = (string)null,
-                        docuRecibe = (string)null,
-                        observaciones = (string)null,
-                        placaVehiculo = (string)null
-                    };
-
                     // Serializar el objeto JSON completo
                     dteJson = JsonSerializer.Serialize(new
                     {
@@ -826,12 +797,11 @@ namespace SRAUMOAR.Pages.puntoventa
                         ventaTercero = (string)null,
                         cuerpoDocumento,
                         resumen,
-                        extension,
                         otrosDocumentos = (string)null,
                         apendice = (string)null
                     });
 
-                    if (!PrepararBorrador(ref dteJson)) return Page();
+                    _jsonFactory.ValidarDocumento(dteJson, ambiente == 1 ? "01" : "00", "03");
                     var factura = await GuardarFacturaPreparadaAsync(dteJson, codigoGeneracion, numeroControl,
                         identificacion.fecEmi, identificacion.horEmi, 3, "03", Factura.Receptor.Correo,
                         totalVenta, totalVentaExenta, totalIva, totalPagar);
@@ -878,7 +848,7 @@ namespace SRAUMOAR.Pages.puntoventa
                     // Crear el objeto para la identificación
                     var identificacion = new
                     {
-                        version = 1,
+                        version = 2,
                         ambiente = ambiente == 1 ? "01" : "00",
                         tipoDte = "14", // Tipo 14 para Sujeto Excluido
                         numeroControl = numeroControl,
@@ -908,15 +878,13 @@ namespace SRAUMOAR.Pages.puntoventa
                             complemento = _emisor.DIRECCION
                         },
                         telefono = _emisor.TELEFONO,
-                        codEstableMH = codigoEstablecimientoMh,
                         codEstable = codigoEstablecimiento, // Ejemplo: "F001"
-                        codPuntoVentaMH = codigoPuntoVentaMh,
                         codPuntoVenta = codigoPuntoVenta, // Ejemplo: "C001"
                         correo = _emisor.EMAIL
                     };
 
-                    // Crear el objeto para el sujeto excluido
-                    var sujetoExcluido = new
+                    // Crear el objeto para el receptor
+                    var receptor = new
                     {
                         tipoDocumento = DeterminarTipoDocumento(Factura.Receptor.Nit), // "13" para DUI
                         numDocumento = Factura.Receptor.Nit,
@@ -954,7 +922,6 @@ namespace SRAUMOAR.Pages.puntoventa
                     decimal totalCompra = cuerpoDocumento.Sum(item => (decimal)item.compra);
                     decimal totalDescuento = cuerpoDocumento.Sum(item => (decimal)item.montoDescu);
                     decimal subTotal = totalCompra;
-                    decimal ivaRete1 = 0; // Para sujeto excluido generalmente es 0
                     decimal reteRenta = retencion ? Math.Round(totalCompra * 0.10m, 2) : 0; // totalCompra*0.10; // Retención de renta si aplica
                     decimal totalPagar = subTotal - reteRenta;
                     string totalLetras = new Conversor().ConvertirNumeroALetras(totalPagar);
@@ -966,7 +933,6 @@ namespace SRAUMOAR.Pages.puntoventa
                         descu = Math.Round(totalDescuento, 2),
                         totalDescu = Math.Round(totalDescuento, 2),
                         subTotal = Math.Round(subTotal, 2),
-                        ivaRete1 = Math.Round(ivaRete1, 2),
                         reteRenta = Math.Round(reteRenta, 2),
                         totalPagar = Math.Round(totalPagar, 2),
                         totalLetras = totalLetras,
@@ -993,13 +959,13 @@ namespace SRAUMOAR.Pages.puntoventa
                     {
                         identificacion,
                         emisor,
-                        sujetoExcluido,
+                        receptor,
                         cuerpoDocumento,
                         resumen,
                         apendice
                     });
 
-                    if (!PrepararBorrador(ref dteJson)) return Page();
+                    _jsonFactory.ValidarDocumento(dteJson, ambiente == 1 ? "01" : "00", "14");
                     var factura = await GuardarFacturaPreparadaAsync(dteJson, codigoGeneracion, numeroControl,
                         identificacion.fecEmi, identificacion.horEmi, 14, "14", Factura.Receptor.Correo,
                         0m, 0m, 0m, totalPagar);
@@ -1042,7 +1008,7 @@ namespace SRAUMOAR.Pages.puntoventa
                     // Crear el objeto para la identificación
                     var identificacion = new
                     {
-                        version = 1,
+                        version = 2,
                         ambiente = ambiente == 1 ? "01" : "00",
                         tipoDte = "15", // Tipo 15 para Comprobante de Donación
                         numeroControl = numeroControl,
@@ -1054,8 +1020,8 @@ namespace SRAUMOAR.Pages.puntoventa
                         tipoMoneda = "USD"
                     };
 
-                    // Crear el objeto para el donatario (equivalente al emisor)
-                    var donatario = new
+                    // Crear el emisor del comprobante de donación
+                    var emisor = new
                     {
                         tipoDocumento = "36", // Tipo fijo para donatarios
                         numDocumento = _emisor.NIT,
@@ -1064,7 +1030,6 @@ namespace SRAUMOAR.Pages.puntoventa
                         codActividad = _emisor.CODACTIVIDAD,
                         descActividad = _emisor.GIRO,
                         nombreComercial = _emisor.NOMBRECOMERCIAL,
-                        tipoEstablecimiento = configuracionFiscal.Entidad.TipoEstablecimiento,
                         direccion = new
                         {
                             departamento = _emisor.DEPARTAMENTO,
@@ -1074,14 +1039,12 @@ namespace SRAUMOAR.Pages.puntoventa
                         },
                         telefono = _emisor.TELEFONO,
                         correo = _emisor.EMAIL,
-                        codEstableMH = codigoEstablecimientoMh,
                         codEstable = codigoEstablecimiento,
-                        codPuntoVentaMH = codigoPuntoVentaMh,
                         codPuntoVenta = codigoPuntoVenta
                     };
 
-                    // Crear el objeto para el donante (equivalente al sujeto excluido)
-                    var donante = new
+                    // Crear el receptor del comprobante de donación
+                    var receptor = new
                     {
                         tipoDocumento = DeterminarTipoDocumento(Factura.Receptor.Nit), // "13" para DUI, etc.
                         numDocumento = Factura.Receptor.Nit,
@@ -1123,7 +1086,7 @@ namespace SRAUMOAR.Pages.puntoventa
                             codigo = producto.Codigo,
                             uniMedida = 99, // Unidad de medida estándar
                             descripcion = producto.Descripcion,
-                            depreciacion = 0,
+                            tipoDepreciacion = 0,
                             valorUni = producto.PrecioUnitario,
                             valor = Math.Round(producto.Cantidad * producto.PrecioUnitario, 2)
                         })
@@ -1158,15 +1121,15 @@ namespace SRAUMOAR.Pages.puntoventa
                     dteJson = JsonSerializer.Serialize(new
                     {
                         identificacion,
-                        donatario,
-                        donante,
+                        emisor,
+                        receptor,
                         otrosDocumentos,
                         cuerpoDocumento,
                         resumen,
                         apendice
                     });
 
-                    if (!PrepararBorrador(ref dteJson)) return Page();
+                    _jsonFactory.ValidarDocumento(dteJson, ambiente == 1 ? "01" : "00", "15");
                     var factura = await GuardarFacturaPreparadaAsync(dteJson, codigoGeneracion, numeroControl,
                         identificacion.fecEmi, identificacion.horEmi, 15, "15", Factura.Receptor.Correo,
                         0m, 0m, 0m, valorTotal);
@@ -1239,19 +1202,6 @@ namespace SRAUMOAR.Pages.puntoventa
             await _context.SaveChangesAsync();
         }
 
-        private bool PrepararBorrador(ref string json)
-        {
-            try
-            {
-                json = DteDocumentoActualizador.ActualizarBorrador(json, ambienteFiscal, _jsonFactory);
-                return true;
-            }
-            catch (Exception ex) when (ex is InvalidOperationException or ArgumentException or Newtonsoft.Json.JsonException)
-            {
-                ModelState.AddModelError(string.Empty, $"No se transmitió el borrador: {ex.Message}");
-                return false;
-            }
-        }
 
         private async Task NotificarResultadoAsync(Factura factura, DteTransmisionResult resultado)
         {

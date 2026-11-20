@@ -13,13 +13,13 @@ public static class DteSchemaValidator
     {
         var archivo = (tipo, version) switch
         {
-            ("01", 1) => "fe-fc-v1.json", ("01", 2) => "fe-f-v2.json",
-            ("03", 3) => "fe-ccf-v3.json", ("03", 4) => "fe-ccf-v4.json",
-            ("05", 3) => "fe-nc-v3.json", ("05", 4) => "fe-nc-v4.json",
+            ("01", 2) => "fe-f-v2.json",
+            ("03", 4) => "fe-ccf-v4.json",
+            ("05", 4) => "fe-nc-v4.json",
             ("06", 3) => "fe-nd-v3.json", ("06", 4) => "fe-nd-v4.json",
             ("11", 1) => "fe-fex-v1.json", ("11", 3) => "fe-fex-v3.json",
-            ("14", 1) => "fe-fse-v1.json", ("14", 2) => "fe-fse-v2.json",
-            ("15", 1) => "fe-cd-v1.json", ("15", 2) => "fe-cd-v2.json",
+            ("14", 2) => "fe-fse-v2.json",
+            ("15", 2) => "fe-cd-v2.json",
             ("18", 1) => "fe-eret-v1.json",
             ("invalidacion", 3) => "invalidacion-schema-v3.json",
             ("contingencia", 4) => "contingencia-schema-v4.json",
