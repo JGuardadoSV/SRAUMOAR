@@ -83,42 +83,39 @@ public class EnviarContingenciaModel : PageModel
             var codigoGeneracion = identificacion.Value<string>("codigoGeneracion") ?? throw new InvalidOperationException("El DTE no tiene código de generación.");
             var numeroControl = identificacion.Value<string>("numeroControl") ?? string.Empty;
             var version = identificacion.Value<int?>("version") ?? 1;
-            var correo = root["receptor"]?.Value<string>("correo") ?? factura.CorreoReceptor;
+            var correo = (root["receptor"] as JObject)?.Value<string>("correo") ?? factura.CorreoReceptor;
             var motivo = string.IsNullOrWhiteSpace(Observaciones) ? "Falla en el sistema de facturacion" : Observaciones.Trim();
             var ambienteFiscal = ConfiguracionFeService.NormalizarAmbiente(
                 identificacion.Value<string>("ambiente") ?? factura.AmbienteFiscal ?? string.Empty);
             var configuracion = await _configuracionFe.ObtenerAsync(ambienteFiscal);
 
-            if (factura.Anulada || factura.EstadoTransmision != DteEstados.Preparado)
-                throw new InvalidOperationException("Solo puede reintentarse un documento preparado sin envío incierto. Los enviados, inciertos o rechazados requieren conciliación/corrección controlada.");
+            if (factura.Anulada || !string.IsNullOrWhiteSpace(factura.SelloRecepcion)
+                || factura.EstadoTransmision == DteEstados.Anulado)
+                throw new InvalidOperationException("El documento ya está aceptado, anulado o tiene sello fiscal; no requiere contingencia.");
 
             var previa = await _context.DteTransmisiones.AsNoTracking().SingleOrDefaultAsync(x =>
                 x.CodigoGeneracion == codigoGeneracion && x.AmbienteFiscal == ambienteFiscal && x.TipoOperacion == "EMISION");
-            if (previa is not null && (previa.Estado != DteEstados.Preparado || !JToken.DeepEquals(JObject.Parse(previa.JsonEnviado), root)))
-                throw new InvalidOperationException("Existe una transmisión previa. No puede alterarse ni reenviarse su JSON sin resolver primero su estado.");
+            if (previa is not null && previa.Estado == DteEstados.Aceptado)
+                throw new InvalidOperationException("La emisión ya fue aceptada en el historial, pero la factura no tiene sello. Ejecute conciliación antes de reintentar.");
 
             // Un fallo previo a Hacienda se reintenta con EXACTAMENTE el JSON reservado.
             // La contingencia solo se prepara si nunca se registró una emisión.
-            string? jsonEvento = null;
-            if (previa is null)
-            {
-                var eventoPrevio = await _context.DteEventos.AsNoTracking().Where(x => x.FacturaId == id
-                    && x.AmbienteFiscal == ambienteFiscal && x.TipoEvento == "CONTINGENCIA")
-                    .OrderByDescending(x => x.Id).FirstOrDefaultAsync();
-                jsonEvento = eventoPrevio?.JsonEvento ?? _jsonFactory.CrearContingencia(
+            var eventoPrevio = await _context.DteEventos.AsNoTracking().Where(x => x.FacturaId == id
+                && x.AmbienteFiscal == ambienteFiscal && x.TipoEvento == "CONTINGENCIA")
+                .OrderByDescending(x => x.Id).FirstOrDefaultAsync();
+            var jsonEvento = eventoPrevio?.JsonEvento ?? _jsonFactory.CrearContingencia(
                 factura.JsonDte,
                 4,
                 motivo,
                 User.Identity?.Name ?? "Administrador",
                 configuracion.Entidad.NitEmisor ?? string.Empty,
                 configuracion.Entidad);
-                if (eventoPrevio is null)
-                {
-                    identificacion["tipoModelo"] = 2;
-                    identificacion["tipoOperacion"] = 2;
-                    identificacion["tipoContingencia"] = 4;
-                    identificacion["motivoContin"] = motivo;
-                }
+            if (eventoPrevio is null)
+            {
+                identificacion["tipoModelo"] = 2;
+                identificacion["tipoOperacion"] = 2;
+                identificacion["tipoContingencia"] = 4;
+                identificacion["motivoContin"] = motivo;
             }
             var jsonEnviado = root.ToString(Formatting.None);
             _jsonFactory.ValidarDocumento(jsonEnviado, ambienteFiscal, tipoDte);
@@ -142,6 +139,25 @@ public class EnviarContingenciaModel : PageModel
                     return Page();
                 }
             }
+            // El evento de contingencia ya fue aceptado. Si existía una reserva de
+            // emisión fallida/incierta, se reutiliza y se reemplaza su JSON por el
+            // documento marcado en contingencia antes de enviarlo a recepción DTE.
+            if (previa is not null)
+            {
+                var actualizadaTransmision = await _context.DteTransmisiones
+                    .Where(x => x.Id == previa.Id && x.Estado != DteEstados.Aceptado)
+                    .ExecuteUpdateAsync(x => x
+                        .SetProperty(t => t.JsonEnviado, jsonEnviado)
+                        .SetProperty(t => t.Estado, DteEstados.Preparado)
+                        .SetProperty(t => t.Intentos, 0)
+                        .SetProperty(t => t.SelloRecepcion, (string?)null)
+                        .SetProperty(t => t.Respuesta, (string?)null)
+                        .SetProperty(t => t.Error, (string?)null)
+                        .SetProperty(t => t.FechaFin, (DateTime?)null));
+                if (actualizadaTransmision != 1)
+                    throw new InvalidOperationException("La reserva de emisión cambió mientras se notificaba la contingencia. Ejecute conciliación antes de reintentar.");
+            }
+
             var resultado = await _dteTransmision.TransmitirAsync(new DteTransmisionRequest(
                 jsonEnviado, tipoDte, codigoGeneracion, numeroControl, version, correo, factura.FacturaId));
 

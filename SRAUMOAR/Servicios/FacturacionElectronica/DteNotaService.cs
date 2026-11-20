@@ -296,7 +296,9 @@ public sealed class DteNotaService : IDteNotaService
     private static (string Catalogo, string Codigo)[]? SeleccionReceptorHistorico(
         JObject original, string? departamento, string? municipio, string? distrito)
     {
-        if (!string.IsNullOrWhiteSpace(original["receptor"]?["direccion"]?.Value<string>("distrito")))
+        var receptor = original["receptor"] as JObject;
+        var direccion = receptor?["direccion"] as JObject;
+        if (!string.IsNullOrWhiteSpace(direccion?.Value<string>("distrito")))
             return null;
         if (string.IsNullOrWhiteSpace(departamento) || string.IsNullOrWhiteSpace(municipio) || string.IsNullOrWhiteSpace(distrito))
             throw new InvalidOperationException("El receptor histórico no tiene distrito. Seleccione departamento, municipio y distrito de los catálogos importados.");

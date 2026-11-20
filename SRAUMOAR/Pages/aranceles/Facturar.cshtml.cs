@@ -235,14 +235,18 @@ namespace SRAUMOAR.Pages.aranceles
                 return Page();
             }
 
-            if (!UbicacionAlumnoFiscal.EsCompleta(alumno))
-            {
-                TempData["Error"] = "Complete la ubicación fiscal y dirección del estudiante antes de facturar.";
-                return RedirectToPage("./Facturar", new { idalumno, arancelIds = string.Join(',', selectedAranceles) });
-            }
-            CodigoDepartamentoReceptor = CatalogoTerritorialFiscal.Codigo(alumno.CodigoDepartamentoFiscal);
-            CodigoMunicipioReceptor = CatalogoTerritorialFiscal.Codigo(alumno.CodigoMunicipioFiscal);
-            var distritoReceptor = CatalogoTerritorialFiscal.Codigo(alumno.CodigoDistritoFiscal);
+            // En DTE 01 el receptor puede ser consumidor final sin datos fiscales completos.
+            // La dirección solo se envía cuando los cuatro valores forman una dirección fiscal válida.
+            var direccionReceptorCompleta = UbicacionAlumnoFiscal.EsCompleta(alumno);
+            CodigoDepartamentoReceptor = direccionReceptorCompleta
+                ? CatalogoTerritorialFiscal.Codigo(alumno.CodigoDepartamentoFiscal)
+                : null;
+            CodigoMunicipioReceptor = direccionReceptorCompleta
+                ? CatalogoTerritorialFiscal.Codigo(alumno.CodigoMunicipioFiscal)
+                : null;
+            var distritoReceptor = direccionReceptorCompleta
+                ? CatalogoTerritorialFiscal.Codigo(alumno.CodigoDistritoFiscal)
+                : null;
 
             // Verificar si el alumno tiene beca parcial y obtener precios personalizados
             var arancelesSeleccionadosDb = await _context.Aranceles
@@ -317,7 +321,11 @@ namespace SRAUMOAR.Pages.aranceles
             //CREACION DEL DTE
             //****************************************************
              alumno = await _context.Alumno.Include(c=>c.Carrera).FirstOrDefaultAsync(m => m.AlumnoId == idalumno);
-            string carnet = alumno.Email.Split('@')[0];
+            if (alumno is null)
+            {
+                TempData["Error"] = "Alumno no encontrado.";
+                return RedirectToPage("./Facturar", new { idalumno, arancelIds = string.Join(',', selectedAranceles) });
+            }
 
             string dteJson = "";
             Guid codigoGeneracion = Guid.NewGuid();
@@ -391,25 +399,37 @@ namespace SRAUMOAR.Pages.aranceles
                 correo = _emisor.EMAIL
             };
 
-            // Crear el objeto para el receptor
-            var receptor = new
-            {
-                tipoDocumento = "37",
-                numDocumento = (string)null,
-                nrc = (string)null,
-                nombre = alumno.Nombres + " " + alumno.Apellidos + " " + alumno.Carnet,
-                codActividad = (string)null,
-                descActividad = (string)null,
-                direccion = new
+            var nombreReceptor = string.Join(" ", new[] { alumno.Nombres, alumno.Apellidos, alumno.Carnet }
+                .Where(valor => !string.IsNullOrWhiteSpace(valor))).Trim();
+            var correoReceptor = string.IsNullOrWhiteSpace(alumno.Email) ? null : alumno.Email.Trim();
+            var direccionReceptor = direccionReceptorCompleta
+                ? new
                 {
                     departamento = CodigoDepartamentoReceptor,
                     municipio = CodigoMunicipioReceptor,
                     distrito = distritoReceptor,
-                    complemento = alumno.DireccionDeResidencia
-                },
+                    complemento = alumno.DireccionDeResidencia!.Trim()
+                }
+                : null;
+
+            // DTE 01 acepta receptor nulo. Si no existe ningún dato útil del alumno,
+            // se envía receptor: null y no un objeto lleno de propiedades nulas.
+            var receptorConDatos = !string.IsNullOrWhiteSpace(nombreReceptor)
+                || correoReceptor is not null
+                || direccionReceptor is not null;
+            var receptorDatos = new
+            {
+                tipoDocumento = (string)null,
+                numDocumento = (string)null,
+                nrc = (string)null,
+                nombre = string.IsNullOrWhiteSpace(nombreReceptor) ? null : nombreReceptor,
+                codActividad = (string)null,
+                descActividad = (string)null,
+                direccion = direccionReceptor,
                 telefono = (string)null,
-                correo = alumno.Email
+                correo = correoReceptor
             };
+            object? receptor = receptorConDatos ? receptorDatos : null;
 
             // Usar una consulta m�s segura que maneje aranceles sin ciclo
             var arancelesAPagar = await _context.Aranceles
@@ -525,7 +545,7 @@ namespace SRAUMOAR.Pages.aranceles
                 otrosDocumentos = (string)null,
                 apendice = (string)null
             });
-
+            dteJson = DteJsonNormalizer.Normalizar(dteJson);
 
                 _jsonFactory.ValidarDocumento(dteJson, ambienteFiscal, "01");
 
@@ -543,7 +563,7 @@ namespace SRAUMOAR.Pages.aranceles
                  factura.AmbienteFiscal = ambienteFiscal;
                  factura.EstadoTransmision = DteEstados.Preparado;
                  factura.IntentosTransmision = 0;
-                 factura.CorreoReceptor = alumno.Email;
+                 factura.CorreoReceptor = correoReceptor;
                 factura.ClaveIdempotencia = claveOperacion;
                 factura.TotalGravado = totalVenta;
                 factura.TotalExento = totalVentaExenta;
@@ -634,7 +654,7 @@ namespace SRAUMOAR.Pages.aranceles
 
             var resultadoTransmision = await _dteTransmision.TransmitirAsync(
                 new DteTransmisionRequest(dteJson, "01", codigoGeneracion.ToString().ToUpperInvariant(), numeroControl, 2,
-                    alumno.Email, factura.FacturaId));
+                    correoReceptor, factura.FacturaId));
             var selloRecibido = resultadoTransmision.SelloRecepcion ?? string.Empty;
             factura.SelloRecepcion = selloRecibido;
             factura.EstadoTransmision = resultadoTransmision.Estado;

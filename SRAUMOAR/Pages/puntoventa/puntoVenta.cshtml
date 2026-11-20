@@ -1196,10 +1196,22 @@
                 }
                 var ubicacion = document.querySelector('[data-territorio-fiscal]');
                 var valores = window.TerritorioFiscal.iniciarSelector(ubicacion).valores();
-                if (!valores.departamento || !valores.municipio || !valores.distrito) {
-                    alert('Complete Departamento → Municipio → Distrito antes de emitir.');
-                    ubicacion.querySelector('select:not(:disabled)').focus();
-                    return false;
+                var complemento = jQuery.trim(jQuery('#Factura_Receptor_Direccion_Complemento').val() || '');
+                var tipoDoc = tipoDocumento.val();
+                var tieneParteDeDireccion = complemento || valores.departamento || valores.municipio || valores.distrito;
+
+                // La dirección es opcional para DTE 01. Si se empieza a capturar,
+                // entonces debe completarse como un bloque de cuatro campos.
+                if (tipoDoc !== '01' || tieneParteDeDireccion) {
+                    if (!complemento || !valores.departamento || !valores.municipio || !valores.distrito) {
+                        alert('Si proporciona una parte de la dirección, complete Complemento, Departamento, Municipio y Distrito.');
+                        if (!valores.departamento) {
+                            ubicacion.querySelector('select:not(:disabled)').focus();
+                        } else if (!complemento) {
+                            jQuery('#Factura_Receptor_Direccion_Complemento').trigger('focus');
+                        }
+                        return false;
+                    }
                 }
                 return true;
             }

@@ -319,11 +319,8 @@ namespace SRAUMOAR.Pages.aranceles
         {
             var alumnoFiscal = await _context.Alumno.AsNoTracking().SingleOrDefaultAsync(a => a.AlumnoId == alumnoId);
             if (alumnoFiscal is null) return NotFound();
-            if (!UbicacionAlumnoFiscal.EsCompleta(alumnoFiscal))
-            {
-                TempData["Error"] = "Actualice primero la ubicación fiscal del estudiante.";
-                return RedirectToPage(new { id = alumnoId, cicloelegido });
-            }
+            // La dirección del receptor es opcional para DTE 01. Facturar.cshtml.cs
+            // enviará dirección null cuando el perfil fiscal del alumno esté incompleto.
             if (selectedAranceles == null || !selectedAranceles.Any())
             {
                 ModelState.AddModelError(string.Empty, "Debe seleccionar al menos un arancel.");

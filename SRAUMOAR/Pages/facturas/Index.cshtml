@@ -1043,12 +1043,12 @@
                 } else {
                     // Mostrar error específico
                     console.error('Error del servidor:', data);
-                    alert(data?.mensaje ?? 'Error al anular la factura.');
+                    alert(data?.mensaje ?? `El servidor no pudo anular la factura (HTTP ${response.status}). Revisa el registro de la aplicación.`);
                 }
             })
             .catch(error => {
-                console.error('Error de red:', error);
-                alert('Error de conexión al anular la factura. Verifica tu conexión a internet.');
+                console.error('Error de red al invalidar:', error);
+                alert('No se pudo completar la solicitud de invalidación. Revisa la conexión y el registro del servidor; la operación no se confirma sin respuesta fiscal.');
             })
             .finally(() => {
                 // Restaurar el botón

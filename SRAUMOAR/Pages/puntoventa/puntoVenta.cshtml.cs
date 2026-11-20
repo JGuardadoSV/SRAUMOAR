@@ -19,8 +19,6 @@ namespace SRAUMOAR.Pages.puntoventa
     [Authorize(Roles = "Administrador,Administracion,Contabilidad")]
     public class puntoVentaModel : PageModel
     {
-        private int ambiente = 1;
-
         [BindProperty]
         public FacturaViewModel Factura { get; set; } = new FacturaViewModel();
         [BindProperty] public Guid OperacionEmisionId { get; set; }
@@ -35,7 +33,7 @@ namespace SRAUMOAR.Pages.puntoventa
         private readonly IDteEmailQueueService _emailQueue;
         private readonly IDteJsonFactory _jsonFactory;
         private readonly IDteEmisionRecuperacionService _recuperacionEmision;
-        private string ambienteFiscal = "01";
+        private string ambienteFiscal = null!;
         private string codigoEstablecimientoMh = "M001";
         private string codigoEstablecimiento = "M001";
         private string codigoPuntoVentaMh = "P001";
@@ -136,17 +134,6 @@ namespace SRAUMOAR.Pages.puntoventa
                 }
             }
 
-            // Validar campos requeridos para Consumidor Final
-            if (Factura.TipoDocumento == "01")
-            {
-                if (string.IsNullOrEmpty(Factura.Receptor.Nombre))
-                {
-                    ModelState.AddModelError("Factura.Receptor.Nombre", "El nombre del receptor es requerido para Consumidor Final.");
-                    CargarDatosEmisor();
-                    return Page();
-                }
-            }
-
             if (!string.IsNullOrEmpty(Factura.CodigoProducto) &&
                 !string.IsNullOrEmpty(Factura.DescripcionProducto) &&
                 Factura.CantidadProducto > 0 &&
@@ -226,7 +213,6 @@ namespace SRAUMOAR.Pages.puntoventa
                 configuracionFiscal = await _configuracionFe.ObtenerActivaAsync();
                 _emisor = DteEmisorConfigMapper.Crear(configuracionFiscal.Entidad);
                 ambienteFiscal = configuracionFiscal.Entidad.AmbienteFiscal;
-                ambiente = ambienteFiscal == "01" ? 1 : 0;
                 codigoEstablecimientoMh = configuracionFiscal.Entidad.CodigoEstablecimientoMh;
                 codigoEstablecimiento = configuracionFiscal.Entidad.CodigoEstablecimiento;
                 codigoPuntoVentaMh = configuracionFiscal.Entidad.CodigoPuntoVentaMh;
@@ -308,12 +294,19 @@ namespace SRAUMOAR.Pages.puntoventa
                 }
             }
 
-            // Validar campos requeridos para Consumidor Final
+            // Para consumidor final, los datos del receptor son opcionales. Se validan
+            // únicamente si el usuario proporciona algún dato.
             if (Factura.TipoDocumento == "01")
             {
-                if (string.IsNullOrEmpty(Factura.Receptor.Nombre))
+                foreach (var clave in ModelState.Keys
+                    .Where(x => x.StartsWith("Factura.Receptor", StringComparison.Ordinal))
+                    .ToArray())
                 {
-                    ModelState.AddModelError("Factura.Receptor.Nombre", "El nombre del receptor es requerido para Consumidor Final.");
+                    ModelState.Remove(clave);
+                }
+
+                if (!ValidarReceptorConsumidorFinal())
+                {
                     CargarDatosEmisor();
                     return Page();
                 }
@@ -350,27 +343,33 @@ namespace SRAUMOAR.Pages.puntoventa
                 ModelState.Remove("Factura.Retencion");
             }
 
-            string distritoReceptor;
+            string? distritoReceptor = null;
             if (Factura.TipoDocumento == "15" && Factura.Receptor.CodigoDomicilioFiscal is not (1 or 2))
             {
                 ModelState.AddModelError(string.Empty, "Seleccione el domicilio fiscal del donante; no se deduce del país de nacionalidad.");
                 return Page();
             }
-            try
+
+            var requiereDireccionReceptor = Factura.TipoDocumento != "01"
+                || TieneDireccionReceptor();
+            if (requiereDireccionReceptor)
             {
-                CatalogoTerritorialFiscal.Exigir(Factura.Receptor.CodigoDepartamento, Factura.Receptor.CodigoMunicipio, Factura.Receptor.CodigoDistrito);
-                Factura.Receptor.CodigoDepartamento = CatalogoTerritorialFiscal.Codigo(Factura.Receptor.CodigoDepartamento);
-                Factura.Receptor.CodigoMunicipio = CatalogoTerritorialFiscal.Codigo(Factura.Receptor.CodigoMunicipio);
-                distritoReceptor = CatalogoTerritorialFiscal.Codigo(Factura.Receptor.CodigoDistrito);
-                Factura.Receptor.Direccion.Departamento = Factura.Receptor.CodigoDepartamento;
-                Factura.Receptor.Direccion.Municipio = Factura.Receptor.CodigoMunicipio;
-                ModelState.Remove("Factura.Receptor.Direccion.Departamento");
-                ModelState.Remove("Factura.Receptor.Direccion.Municipio");
-            }
-            catch (InvalidOperationException ex)
-            {
-                ModelState.AddModelError(string.Empty, ex.Message);
-                return Page();
+                try
+                {
+                    CatalogoTerritorialFiscal.Exigir(Factura.Receptor.CodigoDepartamento, Factura.Receptor.CodigoMunicipio, Factura.Receptor.CodigoDistrito);
+                    Factura.Receptor.CodigoDepartamento = CatalogoTerritorialFiscal.Codigo(Factura.Receptor.CodigoDepartamento);
+                    Factura.Receptor.CodigoMunicipio = CatalogoTerritorialFiscal.Codigo(Factura.Receptor.CodigoMunicipio);
+                    distritoReceptor = CatalogoTerritorialFiscal.Codigo(Factura.Receptor.CodigoDistrito);
+                    Factura.Receptor.Direccion.Departamento = Factura.Receptor.CodigoDepartamento;
+                    Factura.Receptor.Direccion.Municipio = Factura.Receptor.CodigoMunicipio;
+                    ModelState.Remove("Factura.Receptor.Direccion.Departamento");
+                    ModelState.Remove("Factura.Receptor.Direccion.Municipio");
+                }
+                catch (InvalidOperationException ex)
+                {
+                    ModelState.AddModelError(string.Empty, ex.Message);
+                    return Page();
+                }
             }
 
             if (Factura.TipoDocumento is not ("01" or "02" or "03" or "14" or "15"))
@@ -400,7 +399,7 @@ namespace SRAUMOAR.Pages.puntoventa
                     string correlativo = i.ToString().PadLeft(15, '0'); // Rellena con ceros a la izquierda para que tenga 15 caracteres
                                                                         // Generar número de control
 
-                    int numero = (int)await _correlativoService.ObtenerSiguienteCorrelativo("01", ambiente == 1 ? "01" : "00", codigoEstablecimiento, codigoPuntoVenta);
+                    int numero = (int)await _correlativoService.ObtenerSiguienteCorrelativo("01", ambienteFiscal, codigoEstablecimiento, codigoPuntoVenta);
                     string numeroFormateado = numero.ToString("D15");
                     string numeroControl = "DTE-" + "01" + "-" + codigoEstablecimiento + codigoPuntoVenta + "-" + numeroFormateado;
 
@@ -427,7 +426,7 @@ namespace SRAUMOAR.Pages.puntoventa
                     var identificacion = new
                     {
                         version = 2,
-                        ambiente = ambiente == 1 ? "01" : "00",
+                        ambiente = ambienteFiscal,
                         tipoDte = "01",
                         numeroControl = numeroControl,
                         codigoGeneracion = codigoGeneracion.ToString().ToUpper(),
@@ -461,37 +460,44 @@ namespace SRAUMOAR.Pages.puntoventa
                         codPuntoVenta = codigoPuntoVenta,
                         correo = _emisor.EMAIL
                     };
-                    var nitLimpio = Factura.Receptor.Nit?.Replace("-", "").Trim();
-
-                    // Crear el objeto para el receptor
-                    var receptor = new
-                    {
-                        tipoDocumento = string.IsNullOrWhiteSpace(nitLimpio)
-                        ? "37"
-                        : nitLimpio.Length == 9
-                            ? "13"
-                            : nitLimpio.Length == 14
-                                ? "36"
-                                : "37",
-                        numDocumento = string.IsNullOrWhiteSpace(nitLimpio)
-                        ? (string)null
-                        : nitLimpio.Length == 9
-                            ? nitLimpio.Insert(8, "-")
-                            : nitLimpio,
-                        nrc = (string)null,
-                        nombre = Factura.Receptor.Nombre,
-                        codActividad = (string)null,
-                        descActividad = (string)null,
-                        direccion = new
+                    var nitLimpio = NullIfWhiteSpace(Factura.Receptor.Nit)?.Replace("-", "");
+                    var direccionReceptor = TieneDireccionReceptor()
+                        ? (object?)new
                         {
-                            departamento = Factura.Receptor.CodigoDepartamento,
-                            municipio = Factura.Receptor.CodigoMunicipio,
+                            departamento = NullIfWhiteSpace(Factura.Receptor.CodigoDepartamento),
+                            municipio = NullIfWhiteSpace(Factura.Receptor.CodigoMunicipio),
                             distrito = distritoReceptor,
-                            complemento = Factura.Receptor.Direccion.Complemento
-                        },
-                        telefono = Factura.Receptor.Telefono,
-                        correo = Factura.Receptor.Correo
-                    };
+                            complemento = NullIfWhiteSpace(Factura.Receptor.Direccion.Complemento)
+                        }
+                        : null;
+                    var receptorTieneDatos = TieneDatosReceptorConsumidorFinal();
+
+                    // En DTE 01 el receptor completo es opcional. Si no hay ningún
+                    // dato se envía null; los datos no proporcionados permanecen null.
+                    object? receptor = receptorTieneDatos
+                        ? (object)new
+                        {
+                            tipoDocumento = nitLimpio is null
+                                ? null
+                                : nitLimpio.Length == 9
+                                    ? "13"
+                                    : nitLimpio.Length == 14
+                                        ? "36"
+                                        : "37",
+                            numDocumento = nitLimpio is null
+                                ? null
+                                : nitLimpio.Length == 9
+                                    ? nitLimpio.Insert(8, "-")
+                                    : nitLimpio,
+                            nrc = (string?)null,
+                            nombre = NullIfWhiteSpace(Factura.Receptor.Nombre),
+                            codActividad = NullIfWhiteSpace(Factura.Receptor.CodActividad),
+                            descActividad = NullIfWhiteSpace(Factura.Receptor.DescActividad),
+                            direccion = direccionReceptor,
+                            telefono = NullIfWhiteSpace(Factura.Receptor.Telefono),
+                            correo = NullIfWhiteSpace(Factura.Receptor.Correo)
+                        }
+                        : null;
 
 
 
@@ -550,7 +556,6 @@ namespace SRAUMOAR.Pages.puntoventa
                         tributos = (string)null,
                         subTotal = subTotal,
                         ivaRete = 0.00,
-                        reteRenta = 0.0,
                         montoTotalOperacion = montoTotalOperacion,
                         totalNoGravado = 0.0,
                         totalPagar = totalPagar,
@@ -569,7 +574,8 @@ namespace SRAUMOAR.Pages.puntoventa
                         plazo = (string)null
                     }
                 },
-                        numPagoElectronico = "0"
+                        numPagoElectronico = "0",
+                        observaciones = (string)null
                     };
 
                     // Serializar el objeto JSON completo
@@ -585,9 +591,9 @@ namespace SRAUMOAR.Pages.puntoventa
                         otrosDocumentos = (string)null,
                         apendice = (string)null
                     });
+                    dteJson = DteJsonNormalizer.Normalizar(dteJson);
 
-
-                    _jsonFactory.ValidarDocumento(dteJson, ambiente == 1 ? "01" : "00", "01");
+                    _jsonFactory.ValidarDocumento(dteJson, ambienteFiscal, "01");
                     var factura = await GuardarFacturaPreparadaAsync(dteJson, codigoGeneracion, numeroControl,
                         identificacion.fecEmi, identificacion.horEmi, 1, "01", Factura.Receptor.Correo,
                         totalVenta, totalVentaExenta, totalIva, totalPagar);
@@ -613,7 +619,7 @@ namespace SRAUMOAR.Pages.puntoventa
 
                     // Generar número de control
 
-                    int numero = (int)await _correlativoService.ObtenerSiguienteCorrelativo("03", ambiente == 1 ? "01" : "00", codigoEstablecimiento, codigoPuntoVenta);
+                    int numero = (int)await _correlativoService.ObtenerSiguienteCorrelativo("03", ambienteFiscal, codigoEstablecimiento, codigoPuntoVenta);
                     string numeroFormateado = numero.ToString("D15");
                     string numeroControl = "DTE-" + "03" + "-" + codigoEstablecimiento + codigoPuntoVenta + "-" + numeroFormateado;
 
@@ -639,7 +645,7 @@ namespace SRAUMOAR.Pages.puntoventa
                     var identificacion = new
                     {
                         version = 4,
-                        ambiente = ambiente == 1 ? "01" : "00",
+                        ambiente = ambienteFiscal,
                         tipoDte = "03",
                         numeroControl = numeroControl,
                         codigoGeneracion = codigoGeneracion.ToString().ToUpper(),
@@ -766,7 +772,6 @@ namespace SRAUMOAR.Pages.puntoventa
                         subTotal = subTotal,
                         ivaRete = 0.00,
                         ivaPerci = Math.Round(0.00, 2),
-                        reteRenta = 0.0,
                         montoTotalOperacion = montoTotalOperacion,
                         totalNoGravado = 0.0,
                         totalPagar = totalPagar,
@@ -784,7 +789,8 @@ namespace SRAUMOAR.Pages.puntoventa
                                 plazo = (string)null
                             }
                         },
-                        numPagoElectronico = "0"
+                        numPagoElectronico = "0",
+                        observaciones = (string)null
                     };
 
                     // Serializar el objeto JSON completo
@@ -800,8 +806,9 @@ namespace SRAUMOAR.Pages.puntoventa
                         otrosDocumentos = (string)null,
                         apendice = (string)null
                     });
+                    dteJson = DteJsonNormalizer.Normalizar(dteJson);
 
-                    _jsonFactory.ValidarDocumento(dteJson, ambiente == 1 ? "01" : "00", "03");
+                    _jsonFactory.ValidarDocumento(dteJson, ambienteFiscal, "03");
                     var factura = await GuardarFacturaPreparadaAsync(dteJson, codigoGeneracion, numeroControl,
                         identificacion.fecEmi, identificacion.horEmi, 3, "03", Factura.Receptor.Correo,
                         totalVenta, totalVentaExenta, totalIva, totalPagar);
@@ -824,7 +831,7 @@ namespace SRAUMOAR.Pages.puntoventa
 
                     // Generar número de control
 
-                    int numero = (int)await _correlativoService.ObtenerSiguienteCorrelativo("14", ambiente == 1 ? "01" : "00", codigoEstablecimiento, codigoPuntoVenta);
+                    int numero = (int)await _correlativoService.ObtenerSiguienteCorrelativo("14", ambienteFiscal, codigoEstablecimiento, codigoPuntoVenta);
                     string numeroFormateado = numero.ToString("D15");
                     string numeroControl = "DTE-" + "14" + "-" + codigoEstablecimiento + codigoPuntoVenta + "-" + numeroFormateado;
 
@@ -849,7 +856,7 @@ namespace SRAUMOAR.Pages.puntoventa
                     var identificacion = new
                     {
                         version = 2,
-                        ambiente = ambiente == 1 ? "01" : "00",
+                        ambiente = ambienteFiscal,
                         tipoDte = "14", // Tipo 14 para Sujeto Excluido
                         numeroControl = numeroControl,
                         codigoGeneracion = codigoGeneracion.ToString().ToUpper(),
@@ -964,8 +971,9 @@ namespace SRAUMOAR.Pages.puntoventa
                         resumen,
                         apendice
                     });
+                    dteJson = DteJsonNormalizer.Normalizar(dteJson);
 
-                    _jsonFactory.ValidarDocumento(dteJson, ambiente == 1 ? "01" : "00", "14");
+                    _jsonFactory.ValidarDocumento(dteJson, ambienteFiscal, "14");
                     var factura = await GuardarFacturaPreparadaAsync(dteJson, codigoGeneracion, numeroControl,
                         identificacion.fecEmi, identificacion.horEmi, 14, "14", Factura.Receptor.Correo,
                         0m, 0m, 0m, totalPagar);
@@ -983,7 +991,7 @@ namespace SRAUMOAR.Pages.puntoventa
                     Guid codigoGeneracion = Guid.NewGuid();
 
                     // Generar número de control
-                    int numero = (int)await _correlativoService.ObtenerSiguienteCorrelativo("15", ambiente == 1 ? "01" : "00", codigoEstablecimiento, codigoPuntoVenta);
+                    int numero = (int)await _correlativoService.ObtenerSiguienteCorrelativo("15", ambienteFiscal, codigoEstablecimiento, codigoPuntoVenta);
                     string numeroFormateado = numero.ToString("D15");
                     string numeroControl = "DTE-" + "15" + "-" + codigoEstablecimiento + codigoPuntoVenta + "-" + numeroFormateado;
 
@@ -1009,7 +1017,7 @@ namespace SRAUMOAR.Pages.puntoventa
                     var identificacion = new
                     {
                         version = 2,
-                        ambiente = ambiente == 1 ? "01" : "00",
+                        ambiente = ambienteFiscal,
                         tipoDte = "15", // Tipo 15 para Comprobante de Donación
                         numeroControl = numeroControl,
                         codigoGeneracion = codigoGeneracion.ToString().ToUpper(),
@@ -1128,8 +1136,9 @@ namespace SRAUMOAR.Pages.puntoventa
                         resumen,
                         apendice
                     });
+                    dteJson = DteJsonNormalizer.Normalizar(dteJson);
 
-                    _jsonFactory.ValidarDocumento(dteJson, ambiente == 1 ? "01" : "00", "15");
+                    _jsonFactory.ValidarDocumento(dteJson, ambienteFiscal, "15");
                     var factura = await GuardarFacturaPreparadaAsync(dteJson, codigoGeneracion, numeroControl,
                         identificacion.fecEmi, identificacion.horEmi, 15, "15", Factura.Receptor.Correo,
                         0m, 0m, 0m, valorTotal);
@@ -1225,6 +1234,49 @@ namespace SRAUMOAR.Pages.puntoventa
                 TempData["Error"] = "Factura aceptada y guardada, pero no se pudo encolar el correo. No vuelva a emitirla; reintente solo el envío.";
             }
         }
+
+        private bool ValidarReceptorConsumidorFinal()
+        {
+            if (!TieneDireccionReceptor())
+                return true;
+
+            var camposDireccion = new[]
+            {
+                (Factura.Receptor.Direccion.Complemento, "la dirección"),
+                (Factura.Receptor.CodigoDepartamento, "el departamento"),
+                (Factura.Receptor.CodigoMunicipio, "el municipio"),
+                (Factura.Receptor.CodigoDistrito, "el distrito")
+            };
+
+            var faltantes = camposDireccion
+                .Where(x => string.IsNullOrWhiteSpace(x.Item1))
+                .Select(x => x.Item2)
+                .ToArray();
+            if (faltantes.Length == 0)
+                return true;
+
+            ModelState.AddModelError(
+                string.Empty,
+                $"Si proporciona parte de la dirección del receptor debe completar todos los campos: {string.Join(", ", faltantes)}.");
+            return false;
+        }
+
+        private bool TieneDireccionReceptor()
+            => !string.IsNullOrWhiteSpace(Factura.Receptor.Direccion.Complemento)
+                || !string.IsNullOrWhiteSpace(Factura.Receptor.CodigoDepartamento)
+                || !string.IsNullOrWhiteSpace(Factura.Receptor.CodigoMunicipio)
+                || !string.IsNullOrWhiteSpace(Factura.Receptor.CodigoDistrito);
+
+        private bool TieneDatosReceptorConsumidorFinal()
+            => !string.IsNullOrWhiteSpace(Factura.Receptor.Nit)
+                || !string.IsNullOrWhiteSpace(Factura.Receptor.Nombre)
+                || !string.IsNullOrWhiteSpace(Factura.Receptor.NombreComercial)
+                || !string.IsNullOrWhiteSpace(Factura.Receptor.Telefono)
+                || !string.IsNullOrWhiteSpace(Factura.Receptor.Correo)
+                || TieneDireccionReceptor();
+
+        private static string? NullIfWhiteSpace(string? value)
+            => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
         public static string CorregirCorreo(string correo)
         {

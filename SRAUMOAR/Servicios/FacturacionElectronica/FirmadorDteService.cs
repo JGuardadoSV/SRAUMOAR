@@ -46,7 +46,7 @@ public sealed class FirmadorDteService : IFirmadorDteService
         return await FirmarAsync(bytes, password, json, cancellationToken);
     }
 
-    public Task<string> FirmarAsync(byte[] certificadoCrt, string password, string json, CancellationToken cancellationToken = default)
+    public async Task<string> FirmarAsync(byte[] certificadoCrt, string password, string json, CancellationToken cancellationToken = default)
     {
         if (certificadoCrt is not { Length: > 0 })
             throw new InvalidOperationException("No se encontró el certificado .crt en la configuración.");
@@ -70,7 +70,13 @@ public sealed class FirmadorDteService : IFirmadorDteService
         using var rsa = RSA.Create();
         rsa.ImportPkcs8PrivateKey(clavePrivada, out var leidos);
         if (leidos != clavePrivada.Length) throw new InvalidOperationException("La clave privada contiene datos sobrantes.");
-        return Task.Run(() => JWT.Encode(json, rsa, JwsAlgorithm.RS512), cancellationToken);
+
+        cancellationToken.ThrowIfCancellationRequested();
+        // La firma debe terminar antes de liberar RSA. No devolver directamente
+        // Task.Run dentro del using porque el RSA se destruiría prematuramente.
+        var firmado = await Task.Run(() => JWT.Encode(json, rsa, JwsAlgorithm.RS512), cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+        return firmado;
     }
 
     public void LimpiarCache(string? rutaCertificado = null)

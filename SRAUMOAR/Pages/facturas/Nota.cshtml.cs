@@ -91,7 +91,9 @@ public sealed class NotaModel : PageModel
         {
             var original = JObject.Parse(Factura.JsonDte ?? "{}");
             MontoOperacionOriginal = original["resumen"]?.Value<decimal?>("montoTotalOperacion") ?? Factura.TotalPagar;
-            RequiereGeografia = string.IsNullOrWhiteSpace(original["receptor"]?["direccion"]?["distrito"]?.Value<string>());
+            var receptor = original["receptor"] as JObject;
+            var direccion = receptor?["direccion"] as JObject;
+            RequiereGeografia = direccion is null || string.IsNullOrWhiteSpace(direccion.Value<string>("distrito"));
             if (RequiereGeografia)
                 CatalogosGeograficos = await _contexto.CatalogosFe.AsNoTracking()
                     .Where(x => x.Activo && x.Version == "1.1" && (x.CodigoCatalogo == "CAT-012" || x.CodigoCatalogo == "CAT-013" || x.CodigoCatalogo == "CAT-008"))

@@ -1,5 +1,6 @@
-using System.Net.Mail;
-using System.Net;
+using MailKit.Net.Smtp;
+using MailKit.Security;
+using MimeKit;
 using SRAUMOAR.Servicios.FacturacionElectronica;
 
 namespace SRAUMOAR.Servicios
@@ -29,29 +30,27 @@ namespace SRAUMOAR.Servicios
                 var contrasena = await _smtpConfiguration.ObtenerPasswordAsync()
                     ?? throw new InvalidOperationException("La configuración SMTP activa no tiene contraseña.");
 
-                using var cliente = new SmtpClient(entidad.Servidor, entidad.Puerto)
-                {
-                    UseDefaultCredentials = false,
-                    Credentials = new NetworkCredential(entidad.Usuario, contrasena),
-                    EnableSsl = entidad.UsarSsl || entidad.UsarTls
-                };
+                if (entidad.UsarSsl && entidad.UsarTls)
+                    throw new InvalidOperationException("Seleccione SSL directo o STARTTLS, no ambos.");
 
-                using var mensaje = new MailMessage
-                {
-                    From = new MailAddress(entidad.EmailRemitente, entidad.NombreRemitente),
-                    Subject = asunto,
-                    Body = cuerpo,
-                    IsBodyHtml = true
-                };
-                mensaje.To.Add(new MailAddress(destinatario, nombreDestinatario ?? destinatario));
+                var socket = entidad.UsarSsl
+                    ? SecureSocketOptions.SslOnConnect
+                    : entidad.UsarTls ? SecureSocketOptions.StartTls : SecureSocketOptions.Auto;
+                using var cliente = new SmtpClient();
+                await cliente.ConnectAsync(entidad.Servidor, entidad.Puerto, socket);
+                if (!string.IsNullOrWhiteSpace(entidad.Usuario))
+                    await cliente.AuthenticateAsync(entidad.Usuario, contrasena);
 
-                if (!string.IsNullOrWhiteSpace(entidad.CopiaOculta))
-                {
-                    foreach (var copia in entidad.CopiaOculta.Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-                        mensaje.Bcc.Add(copia);
-                }
+                var mensaje = new MimeMessage();
+                mensaje.From.Add(new MailboxAddress(entidad.NombreRemitente ?? entidad.EmailRemitente, entidad.EmailRemitente));
+                mensaje.To.Add(new MailboxAddress(nombreDestinatario ?? destinatario, destinatario));
+                foreach (var copia in (entidad.CopiaOculta ?? string.Empty).Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                    mensaje.Bcc.Add(MailboxAddress.Parse(copia));
+                mensaje.Subject = asunto;
+                mensaje.Body = new BodyBuilder { HtmlBody = cuerpo }.ToMessageBody();
 
-                await cliente.SendMailAsync(mensaje);
+                await cliente.SendAsync(mensaje);
+                await cliente.DisconnectAsync(true);
                 return true;
             }
             catch (Exception ex)

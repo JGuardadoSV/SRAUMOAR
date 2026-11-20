@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json.Linq;
 using SRAUMOAR.Entidades.Colecturia;
 using SRAUMOAR.Modelos;
 using SRAUMOAR.Modelos.FacturacionElectronica;
@@ -20,6 +21,7 @@ public sealed class DeleteModel : PageModel
     private readonly IDteTransmisionService _dteTransmision;
     private readonly IDteEmailQueueService _emailQueue;
     private readonly IDteConciliacionService _conciliacion;
+    private readonly ILogger<DeleteModel> _logger;
 
     public DeleteModel(
         Contexto context,
@@ -27,7 +29,8 @@ public sealed class DeleteModel : PageModel
         IDteJsonFactory jsonFactory,
         IDteTransmisionService dteTransmision,
         IDteEmailQueueService emailQueue,
-        IDteConciliacionService conciliacion)
+        IDteConciliacionService conciliacion,
+        ILogger<DeleteModel> logger)
     {
         _context = context;
         _configuracionFe = configuracionFe;
@@ -35,6 +38,7 @@ public sealed class DeleteModel : PageModel
         _dteTransmision = dteTransmision;
         _emailQueue = emailQueue;
         _conciliacion = conciliacion;
+        _logger = logger;
     }
 
     [BindProperty]
@@ -91,6 +95,9 @@ public sealed class DeleteModel : PageModel
                 User.Identity?.Name ?? "Administrador",
                 NormalizarNit(configuracion.Entidad.NitEmisor),
                 configuracion.Entidad);
+            // Validar el mismo contrato v3 antes de reservar/transmitir. Así se evita
+            // enviar un evento incompleto y se conserva el motivo exacto del rechazo.
+            DteSchemaValidator.Validar(jsonInvalidacion, "invalidacion", 3);
 
             await using (var transaccion = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken))
             {
@@ -146,12 +153,12 @@ public sealed class DeleteModel : PageModel
             // En ERET el receptor está en "documento", no en "receptor". Se prioriza
             // el correo del JSON aceptado para que la invalidación llegue al titular correcto.
             var destinatario = esEventoRetorno
-                ? rootOriginal["documento"]?.Value<string>("correo")
+                ? (rootOriginal["documento"] as JObject)?.Value<string>("correo")
                 : factura.CorreoReceptor;
             if (string.IsNullOrWhiteSpace(destinatario))
                 destinatario = esEventoRetorno
-                    ? rootOriginal["documento"]?.Value<string>("correo")
-                    : rootOriginal["receptor"]?.Value<string>("correo");
+                    ? (rootOriginal["documento"] as JObject)?.Value<string>("correo")
+                    : (rootOriginal["receptor"] as JObject)?.Value<string>("correo");
             if (string.IsNullOrWhiteSpace(destinatario))
                 destinatario = factura.CorreoReceptor;
 
@@ -177,6 +184,7 @@ public sealed class DeleteModel : PageModel
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Error al invalidar la factura {FacturaId}", id);
             var mensaje = $"Error al anular la factura: {ex.Message}";
             TempData["ErrorAnulacion"] = mensaje;
             if (esAjax) return BadRequest(new { ok = false, mensaje });

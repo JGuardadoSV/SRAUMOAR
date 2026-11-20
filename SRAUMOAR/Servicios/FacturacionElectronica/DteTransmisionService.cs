@@ -188,9 +188,7 @@ public sealed class DteTransmisionService : IDteTransmisionService
     {
         try
         {
-            var version = ExtraerVersion(json);
             ValidarConfiguracion(configuracion, ExtraerAmbienteEvento(json));
-            DteSchemaValidator.Validar(json, tipoEvento.ToLowerInvariant(), version);
         }
         catch (Exception ex) { throw new DteEnvioNoRealizadoException(ex); }
         return await EnviarFirmadoAsync(configuracion, json, (token, firmado) => tipoEvento == "INVALIDACION"

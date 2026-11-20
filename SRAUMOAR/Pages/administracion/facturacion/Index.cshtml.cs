@@ -96,6 +96,10 @@ public class IndexModel : PageModel
                 form.ComplementoDireccion, form.TelefonoEmisor, form.CorreoEmisor, certificadoCrt), cancellationToken);
             Mensaje = $"Configuración del ambiente fiscal {ambiente} guardada.";
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return new EmptyResult();
+        }
         catch (Exception ex)
         {
             Error = ex.Message;
@@ -111,7 +115,30 @@ public class IndexModel : PageModel
             await _configuracion.SeleccionarAmbienteActivoAsync(ambienteFiscal, cancellationToken);
             Mensaje = $"El ambiente fiscal activo ahora es {ConfiguracionFeService.NormalizarAmbiente(ambienteFiscal)}.";
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return new EmptyResult();
+        }
         catch (Exception ex) { Error = ex.Message; }
+        await CargarAsync(cancellationToken);
+        return Page();
+    }
+
+    public async Task<IActionResult> OnPostProbarSmtpAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Este formulario solo contiene el botón de prueba. No debe guardar el
+            // modelo enlazado porque los campos SMTP no viajan en este POST.
+            await _smtp.EnviarPruebaAsync(cancellationToken);
+            var configuracion = await _smtp.ObtenerAsync(cancellationToken);
+            Mensaje = $"Correo de prueba enviado a {configuracion.Entidad?.EmailRemitente}. Revise la bandeja de entrada y spam.";
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return new EmptyResult();
+        }
+        catch (Exception ex) { Error = $"La prueba SMTP falló: {ex.Message}"; }
         await CargarAsync(cancellationToken);
         return Page();
     }
@@ -122,6 +149,10 @@ public class IndexModel : PageModel
         {
             await _smtp.GuardarAsync(new SmtpConfigurationInput(Smtp.Servidor, Smtp.Puerto, Smtp.Usuario, Smtp.Password, Smtp.EmailRemitente, Smtp.NombreRemitente, Smtp.CopiaOculta, Smtp.UsarSsl, Smtp.UsarTls, Smtp.MaxReintentos), cancellationToken);
             Mensaje = "Configuración SMTP guardada.";
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return new EmptyResult();
         }
         catch (Exception ex) { Error = ex.Message; }
         await CargarAsync(cancellationToken);
@@ -168,7 +199,8 @@ public class IndexModel : PageModel
             form.CorreoEmisor = ambiente.Entidad.CorreoEmisor;
             form.TimeoutSegundos = ambiente.Entidad.TimeoutSegundos;
             form.MaxReintentos = ambiente.Entidad.MaxReintentos;
-            form.TieneCertificado = !string.IsNullOrWhiteSpace(ambiente.Entidad.RutaCertificado);
+            form.TieneCertificado = ambiente.Entidad.CertificadoCrt is { Length: > 0 }
+                            || !string.IsNullOrWhiteSpace(ambiente.Entidad.RutaCertificado);
             if (ambiente.Entidad.EsAmbienteFiscalActivo) AmbienteActivo = ambiente.Entidad.AmbienteFiscal;
         }
 

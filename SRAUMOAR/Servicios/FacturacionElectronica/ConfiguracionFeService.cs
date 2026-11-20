@@ -1,7 +1,5 @@
 using System.Collections.Concurrent;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Cryptography;
 using SRAUMOAR.Entidades.FacturacionElectronica;
 using SRAUMOAR.Modelos;
 
@@ -65,12 +63,10 @@ public sealed class ConfiguracionFeService : IConfiguracionFeService
     private static readonly ConcurrentDictionary<string, ConfiguracionFeActiva> ConfiguracionEnMemoria = new(StringComparer.Ordinal);
     private static string? AmbienteActivoEnMemoria;
     private readonly Contexto _contexto;
-    private readonly IDataProtector _protector;
 
-    public ConfiguracionFeService(Contexto contexto, IDataProtectionProvider dataProtectionProvider)
+    public ConfiguracionFeService(Contexto contexto)
     {
         _contexto = contexto;
-        _protector = dataProtectionProvider.CreateProtector("SRAUMOAR.FacturacionElectronica.Secretos.v1");
     }
 
     public async Task<ConfiguracionFeActiva> ObtenerActivaAsync(CancellationToken cancellationToken = default)
@@ -154,6 +150,7 @@ public sealed class ConfiguracionFeService : IConfiguracionFeService
 
         var entidad = await _contexto.ConfiguracionesFacturacionElectronica
             .SingleOrDefaultAsync(x => x.AmbienteFiscal == ambiente, cancellationToken);
+        var esNueva = entidad is null;
 
         if (entidad is null)
         {
@@ -194,7 +191,10 @@ public sealed class ConfiguracionFeService : IConfiguracionFeService
         entidad.CorreoEmisor = input.CorreoEmisor?.Trim();
         entidad.TimeoutSegundos = Math.Clamp(input.TimeoutSegundos, 10, 300);
         entidad.MaxReintentos = Math.Clamp(input.MaxReintentos, 1, 10);
-        entidad.EsAmbienteFiscalActivo = input.EsAmbienteFiscalActivo;
+        // Guardar la configuración no cambia el ambiente activo. La activación
+        // se realiza exclusivamente mediante SeleccionarAmbienteActivoAsync.
+        if (esNueva)
+            entidad.EsAmbienteFiscalActivo = input.EsAmbienteFiscalActivo;
 
         var otroAmbiente = await _contexto.ConfiguracionesFacturacionElectronica
             .SingleOrDefaultAsync(x => x.AmbienteFiscal != ambiente, cancellationToken);
@@ -203,10 +203,11 @@ public sealed class ConfiguracionFeService : IConfiguracionFeService
         else if (ambiente == "00" && otroAmbiente is not null)
             CopiarDatosGenerales(otroAmbiente, entidad);
 
-        if (!string.IsNullOrWhiteSpace(input.CredencialHacienda))
-            entidad.CredencialHaciendaCifrada = _protector.Protect(input.CredencialHacienda);
-        if (!string.IsNullOrWhiteSpace(input.PasswordCertificado))
-            entidad.PasswordCertificadoCifrada = _protector.Protect(input.PasswordCertificado);
+        // Las credenciales se reemplazan con los valores capturados en la pantalla.
+        // No se protegen con Data Protection para que la configuración no dependa
+        // de claves generadas en otro entorno (por ejemplo, local frente a Docker).
+        entidad.CredencialHaciendaCifrada = input.CredencialHacienda?.Trim();
+        entidad.PasswordCertificadoCifrada = input.PasswordCertificado?.Trim();
 
         if (entidad.EsAmbienteFiscalActivo)
         {
@@ -224,16 +225,19 @@ public sealed class ConfiguracionFeService : IConfiguracionFeService
     public async Task SeleccionarAmbienteActivoAsync(string ambienteFiscal, CancellationToken cancellationToken = default)
     {
         var ambiente = NormalizarAmbiente(ambienteFiscal);
-        var seleccionado = await _contexto.ConfiguracionesFacturacionElectronica
-            .SingleOrDefaultAsync(x => x.AmbienteFiscal == ambiente && x.Habilitado, cancellationToken);
+        var configuraciones = await _contexto.ConfiguracionesFacturacionElectronica
+            .ToListAsync(cancellationToken);
+        var seleccionado = configuraciones.SingleOrDefault(x => x.AmbienteFiscal == ambiente && x.Habilitado);
 
         if (seleccionado is null)
             throw new InvalidOperationException($"El ambiente fiscal {ambiente} no está configurado o habilitado.");
 
-        await _contexto.ConfiguracionesFacturacionElectronica
-            .ExecuteUpdateAsync(x => x.SetProperty(y => y.EsAmbienteFiscalActivo, false), cancellationToken);
-        seleccionado.EsAmbienteFiscalActivo = true;
-        seleccionado.FechaActualizacion = DateTime.UtcNow;
+        foreach (var configuracion in configuraciones)
+        {
+            configuracion.EsAmbienteFiscalActivo = configuracion == seleccionado;
+            configuracion.FechaActualizacion = DateTime.UtcNow;
+        }
+
         await _contexto.SaveChangesAsync(cancellationToken);
         AmbienteActivoEnMemoria = null;
         ConfiguracionEnMemoria.Clear();
@@ -292,17 +296,7 @@ public sealed class ConfiguracionFeService : IConfiguracionFeService
     }
 
     private ConfiguracionFeActiva Convertir(ConfiguracionFacturacionElectronica entidad)
-        => new(entidad, Desproteger(entidad.CredencialHaciendaCifrada), Desproteger(entidad.PasswordCertificadoCifrada));
-
-    private string? Desproteger(string? valor)
-    {
-        if (string.IsNullOrWhiteSpace(valor)) return null;
-        try { return _protector.Unprotect(valor); }
-        catch (Exception ex) when (ex is CryptographicException || ex is FormatException)
-        {
-            throw new InvalidOperationException("No se pudo descifrar una credencial de Facturación Electrónica.", ex);
-        }
-    }
+        => new(entidad, entidad.CredencialHaciendaCifrada, entidad.PasswordCertificadoCifrada);
 
     public static string NormalizarAmbiente(string ambienteFiscal)
     {

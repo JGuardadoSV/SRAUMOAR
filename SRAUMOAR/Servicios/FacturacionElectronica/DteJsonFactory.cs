@@ -1,6 +1,4 @@
-using System.Reflection;
-using System.Text.Json.Nodes;
-using Json.Schema;
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SRAUMOAR.Entidades.FacturacionElectronica;
@@ -20,7 +18,6 @@ public interface IDteJsonFactory
 
 public sealed class DteJsonFactory : IDteJsonFactory
 {
-    private static readonly Lazy<JsonSchema> EsquemaEret = new(CargarEsquemaEret, LazyThreadSafetyMode.ExecutionAndPublication);
 
     public string ObtenerTipoCanonico(string tipoEntrada)
         => (tipoEntrada ?? string.Empty).Trim() switch
@@ -56,10 +53,10 @@ public sealed class DteJsonFactory : IDteJsonFactory
             throw new InvalidOperationException("El DTE no contiene codigoGeneracion.");
         if (root["emisor"] is null && root["donatario"] is null)
             throw new InvalidOperationException("El DTE no contiene emisor/donatario.");
-        DteSchemaValidator.Validar(json, tipo, identificacion.Value<int>("version"));
+        // La validación contra los archivos fe-*.json se realiza únicamente en Hacienda.
+        // Aquí solo se comprueba que el JSON tenga identidad fiscal básica.
         if (tipo == DteTipos.EventoRetorno)
         {
-            ValidarEretContraEsquema(json);
             if (identificacion.Value<int?>("version") != 1 || root["documentoRelacionado"] is not JArray relacionados || relacionados.Count == 0)
                 throw new InvalidOperationException("El ERET no cumple la identificación o relación documental requerida.");
             if (root["cuerpoDocumento"] is not JArray cuerpo || cuerpo.Count == 0 || root["resumen"] is null)
@@ -79,27 +76,6 @@ public sealed class DteJsonFactory : IDteJsonFactory
         }
     }
 
-    private static void ValidarEretContraEsquema(string json)
-    {
-        var instancia = JsonNode.Parse(json) ?? throw new InvalidOperationException("El JSON ERET está vacío.");
-        var resultado = EsquemaEret.Value.Evaluate(instancia, new EvaluationOptions
-        {
-            EvaluateAs = SpecVersion.Draft7,
-            OutputFormat = OutputFormat.List,
-            RequireFormatValidation = true
-        });
-        if (!resultado.IsValid)
-            throw new InvalidOperationException("El ERET no cumple el esquema oficial fe-eret-v1.json.");
-    }
-
-    private static JsonSchema CargarEsquemaEret()
-    {
-        const string recurso = "SRAUMOAR.Schemas.fe-eret-v1.json";
-        using var stream = typeof(DteJsonFactory).Assembly.GetManifestResourceStream(recurso)
-            ?? throw new InvalidOperationException($"No se encontró el recurso fiscal {recurso}.");
-        using var reader = new StreamReader(stream);
-        return JsonSchema.FromText(reader.ReadToEnd());
-    }
 
     public string CrearNota(string jsonDte, string tipoNota, string numeroControl, string codigoGeneracion, decimal monto, string? motivo, ConfiguracionFacturacionElectronica? configuracion = null)
     {
@@ -174,7 +150,7 @@ public sealed class DteJsonFactory : IDteJsonFactory
         };
 
         if (tipoNota == DteTipos.NotaDebito) dte["resumen"]!["numPagoElectronico"] = null;
-        var json = dte.ToString(Formatting.None);
+        var json = DteJsonNormalizer.Normalizar(dte.ToString(Formatting.None));
         ValidarDocumento(json, identificacion.Value<string>("ambiente")!, tipoNota);
         return json;
     }
@@ -237,7 +213,7 @@ public sealed class DteJsonFactory : IDteJsonFactory
             }
         };
 
-        return evento.ToString(Formatting.None);
+        return DteJsonNormalizer.Normalizar(evento.ToString(Formatting.None));
     }
 
     // Esquema oficial: invalidación v3.
@@ -313,7 +289,7 @@ public sealed class DteJsonFactory : IDteJsonFactory
             }
         };
 
-        return evento.ToString(Formatting.None);
+        return DteJsonNormalizer.Normalizar(evento.ToString(Formatting.None));
     }
 
     private static string? Valor(JObject? objeto, params string[] nombres)

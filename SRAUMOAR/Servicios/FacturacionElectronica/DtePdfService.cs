@@ -1,5 +1,6 @@
-using QRCoder;
+using System.Globalization;
 using Newtonsoft.Json.Linq;
+using QRCoder;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -12,189 +13,74 @@ public interface IDtePdfService
     string ObtenerNombre(string tipoDte, string codigoGeneracion, bool anulacion = false);
 }
 
+/// <summary>
+/// Renderizador único de documentos fiscales. La información se obtiene de los nombres
+/// oficiales actuales y de sus equivalentes históricos para que los DTE existentes sigan
+/// siendo imprimibles aunque hayan sido emitidos con una versión anterior del esquema.
+/// </summary>
 public sealed class DtePdfService : IDtePdfService
 {
+    private const string Azul = "#0F2747";
+    private const string AzulMedio = "#1769AA";
+    private const string AzulClaro = "#EAF3FA";
+    private const string Texto = "#263746";
+    private const string Muted = "#657786";
+    private const string Borde = "#D9E2EA";
+    private const string Fondo = "#F6F8FB";
+
     public byte[] Generar(string tipoDte, string json, string? sello)
     {
         var root = JObject.Parse(json);
         var identificacion = root["identificacion"] as JObject ?? new JObject();
-        var tipoIdentificacion = identificacion.Value<string>("tipoDte")
-            ?? identificacion.Value<string>("tipoEvento");
+        var tipoEntrada = identificacion.Value<string>("tipoDte")
+            ?? identificacion.Value<string>("tipoEvento")
+            ?? tipoDte;
         var tipo = string.Equals(tipoDte, "INVALIDACION", StringComparison.OrdinalIgnoreCase)
             ? "INVALIDACION"
-            : (string.IsNullOrWhiteSpace(tipoIdentificacion) ? tipoDte : tipoIdentificacion).PadLeft(2, '0');
+            : (tipoEntrada ?? string.Empty).PadLeft(2, '0');
 
-        if (tipo == "18")
-            return GenerarEventoRetorno(root, identificacion, sello);
+        if (tipo == "18") return GenerarEventoRetorno(root, identificacion, sello);
 
         var emisor = root["emisor"] as JObject ?? root["donatario"] as JObject ?? new JObject();
-        var receptor = root["receptor"] as JObject ?? root["sujetoExcluido"] as JObject ?? root["donante"] as JObject ?? new JObject();
-        var codigo = identificacion.Value<string>("codigoGeneracion") ?? string.Empty;
-        var numeroControl = identificacion.Value<string>("numeroControl") ?? string.Empty;
-        var titulo = tipo == "INVALIDACION" ? "DOCUMENTO DE INVALIDACIÓN" : $"DOCUMENTO TRIBUTARIO ELECTRÓNICO {tipo}";
+        var receptor = root["receptor"] as JObject ?? root["sujetoExcluido"] as JObject
+            ?? root["donante"] as JObject ?? new JObject();
+        var codigo = Valor(identificacion, "codigoGeneracion");
+        var titulo = tipo == "INVALIDACION" ? "DOCUMENTO DE INVALIDACIÓN" : TipoDocumento(tipo);
 
         return Document.Create(document => document.Page(page =>
         {
             page.Size(PageSizes.Letter);
-            page.Margin(28);
-            page.DefaultTextStyle(x => x.FontSize(9));
-            page.Header().Column(column =>
-            {
-                column.Item().Text("UNIVERSIDAD MONSEÑOR OSCAR ARNULFO ROMERO").Bold().FontSize(15).FontColor(Colors.Blue.Darken2);
-                column.Item().Text(titulo).Bold().FontSize(12);
-                column.Item().Text($"Ambiente: {identificacion.Value<string>("ambiente") ?? "-"}   Código: {codigo}");
-            });
+            page.Margin(30);
+            page.DefaultTextStyle(style => style.FontFamily("Helvetica").FontSize(8).FontColor(Texto));
+            page.Header().Element(header => AgregarEncabezado(header, root, identificacion, emisor, titulo, codigo));
             page.Content().PaddingTop(12).Column(column =>
             {
-                AgregarBloque(column, "Identificación", new[]
-                {
-                    ("Tipo DTE", identificacion.Value<string>("tipoDte") ?? tipo),
-                    ("Número de control", numeroControl),
-                    ("Fecha", identificacion.Value<string>("fecEmi") ?? identificacion.Value<string>("fecAnula") ?? "-"),
-                    ("Hora", identificacion.Value<string>("horEmi") ?? identificacion.Value<string>("horAnula") ?? "-")
-                });
-                AgregarBloque(column, "Emisor", new[]
-                {
-                    ("NIT", emisor.Value<string>("nit") ?? emisor.Value<string>("numDocumento") ?? "-"),
-                    ("NRC", emisor.Value<string>("nrc") ?? "-"),
-                    ("Actividad", ObtenerValor(emisor, "descActividad", "codActividad")),
-                    ("Dirección", Direccion(emisor)),
-                    ("Teléfono", emisor.Value<string>("telefono") ?? "-"),
-                    ("Nombre", emisor.Value<string>("nombre") ?? "-"),
-                    ("Correo", emisor.Value<string>("correo") ?? "-")
-                });
-                if (tipo is "05" or "06")
-                {
-                    var relacionado = (root["documentoRelacionado"] as JArray)?.OfType<JObject>().FirstOrDefault();
-                    var motivoNota = (root["resumen"] as JObject)?.Value<string>("observaciones");
-                    AgregarBloque(column, tipo == "05" ? "Nota de credito" : "Nota de debito", new[]
-                    {
-                        ("Documento original", relacionado?.Value<string>("numeroDocumento") ?? "-"),
-                        ("Fecha original", relacionado?.Value<string>("fechaEmision") ?? "-"),
-                        ("Motivo", string.IsNullOrWhiteSpace(motivoNota) ? "-" : motivoNota)
-                    });
-                }
-                if (tipo == "INVALIDACION")
-                {
-                    var documento = root["documento"] as JObject ?? new JObject();
-                    var motivo = root["motivo"] as JObject ?? new JObject();
-                    AgregarBloque(column, "Documento invalidado", new[]
-                    {
-                        ("Código original", documento.Value<string>("codigoGeneracion") ?? "-"),
-                        ("Sello original", documento.Value<string>("selloRecibido") ?? "-"),
-                        ("Motivo", motivo.Value<string>("motivoAnulacion") ?? "-")
-                    });
-                }
+                column.Spacing(8);
+                AgregarIdentificacion(column, identificacion, tipo, codigo);
+                AgregarPartes(column, emisor, receptor, tipo);
+
+                if (tipo is "05" or "06") AgregarNota(column, root, tipo);
+                if (tipo == "INVALIDACION") AgregarInvalidacion(column, root);
                 else
                 {
-                    AgregarBloque(column, "Receptor", new[]
-                    {
-                        ("Documento", receptor.Value<string>("numDocumento") ?? receptor.Value<string>("nit") ?? "-"),
-                        ("NRC", receptor.Value<string>("nrc") ?? "-"),
-                        ("Actividad", ObtenerValor(receptor, "descActividad", "codActividad")),
-                        ("Dirección", Direccion(receptor)),
-                        ("Teléfono", receptor.Value<string>("telefono") ?? "-"),
-                        ("Nombre", receptor.Value<string>("nombre") ?? "-"),
-                        ("Correo", receptor.Value<string>("correo") ?? "-")
-                    });
                     AgregarDetalle(column, root["cuerpoDocumento"] as JArray);
-                    var resumen = root["resumen"] as JObject;
-                    if (resumen is not null)
-                    {
-                        AgregarBloque(column, "Resumen", new[]
-                        {
-                            ("No sujeto", ObtenerValor(resumen, "totalNoSuj")),
-                            ("Exento", ObtenerValor(resumen, "totalExenta")),
-                            ("Gravado", ObtenerValor(resumen, "totalGravada")),
-                            ("Compra", ObtenerValor(resumen, "totalCompra", "totalCompraExcluidos")),
-                            ("Descuento", ObtenerValor(resumen, "totalDescu")),
-                            ("Retención IVA", ObtenerValor(resumen, "ivaRete", "ivaRete1")),
-                            ("Percepción IVA", ObtenerValor(resumen, "ivaPerci", "ivaPerci1")),
-                            ("Retención renta", ObtenerValor(resumen, "reteRenta")),
-                            ("Total", ObtenerValor(resumen, "totalPagar", "valorTotal", "totalCompra", "totalExenta")),
-                            ("IVA", ObtenerValor(resumen, "totalIva", "totalIvaRetenido")),
-                            ("Total en letras", resumen.Value<string>("totalLetras") ?? "-")
-                        });
-                        if (resumen["tributos"] is JArray tributos)
-                            foreach (var tributo in tributos.OfType<JObject>())
-                                column.Item().Text($"Tributo {ObtenerValor(tributo, "codigo")}: {ObtenerValor(tributo, "descripcion")} — {ObtenerValor(tributo, "valor")}").FontSize(8);
-                    }
+                    AgregarResumen(column, root["resumen"] as JObject);
                 }
-                AgregarQr(column, tipo == "INVALIDACION" ? root["documento"] as JObject ?? identificacion : identificacion,
+
+                AgregarQrYValidacion(column, tipo == "INVALIDACION"
+                    ? root["documento"] as JObject ?? identificacion : identificacion,
                     identificacion.Value<string>("ambiente"), sello);
-                column.Item().PaddingTop(10).Text($"Sello de recepción: {sello ?? "Pendiente"}").FontSize(8);
-                column.Item().PaddingTop(16).Text("Documento generado por SRAUMOAR. El JSON electrónico correspondiente se conserva como respaldo.").Italic().FontSize(8);
             });
-            page.Footer().AlignCenter().Text(text => text.Span("SRAUMOAR - Facturación Electrónica").FontSize(8));
-        })).GeneratePdf();
-    }
-
-    private static byte[] GenerarEventoRetorno(JObject root, JObject identificacion, string? sello)
-    {
-        var emisor = root["emisor"] as JObject ?? new JObject();
-        var documento = root["documento"] as JObject ?? new JObject();
-        var relacionados = root["documentoRelacionado"] as JArray;
-        var cuerpo = root["cuerpoDocumento"] as JArray;
-        var resumen = root["resumen"] as JObject ?? new JObject();
-        var codigo = identificacion.Value<string>("codigoGeneracion") ?? "-";
-        var ambiente = identificacion.Value<string>("ambiente") ?? "-";
-        var ambienteTexto = ambiente == "00" ? "Pruebas (00)" : ambiente == "01" ? "Producción (01)" : ambiente;
-
-        return Document.Create(document => document.Page(page =>
-        {
-            page.Size(PageSizes.Letter);
-            page.Margin(25);
-            page.DefaultTextStyle(x => x.FontSize(8.5f));
-            page.Header().Column(column =>
+            page.Footer().PaddingTop(8).BorderTop(1).BorderColor(Borde).Row(row =>
             {
-                column.Item().Text("UNIVERSIDAD MONSEÑOR OSCAR ARNULFO ROMERO")
-                    .Bold().FontSize(14).FontColor(Colors.Blue.Darken2);
-                column.Item().PaddingTop(2).Text("EVENTO DE RETORNO")
-                    .Bold().FontSize(13).FontColor(Colors.Blue.Darken2);
-                column.Item().Text("Evento de Retorno de Mercancías (ERET) - Tipo 18").FontSize(9);
-            });
-            page.Content().PaddingTop(10).Column(column =>
-            {
-                column.Spacing(6);
-                AgregarQr(column, identificacion, ambiente, sello);
-                column.Item().Background(Colors.Blue.Lighten5).Border(1).BorderColor(Colors.Blue.Lighten3).Padding(7).Column(info =>
+                row.RelativeItem().Text("SRAUMOAR  ·  Facturación Electrónica").FontSize(7).FontColor(Muted);
+                row.ConstantItem(80).AlignRight().Text(text =>
                 {
-                    info.Item().Text($"Código de generación: {codigo}").Bold().FontSize(8);
-                    info.Item().Text($"Sello de recepción: {sello ?? "Pendiente"}").FontSize(8);
-                    info.Item().Text($"Emisión: {UnirFechaHora(identificacion)}   Ambiente: {ambienteTexto}").FontSize(8);
+                    text.Span("Página ").FontSize(7).FontColor(Muted);
+                    text.CurrentPageNumber().FontSize(7).FontColor(Muted);
+                    text.Span(" de ").FontSize(7).FontColor(Muted);
+                    text.TotalPages().FontSize(7).FontColor(Muted);
                 });
-
-                column.Item().Row(row =>
-                {
-                    row.RelativeItem().Element(container => AgregarBloqueContenedor(container, "Emisor", new[]
-                    {
-                        ("NIT", emisor.Value<string>("nit") ?? "-"),
-                        ("Nombre", emisor.Value<string>("nombre") ?? "-"),
-                        ("Establecimiento", ObtenerValor(emisor, "codEstableMH", "codEstable")),
-                        ("Punto de venta", ObtenerValor(emisor, "codPuntoVentaMH", "codPuntoVenta")),
-                        ("Recinto fiscal", ObtenerValor(emisor, "recintoFiscal")),
-                        ("Régimen", ObtenerValor(emisor, "regimen"))
-                    }));
-                    row.RelativeItem().PaddingLeft(7).Element(container => AgregarBloqueContenedor(container, "Documento / receptor", new[]
-                    {
-                        ("Documento", documento.Value<string>("numDocumento") ?? "-"),
-                        ("Nombre", documento.Value<string>("nombre") ?? "-"),
-                        ("País", documento.Value<string>("nombrePais") ?? documento.Value<string>("codPais") ?? "-"),
-                        ("Teléfono", documento.Value<string>("telefono") ?? "-"),
-                        ("Correo", documento.Value<string>("correo") ?? "-")
-                    }));
-                });
-
-                AgregarDocumentosRelacionados(column, relacionados);
-                AgregarDetalleRetorno(column, cuerpo);
-                AgregarResumenRetorno(column, resumen);
-            });
-            page.Footer().AlignCenter().Text(text =>
-            {
-                text.Span("SRAUMOAR - Evento de Retorno - ").FontSize(7.5f);
-                text.CurrentPageNumber().FontSize(7.5f);
-                text.Span(" / ").FontSize(7.5f);
-                text.TotalPages().FontSize(7.5f);
             });
         })).GeneratePdf();
     }
@@ -202,151 +88,260 @@ public sealed class DtePdfService : IDtePdfService
     public string ObtenerNombre(string tipoDte, string codigoGeneracion, bool anulacion = false)
         => $"{(anulacion ? "INVALIDACION" : "DTE-" + tipoDte.PadLeft(2, '0'))}-{codigoGeneracion}.pdf";
 
-    private static void AgregarBloque(ColumnDescriptor column, string titulo, IEnumerable<(string Etiqueta, string Valor)> datos)
+    private static void AgregarEncabezado(IContainer container, JObject root, JObject identificacion,
+        JObject emisor, string titulo, string codigo)
     {
-        column.Item().PaddingTop(8).Text(titulo).Bold().FontColor(Colors.Blue.Darken2);
-        column.Item().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(6).Column(inner =>
+        container.Background(Azul).Padding(14).Row(row =>
         {
-            foreach (var dato in datos)
-                inner.Item().Text($"{dato.Etiqueta}: {dato.Valor ?? "-"}").FontSize(8);
-        });
-    }
-
-    private static void AgregarBloqueContenedor(IContainer container, string titulo, IEnumerable<(string Etiqueta, string Valor)> datos)
-    {
-        container.Border(1).BorderColor(Colors.Grey.Lighten2).Padding(6).Column(column =>
-        {
-            column.Item().Text(titulo).Bold().FontColor(Colors.Blue.Darken2).FontSize(9);
-            foreach (var dato in datos)
-                column.Item().PaddingTop(1).Text($"{dato.Etiqueta}: {dato.Valor}").FontSize(7.5f);
-        });
-    }
-
-    private static void AgregarDocumentosRelacionados(ColumnDescriptor column, JArray? documentos)
-    {
-        if (documentos is null || documentos.Count == 0) return;
-
-        column.Item().Text("Documento relacionado").Bold().FontColor(Colors.Blue.Darken2).FontSize(9);
-        column.Item().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(6).Column(inner =>
-        {
-            foreach (var documento in documentos.OfType<JObject>())
+            row.RelativeItem(1.25f).Column(left =>
             {
-                inner.Item().Text(
-                    $"Tipo {documento.Value<string>("tipoDocumento") ?? "-"} | " +
-                    $"Código: {documento.Value<string>("codigoGeneracion") ?? "-"} | " +
-                    $"Fecha: {documento.Value<string>("fechaEmision") ?? "-"}")
-                    .FontSize(7.5f);
-            }
+                var logo = ObtenerLogo();
+                if (logo is not null) left.Item().Height(38).Image(logo).FitArea();
+                left.Item().PaddingTop(4).Text(Valor(emisor, "nombreComercial", "nombre", "razonSocial"))
+                    .Bold().FontSize(12).FontColor(Colors.White);
+                left.Item().Text("Documento tributario electrónico").FontSize(7.5f).FontColor("#C9D9E8");
+            });
+            row.ConstantItem(205).Background(Colors.White).Padding(9).Column(right =>
+            {
+                right.Item().Text(titulo).Bold().FontSize(10).FontColor(Azul);
+                right.Item().PaddingTop(3).Text($"Tipo DTE  {Valor(identificacion, "tipoDte", "tipoEvento", "-")}")
+                    .FontSize(7.5f).FontColor(Texto);
+                right.Item().Text($"Código  {codigo}").FontSize(7.5f).FontColor(Texto);
+                right.Item().Text($"Ambiente  {Ambiente(Valor(identificacion, "ambiente"))}")
+                    .FontSize(7.5f).FontColor(Texto);
+            });
         });
     }
 
-    private static void AgregarDetalleRetorno(ColumnDescriptor column, JArray? items)
+    private static void AgregarIdentificacion(ColumnDescriptor column, JObject identificacion, string tipo, string codigo)
+    {
+        Seccion(column, "Identificación fiscal", content => content.Row(row =>
+        {
+            row.RelativeItem().Element(c => Campo(c, "Número de control", Valor(identificacion, "numeroControl", "numeroControlDte")));
+            row.RelativeItem().Element(c => Campo(c, "Código de generación", codigo));
+            row.RelativeItem().Element(c => Campo(c, "Fecha y hora", FechaHora(identificacion)));
+        }));
+    }
+
+    private static void AgregarPartes(ColumnDescriptor column, JObject emisor, JObject receptor, string tipo)
+    {
+        column.Item().Row(row =>
+        {
+            row.RelativeItem().Element(c => TarjetaParte(c, "Emisor", emisor, true));
+            row.ConstantItem(8);
+            if (tipo == "INVALIDACION")
+                row.RelativeItem().Element(c => TarjetaParte(c, "Entidad receptora", receptor, false));
+            else
+                row.RelativeItem().Element(c => TarjetaParte(c, "Receptor", receptor, false));
+        });
+    }
+
+    private static void TarjetaParte(IContainer container, string titulo, JObject persona, bool emisor)
+    {
+        container.Border(1).BorderColor(Borde).Background(Fondo).Padding(9).Column(column =>
+        {
+            column.Item().Text(titulo.ToUpperInvariant()).Bold().FontSize(8).FontColor(AzulMedio);
+            column.Item().PaddingTop(4).Text(Valor(persona, "nombre", "nombreComercial", "razonSocial"))
+                .Bold().FontSize(9).FontColor(Texto);
+            column.Item().PaddingTop(2).Text($"{(emisor ? "NIT" : "Documento")}: {Valor(persona, "nit", "numDocumento", "numeroDocumento")}").FontSize(7.5f);
+            if (emisor) column.Item().Text($"NRC: {Valor(persona, "nrc")}").FontSize(7.5f);
+            var actividad = Valor(persona, "descActividad", "actividadEconomica");
+            if (actividad != "-") column.Item().Text(actividad).FontSize(7.5f).FontColor(Muted);
+            column.Item().Text(Direccion(persona)).FontSize(7.5f).FontColor(Muted);
+            var contacto = string.Join("  ·  ", new[] { Valor(persona, "telefono"), Valor(persona, "correo", "email") }.Where(x => x != "-"));
+            if (!string.IsNullOrWhiteSpace(contacto)) column.Item().Text(contacto).FontSize(7.5f).FontColor(Muted);
+        });
+    }
+
+    private static void AgregarNota(ColumnDescriptor column, JObject root, string tipo)
+    {
+        var relacionado = (root["documentoRelacionado"] as JArray)?.OfType<JObject>().FirstOrDefault();
+        var resumen = root["resumen"] as JObject;
+        Seccion(column, tipo == "05" ? "Nota de crédito" : "Nota de débito", content => content.Row(row =>
+        {
+            Campo(row.RelativeItem(), "Documento original", Valor(relacionado, "numeroDocumento", "codigoGeneracion"));
+            Campo(row.RelativeItem(), "Fecha original", Valor(relacionado, "fechaEmision"));
+            Campo(row.RelativeItem(1.5f), "Motivo", Valor(resumen, "observaciones", "descripcion"));
+        }));
+    }
+
+    private static void AgregarInvalidacion(ColumnDescriptor column, JObject root)
+    {
+        var documento = root["documento"] as JObject ?? new JObject();
+        var motivo = root["motivo"] as JObject ?? new JObject();
+        Seccion(column, "Documento invalidado", content => content.Column(inner =>
+        {
+            inner.Item().Element(c => Campo(c, "Código de generación original", Valor(documento, "codigoGeneracion")));
+            inner.Item().Element(c => Campo(c, "Sello original", Valor(documento, "selloRecibido", "sello")));
+            inner.Item().Element(c => Campo(c, "Motivo", Valor(motivo, "motivoAnulacion", "descripcionMotivo")));
+        }));
+    }
+
+    private static void AgregarDetalle(ColumnDescriptor column, JArray? items)
     {
         if (items is null || items.Count == 0) return;
-
-        column.Item().Text("Detalle de mercancías retornadas").Bold().FontColor(Colors.Blue.Darken2).FontSize(9);
-        column.Item().Table(table =>
+        Seccion(column, "Detalle de bienes y servicios", content => content.Table(table =>
         {
             table.ColumnsDefinition(columns =>
             {
-                columns.ConstantColumn(26);
-                columns.RelativeColumn(1.2f);
-                columns.RelativeColumn(3.5f);
-                columns.RelativeColumn(1.1f);
-                columns.RelativeColumn(1.25f);
-                columns.RelativeColumn(1.35f);
+                columns.ConstantColumn(22); columns.RelativeColumn(3.8f); columns.ConstantColumn(42);
+                columns.ConstantColumn(58); columns.ConstantColumn(54); columns.ConstantColumn(66);
             });
             table.Header(header =>
             {
-                foreach (var titulo in new[] { "#", "Código", "Descripción", "Cantidad", "P. unitario", "Total" })
-                    header.Cell().Background(Colors.Blue.Darken2).Padding(3).Text(titulo).FontColor(Colors.White).Bold().FontSize(7);
+                foreach (var title in new[] { "#", "Descripción / código", "Cant.", "P. unitario", "Descuento", "Valor" })
+                    header.Cell().Background(Azul).Padding(5).Text(title).Bold().FontSize(7).FontColor(Colors.White);
             });
-
             foreach (var item in items.OfType<JObject>())
             {
-                var total = ObtenerMontoItem(item);
-                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).Padding(3).Text(ObtenerValor(item, "numItem")).FontSize(7);
-                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).Padding(3).Text(ObtenerValor(item, "codigo")).FontSize(7);
-                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).Padding(3).Column(description =>
+                Celda(table, Valor(item, "numItem"));
+                table.Cell().BorderBottom(1).BorderColor(Borde).Padding(5).Column(detail =>
                 {
-                    description.Item().Text(ObtenerValor(item, "descripcion")).FontSize(7);
-                    var codigoRelacionado = item.Value<string>("codigoGeneracion");
-                    if (!string.IsNullOrWhiteSpace(codigoRelacionado))
-                        description.Item().Text($"DTE: {codigoRelacionado}").Italic().FontSize(6).FontColor(Colors.Grey.Darken1);
+                    detail.Item().Text(Valor(item, "descripcion", "detalle")).FontSize(7.5f);
+                    var code = Valor(item, "codigo", "codigoItem");
+                    if (code != "-") detail.Item().Text(code).FontSize(6.5f).FontColor(Muted);
                 });
-                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).Padding(3).AlignRight().Text(ObtenerValor(item, "cantidad")).FontSize(7);
-                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).Padding(3).AlignRight().Text(FormatearMoneda(item["precioUni"])).FontSize(7);
-                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).Padding(3).AlignRight().Text(FormatearMoneda(total)).FontSize(7).Bold();
+                Celda(table, Valor(item, "cantidad"), true);
+                Celda(table, Moneda(item["precioUni"]), true);
+                Celda(table, Moneda(item["montoDescu"]), true);
+                Celda(table, Moneda(ObtenerMontoItem(item)), true, true);
             }
+        }));
+    }
+
+    private static void AgregarResumen(ColumnDescriptor column, JObject? resumen)
+    {
+        if (resumen is null) return;
+        Seccion(column, "Resumen de la operación", content => content.Row(row =>
+        {
+            row.RelativeItem().Background(Fondo).Border(1).BorderColor(Borde).Padding(8).Column(left =>
+            {
+                left.Item().Text("TOTAL EN LETRAS").Bold().FontSize(7).FontColor(AzulMedio);
+                left.Item().PaddingTop(4).Text(Valor(resumen, "totalLetras")).FontSize(8);
+                var tributos = resumen["tributos"] as JArray;
+                if (tributos is not null)
+                    foreach (var tributo in tributos.OfType<JObject>())
+                        left.Item().PaddingTop(3).Text($"{Valor(tributo, "descripcion", "codigo")}: {Moneda(tributo["valor"])}").FontSize(7);
+            });
+            row.ConstantItem(8);
+            row.RelativeItem().Border(1).BorderColor(Borde).Padding(8).Column(right =>
+            {
+                LineaTotal(right, "No sujeto", resumen, "totalNoSuj");
+                LineaTotal(right, "Exento", resumen, "totalExenta");
+                LineaTotal(right, "Gravado", resumen, "totalGravada");
+                LineaTotal(right, "Descuento", resumen, "totalDescu");
+                LineaTotal(right, "IVA", resumen, "totalIva", "totalIvaRetenido");
+                LineaTotal(right, "Retención IVA", resumen, "ivaRete", "ivaRete1");
+                LineaTotal(right, "Percepción IVA", resumen, "ivaPerci", "ivaPerci1");
+                LineaTotal(right, "Total a pagar", resumen, "totalPagar", "valorTotal", true);
+            });
+        }));
+    }
+
+    private static void AgregarQrYValidacion(ColumnDescriptor column, JObject identificacion, string? ambiente, string? sello)
+    {
+        var url = UrlConsulta(identificacion, ambiente);
+        column.Item().PaddingTop(2).Row(row =>
+        {
+            if (url is not null && !string.IsNullOrWhiteSpace(sello))
+            {
+                using var data = QRCodeGenerator.GenerateQrCode(url, QRCodeGenerator.ECCLevel.M);
+                using var qr = new PngByteQRCode(data);
+                row.ConstantItem(70).Height(70).Image(qr.GetGraphic(4)).FitArea();
+                row.RelativeItem().PaddingLeft(10).AlignMiddle().Column(info =>
+                {
+                    info.Item().Text("Consulta y valida este documento").Bold().FontSize(8).FontColor(Azul);
+                    info.Item().PaddingTop(3).Text(url).FontSize(6.5f).FontColor(AzulMedio);
+                    info.Item().PaddingTop(5).Text($"Sello de recepción: {sello}").FontSize(7).FontColor(Muted);
+                });
+            }
+            else row.RelativeItem().Text($"Sello de recepción: {sello ?? "Pendiente de transmisión"}").Bold().FontSize(8).FontColor(Muted);
+        });
+        column.Item().PaddingTop(9).Text("El JSON electrónico correspondiente se conserva como respaldo del documento.")
+            .Italic().FontSize(7).FontColor(Muted);
+    }
+
+    private static void Seccion(ColumnDescriptor column, string titulo, Action<IContainer> contenido)
+    {
+        column.Item().Text(titulo).Bold().FontSize(9).FontColor(Azul);
+        column.Item().Element(contenido);
+    }
+
+    private static void Campo(IContainer container, string etiqueta, string valor)
+    {
+        container.PaddingRight(8).Column(column =>
+        {
+            column.Item().Text(etiqueta.ToUpperInvariant()).FontSize(6.5f).FontColor(Muted);
+            column.Item().PaddingTop(2).Text(valor).FontSize(8).FontColor(Texto);
         });
     }
 
-    private static void AgregarResumenRetorno(ColumnDescriptor column, JObject resumen)
+    private static void Celda(TableDescriptor table, string texto, bool derecha = false, bool negrita = false)
     {
+        var cell = table.Cell().BorderBottom(1).BorderColor(Borde).Padding(5);
+        var line = (derecha ? cell.AlignRight() : cell).Text(texto).FontSize(7.5f);
+        if (negrita) line.Bold();
+    }
+
+    private static void LineaTotal(ColumnDescriptor column, string etiqueta, JObject resumen, string nombre, string? alterno = null, bool destacada = false)
+    {
+        var valor = Valor(resumen, nombre, alterno ?? string.Empty);
+        if (valor == "-") return;
         column.Item().Row(row =>
         {
-            row.RelativeItem().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(6).Column(left =>
+            var etiquetaTexto = row.RelativeItem().Text(etiqueta).FontSize(destacada ? 8.5f : 7.5f);
+            var valorTexto = row.ConstantItem(74).AlignRight().Text(Moneda(valor)).FontSize(destacada ? 8.5f : 7.5f);
+            if (destacada)
             {
-                left.Item().Text("Total en letras").Bold().FontColor(Colors.Blue.Darken2).FontSize(8);
-                left.Item().Text(resumen.Value<string>("totalLetras") ?? "-").FontSize(7.5f);
-            });
-            row.RelativeItem().PaddingLeft(7).Border(1).BorderColor(Colors.Grey.Lighten2).Padding(6).Column(right =>
-            {
-                right.Item().Text("Resumen").Bold().FontColor(Colors.Blue.Darken2).FontSize(8);
-                AgregarLineaTotal(right, "No sujeto", resumen["totalNoSuj"]);
-                AgregarLineaTotal(right, "Exento", resumen["totalExenta"]);
-                AgregarLineaTotal(right, "Gravado", resumen["totalGravada"]);
-                AgregarLineaTotal(right, "Compras excluidos", resumen["totalCompraExcluidos"]);
-                AgregarLineaTotal(right, "IVA", resumen["totalIva"]);
-                AgregarLineaTotal(right, "Seguro", resumen["totalSeguro"]);
-                AgregarLineaTotal(right, "Flete", resumen["totalFlete"]);
-                AgregarLineaTotal(right, "Monto operación", resumen["montoTotalOperacion"]);
-                AgregarLineaTotal(right, "Total a pagar", resumen["totalPagar"], true);
-            });
+                etiquetaTexto.Bold();
+                valorTexto.Bold();
+            }
         });
     }
 
-    private static void AgregarLineaTotal(ColumnDescriptor column, string etiqueta, JToken? valor, bool destacado = false)
-    {
-        if (valor is null || valor.Type == JTokenType.Null) return;
-        if (!destacado && decimal.TryParse(valor.ToString(), System.Globalization.NumberStyles.Any,
-                System.Globalization.CultureInfo.InvariantCulture, out var numero) && numero == 0m) return;
 
-        column.Item().Row(row =>
+    private static string TipoDocumento(string tipo) => tipo switch
+    {
+        "01" => "FACTURA ELECTRÓNICA", "03" => "COMPROBANTE DE CRÉDITO FISCAL",
+        "05" => "NOTA DE CRÉDITO", "06" => "NOTA DE DÉBITO", "07" => "COMPROBANTE DE RETENCIÓN",
+        "08" => "COMPROBANTE DE LIQUIDACIÓN", "09" => "DOCUMENTO CONTABLE DE LIQUIDACIÓN",
+        "11" => "FACTURA DE EXPORTACIÓN", "14" => "FACTURA DE SUJETO EXCLUIDO",
+        "15" => "COMPROBANTE DE DONACIÓN", _ => $"DOCUMENTO TRIBUTARIO ELECTRÓNICO {tipo}"
+    };
+
+    private static string Ambiente(string value) => value switch { "00" => "Pruebas (00)", "01" => "Producción (01)", _ => value == "-" ? "-" : value };
+
+    private static string FechaHora(JObject value)
+    {
+        var fecha = Valor(value, "fecEmi", "fecAnula");
+        var hora = Valor(value, "horEmi", "horAnula");
+        return hora == "-" ? fecha : $"{fecha} {hora}";
+    }
+
+    private static string Direccion(JObject persona)
+        => persona["direccion"] is JObject direccion ? CatalogoTerritorialFiscal.Formatear(direccion) : Valor(persona, "direccion");
+
+    internal static string? UrlConsulta(JObject identificacion, string? ambiente)
+    {
+        var codigo = Valor(identificacion, "codigoGeneracion");
+        var fecha = Valor(identificacion, "fecEmi", "fecAnula");
+        return ambiente is ("00" or "01") && codigo != "-" && fecha != "-"
+            ? $"https://admin.factura.gob.sv/consultaPublica?ambiente={ambiente}&codGen={Uri.EscapeDataString(codigo)}&fechaEmi={Uri.EscapeDataString(fecha)}" : null;
+    }
+
+    private static string Valor(JObject? objeto, params string[] nombres)
+    {
+        if (objeto is null) return "-";
+        foreach (var nombre in nombres.Where(n => !string.IsNullOrWhiteSpace(n)))
         {
-            var etiquetaContenedor = row.RelativeItem();
-            var valorContenedor = row.RelativeItem().AlignRight();
-            if (destacado)
-            {
-                etiquetaContenedor.Text(etiqueta).Bold().FontSize(8);
-                valorContenedor.Text(FormatearMoneda(valor)).Bold().FontSize(8);
-            }
-            else
-            {
-                etiquetaContenedor.Text(etiqueta).FontSize(7);
-                valorContenedor.Text(FormatearMoneda(valor)).FontSize(7);
-            }
-        });
+            var valor = objeto[nombre];
+            if (valor is not null && valor.Type != JTokenType.Null && !string.IsNullOrWhiteSpace(valor.ToString())) return valor.ToString();
+        }
+        return "-";
     }
 
-    private static string UnirFechaHora(JObject identificacion)
-    {
-        var fecha = identificacion.Value<string>("fecEmi") ?? "-";
-        var hora = identificacion.Value<string>("horEmi");
-        return string.IsNullOrWhiteSpace(hora) ? fecha : $"{fecha} {hora}";
-    }
-
-    private static string FormatearMoneda(JToken? valor)
-        => decimal.TryParse(valor?.ToString(), System.Globalization.NumberStyles.Any,
-            System.Globalization.CultureInfo.InvariantCulture, out var numero)
-            ? $"${numero:N2}"
-            : "-";
-
-    private static string FormatearMoneda(string valor)
-        => decimal.TryParse(valor, System.Globalization.NumberStyles.Any,
-            System.Globalization.CultureInfo.InvariantCulture, out var numero)
-            ? $"${numero:N2}"
-            : "-";
+    private static string Moneda(JToken? valor)
+        => decimal.TryParse(valor?.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var numero) ? $"${numero:N2}" : "-";
 
     private static string ObtenerMontoItem(JObject item)
     {
@@ -354,97 +349,72 @@ public sealed class DtePdfService : IDtePdfService
         {
             if (valor?.Type is JTokenType.Integer or JTokenType.Float)
                 return valor.Value<decimal>();
-            return decimal.TryParse(valor?.ToString(), System.Globalization.NumberStyles.Any,
-                System.Globalization.CultureInfo.InvariantCulture, out var numero) ? numero : 0m;
+            if (decimal.TryParse(valor?.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var n))
+                return n;
+            return decimal.TryParse(valor?.ToString(), NumberStyles.Any, CultureInfo.CurrentCulture, out n) ? n : 0m;
         }
-
-        // Las clasificaciones pueden coexistir y una gravada presente con valor
-        // cero no debe ocultar una venta exenta/no sujeta ni una compra excluida.
         var nombres = new[] { "ventaGravada", "ventaExenta", "ventaNoSuj", "compra" };
-        decimal total = 0m;
-        var tieneClasificacion = false;
-        foreach (var nombre in nombres)
-        {
-            var valor = item[nombre];
-            if (valor is null || valor.Type == JTokenType.Null) continue;
-            tieneClasificacion = true;
-            total += Numero(valor);
-        }
-
-        if (!tieneClasificacion) total = Numero(item["valor"]);
-        return total.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var presentes = nombres.Where(n => item[n] is not null && item[n]!.Type != JTokenType.Null).ToArray();
+        var total = presentes.Length == 0 ? Numero(item["valor"]) : presentes.Sum(n => Numero(item[n]));
+        return total.ToString(CultureInfo.InvariantCulture);
     }
 
-    private static void AgregarDetalle(ColumnDescriptor column, JArray? items)
+    private static bool EsCero(string valor) => decimal.TryParse(valor, NumberStyles.Any, CultureInfo.InvariantCulture, out var n) && n == 0m;
+
+    private static byte[]? ObtenerLogo()
     {
-        if (items is null || items.Count == 0) return;
-        column.Item().PaddingTop(8).Text("Detalle").Bold().FontColor(Colors.Blue.Darken2);
-        column.Item().Table(table =>
+        var candidatos = new[]
         {
-            table.ColumnsDefinition(columns =>
+            Path.Combine(AppContext.BaseDirectory, "wwwroot", "images", "logoUmoar.jpg"),
+            Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "logoUmoar.jpg"),
+            Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "wwwroot", "images", "logoUmoar.jpg"))
+        };
+        var ruta = candidatos.FirstOrDefault(File.Exists);
+        if (ruta is not null) return File.ReadAllBytes(ruta);
+
+        // El recurso embebido evita que el logo desaparezca en pruebas, servicios o
+        // publicaciones donde wwwroot no queda junto al ensamblado.
+        using var recurso = typeof(DtePdfService).Assembly
+            .GetManifestResourceStream("SRAUMOAR.logoUmoar.jpg");
+        if (recurso is null) return null;
+        using var memoria = new MemoryStream();
+        recurso.CopyTo(memoria);
+        return memoria.ToArray();
+    }
+
+    private static byte[] GenerarEventoRetorno(JObject root, JObject identificacion, string? sello)
+    {
+        // ERET mantiene sus campos propios, pero usa la misma jerarquía visual del resto de DTE.
+        var emisor = root["emisor"] as JObject ?? new JObject();
+        var documento = root["documento"] as JObject ?? new JObject();
+        var resumen = root["resumen"] as JObject ?? new JObject();
+        return Document.Create(document => document.Page(page =>
+        {
+            page.Size(PageSizes.Letter); page.Margin(30);
+            page.DefaultTextStyle(style => style.FontFamily("Helvetica").FontSize(8).FontColor(Texto));
+            page.Header().Element(header => AgregarEncabezado(header, root, identificacion, emisor, "EVENTO DE RETORNO · TIPO 18", Valor(identificacion, "codigoGeneracion")));
+            page.Content().PaddingTop(12).Column(column =>
             {
-                columns.ConstantColumn(20);
-                columns.RelativeColumn(4);
-                for (var i = 0; i < 9; i++) columns.RelativeColumn();
+                column.Spacing(8);
+                AgregarIdentificacion(column, identificacion, "18", Valor(identificacion, "codigoGeneracion"));
+                column.Item().Row(row =>
+                {
+                    row.RelativeItem().Element(c => TarjetaParte(c, "Emisor", emisor, true));
+                    row.ConstantItem(8);
+                    row.RelativeItem().Element(c => TarjetaParte(c, "Documento / receptor", documento, false));
+                });
+                var relacionados = root["documentoRelacionado"] as JArray;
+                if (relacionados is not null && relacionados.Count > 0)
+                    Seccion(column, "Documentos relacionados", c => c.Column(inner =>
+                    {
+                        foreach (var d in relacionados.OfType<JObject>())
+                            inner.Item().Text($"Tipo: {Valor(d, "tipoDocumento")}   Código: {Valor(d, "codigoGeneracion")}   Fecha: {Valor(d, "fechaEmision")}");
+                    }));
+                AgregarDetalle(column, root["cuerpoDocumento"] as JArray);
+                AgregarResumen(column, resumen);
+                AgregarQrYValidacion(column, identificacion, identificacion.Value<string>("ambiente"), sello);
             });
-            table.Header(header =>
-            {
-                foreach (var titulo in new[] { "#", "Descripción / código", "Cant.", "Precio", "Desc.", "No suj.", "Exento", "Gravado", "Compra", "IVA", "Valor" })
-                    header.Cell().Background(Colors.Blue.Darken2).Padding(2).Text(titulo).FontColor(Colors.White).FontSize(6);
-            });
-            foreach (var item in items.OfType<JObject>())
-            {
-                var valores = new[] { ObtenerValor(item, "numItem"), $"{ObtenerValor(item, "descripcion")} / {ObtenerValor(item, "codigo")}",
-                    ObtenerValor(item, "cantidad"), ObtenerValor(item, "precioUni"), ObtenerValor(item, "montoDescu"),
-                    ObtenerValor(item, "ventaNoSuj"), ObtenerValor(item, "ventaExenta"), ObtenerValor(item, "ventaGravada"),
-                    ObtenerValor(item, "compra"), ObtenerValor(item, "totalIva", "ivaItem"), ObtenerMontoItem(item) };
-                foreach (var valor in valores) table.Cell().BorderBottom(0.25f).BorderColor(Colors.Grey.Lighten2).Padding(2).Text(valor).FontSize(6);
-            }
-        });
-    }
-
-    internal static string Direccion(JObject persona)
-    {
-        if (persona["direccion"] is not JObject direccion) return "-";
-        return CatalogoTerritorialFiscal.Formatear(direccion);
-    }
-
-    internal static string? UrlConsulta(JObject identificacion, string? ambiente)
-    {
-        var codigo = identificacion.Value<string>("codigoGeneracion");
-        var fecha = identificacion.Value<string>("fecEmi");
-        if (ambiente is not ("00" or "01") || string.IsNullOrWhiteSpace(codigo) || string.IsNullOrWhiteSpace(fecha)) return null;
-        return $"https://admin.factura.gob.sv/consultaPublica?ambiente={ambiente}&codGen={Uri.EscapeDataString(codigo)}&fechaEmi={Uri.EscapeDataString(fecha)}";
-    }
-
-    private static void AgregarQr(ColumnDescriptor column, JObject identificacion, string? ambiente, string? sello)
-    {
-        var url = UrlConsulta(identificacion, ambiente);
-        if (url is null || string.IsNullOrWhiteSpace(sello))
-        {
-            column.Item().Text("Sin confirmación de recepción fiscal").Bold().FontColor(Colors.Orange.Darken3);
-            return;
-        }
-        using var datos = QRCodeGenerator.GenerateQrCode(url, QRCodeGenerator.ECCLevel.M);
-        using var qr = new PngByteQRCode(datos);
-        column.Item().PaddingTop(8).Row(row =>
-        {
-            row.ConstantItem(72).Image(qr.GetGraphic(4));
-            row.RelativeItem().PaddingLeft(8).AlignMiddle().Column(info =>
-            {
-                info.Item().Text("Consulte este documento en Hacienda").Bold().FontSize(8);
-                info.Item().Hyperlink(url).Text(url).FontSize(7).FontColor(Colors.Blue.Darken2);
-            });
-        });
-    }
-
-    private static string ObtenerValor(JObject objeto, params string[] nombres)
-    {
-        foreach (var nombre in nombres)
-        {
-            var valor = objeto[nombre];
-            if (valor is not null && valor.Type != JTokenType.Null) return valor.ToString();
-        }
-        return "-";
+            page.Footer().AlignCenter().Text("SRAUMOAR  ·  Evento de Retorno · Página ").FontSize(7).FontColor(Muted);
+        })).GeneratePdf();
     }
 }

@@ -38,17 +38,20 @@ namespace SRAUMOAR.Pages.facturas
         private readonly IDteEmailQueueService _emailQueue;
         private readonly IDteJsonFactory _jsonFactory;
         private readonly IDtePdfService _pdfService;
+        private readonly IConfiguracionFeService _configuracionFe;
         
         public IndexModel(
             SRAUMOAR.Modelos.Contexto context,
             IDteEmailQueueService emailQueue,
             IDteJsonFactory jsonFactory,
-            IDtePdfService pdfService)
+            IDtePdfService pdfService,
+            IConfiguracionFeService configuracionFe)
         {
             _context = context;
             _emailQueue = emailQueue;
             _jsonFactory = jsonFactory;
             _pdfService = pdfService;
+            _configuracionFe = configuracionFe;
         }
 
         public IList<Factura> Factura { get;set; } = default!;
@@ -68,7 +71,7 @@ namespace SRAUMOAR.Pages.facturas
         public string? EstadoFiltro { get; set; }
 
         [BindProperty(SupportsGet = true)]
-        public string AmbienteFiltro { get; set; } = "01";
+        public string AmbienteFiltro { get; set; } = string.Empty;
 
         [BindProperty(SupportsGet = true)]
         public int PaginaActual { get; set; } = 1;
@@ -77,8 +80,14 @@ namespace SRAUMOAR.Pages.facturas
         public int TotalRegistros { get; set; }
         public int RegistrosPorPagina { get; set; } = 20;
 
-        public async Task OnGetAsync()
+        public async Task OnGetAsync(CancellationToken cancellationToken)
         {
+            if (!Request.Query.ContainsKey(nameof(AmbienteFiltro)))
+            {
+                var configuracionActiva = await _configuracionFe.ObtenerActivaAsync(cancellationToken);
+                AmbienteFiltro = configuracionActiva.Entidad.AmbienteFiscal;
+            }
+
             var query = await ObtenerConsultaFiltradaAsync();
             TotalRegistros = await query.CountAsync();
             TotalPaginas = (int)Math.Ceiling((double)TotalRegistros / RegistrosPorPagina);
@@ -219,7 +228,8 @@ namespace SRAUMOAR.Pages.facturas
         private static string ExtraerCorreoReceptor(Factura factura, JObject json)
         {
             var esEret = factura.TipoDteCodigo == DteTipos.EventoRetorno || factura.TipoDTE == 18;
-            return (esEret ? json["documento"]?["correo"]?.ToString() : json["receptor"]?["correo"]?.ToString())
+            var persona = esEret ? json["documento"] as JObject : json["receptor"] as JObject;
+            return persona?.Value<string>("correo")
                 ?? factura.CorreoReceptor
                 ?? string.Empty;
         }

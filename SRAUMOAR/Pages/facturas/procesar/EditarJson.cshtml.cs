@@ -42,12 +42,7 @@ public sealed class EditarJsonModel : PageModel
         if (id is null) return NotFound();
         var factura = await _context.Facturas.FirstOrDefaultAsync(x => x.FacturaId == id);
         if (factura is null) return NotFound();
-        if (factura.TipoDTE == 18 || factura.TipoDteCodigo == "18")
-        {
-            TempData["Error"] = "Los ERET se reanudan desde su flujo controlado y no permiten edición manual del JSON.";
-            return RedirectToPage("./Index");
-        }
-        if (!string.IsNullOrEmpty(factura.SelloRecepcion))
+        if (!string.IsNullOrWhiteSpace(factura.SelloRecepcion))
         {
             TempData["Error"] = "Esta factura ya tiene sello de recepción y no puede editarse.";
             return RedirectToPage("./Index");
@@ -88,46 +83,70 @@ public sealed class EditarJsonModel : PageModel
         await using var transaccion = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable, cancellationToken);
         var factura = await _context.Facturas.FirstOrDefaultAsync(x => x.FacturaId == id, cancellationToken);
         if (factura is null) return NotFound();
-        if (factura.TipoDTE == 18 || factura.TipoDteCodigo == "18")
-        {
-            TempData["Error"] = "No se permite editar manualmente el JSON de un ERET.";
-            return RedirectToPage("./Index");
-        }
-        if (!string.IsNullOrEmpty(factura.SelloRecepcion))
+        if (!string.IsNullOrWhiteSpace(factura.SelloRecepcion))
         {
             TempData["Error"] = "Esta factura ya tiene sello de recepción y no puede editarse.";
             return RedirectToPage("./Index");
         }
 
-        if (factura.Anulada || factura.EstadoTransmision != DteEstados.Preparado || factura.IntentosTransmision != 0
-            || factura.TipoDteCodigo is "05" or "06" || factura.TipoDTE is 5 or 6
-            || await _context.DteTransmisiones.AnyAsync(x => x.FacturaId == id || x.CodigoGeneracion == factura.CodigoGeneracion, cancellationToken)
-            || await _context.DteEventos.AnyAsync(x => x.FacturaId == id, cancellationToken))
+        var tieneSelloEnTransmision = await _context.DteTransmisiones.AnyAsync(x =>
+            (x.FacturaId == id || x.CodigoGeneracion == factura.CodigoGeneracion)
+            && x.TipoOperacion == "EMISION"
+            && !string.IsNullOrWhiteSpace(x.SelloRecepcion), cancellationToken);
+        if (tieneSelloEnTransmision)
         {
-            TempData["Error"] = "No puede alterarse un JSON con transmisión/reserva fiscal previa. Reintente el documento intacto o utilice una corrección fiscal controlada.";
+            TempData["Error"] = "Esta factura ya tiene sello de recepción y no puede editarse.";
             return RedirectToPage("./Index");
         }
-        var original = JObject.Parse(factura.JsonDte ?? "{}");
+
+        var reservaPendiente = await _context.DteTransmisiones
+            .FirstOrDefaultAsync(x => (x.FacturaId == id || x.CodigoGeneracion == factura.CodigoGeneracion)
+                && x.TipoOperacion == "EMISION"
+                && string.IsNullOrWhiteSpace(x.SelloRecepcion), cancellationToken);
         var editado = JObject.Parse(JsonEditado);
-        foreach (var campo in new[] { "codigoGeneracion", "numeroControl", "ambiente", "tipoDte", "version" })
-            if (!JToken.DeepEquals(original["identificacion"]?[campo], editado["identificacion"]?[campo]))
-            {
-                TempData["Error"] = "La edición no puede cambiar la identidad, versión ni ambiente fiscal del documento.";
-                return RedirectToPage("./Index");
-            }
         try
         {
-            DteEdicionReglas.ValidarSinCambiosFinancieros(original, editado);
-            new DteJsonFactory().ValidarDocumento(JsonEditado, editado["identificacion"]!.Value<string>("ambiente")!);
+            var ambiente = (editado["identificacion"] as JObject)?.Value<string>("ambiente");
+            if (string.IsNullOrWhiteSpace(ambiente))
+                throw new InvalidOperationException("El JSON debe contener el ambiente fiscal en identificacion.");
+            new DteJsonFactory().ValidarDocumento(JsonEditado, ambiente);
         }
         catch (InvalidOperationException ex)
         {
             TempData["Error"] = ex.Message;
             return RedirectToPage("./Index");
         }
+        var identificacionEditada = (editado["identificacion"] as JObject)!;
+        var codigoGeneracionEditado = identificacionEditada.Value<string>("codigoGeneracion");
+        var numeroControlEditado = identificacionEditada.Value<string>("numeroControl");
+        var tipoDteEditado = identificacionEditada.Value<string>("tipoDte");
+        var ambienteEditado = identificacionEditada.Value<string>("ambiente");
         factura.JsonDte = JsonEditado;
-        factura.CorreoReceptor = editado["receptor"]?.Value<string>("correo")
-            ?? editado["sujetoExcluido"]?.Value<string>("correo") ?? editado["donante"]?.Value<string>("correo");
+        factura.CodigoGeneracion = codigoGeneracionEditado ?? factura.CodigoGeneracion;
+        factura.NumeroControl = numeroControlEditado ?? factura.NumeroControl;
+        factura.TipoDteCodigo = tipoDteEditado ?? factura.TipoDteCodigo;
+        if (int.TryParse(tipoDteEditado, out var tipoDteNumerico))
+            factura.TipoDTE = tipoDteNumerico;
+        factura.AmbienteFiscal = ambienteEditado ?? factura.AmbienteFiscal;
+        factura.EstadoTransmision = DteEstados.Preparado;
+        factura.IntentosTransmision = 0;
+        factura.RespuestaHacienda = null;
+        factura.FechaAceptacion = null;
+        factura.CorreoReceptor = (editado["receptor"] as JObject)?.Value<string>("correo")
+            ?? (editado["sujetoExcluido"] as JObject)?.Value<string>("correo")
+            ?? (editado["donante"] as JObject)?.Value<string>("correo");
+        if (reservaPendiente is not null)
+        {
+            reservaPendiente.JsonEnviado = JsonEditado;
+            reservaPendiente.CodigoGeneracion = codigoGeneracionEditado ?? reservaPendiente.CodigoGeneracion;
+            reservaPendiente.AmbienteFiscal = ambienteEditado ?? reservaPendiente.AmbienteFiscal;
+            reservaPendiente.Estado = DteEstados.Preparado;
+            reservaPendiente.Intentos = 0;
+            reservaPendiente.SelloRecepcion = null;
+            reservaPendiente.Respuesta = null;
+            reservaPendiente.Error = null;
+            reservaPendiente.FechaFin = null;
+        }
         await _context.SaveChangesAsync(cancellationToken);
         await transaccion.CommitAsync(cancellationToken);
         TempData["Success"] = "JSON actualizado. Revise el DTE antes de procesar la contingencia.";
