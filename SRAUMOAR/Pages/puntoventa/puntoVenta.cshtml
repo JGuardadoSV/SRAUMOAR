@@ -1139,7 +1139,7 @@
                 jQuery('.btn-agregar-producto').prop('disabled', !hayTipo);
                 jQuery('.iva-row').toggle(tipoDoc === '02' || tipoDoc === '03');
                 jQuery('.campos-credito-fiscal').toggle(tipoDoc === '01' || tipoDoc === '02' || tipoDoc === '03' || tipoDoc === '15');
-                jQuery('.campos-gran-contribuyente').toggle(tipoDoc === '01' || tipoDoc === '03');
+                jQuery('.campos-gran-contribuyente').toggle(tipoDoc === '01' || tipoDoc === '02' || tipoDoc === '03');
                 jQuery('.campo-pais, .campo-tipo-donacion').toggle(tipoDoc === '15');
                 jQuery('.campo-sujeto-excluido').toggle(tipoDoc === '14');
 
@@ -1149,7 +1149,7 @@
                     limpiarCatalogo('#Factura_TipoDonacion', '#Factura_TipoDonacionTexto');
                 }
 
-                if (tipoDoc !== '01' && tipoDoc !== '03') {
+                if (tipoDoc !== '01' && tipoDoc !== '02' && tipoDoc !== '03') {
                     jQuery('#Factura_Receptor_GranContribuyente').prop('checked', false);
                 }
                 if (tipoDoc !== '14') {
@@ -1258,7 +1258,7 @@
 
                 var granContribuyente = jQuery('#Factura_Receptor_GranContribuyente').is(':checked');
                 var baseRetencionIva = tipoDoc === '01' ? totalGravado / 1.13 : totalGravado;
-                if ((tipoDoc === '01' || tipoDoc === '03') && granContribuyente && baseRetencionIva >= 100) {
+                if ((tipoDoc === '01' || tipoDoc === '02' || tipoDoc === '03') && granContribuyente && baseRetencionIva >= 100) {
                     retencionIva = Math.round(baseRetencionIva * 0.01 * 100) / 100;
                 }
                 if (tipoDoc === '14' && jQuery('#retencionRentaCheck').is(':checked')) {

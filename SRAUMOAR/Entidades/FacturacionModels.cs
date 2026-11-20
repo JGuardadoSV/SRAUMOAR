@@ -185,7 +185,7 @@ namespace SRAUMOAR.Entidades
                 ? Math.Round(TotalGravado / 1.13m, 2)
                 : TotalGravado;
 
-            public decimal IvaRetenido => TipoDocumento is "01" or "03"
+            public decimal IvaRetenido => TipoDocumento is "01" or "02" or "03"
                 && Receptor.GranContribuyente
                 && BaseGravadaRetencion >= 100m
                     ? Math.Round(BaseGravadaRetencion * 0.01m, 2)
