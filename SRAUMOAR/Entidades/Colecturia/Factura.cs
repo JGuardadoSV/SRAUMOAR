@@ -87,6 +87,9 @@ namespace SRAUMOAR.Entidades.Colecturia
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal TotalIva { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal IvaRetenido { get; set; }
     }
 
     [Table("DteRetornoDetalle")]

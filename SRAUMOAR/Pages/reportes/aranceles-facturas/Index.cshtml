@@ -155,6 +155,7 @@
                             <th>Origen</th>
                                     <th class="col-arancel">Arancel</th>
                             <th>Total Factura</th>
+                            <th>Retención IVA</th>
                             <th>Monto Arancel</th>
                             <th>Donación</th>
                         </tr>
@@ -172,6 +173,7 @@
                                     <td>@item.Origen</td>
                                     <td class="detalle-arancel col-arancel" title="@item.ArancelNombre">@(item.ArancelNombre ?? "-")</td>
                                     <td class="text-end">$@item.TotalFactura.ToString("N2")</td>
+                                    <td class="text-end">$@item.IvaRetenido.ToString("N2")</td>
                                     <td class="text-end">$@item.MontoArancel.ToString("N2")</td>
                                     <td>@(item.EsDonacion ? "Sí" : "No")</td>
                                 </tr>

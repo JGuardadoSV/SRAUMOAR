@@ -20,8 +20,9 @@ public sealed class JsonFiscalCorreccionesTests
         var json = factory.CrearNota(original.ToString(), tipo, $"DTE-{tipo}-M001P001-000000000000001",
             Guid.NewGuid().ToString(), 56.50m, "Ajuste parcial");
         var nota = JObject.Parse(json);
-        Assert.Equal(6.5m, nota["resumen"]!.Value<decimal>("totalIva"));
-        Assert.Equal(6.5m, nota["cuerpoDocumento"]![0]!.Value<decimal>("totalIva"));
+        var totalIvaEsperado = tipo == "05" ? 0m : 6.5m;
+        Assert.Equal(totalIvaEsperado, nota["resumen"]!.Value<decimal>("totalIva"));
+        Assert.Equal(totalIvaEsperado, nota["cuerpoDocumento"]![0]!.Value<decimal>("totalIva"));
         Assert.Equal(50m, nota["resumen"]!.Value<decimal>("totalGravada"));
         Assert.Null(((JObject)nota["emisor"]!).Property("tipoEstablecimiento"));
         Assert.Equal(ambiente, nota["identificacion"]!.Value<string>("ambiente"));
@@ -105,7 +106,7 @@ public sealed class JsonFiscalCorreccionesTests
             System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo("es-ES");
             var nota = JObject.Parse(new DteJsonFactory().CrearNota(Original("00").ToString(), "05",
                 "DTE-05-M001P001-000000000000001", Guid.NewGuid().ToString(), 56.5m, "Ajuste"));
-            Assert.Equal(6.5m, nota["resumen"]!.Value<decimal>("totalIva"));
+            Assert.Equal(0m, nota["resumen"]!.Value<decimal>("totalIva"));
             Assert.Equal(56.5m, nota["resumen"]!.Value<decimal>("totalPagar"));
         }
         finally { System.Globalization.CultureInfo.CurrentCulture = anterior; }

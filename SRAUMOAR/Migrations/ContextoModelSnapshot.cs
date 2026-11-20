@@ -570,6 +570,9 @@ namespace SRAUMOAR.Migrations
                     b.Property<int>("IntentosTransmision")
                         .HasColumnType("int");
 
+                    b.Property<decimal>("IvaRetenido")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("JsonAnulacion")
                         .HasColumnType("nvarchar(max)");
 

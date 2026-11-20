@@ -144,8 +144,8 @@ public sealed class DteJsonFactory : IDteJsonFactory
             ["emisor"] = ConstruirEmisor(emisorOriginal, configuracion),
             ["receptor"] = ConstruirReceptor(receptorOriginal),
             ["ventaTercero"] = null,
-            ["cuerpoDocumento"] = ConstruirCuerpo(cuerpoOriginal, resumenOriginal, codigoOriginal, factor),
-            ["resumen"] = ConstruirResumen(resumenOriginal, factor, monto, motivo),
+            ["cuerpoDocumento"] = ConstruirCuerpo(cuerpoOriginal, resumenOriginal, codigoOriginal, factor, tipoNota),
+            ["resumen"] = ConstruirResumen(resumenOriginal, factor, monto, motivo, tipoNota),
             ["apendice"] = null
         };
 
@@ -364,11 +364,12 @@ public sealed class DteJsonFactory : IDteJsonFactory
         };
     }
 
-    private static JArray ConstruirCuerpo(JArray original, JObject resumenOriginal, string codigoOriginal, decimal factor)
+    private static JArray ConstruirCuerpo(JArray original, JObject resumenOriginal, string codigoOriginal, decimal factor, string tipoNota)
     {
         var cuerpo = new JArray();
         var baseGravada = original.OfType<JObject>().Sum(x => Numero(x, "ventaGravada") ?? 0m);
-        var ivaOriginal = Numero(resumenOriginal, "totalIva") ?? SumarTributos(resumenOriginal["tributos"] as JArray ?? new JArray());
+        var ivaOriginal = Numero(resumenOriginal, "totalIva")
+            ?? SumarTributos(resumenOriginal["tributos"] as JArray ?? new JArray());
         foreach (var token in original.OfType<JObject>())
         {
             var pesoGravado = baseGravada > 0m ? (Numero(token, "ventaGravada") ?? 0m) / baseGravada : 0m;
@@ -390,7 +391,11 @@ public sealed class DteJsonFactory : IDteJsonFactory
                 ["tributos"] = token["tributos"]?.DeepClone(),
                 ["noGravado"] = Escalar(Numero(token, "noGravado") ?? 0m, factor, 8),
                 ["ivaPerci"] = Escalar(Numero(token, "ivaPerci") ?? (Numero(resumenOriginal, "ivaPerci", "ivaPerci1") ?? 0m) * pesoGravado, factor, 8),
-                ["totalIva"] = Escalar(Numero(token, "totalIva") ?? ivaOriginal * pesoGravado, factor, 8),
+                // En DTE 05 el IVA se informa en resumen.tributos; totalIva
+                // debe permanecer en cero tanto por línea como en el resumen.
+                ["totalIva"] = tipoNota == DteTipos.NotaCredito
+                    ? 0m
+                    : Escalar(Numero(token, "totalIva") ?? ivaOriginal * pesoGravado, factor, 8),
                 ["ivaRete"] = Escalar(Numero(token, "ivaRete") ?? (Numero(resumenOriginal, "ivaRete", "ivaRete1") ?? 0m) * pesoGravado, factor, 8)
             };
             if (linea["tributos"] is null && (Numero(linea, "ventaGravada") ?? 0m) > 0m)
@@ -401,7 +406,7 @@ public sealed class DteJsonFactory : IDteJsonFactory
         return cuerpo;
     }
 
-    private static JObject ConstruirResumen(JObject original, decimal factor, decimal monto, string? motivo)
+    private static JObject ConstruirResumen(JObject original, decimal factor, decimal monto, string? motivo, string tipoNota)
     {
         var tributos = new JArray();
         if (original["tributos"] is JArray originalTributos)
@@ -427,7 +432,10 @@ public sealed class DteJsonFactory : IDteJsonFactory
             ["tributos"] = tributos.Count == 0 ? null : tributos,
             ["montoTotalOperacion"] = Math.Round(monto, 2, MidpointRounding.AwayFromZero),
             ["ivaPerci"] = Escalar(Numero(original, "ivaPerci", "ivaPerci1") ?? 0m, factor, 2),
-            ["totalIva"] = Numero(original, "totalIva") is decimal iva ? Escalar(iva, factor, 2) : SumarTributos(tributos),
+            // Hacienda exige totalIva = 0 en DTE 05; el IVA queda en tributos.
+            ["totalIva"] = tipoNota == DteTipos.NotaCredito
+                ? 0m
+                : (Numero(original, "totalIva") is decimal iva ? Escalar(iva, factor, 2) : SumarTributos(tributos)),
             ["ivaRete"] = Escalar(Numero(original, "ivaRete", "ivaRete1") ?? 0m, factor, 2),
             ["totalNoGravado"] = Escalar(Numero(original, "totalNoGravado") ?? 0m, factor, 2),
             ["totalPagar"] = Escalar(Numero(original, "totalPagar") ?? monto / factor, factor, 2),
@@ -438,6 +446,7 @@ public sealed class DteJsonFactory : IDteJsonFactory
         };
         return resumen;
     }
+
 
     private static decimal SumarTributos(JArray tributos)
         => tributos.OfType<JObject>().Where(x => x.Value<string>("codigo") == "20").Sum(x => Numero(x, "valor") ?? 0m);

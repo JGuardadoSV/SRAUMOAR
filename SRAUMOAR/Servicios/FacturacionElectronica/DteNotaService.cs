@@ -146,7 +146,8 @@ public sealed class DteNotaService : IDteNotaService
             TotalGravado = preparada.TotalGravado,
             TotalExento = preparada.TotalExento,
             TotalPagar = LeerTotalesNota(preparada.Json).TotalPagar,
-            TotalIva = preparada.TotalIva
+            TotalIva = preparada.TotalIva,
+            IvaRetenido = Numero((JObject.Parse(preparada.Json)["resumen"] as JObject)!, "ivaRete", "ivaRete1") ?? 0m
         };
 
         try

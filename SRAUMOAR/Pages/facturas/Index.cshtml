@@ -691,6 +691,7 @@
                         <th>Total Gravado</th>
                         <th>Total Exento</th>
                         <th>IVA</th>
+                        <th>Retención IVA</th>
                         <th>Total a Pagar</th>
                         <th>Acciones</th>
                     </tr>
@@ -772,6 +773,16 @@
                         </td>
                         <td>
                             <span class="currency">$@Html.DisplayFor(modelItem => item.TotalIva)</span>
+                        </td>
+                        <td>
+                            @if (item.IvaRetenido > 0)
+                            {
+                                <span class="currency text-danger">-$@item.IvaRetenido.ToString("N2")</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">$0.00</span>
+                            }
                         </td>
                         <td>
                             <strong class="currency" style="font-size: 1.1em;">$@Html.DisplayFor(modelItem => item.TotalPagar)</strong>

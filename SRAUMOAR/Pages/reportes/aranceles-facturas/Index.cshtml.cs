@@ -377,6 +377,7 @@ namespace SRAUMOAR.Pages.reportes.aranceles_facturas
                             Origen = "Arancel",
                             ArancelNombre = detalle.Arancel?.Nombre ?? $"Arancel {detalle.ArancelId}",
                             TotalFactura = factura.TotalPagar,
+                            IvaRetenido = factura.IvaRetenido,
                             MontoArancel = detalle.costo,
                             EsDonacion = factura.TipoDTE == 15
                         });
@@ -395,6 +396,7 @@ namespace SRAUMOAR.Pages.reportes.aranceles_facturas
                         Origen = "Punto de venta",
                         ArancelNombre = detallePuntoVenta,
                         TotalFactura = factura.TotalPagar,
+                        IvaRetenido = factura.IvaRetenido,
                         MontoArancel = 0,
                         EsDonacion = factura.TipoDTE == 15
                     });
@@ -474,6 +476,7 @@ namespace SRAUMOAR.Pages.reportes.aranceles_facturas
             public string Origen { get; set; } = "";
             public string? ArancelNombre { get; set; }
             public decimal TotalFactura { get; set; }
+            public decimal IvaRetenido { get; set; }
             public decimal MontoArancel { get; set; }
             public bool EsDonacion { get; set; }
         }
