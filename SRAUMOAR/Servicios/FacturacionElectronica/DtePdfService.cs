@@ -197,6 +197,7 @@ public sealed class DtePdfService : IDtePdfService
             "03" => "DATOS DEL RECEPTOR / CONTRIBUYENTE (CRÉDITO FISCAL)",
             "14" => "DATOS DEL SUJETO EXCLUIDO (PROVEEDOR / VENDEDOR)",
             "15" => "DATOS DEL DONANTE",
+            "01" => "DATOS DEL ALUMNO / ALUMNA",
             "INVALIDACION" => "DATOS DEL RECEPTOR DE LA INVALIDACIÓN",
             _ => "DATOS DEL RECEPTOR / CLIENTE"
         };
@@ -288,6 +289,15 @@ public sealed class DtePdfService : IDtePdfService
                         });
                     }
 
+                    if (tipo == "01" && ObtenerCarnetInstitucional(correo) is string carnet)
+                    {
+                        right.Item().PaddingTop(2).Text(t =>
+                        {
+                            t.Span("Carnet: ").FontSize(7).FontColor(TextoMuted);
+                            t.Span(carnet).Bold().FontSize(7.2f).FontColor(TextoOscuro);
+                        });
+                    }
+
                     var tel = Valor(receptor, "telefono");
                     if (tel != "-")
                     {
@@ -300,6 +310,22 @@ public sealed class DtePdfService : IDtePdfService
                 });
             });
         });
+    }
+
+    private static string? ObtenerCarnetInstitucional(string correo)
+    {
+        const string dominio = "@umoar.edu.sv";
+        var correoNormalizado = correo.Trim();
+        var posicionArroba = correoNormalizado.LastIndexOf('@');
+
+        if (posicionArroba <= 0
+            || !correoNormalizado[(posicionArroba)..].Equals(dominio, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        var carnet = correoNormalizado[..posicionArroba].Trim();
+        return carnet.Length == 0 ? null : carnet;
     }
 
     private static void AgregarOtrosDocumentosDonacion(ColumnDescriptor column, JObject root)
