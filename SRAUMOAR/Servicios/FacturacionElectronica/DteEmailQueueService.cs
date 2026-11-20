@@ -3,6 +3,8 @@ using System.Linq.Expressions;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Data.SqlClient;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Microsoft.EntityFrameworkCore;
 using SRAUMOAR.Entidades.Colecturia;
 using SRAUMOAR.Entidades.FacturacionElectronica;
@@ -24,13 +26,23 @@ public sealed class DteEmailQueueService : IDteEmailQueueService
     private readonly Contexto _contexto;
     private readonly IDtePdfService _pdfService;
     private readonly IDteEmailSender _sender;
+    private readonly IConfiguracionFeService _configuracionFe;
+    private readonly IFirmadorDteService _firmador;
     private readonly ILogger<DteEmailQueueService> _logger;
 
-    public DteEmailQueueService(Contexto contexto, IDtePdfService pdfService, IDteEmailSender sender, ILogger<DteEmailQueueService> logger)
+    public DteEmailQueueService(
+        Contexto contexto,
+        IDtePdfService pdfService,
+        IDteEmailSender sender,
+        IConfiguracionFeService configuracionFe,
+        IFirmadorDteService firmador,
+        ILogger<DteEmailQueueService> logger)
     {
         _contexto = contexto;
         _pdfService = pdfService;
         _sender = sender;
+        _configuracionFe = configuracionFe;
+        _firmador = firmador;
         _logger = logger;
     }
 
@@ -132,14 +144,16 @@ public sealed class DteEmailQueueService : IDteEmailQueueService
         }
 
         var pdf = _pdfService.Generar(tipoDte, json, sello);
+        var jsonAdjunto = await CrearJsonAdjuntoAsync(factura, json, sello, cancellationToken);
+        var nombreDocumento = anulacion ? "documento de invalidación" : "Documento Tributario Electrónico";
         var correo = new ColaCorreoDte
         {
             FacturaId = factura.FacturaId,
             TipoCorreo = anulacion ? "AnulacionDte" : "Dte",
             Destinatario = destinatario.Trim(),
             Asunto = anulacion ? $"Invalidación DTE {codigo}" : $"DTE {tipoDte.PadLeft(2, '0')} {codigo}",
-            CuerpoHtml = anulacion ? "Se adjunta el documento de invalidación y su JSON." : "Se adjunta el Documento Tributario Electrónico y su JSON.",
-            JsonAdjunto = json,
+            CuerpoHtml = CrearCuerpoHtml(factura, tipoDte, codigo, sello, nombreDocumento, anulacion),
+            JsonAdjunto = jsonAdjunto,
             NombreJson = $"{(anulacion ? "INVALIDACION" : "DTE-" + tipoDte.PadLeft(2, '0'))}-{codigo}.json",
             PdfAdjunto = pdf,
             NombrePdf = _pdfService.ObtenerNombre(tipoDte, codigo, anulacion),
@@ -154,6 +168,65 @@ public sealed class DteEmailQueueService : IDteEmailQueueService
         if (existente is not null)
             _logger.LogInformation("Reenvío DTE {CorreoId} creado desde {CorreoAnteriorId}", correo.Id, existente.Id);
         return correo;
+    }
+
+    private async Task<string> CrearJsonAdjuntoAsync(Factura factura, string json, string? sello, CancellationToken cancellationToken)
+    {
+        var documento = JObject.Parse(json);
+        documento["selloRecibido"] = sello;
+
+        try
+        {
+            var configuracion = await _configuracionFe.ObtenerAsync(factura.AmbienteFiscal ?? "00", cancellationToken);
+            if (!string.IsNullOrWhiteSpace(configuracion.PasswordCertificado))
+            {
+                var firma = configuracion.Entidad.CertificadoCrt is { Length: > 0 }
+                    ? await _firmador.FirmarAsync(configuracion.Entidad.CertificadoCrt, configuracion.PasswordCertificado, json, cancellationToken)
+                    : !string.IsNullOrWhiteSpace(configuracion.Entidad.RutaCertificado)
+                        ? await _firmador.FirmarAsync(configuracion.Entidad.RutaCertificado, configuracion.PasswordCertificado, json, cancellationToken)
+                        : null;
+                if (!string.IsNullOrWhiteSpace(firma)) documento["firmaElectronica"] = firma;
+            }
+        }
+        catch (Exception ex)
+        {
+            // El correo no debe perderse por un problema al reconstruir la firma.
+            // El sello de recepción y el JSON original siguen siendo adjuntados.
+            _logger.LogWarning(ex, "No se pudo incluir la firma electrónica en el correo de la factura {FacturaId}.", factura.FacturaId);
+        }
+
+        return documento.ToString(Formatting.Indented);
+    }
+
+    private static string CrearCuerpoHtml(Factura factura, string tipoDte, string codigo, string? sello, string nombreDocumento, bool anulacion)
+    {
+        static string E(string? valor) => System.Net.WebUtility.HtmlEncode(valor ?? "");
+        var titulo = anulacion ? "Invalidación electrónica" : "Documento Tributario Electrónico";
+        var mensaje = anulacion
+            ? "Adjuntamos la invalidación electrónica y el archivo JSON correspondiente."
+            : "Adjuntamos su Documento Tributario Electrónico en formato PDF y JSON para su respaldo.";
+        return $"""
+            <div style="margin:0;background:#f4f7fb;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;color:#243447;">
+              <div style="max-width:680px;margin:0 auto;background:#ffffff;border:1px solid #dce4ee;border-radius:12px;overflow:hidden;">
+                <div style="background:#0b4d1a;padding:24px 30px;color:#ffffff;">
+                  <div style="font-size:12px;letter-spacing:1.5px;text-transform:uppercase;opacity:.85;">UMOAR · Facturación electrónica</div>
+                  <h1 style="margin:8px 0 0;font-size:24px;font-weight:600;">{titulo}</h1>
+                </div>
+                <div style="padding:30px;line-height:1.6;">
+                  <p style="margin-top:0;">Estimado(a) cliente:</p>
+                  <p>{mensaje}</p>
+                  <table style="width:100%;border-collapse:collapse;margin:24px 0;font-size:14px;">
+                    <tr><td style="padding:10px;border-bottom:1px solid #e7edf3;color:#667085;">Tipo de documento</td><td style="padding:10px;border-bottom:1px solid #e7edf3;font-weight:600;">DTE {E(tipoDte.PadLeft(2, '0'))}</td></tr>
+                    <tr><td style="padding:10px;border-bottom:1px solid #e7edf3;color:#667085;">Código de generación</td><td style="padding:10px;border-bottom:1px solid #e7edf3;font-family:monospace;">{E(codigo)}</td></tr>
+                    <tr><td style="padding:10px;color:#667085;">Sello de recepción</td><td style="padding:10px;font-family:monospace;word-break:break-all;">{E(sello)}</td></tr>
+                  </table>
+                  <p style="font-size:13px;color:#667085;">Los archivos adjuntos son: <strong>{E(nombreDocumento)} en PDF</strong> y su representación JSON firmada electrónicamente.</p>
+                  <p style="margin-bottom:0;">Gracias por utilizar nuestros servicios.</p>
+                </div>
+                <div style="background:#f8fafc;padding:16px 30px;color:#667085;font-size:12px;">Este es un correo automático. Por favor, no responda a este mensaje.</div>
+              </div>
+            </div>
+            """;
     }
 
     private static Expression<Func<ColaCorreoDte, bool>> FiltroElegibles(DateTime ahora)
@@ -244,7 +317,7 @@ public sealed class DteEmailSender : IDteEmailSender
         var mensaje = new MimeKit.MimeMessage();
         mensaje.From.Add(new MimeKit.MailboxAddress(configuracion.Entidad.NombreRemitente ?? configuracion.Entidad.EmailRemitente, configuracion.Entidad.EmailRemitente));
         mensaje.To.Add(MimeKit.MailboxAddress.Parse(correo.Destinatario));
-        foreach (var copia in (configuracion.Entidad.CopiaOculta ?? string.Empty).Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        foreach (var copia in (configuracion.Entidad.CopiaOculta ?? string.Empty).Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
             mensaje.Bcc.Add(MimeKit.MailboxAddress.Parse(copia));
         mensaje.Subject = correo.Asunto;
 
@@ -254,7 +327,10 @@ public sealed class DteEmailSender : IDteEmailSender
             cuerpo.Attachments.Add(correo.NombrePdf, pdf, new MimeKit.ContentType("application", "pdf"));
         mensaje.Body = cuerpo.ToMessageBody();
 
-        using var cliente = new MailKit.Net.Smtp.SmtpClient();
+        using var cliente = new MailKit.Net.Smtp.SmtpClient
+        {
+            Timeout = 30000
+        };
         var socket = configuracion.Entidad.UsarSsl ? MailKit.Security.SecureSocketOptions.SslOnConnect : configuracion.Entidad.UsarTls ? MailKit.Security.SecureSocketOptions.StartTls : MailKit.Security.SecureSocketOptions.Auto;
         await cliente.ConnectAsync(configuracion.Entidad.Servidor, configuracion.Entidad.Puerto, socket, cancellationToken);
         if (!string.IsNullOrWhiteSpace(configuracion.Entidad.Usuario))

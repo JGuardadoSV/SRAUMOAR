@@ -137,10 +137,19 @@
                             <button class="btn btn-primary" type="submit">Guardar SMTP</button>
                         </div>
                     </form>
-                    <form method="post" asp-page-handler="ProbarSmtp" class="mt-2">
-                        <button class="btn btn-outline-success" type="submit">
-                            <i class="fas fa-paper-plane me-1"></i> Enviar correo de prueba
-                        </button>
+                    <form method="post" asp-page-handler="ProbarSmtp" class="mt-3">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-6">
+                                <label class="form-label" asp-for="Smtp.CorreoDestinoPrueba">Correo destino de prueba</label>
+                                <input class="form-control" type="email" asp-for="Smtp.CorreoDestinoPrueba" required />
+                                <small class="text-muted">La prueba se enviará a esta dirección. No se guarda en la configuración.</small>
+                            </div>
+                            <div class="col-md-auto">
+                                <button class="btn btn-outline-success" type="submit">
+                                    <i class="fas fa-paper-plane me-1"></i> Enviar correo de prueba
+                                </button>
+                            </div>
+                        </div>
                     </form>
                 </div>
             </div>

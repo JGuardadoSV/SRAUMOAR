@@ -167,12 +167,15 @@ public sealed class DeleteModel : PageModel
             {
                 try
                 {
-                    await _emailQueue.EncolarInvalidacionAsync(factura, jsonInvalidacion, resultado.SelloRecepcion, destinatario, cancellationToken);
+                    // La invalidación ya fue aceptada y guardada. La cola de correo no
+                    // debe cancelarse si el navegador cierra la solicitud después de la respuesta fiscal.
+                    await _emailQueue.EncolarInvalidacionAsync(factura, jsonInvalidacion, resultado.SelloRecepcion, destinatario, CancellationToken.None);
                     correoEncolado = true;
                 }
-                catch
+                catch (Exception ex)
                 {
                     // La invalidación ya aceptada y persistida no se revierte por un fallo de correo.
+                    _logger.LogError(ex, "No se pudo encolar el correo de invalidación para la factura {FacturaId}", factura.FacturaId);
                 }
             }
 

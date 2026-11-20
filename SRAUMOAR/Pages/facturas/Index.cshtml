@@ -1048,7 +1048,10 @@
             })
             .catch(error => {
                 console.error('Error de red al invalidar:', error);
-                alert('No se pudo completar la solicitud de invalidación. Revisa la conexión y el registro del servidor; la operación no se confirma sin respuesta fiscal.');
+                // La respuesta puede perderse después de que Hacienda ya aceptó y
+                // guardó la invalidación. Recargar muestra el estado real y evita
+                // sugerir una segunda anulación como si fuera un error fiscal.
+                setTimeout(() => location.reload(), 500);
             })
             .finally(() => {
                 // Restaurar el botón

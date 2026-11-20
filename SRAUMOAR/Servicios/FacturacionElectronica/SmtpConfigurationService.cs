@@ -16,7 +16,7 @@ public interface ISmtpConfigurationService
     Task GuardarAsync(SmtpConfigurationInput input, CancellationToken cancellationToken = default);
     Task<string?> ObtenerPasswordAsync(CancellationToken cancellationToken = default);
     Task ProbarAsync(CancellationToken cancellationToken = default);
-    Task EnviarPruebaAsync(CancellationToken cancellationToken = default);
+    Task EnviarPruebaAsync(string correoDestino, CancellationToken cancellationToken = default);
 }
 
 public sealed class SmtpConfigurationService : ISmtpConfigurationService
@@ -49,6 +49,7 @@ public sealed class SmtpConfigurationService : ISmtpConfigurationService
         entidad.Usuario = input.Usuario?.Trim();
         if (!string.IsNullOrWhiteSpace(input.Password)) entidad.PasswordCifrada = _protector.Protect(input.Password);
         entidad.EmailRemitente = input.EmailRemitente.Trim();
+        ValidarCopiasOcultas(input.CopiaOculta);
         entidad.NombreRemitente = input.NombreRemitente?.Trim();
         entidad.CopiaOculta = input.CopiaOculta?.Trim();
         entidad.UsarSsl = input.UsarSsl;
@@ -56,6 +57,22 @@ public sealed class SmtpConfigurationService : ISmtpConfigurationService
         entidad.MaxReintentos = Math.Clamp(input.MaxReintentos, 1, 10);
         entidad.FechaActualizacion = DateTime.UtcNow;
         await _contexto.SaveChangesAsync(cancellationToken);
+    }
+
+    private static IEnumerable<string> ObtenerCopiasOcultas(string? copias)
+        => (copias ?? string.Empty).Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    private static void ValidarCopiasOcultas(string? copias)
+    {
+        try
+        {
+            foreach (var copia in ObtenerCopiasOcultas(copias))
+                _ = MimeKit.MailboxAddress.Parse(copia);
+        }
+        catch (FormatException ex)
+        {
+            throw new InvalidOperationException("La copia oculta contiene un correo no válido. Déjela vacía o use direcciones separadas por punto y coma.", ex);
+        }
     }
 
     public async Task<string?> ObtenerPasswordAsync(CancellationToken cancellationToken = default)
@@ -67,8 +84,21 @@ public sealed class SmtpConfigurationService : ISmtpConfigurationService
         { throw new InvalidOperationException("No se pudo descifrar la contraseña SMTP.", ex); }
     }
 
-    public async Task EnviarPruebaAsync(CancellationToken cancellationToken = default)
+    public async Task EnviarPruebaAsync(string correoDestino, CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(correoDestino))
+            throw new InvalidOperationException("El correo destino de la prueba es requerido.");
+
+        MimeKit.MailboxAddress destinatario;
+        try
+        {
+            destinatario = MimeKit.MailboxAddress.Parse(correoDestino.Trim());
+        }
+        catch (FormatException ex)
+        {
+            throw new InvalidOperationException("El correo destino de la prueba no es válido.", ex);
+        }
+
         var configuracion = await ObtenerAsync(cancellationToken);
         var entidad = configuracion.Entidad
             ?? throw new InvalidOperationException("No existe una configuración SMTP activa.");
@@ -82,13 +112,18 @@ public sealed class SmtpConfigurationService : ISmtpConfigurationService
         var socket = entidad.UsarSsl
             ? SecureSocketOptions.SslOnConnect
             : entidad.UsarTls ? SecureSocketOptions.StartTls : SecureSocketOptions.Auto;
-        using var cliente = new SmtpClient();
+        using var cliente = new SmtpClient
+        {
+            Timeout = 30000
+        };
         await cliente.ConnectAsync(entidad.Servidor, entidad.Puerto, socket, cancellationToken);
         await cliente.AuthenticateAsync(entidad.Usuario, password, cancellationToken);
 
         var mensaje = new MimeKit.MimeMessage();
         mensaje.From.Add(new MimeKit.MailboxAddress(entidad.NombreRemitente ?? entidad.EmailRemitente, entidad.EmailRemitente));
-        mensaje.To.Add(MimeKit.MailboxAddress.Parse(entidad.EmailRemitente));
+        mensaje.To.Add(destinatario);
+        foreach (var copia in ObtenerCopiasOcultas(entidad.CopiaOculta))
+            mensaje.Bcc.Add(MimeKit.MailboxAddress.Parse(copia));
         mensaje.Subject = "Prueba SMTP - SRAUMOAR";
         mensaje.Body = new MimeKit.BodyBuilder
         {
@@ -115,7 +150,10 @@ public sealed class SmtpConfigurationService : ISmtpConfigurationService
         var socket = entidad.UsarSsl
             ? SecureSocketOptions.SslOnConnect
             : entidad.UsarTls ? SecureSocketOptions.StartTls : SecureSocketOptions.Auto;
-        using var cliente = new SmtpClient();
+        using var cliente = new SmtpClient
+        {
+            Timeout = 30000
+        };
         await cliente.ConnectAsync(entidad.Servidor, entidad.Puerto, socket, cancellationToken);
         await cliente.AuthenticateAsync(entidad.Usuario, password, cancellationToken);
         await cliente.DisconnectAsync(true, cancellationToken);

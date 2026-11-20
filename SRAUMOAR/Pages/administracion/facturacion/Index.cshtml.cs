@@ -128,11 +128,11 @@ public class IndexModel : PageModel
     {
         try
         {
-            // Este formulario solo contiene el botón de prueba. No debe guardar el
-            // modelo enlazado porque los campos SMTP no viajan en este POST.
-            await _smtp.EnviarPruebaAsync(cancellationToken);
-            var configuracion = await _smtp.ObtenerAsync(cancellationToken);
-            Mensaje = $"Correo de prueba enviado a {configuracion.Entidad?.EmailRemitente}. Revise la bandeja de entrada y spam.";
+            if (string.IsNullOrWhiteSpace(Smtp.CorreoDestinoPrueba))
+                throw new InvalidOperationException("Indique el correo destino para la prueba SMTP.");
+
+            await _smtp.EnviarPruebaAsync(Smtp.CorreoDestinoPrueba, cancellationToken);
+            Mensaje = $"Correo de prueba enviado a {Smtp.CorreoDestinoPrueba}. Revise la bandeja de entrada y spam.";
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -211,6 +211,8 @@ public class IndexModel : PageModel
             Smtp.Puerto = smtp.Entidad.Puerto;
             Smtp.Usuario = smtp.Entidad.Usuario;
             Smtp.EmailRemitente = smtp.Entidad.EmailRemitente;
+            if (string.IsNullOrWhiteSpace(Smtp.CorreoDestinoPrueba))
+                Smtp.CorreoDestinoPrueba = smtp.Entidad.EmailRemitente;
             Smtp.NombreRemitente = smtp.Entidad.NombreRemitente;
             Smtp.CopiaOculta = smtp.Entidad.CopiaOculta;
             Smtp.UsarSsl = smtp.Entidad.UsarSsl;
@@ -262,6 +264,7 @@ public class IndexModel : PageModel
         public string? Usuario { get; set; }
         public string? Password { get; set; }
         public string EmailRemitente { get; set; } = string.Empty;
+        public string CorreoDestinoPrueba { get; set; } = string.Empty;
         public string? NombreRemitente { get; set; }
         public string? CopiaOculta { get; set; }
         public bool UsarSsl { get; set; }

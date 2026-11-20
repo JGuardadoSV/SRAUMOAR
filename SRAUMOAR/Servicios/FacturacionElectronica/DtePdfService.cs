@@ -20,9 +20,9 @@ public interface IDtePdfService
 /// </summary>
 public sealed class DtePdfService : IDtePdfService
 {
-    private const string Azul = "#0F2747";
-    private const string AzulMedio = "#1769AA";
-    private const string AzulClaro = "#EAF3FA";
+    private const string Azul = "#0B4D1A";
+    private const string AzulMedio = "#2E7D32";
+    private const string AzulClaro = "#E8F5E9";
     private const string Texto = "#263746";
     private const string Muted = "#657786";
     private const string Borde = "#D9E2EA";
