@@ -753,7 +753,7 @@ namespace SRAUMOAR.Migrations
 
                     b.HasIndex("CodigoCatalogo", "Version", "Codigo")
                         .IsUnique()
-                        .HasFilter("[CodigoCatalogo] NOT IN ('CAT-008','CAT-013')");
+                        .HasFilter("[CodigoCatalogo] <> 'CAT-008' AND [CodigoCatalogo] <> 'CAT-013'");
 
                     b.HasIndex("CodigoCatalogo", "Version", "Codigo", "AmbitoDepartamento")
                         .IsUnique()

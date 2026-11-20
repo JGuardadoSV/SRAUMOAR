@@ -294,7 +294,7 @@ namespace SRAUMOAR.Modelos
             modelBuilder.Entity<CatalogoFeItem>()
                 .HasIndex(x => new { x.CodigoCatalogo, x.Version, x.Codigo })
                 .IsUnique()
-                .HasFilter("[CodigoCatalogo] NOT IN ('CAT-008','CAT-013')");
+                .HasFilter("[CodigoCatalogo] <> 'CAT-008' AND [CodigoCatalogo] <> 'CAT-013'");
             modelBuilder.Entity<CatalogoFeItem>()
                 .HasIndex(x => new { x.CodigoCatalogo, x.Version, x.Codigo, x.AmbitoDepartamento })
                 .IsUnique()

@@ -37,7 +37,7 @@ namespace SRAUMOAR.Migrations
                 table: "CatalogosFe",
                 columns: new[] { "CodigoCatalogo", "Version", "Codigo" },
                 unique: true,
-                filter: "[CodigoCatalogo] NOT IN ('CAT-008','CAT-013')");
+                filter: "[CodigoCatalogo] <> 'CAT-008' AND [CodigoCatalogo] <> 'CAT-013'");
 
             migrationBuilder.CreateIndex(
                 name: "IX_CatalogosFe_CodigoCatalogo_Version_Codigo_AmbitoDepartamento",
