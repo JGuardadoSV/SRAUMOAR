@@ -93,6 +93,11 @@ namespace SRAUMOAR.Pages.historial
                         .SelectMany(h => h.CiclosHistorial ?? new List<HistorialCiclo>())
                         .ToList();
                 }
+
+                // Orden cronológico: primero año y luego número de ciclo (01-2022, 02-2022, 01-2023...).
+                HistorialCiclos = HistorialCiclos
+                    .OrderBy(c => ObtenerOrdenCiclo(c.CicloTexto))
+                    .ToList();
                 
                 // Calcular totales considerando materias libres
                 TotalMaterias = HistorialCiclos.Sum(hc => hc.MateriasHistorial?.Count ?? 0);
@@ -119,11 +124,28 @@ namespace SRAUMOAR.Pages.historial
                 // Obtener todos los ciclos del alumno (sin filtrar por carrera) para poder mover materias
                 TodosLosCiclos = historialAcademico
                     .SelectMany(h => h.CiclosHistorial ?? new List<HistorialCiclo>())
-                    .OrderByDescending(c => c.CicloTexto)
+                    .OrderBy(c => ObtenerOrdenCiclo(c.CicloTexto))
                     .ToList();
             }
 
             return Page();
+        }
+
+        private static (int Grupo, int Anio, int NumeroCiclo, string Texto) ObtenerOrdenCiclo(string? cicloTexto)
+        {
+            var texto = cicloTexto?.Trim() ?? string.Empty;
+            var partes = texto.Split(new[] { '-', '/' }, StringSplitOptions.RemoveEmptyEntries);
+
+            if (partes.Length == 2 &&
+                int.TryParse(partes[0].Trim(), out var numeroCiclo) &&
+                int.TryParse(partes[1].Trim(), out var anio) &&
+                numeroCiclo > 0 && anio > 0)
+            {
+                return (0, anio, numeroCiclo, texto);
+            }
+
+            // Valores especiales, como EQUIV, quedan después de los ciclos académicos.
+            return (1, int.MaxValue, int.MaxValue, texto);
         }
 
         public async Task<IActionResult> OnPostActualizarNotasAsync(

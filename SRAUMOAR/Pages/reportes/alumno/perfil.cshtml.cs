@@ -60,7 +60,7 @@ namespace SRAUMOAR.Pages.reportes.alumno
             using var document = new Document(pdf, iText.Kernel.Geom.PageSize.A4);
 
             // Configurar márgenes
-            document.SetMargins(40, 40, 40, 40);
+            document.SetMargins(24, 32, 24, 32);
 
             // Configurar fuentes
             PdfFont fontBold = PdfFontFactory.CreateFont(StandardFonts.HELVETICA_BOLD);
@@ -104,12 +104,12 @@ namespace SRAUMOAR.Pages.reportes.alumno
             var titleCell = new Cell()
                 .Add(new Paragraph("UNIVERSIDAD MONSEÑOR OSCAR ARNULFO ROMERO")
                     .SetFont(fontTitle)
-                    .SetFontSize(14)
+                    .SetFontSize(12)
                     .SetFontColor(colorPrimario)
                     .SetTextAlignment(TextAlignment.CENTER))
                 .Add(new Paragraph("Ficha de Información del Estudiante")
                     .SetFont(fontRegular)
-                    .SetFontSize(12)
+                    .SetFontSize(10)
                     .SetFontColor(colorSecundario)
                     .SetTextAlignment(TextAlignment.CENTER))
                 .SetBorder(Border.NO_BORDER)
@@ -132,8 +132,8 @@ namespace SRAUMOAR.Pages.reportes.alumno
             document.Add(new Paragraph()
                 .SetHeight(10)
                 .SetBackgroundColor(colorPrimario)
-                .SetMarginTop(15)
-                .SetMarginBottom(5));
+                .SetMarginTop(7)
+                .SetMarginBottom(2));
 
             // === INFORMACIÓN PERSONAL ===
             var seccionPersonal = CrearSeccion("INFORMACIÓN PERSONAL", colorPrimario, fontBold);
@@ -252,13 +252,19 @@ namespace SRAUMOAR.Pages.reportes.alumno
             // === DIRECCIÓN ===
             var seccionDireccion = CrearSeccion("DIRECCIÓN DE RESIDENCIA", colorPrimario, fontBold);
             document.Add(seccionDireccion);
-            string direccion = alumno.DireccionDeResidencia + ", "+alumno.Municipio.NombreMunicipio+", "+alumno.Municipio.Distrito.NombreDistrito + ", " + alumno.Municipio.Distrito.Departamento.NombreDepartamento;
-            var direccionParagraph = new Paragraph(direccion ?? "N/A")
+            string direccion = string.Join(", ", new[]
+            {
+                alumno.DireccionDeResidencia,
+                alumno.Municipio?.NombreMunicipio,
+                alumno.Municipio?.Distrito?.NombreDistrito,
+                alumno.Municipio?.Distrito?.Departamento?.NombreDepartamento
+            }.Where(parte => !string.IsNullOrWhiteSpace(parte)));
+            var direccionParagraph = new Paragraph(string.IsNullOrWhiteSpace(direccion) ? "N/A" : direccion)
                 .SetFont(fontRegular)
-                .SetFontSize(11)
+                .SetFontSize(9)
                 .SetFontColor(colorTexto)
                 .SetBackgroundColor(colorFondo)
-                .SetPadding(10)
+                .SetPadding(5)
                 .SetBorder(new SolidBorder(colorPrimario, 1))
                 .SetMarginBottom(5);
 
@@ -271,25 +277,46 @@ namespace SRAUMOAR.Pages.reportes.alumno
             var tablaAcademica = new Table(new float[] { 1, 2, 1, 2 });
             tablaAcademica.SetWidth(UnitValue.CreatePercentValue(100));
 
-            AgregarCampo(tablaAcademica, "Carrera:", alumno.Carrera.NombreCarrera, fontBold, fontRegular, colorSecundario);
-            AgregarCampo(tablaAcademica, "Carnet:", alumno.Carnet ?? "N/A", fontBold, fontRegular, colorSecundario);
+            AgregarCampo(tablaAcademica, "Carrera:", alumno.Carrera?.NombreCarrera ?? "N/A", fontBold, fontRegular, colorSecundario);
+            AgregarCampo(tablaAcademica, "Carnet:", ObtenerCarnet(alumno), fontBold, fontRegular, colorSecundario);
             AgregarCampo(tablaAcademica, "Fecha de Registro:", alumno.FechaDeRegistro.ToString("dd/MM/yyyy"), fontBold, fontRegular, colorSecundario);
             AgregarCampo(tablaAcademica, "Ingreso por Equivalencias:", alumno.IngresoPorEquivalencias ? "Sí" : "No", fontBold, fontRegular, colorSecundario);
 
             document.Add(tablaAcademica);
 
+            // Espacio para que el estudiante firme la ficha impresa.
+            var tablaFirma = new Table(1);
+            tablaFirma.SetWidth(UnitValue.CreatePointValue(230));
+            tablaFirma.SetHorizontalAlignment(HorizontalAlignment.CENTER);
+            tablaFirma.SetMarginTop(8);
+            tablaFirma.AddCell(new Cell().SetBorder(Border.NO_BORDER).SetHeight(25));
+            tablaFirma.AddCell(new Cell()
+                .Add(new Paragraph(" ").SetMargin(0))
+                .SetBorder(Border.NO_BORDER)
+                .SetBorderTop(new SolidBorder(colorPrimario, 1))
+                .SetPaddingTop(3)
+                .SetPaddingBottom(0));
+            tablaFirma.AddCell(new Cell()
+                .Add(new Paragraph("Firma del estudiante").SetFont(fontRegular).SetFontSize(9).SetTextAlignment(TextAlignment.CENTER).SetMargin(0))
+                .SetBorder(Border.NO_BORDER));
+            tablaFirma.AddCell(new Cell()
+                .Add(new Paragraph($"{alumno.Nombres} {alumno.Apellidos} | Carnet: {ObtenerCarnet(alumno)}")
+                    .SetFont(fontRegular).SetFontSize(8).SetTextAlignment(TextAlignment.CENTER).SetMarginTop(2))
+                .SetBorder(Border.NO_BORDER));
+            document.Add(tablaFirma);
+
             // === FOOTER ===
             document.Add(new Paragraph()
                 .SetHeight(1)
                 .SetBackgroundColor(colorPrimario)
-                .SetMarginTop(30));
+                .SetMarginTop(8));
 
             var footerText = new Paragraph("Documento generado automáticamente por el Sistema UMOAR")
                 .SetFont(fontRegular)
                 .SetFontSize(8)
                 .SetFontColor(colorSecundario)
                 .SetTextAlignment(TextAlignment.CENTER)
-                .SetMarginTop(10);
+                .SetMarginTop(5);
 
             document.Add(footerText);
 
@@ -301,10 +328,10 @@ namespace SRAUMOAR.Pages.reportes.alumno
         {
             return new Paragraph(titulo)
                 .SetFont(font)
-                .SetFontSize(14)
+                .SetFontSize(12)
                 .SetFontColor(color)
-                .SetMarginTop(20)
-                .SetMarginBottom(5)
+                .SetMarginTop(8)
+                .SetMarginBottom(3)
                 .SetPaddingLeft(10)
                 .SetBorderLeft(new SolidBorder(color, 3));
         }
@@ -315,18 +342,18 @@ namespace SRAUMOAR.Pages.reportes.alumno
             tabla.AddCell(new Cell()
                 .Add(new Paragraph(etiqueta)
                     .SetFont(fontBold)
-                    .SetFontSize(10)
+                    .SetFontSize(9)
                     .SetFontColor(colorSecundario))
                 .SetBorder(Border.NO_BORDER)
-                .SetPaddingBottom(2));
+                .SetPaddingBottom(1));
 
             // Celda de valor
             tabla.AddCell(new Cell()
                 .Add(new Paragraph(valor)
                     .SetFont(fontRegular)
-                    .SetFontSize(10))
+                    .SetFontSize(9))
                 .SetBorder(Border.NO_BORDER)
-                .SetPaddingBottom(2));
+                .SetPaddingBottom(1));
         }
 
         private string ObtenerGenero(int genero)
@@ -338,6 +365,25 @@ namespace SRAUMOAR.Pages.reportes.alumno
                 3 => "Otro",
                 _ => "No especificado"
             };
+        }
+
+        private string ObtenerCarnet(Alumno alumno)
+        {
+            if (!string.IsNullOrWhiteSpace(alumno.Carnet))
+            {
+                return alumno.Carnet.Trim();
+            }
+
+            if (!string.IsNullOrWhiteSpace(alumno.Email))
+            {
+                var indiceArroba = alumno.Email.IndexOf('@');
+                if (indiceArroba > 0)
+                {
+                    return alumno.Email[..indiceArroba].Trim();
+                }
+            }
+
+            return "N/A";
         }
       
     }

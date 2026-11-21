@@ -34,9 +34,12 @@ namespace SRAUMOAR.Pages.inscripcion
         public Alumno Alumno { get; set; }
         public Ciclo CicloActual { get; set; }
 
-        public IActionResult OnGet(int id)
+        public IActionResult OnGet(int id, int cicloelegido = 0)
         {
-            CicloActual = _context.Ciclos.Where(x => x.Activo == true).FirstOrDefault();
+            CicloActual = cicloelegido > 0
+                ? _context.Ciclos.FirstOrDefault(x => x.Id == cicloelegido)
+                : null;
+            CicloActual ??= _context.Ciclos.Where(x => x.Activo == true).FirstOrDefault();
             if (CicloActual == null)
             {
                 return BadRequest("No hay un ciclo activo");

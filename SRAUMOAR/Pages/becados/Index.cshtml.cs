@@ -52,6 +52,9 @@ namespace SRAUMOAR.Pages.becados
         [BindProperty(SupportsGet = true)]
         public string? Estado { get; set; }
 
+        [BindProperty(SupportsGet = true)]
+        public string? NombreAlumno { get; set; }
+
         // Listas para los dropdowns de filtros
         public SelectList Carreras { get; set; } = default!;
         public SelectList EntidadesBeca { get; set; } = default!;
@@ -75,6 +78,15 @@ namespace SRAUMOAR.Pages.becados
                 .Include(b => b.Ciclo)
                 .Include(b => b.EntidadBeca)
                 .Where(x => x.Ciclo.Activo == true);
+
+            var nombreBusqueda = NombreAlumno?.Trim();
+            if (!string.IsNullOrWhiteSpace(nombreBusqueda))
+            {
+                query = query.Where(b =>
+                    (b.Alumno.Nombres ?? "").Contains(nombreBusqueda) ||
+                    (b.Alumno.Apellidos ?? "").Contains(nombreBusqueda) ||
+                    ((b.Alumno.Nombres ?? "") + " " + (b.Alumno.Apellidos ?? "")).Contains(nombreBusqueda));
+            }
 
             // Aplicar filtros
             if (CarreraId.HasValue)
@@ -145,6 +157,15 @@ namespace SRAUMOAR.Pages.becados
                     .Include(b => b.Ciclo)
                     .Include(b => b.EntidadBeca)
                     .Where(x => x.Ciclo.Activo == true);
+
+                var nombreBusqueda = NombreAlumno?.Trim();
+                if (!string.IsNullOrWhiteSpace(nombreBusqueda))
+                {
+                    query = query.Where(b =>
+                        (b.Alumno.Nombres ?? "").Contains(nombreBusqueda) ||
+                        (b.Alumno.Apellidos ?? "").Contains(nombreBusqueda) ||
+                        ((b.Alumno.Nombres ?? "") + " " + (b.Alumno.Apellidos ?? "")).Contains(nombreBusqueda));
+                }
 
                 if (CarreraId.HasValue)
                     query = query.Where(b => b.Alumno.CarreraId == CarreraId.Value);

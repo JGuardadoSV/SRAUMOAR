@@ -174,6 +174,35 @@ namespace SRAUMOAR.Pages.administracion
             return RedirectToPage(new { grupoId = grupoId });
         }
 
+        public async Task<IActionResult> OnPostAnularRecuperacionAsync(int materiaInscritaId, int grupoId)
+        {
+            var materiaInscrita = await _context.MateriasInscritas
+                .Include(mi => mi.MateriasGrupo)
+                    .ThenInclude(mg => mg!.Grupo)
+                .Include(mi => mi.Notas)
+                .FirstOrDefaultAsync(mi => mi.MateriasInscritasId == materiaInscritaId &&
+                                           mi.MateriasGrupo!.GrupoId == grupoId);
+
+            if (materiaInscrita == null)
+            {
+                return NotFound("No se encontr\u00f3 la materia inscrita en este grupo.");
+            }
+
+            var actividades = await _context.ActividadesAcademicas
+                .Where(a => a.CicloId == materiaInscrita.MateriasGrupo!.Grupo!.CicloId)
+                .ToListAsync();
+
+            materiaInscrita.NotaRecuperacion = null;
+            materiaInscrita.FechaRecuperacion = null;
+            materiaInscrita.NotaPromedio = CalcularPromedioMateriaComun(
+                materiaInscrita.Notas ?? new List<Notas>(), actividades);
+            materiaInscrita.Aprobada = materiaInscrita.NotaPromedio >= 7;
+
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Se anul\u00f3 la nota de reposici\u00f3n y se recalcul\u00f3 el promedio con las notas registradas.";
+            return RedirectToPage(new { grupoId });
+        }
+
         public async Task<IActionResult> OnGetAsync(int grupoId)
         {
             GrupoId = grupoId;

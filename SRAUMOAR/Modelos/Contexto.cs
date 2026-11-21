@@ -263,7 +263,8 @@ namespace SRAUMOAR.Modelos
                 new ConfiguracionReporte { Id = 75, Reporte = "ConstanciaAlumnoActivo", Clave = "FirmaCargoLinea2", Valor = "ADMINISTRADOR EN FUNCIONES AD HONOREM", Descripcion = "Segunda línea del cargo del firmante" },
                 new ConfiguracionReporte { Id = 76, Reporte = "ConstanciaAlumnoActivo", Clave = "FirmaCargoLinea3", Valor = "DE REGISTRO ACADÉMICO", Descripcion = "Tercera línea del cargo del firmante" },
                 new ConfiguracionReporte { Id = 77, Reporte = "ConstanciaAlumnoActivo", Clave = "ElaboradoPor", Valor = "ELABORADO POR: MTRC", Descripcion = "Texto de elaboración al pie de la constancia" },
-                new ConfiguracionReporte { Id = 78, Reporte = "ConstanciaAlumnoActivo", Clave = "LeyendaValidez", Valor = "ESTA CONSTANCIA NO ES VÁLIDA, SIN FIRMAS Y SELLOS DE ESTA UNIVERSIDAD", Descripcion = "Leyenda de validez al pie de la constancia" }
+                new ConfiguracionReporte { Id = 78, Reporte = "ConstanciaAlumnoActivo", Clave = "LeyendaValidez", Valor = "ESTA CONSTANCIA NO ES VÁLIDA, SIN FIRMAS Y SELLOS DE ESTA UNIVERSIDAD", Descripcion = "Leyenda de validez al pie de la constancia" },
+                new ConfiguracionReporte { Id = 79, Reporte = "CertificacionNotas", Clave = "LugarExpedicion", Valor = "el distrito de Tejutla, municipio de Chalatenango Centro, departamento de Chalatenango", Descripcion = "Lugar de expedición de la certificación de notas" }
             );
 
             modelBuilder.Entity<ConfiguracionFacturacionElectronica>()

@@ -554,6 +554,12 @@
         
         <form method="get" class="filters-form">
             <div class="filter-group">
+                <label class="filter-label" for="NombreAlumno">Buscar estudiante</label>
+                <input type="search" id="NombreAlumno" name="NombreAlumno" value="@Model.NombreAlumno"
+                       class="filter-select" placeholder="Escriba el nombre o apellido" />
+            </div>
+
+            <div class="filter-group">
                 <label class="filter-label">🎓 Carrera</label>
                 <select name="CarreraId" class="filter-select">
                     <option value="">-- Todas las carreras --</option>
@@ -645,13 +651,21 @@
             </div>
         </form>
 
-        @if (Model.CarreraId.HasValue || Model.EntidadBecaId.HasValue || !string.IsNullOrEmpty(Model.TipoBeca) || !string.IsNullOrEmpty(Model.Estado))
+        @if (!string.IsNullOrWhiteSpace(Model.NombreAlumno) || Model.CarreraId.HasValue || Model.EntidadBecaId.HasValue || !string.IsNullOrEmpty(Model.TipoBeca) || !string.IsNullOrEmpty(Model.Estado))
         {
             <div class="active-filters">
                 <span class="active-filter-badge">
                     Filtros activos:
                     <button type="button" class="remove-filter" onclick="window.location.href='@Url.Page("Index")'">×</button>
                 </span>
+
+                @if (!string.IsNullOrWhiteSpace(Model.NombreAlumno))
+                {
+                    <span class="active-filter-badge">
+                        Estudiante: @Model.NombreAlumno
+                        <a href="@Url.Page("Index", new { CarreraId = Model.CarreraId, EntidadBecaId = Model.EntidadBecaId, TipoBeca = Model.TipoBeca, Estado = Model.Estado })" class="remove-filter" aria-label="Quitar búsqueda">×</a>
+                    </span>
+                }
                 
                 @if (Model.CarreraId.HasValue)
                 {
@@ -660,7 +674,7 @@
                     {
                         <span class="active-filter-badge">
                             Carrera: @carrera.Text
-                            <a href="@Url.Page("Index", new { EntidadBecaId = Model.EntidadBecaId, TipoBeca = Model.TipoBeca, Estado = Model.Estado })" class="remove-filter">×</a>
+                            <a href="@Url.Page("Index", new { EntidadBecaId = Model.EntidadBecaId, TipoBeca = Model.TipoBeca, Estado = Model.Estado, NombreAlumno = Model.NombreAlumno })" class="remove-filter">×</a>
                         </span>
                     }
                 }
@@ -672,7 +686,7 @@
                     {
                         <span class="active-filter-badge">
                             Institución: @entidad.Text
-                            <a href="@Url.Page("Index", new { CarreraId = Model.CarreraId, TipoBeca = Model.TipoBeca, Estado = Model.Estado })" class="remove-filter">×</a>
+                            <a href="@Url.Page("Index", new { CarreraId = Model.CarreraId, TipoBeca = Model.TipoBeca, Estado = Model.Estado, NombreAlumno = Model.NombreAlumno })" class="remove-filter">×</a>
                         </span>
                     }
                 }
@@ -681,7 +695,7 @@
                 {
                     <span class="active-filter-badge">
                         Tipo: @Model.TipoBeca
-                        <a href="@Url.Page("Index", new { CarreraId = Model.CarreraId, EntidadBecaId = Model.EntidadBecaId, Estado = Model.Estado })" class="remove-filter">×</a>
+                        <a href="@Url.Page("Index", new { CarreraId = Model.CarreraId, EntidadBecaId = Model.EntidadBecaId, Estado = Model.Estado, NombreAlumno = Model.NombreAlumno })" class="remove-filter">×</a>
                     </span>
                 }
                 
@@ -689,7 +703,7 @@
                 {
                     <span class="active-filter-badge">
                         Estado: @Model.Estado
-                        <a href="@Url.Page("Index", new { CarreraId = Model.CarreraId, EntidadBecaId = Model.EntidadBecaId, TipoBeca = Model.TipoBeca })" class="remove-filter">×</a>
+                        <a href="@Url.Page("Index", new { CarreraId = Model.CarreraId, EntidadBecaId = Model.EntidadBecaId, TipoBeca = Model.TipoBeca, NombreAlumno = Model.NombreAlumno })" class="remove-filter">×</a>
                     </span>
                 }
             </div>
@@ -709,6 +723,7 @@
                    asp-route-EntidadBecaId="@Model.EntidadBecaId"
                    asp-route-TipoBeca="@Model.TipoBeca"
                    asp-route-Estado="@Model.Estado"
+                   asp-route-NombreAlumno="@Model.NombreAlumno"
                    class="btn btn-success" title="Exportar a Excel">
                     <i class="bi bi-file-earmark-excel me-2"></i>Excel
                 </a>
@@ -804,16 +819,16 @@
         <nav aria-label="Paginación de becados" class="mt-4">
             <ul class="pagination justify-content-center">
                 <li class="page-item @(Model.PageNumber == 1 ? "disabled" : "")">
-                    <a class="page-link" href="@Url.Page(null, null, new { CarreraId = Model.CarreraId, EntidadBecaId = Model.EntidadBecaId, TipoBeca = Model.TipoBeca, Estado = Model.Estado, PageNumber = Model.PageNumber - 1 }, null)">Anterior</a>
+                    <a class="page-link" href="@Url.Page(null, null, new { CarreraId = Model.CarreraId, EntidadBecaId = Model.EntidadBecaId, TipoBeca = Model.TipoBeca, Estado = Model.Estado, NombreAlumno = Model.NombreAlumno, PageNumber = Model.PageNumber - 1 }, null)">Anterior</a>
                 </li>
                 @for (int i = 1; i <= Model.TotalPages; i++)
                 {
                     <li class="page-item @(i == Model.PageNumber ? "active" : "")">
-                        <a class="page-link" href="@Url.Page(null, null, new { CarreraId = Model.CarreraId, EntidadBecaId = Model.EntidadBecaId, TipoBeca = Model.TipoBeca, Estado = Model.Estado, PageNumber = i }, null)">@i</a>
+                        <a class="page-link" href="@Url.Page(null, null, new { CarreraId = Model.CarreraId, EntidadBecaId = Model.EntidadBecaId, TipoBeca = Model.TipoBeca, Estado = Model.Estado, NombreAlumno = Model.NombreAlumno, PageNumber = i }, null)">@i</a>
                     </li>
                 }
                 <li class="page-item @(Model.PageNumber == Model.TotalPages ? "disabled" : "")">
-                    <a class="page-link" href="@Url.Page(null, null, new { CarreraId = Model.CarreraId, EntidadBecaId = Model.EntidadBecaId, TipoBeca = Model.TipoBeca, Estado = Model.Estado, PageNumber = Model.PageNumber + 1 }, null)">Siguiente</a>
+                    <a class="page-link" href="@Url.Page(null, null, new { CarreraId = Model.CarreraId, EntidadBecaId = Model.EntidadBecaId, TipoBeca = Model.TipoBeca, Estado = Model.Estado, NombreAlumno = Model.NombreAlumno, PageNumber = Model.PageNumber + 1 }, null)">Siguiente</a>
                 </li>
             </ul>
         </nav>

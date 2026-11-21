@@ -127,7 +127,7 @@
                     @if (Model.HistorialCiclos != null && Model.HistorialCiclos.Any())
                     {
                         <!-- Historial por Ciclos -->
-                        @foreach (var ciclo in Model.HistorialCiclos.OrderByDescending(c => c.CicloTexto))
+                        @foreach (var ciclo in Model.HistorialCiclos)
                         {
                             <div class="card mb-3">
                                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">

@@ -122,7 +122,7 @@ namespace SRAUMOAR.Servicios
             }
         }
 
-        public async Task<byte[]> GenerarReporteFiltradoAsync(int? carreraId, int? estado, bool? ingresoPorEquivalencias, bool? inscritosEnCicloActivo)
+        public async Task<byte[]> GenerarReporteFiltradoAsync(int? carreraId, int? estado, bool? ingresoPorEquivalencias, bool? inscritosEnCicloActivo, int? cicloId)
         {
             try
             {
@@ -141,6 +141,12 @@ namespace SRAUMOAR.Servicios
                     query = query.Where(a => a.IngresoPorEquivalencias == ingresoPorEquivalencias.Value);
 
                 // Filtro por inscripción en ciclo activo
+                if (cicloId.HasValue)
+                {
+                    query = query.Where(a => _context.Inscripciones
+                        .Any(i => i.AlumnoId == a.AlumnoId && i.CicloId == cicloId.Value && i.Activa));
+                }
+
                 if (inscritosEnCicloActivo.HasValue)
                 {
                     var cicloActivo = await _context.Ciclos.Where(c => c.Activo).FirstOrDefaultAsync();

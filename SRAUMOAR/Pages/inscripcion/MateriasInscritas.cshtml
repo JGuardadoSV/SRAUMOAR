@@ -158,7 +158,7 @@
         }
         @if (Model.EstaInscrito)
         {
-            <button class="btn btn-primary" onclick="abrirPdfEnPopup('/reportes/inscripcion/reporteInscripcion?id=@Model.Alumno.AlumnoId')">
+            <button class="btn btn-primary" onclick="abrirPdfEnPopup('/reportes/inscripcion/reporteInscripcion?id=@Model.Alumno.AlumnoId&cicloelegido=@(ViewBag.CicloId?.SelectedValue ?? "")')">
                 Imprimir hoja de inscripción
             </button>
             <form method="post" asp-page-handler="Desinscribir" asp-route-id="@Model.Alumno.AlumnoId" id="formDesinscribir" style="display:inline;" onsubmit="return confirm('¿Está seguro de desinscribir completamente al alumno del ciclo seleccionado? Esto eliminará todas las materias inscritas.');">
@@ -197,6 +197,7 @@
                     <td>@Html.DisplayFor(m => item.MateriasGrupo.Dia) @item.MateriasGrupo.FormatearHora12Horas(item.MateriasGrupo.HoraInicio) - @item.MateriasGrupo.FormatearHora12Horas(item.MateriasGrupo.HoraInicio)</td>
                     <td>
                         <form method="post" asp-page-handler="Eliminar" asp-route-id="@item.MateriasInscritasId" style="display:inline;" onsubmit="return confirm('¿Está seguro de eliminar esta inscripción?');">
+                            <input type="hidden" name="cicloelegido" value="@(ViewBag.CicloId?.SelectedValue ?? "")" />
                             <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
                         </form>
                     </td>

@@ -24,6 +24,12 @@ namespace SRAUMOAR.Pages.grupos
 
         public IActionResult OnGet()
         {
+            CargarListas();
+            return Page();
+        }
+
+        private void CargarListas()
+        {
             var carreras = _context.Carreras.ToList();
             var pensums = _context.Pensums.ToList();
             carreras.Insert(0, new Carrera { CarreraId = 0, NombreCarrera = "Seleccione una carrera" });
@@ -34,7 +40,8 @@ namespace SRAUMOAR.Pages.grupos
 
             ViewData["CicloId"] = new SelectList(
                 _context.Ciclos
-                .Where(x => x.Activo == true)
+                .OrderByDescending(x => x.anio)
+                .ThenByDescending(x => x.NCiclo)
                 .Select(d => new
                 {
                     Id = d.Id,
@@ -51,7 +58,6 @@ namespace SRAUMOAR.Pages.grupos
                                                     "DocenteId",
                                                     "NombreCompleto"
                                                 );
-            return Page();
         }
 
         [BindProperty]
@@ -62,6 +68,7 @@ namespace SRAUMOAR.Pages.grupos
         {
             if (!ModelState.IsValid)
             {
+                CargarListas();
                 return Page();
             }
 

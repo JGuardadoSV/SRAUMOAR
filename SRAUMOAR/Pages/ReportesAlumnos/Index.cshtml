@@ -57,7 +57,7 @@
                                         Genera un reporte Excel con filtros específicos para análisis más detallados.
                                     </p>
                                                                          <p class="text-muted small">
-                                         <strong>Filtros disponibles:</strong> Carrera, Estado, Ingreso por Equivalencias, Inscritos en Ciclo Activo.
+                                         <strong>Filtros disponibles:</strong> Carrera, Estado, Ingreso por Equivalencias, Ciclo e Inscritos en Ciclo Activo.
                                      </p>
                                                                          <button type="button" class="btn btn-success btn-lg btn-block" 
                                              data-bs-toggle="modal" data-bs-target="#filtrosModal">
@@ -151,6 +151,17 @@
                          </select>
                      </div>
                      
+                     <div class="form-group">
+                         <label for="cicloId">Ciclo:</label>
+                         <select class="form-control" id="cicloId" name="cicloId">
+                             <option value="">Todos los ciclos</option>
+                             @foreach (var ciclo in Model.Ciclos)
+                             {
+                                 <option value="@ciclo.Id">@ciclo.NCiclo - @ciclo.anio</option>
+                             }
+                         </select>
+                     </div>
+
                      <div class="form-group">
                          <label for="inscritosEnCicloActivo">Inscritos en Ciclo Activo:</label>
                          <select class="form-control" id="inscritosEnCicloActivo" name="inscritosEnCicloActivo">

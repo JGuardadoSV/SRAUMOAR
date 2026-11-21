@@ -55,6 +55,15 @@
                 </div>
             }
 
+            @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    @Model.ErrorMessage
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
             <div class="row">
                 <div class="col-md-12">
                     <form method="post">
@@ -104,6 +113,13 @@
                                                     <h5 class="mb-4 text-primary">
                                                         <i class="bi bi-file-earmark-text me-2"></i>Campos Editables para @(grupo.Key == "CertificacionNotas" ? "Certificación de Notas (PDF)" : grupo.Key)
                                                     </h5>
+
+                                                    @if (grupo.Key == "CertificacionNotas")
+                                                    {
+                                                        <div class="alert alert-info py-2">
+                                                            Las tres líneas de dirección se comparten como membrete en los demás reportes configurables.
+                                                        </div>
+                                                    }
                                                     
                                                     @foreach (var config in grupo)
                                                     {
@@ -122,7 +138,7 @@
                                                             </label>
                                                             
                                                             <div class="col-sm-9">
-                                                                @if (config.Clave.Contains("Introduccion") || config.Clave.Contains("Cuerpo") || config.Clave.Contains("Texto"))
+                                                                @if (config.Clave.Contains("Introduccion") || config.Clave.Contains("Cuerpo") || config.Clave.Contains("Texto") || config.Clave.Contains("Cierre") || config.Clave.Contains("RectoraCertificacion"))
                                                                 {
                                                                     <textarea name="Configuraciones[@index].Valor" class="form-control" rows="4" placeholder="Ingresa el texto aquí...">@config.Valor</textarea>
                                                                 }

@@ -177,8 +177,7 @@ namespace SRAUMOAR.Pages.reportes
         private static string GetConfig(Dictionary<string, Dictionary<string, string>> configs, string reporte, string clave, string defaultValue)
         {
             if (configs.TryGetValue(reporte, out var reporteConfigs) &&
-                reporteConfigs.TryGetValue(clave, out var value) &&
-                !string.IsNullOrWhiteSpace(value))
+                reporteConfigs.TryGetValue(clave, out var value))
             {
                 return value.Trim();
             }

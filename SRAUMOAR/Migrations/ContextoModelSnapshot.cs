@@ -2067,6 +2067,14 @@ namespace SRAUMOAR.Migrations
                             Descripcion = "Leyenda de validez al pie de la constancia",
                             Reporte = "ConstanciaAlumnoActivo",
                             Valor = "ESTA CONSTANCIA NO ES VÁLIDA, SIN FIRMAS Y SELLOS DE ESTA UNIVERSIDAD"
+                        },
+                        new
+                        {
+                            Id = 79,
+                            Clave = "LugarExpedicion",
+                            Descripcion = "Lugar de expedición de la certificación de notas",
+                            Reporte = "CertificacionNotas",
+                            Valor = "el distrito de Tejutla, municipio de Chalatenango Centro, departamento de Chalatenango"
                         });
                 });
 

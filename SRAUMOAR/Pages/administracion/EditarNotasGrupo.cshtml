@@ -198,6 +198,13 @@
                                                 @if (materiaInscrita.NotaRecuperacion.HasValue)
                                                 {
                                                     <span class="badge bg-warning text-dark me-1">@materiaInscrita.NotaRecuperacion.Value.ToString("N2")</span>
+                                                    <form method="post" asp-page-handler="AnularRecuperacion" class="d-inline" onsubmit="return confirm('Anular la nota de reposicion? Se volvera a calcular el promedio con las notas registradas.');">
+                                                        <input type="hidden" name="materiaInscritaId" value="@materiaInscrita.MateriasInscritasId" />
+                                                        <input type="hidden" name="grupoId" value="@Model.GrupoId" />
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger p-1" title="Anular nota de reposicion" aria-label="Anular nota de reposicion">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </form>
                                                 }
                                                 <button type="button" 
                                                         class="btn btn-sm btn-outline-warning p-1" 

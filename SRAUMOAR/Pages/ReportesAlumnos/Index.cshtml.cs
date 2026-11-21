@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using SRAUMOAR.Entidades.Generales;
+using SRAUMOAR.Entidades.Procesos;
 using SRAUMOAR.Modelos;
 using SRAUMOAR.Servicios;
 
@@ -21,6 +22,7 @@ namespace SRAUMOAR.Pages.ReportesAlumnos
         }
 
         public List<Carrera> Carreras { get; set; } = new List<Carrera>();
+        public List<Ciclo> Ciclos { get; set; } = new List<Ciclo>();
 
         public async Task OnGetAsync()
         {
@@ -28,6 +30,11 @@ namespace SRAUMOAR.Pages.ReportesAlumnos
             Carreras = await _context.Carreras
                 .Where(c => c.Activa)
                 .OrderBy(c => c.NombreCarrera)
+                .ToListAsync();
+
+            Ciclos = await _context.Ciclos
+                .OrderByDescending(c => c.anio)
+                .ThenByDescending(c => c.NCiclo)
                 .ToListAsync();
         }
 
@@ -47,11 +54,11 @@ namespace SRAUMOAR.Pages.ReportesAlumnos
             }
         }
 
-        public async Task<IActionResult> OnGetExcelFiltradoAsync(int? carreraId, int? estado, bool? ingresoPorEquivalencias, bool? inscritosEnCicloActivo)
+        public async Task<IActionResult> OnGetExcelFiltradoAsync(int? carreraId, int? estado, bool? ingresoPorEquivalencias, bool? inscritosEnCicloActivo, int? cicloId)
         {
             try
             {
-                var excelBytes = await _reporteService.GenerarReporteFiltradoAsync(carreraId, estado, ingresoPorEquivalencias, inscritosEnCicloActivo);
+                var excelBytes = await _reporteService.GenerarReporteFiltradoAsync(carreraId, estado, ingresoPorEquivalencias, inscritosEnCicloActivo, cicloId);
                 var fileName = $"Reporte_Alumnos_Filtrado_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
                 
                 return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);

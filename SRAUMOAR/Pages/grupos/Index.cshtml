@@ -366,7 +366,7 @@
         </div>
     </div>
 
-    <!-- Filtro por carrera -->
+    <!-- Filtros de carrera y ciclo -->
     <form method="get" class="mb-4">
         <div class="row align-items-end">
             <div class="col-md-4">
@@ -375,6 +375,19 @@
                     <option value="">Todas las carreras</option>
                 </select>
             </div>
+            @if (!User.IsInRole("Docentes"))
+            {
+                <div class="col-md-4">
+                    <label for="CicloId" class="form-label">Filtrar por ciclo</label>
+                    <select asp-for="CicloId" class="form-select">
+                        <option value="">Todos los ciclos</option>
+                        @foreach (var ciclo in Model.Ciclos)
+                        {
+                            <option value="@ciclo.Id">Ciclo @ciclo.NCiclo-@ciclo.anio</option>
+                        }
+                    </select>
+                </div>
+            }
             <div class="col-md-2">
                 <button type="submit" class="btn btn-primary-green w-100">Filtrar</button>
             </div>

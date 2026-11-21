@@ -21,7 +21,7 @@ namespace SRAUMOAR.Pages.reportes
             _context = context;
         }
 
-        public async Task<IActionResult> OnGetAsync(int? alumnoId, int? cicloId, DateTime? fechaExpedicion = null, string? destinatario = null)
+        public async Task<IActionResult> OnGetAsync(int? alumnoId, int? cicloId, DateTime? fechaExpedicion = null, string? destinatario = null, DateTime? fechaInicioCiclo = null, DateTime? fechaFinCiclo = null)
         {
             try
             {
@@ -94,7 +94,7 @@ namespace SRAUMOAR.Pages.reportes
                     "Y para ser presentada a la {destinatario}, se le extiende la presente en el {lugarExpedicion}, {fechaExpedicion}.");
 
                 var fechaDocumento = fechaExpedicion?.Date ?? DateTime.Now.Date;
-                var datos = CrearDatosPlantilla(alumno, ciclo, materiasInscritas.Count, fechaDocumento, emisorCargo, lugarInstitucion, destinatarioReporte, lugarExpedicion);
+                var datos = CrearDatosPlantilla(alumno, ciclo, materiasInscritas.Count, fechaDocumento, fechaInicioCiclo?.Date ?? ciclo.FechaInicio, fechaFinCiclo?.Date ?? ciclo.FechaFin, emisorCargo, lugarInstitucion, destinatarioReporte, lugarExpedicion);
 
                 cuerpo = ReemplazarPlaceholders(cuerpo, datos);
                 cierre = ReemplazarPlaceholders(cierre, datos);
@@ -240,8 +240,7 @@ namespace SRAUMOAR.Pages.reportes
         private static string GetConfig(Dictionary<string, Dictionary<string, string>> configs, string reporte, string clave, string defaultValue)
         {
             if (configs.TryGetValue(reporte, out var reporteConfigs) &&
-                reporteConfigs.TryGetValue(clave, out var value) &&
-                !string.IsNullOrWhiteSpace(value))
+                reporteConfigs.TryGetValue(clave, out var value))
             {
                 return value.Trim();
             }
@@ -254,6 +253,8 @@ namespace SRAUMOAR.Pages.reportes
             Ciclo ciclo,
             int cantidadMaterias,
             DateTime fechaExpedicion,
+            DateTime fechaInicioCiclo,
+            DateTime fechaFinCiclo,
             string emisorCargo,
             string lugarInstitucion,
             string destinatario,
@@ -286,8 +287,8 @@ namespace SRAUMOAR.Pages.reportes
                 ["facultad"] = facultad,
                 ["carrera"] = carrera,
                 ["cicloAcademico"] = $"{ciclo.NCiclo:D2}-{ciclo.anio}",
-                ["fechaInicioCiclo"] = FormatearFechaCurso(ciclo.FechaInicio),
-                ["fechaFinCiclo"] = FormatearFechaCurso(ciclo.FechaFin),
+                ["fechaInicioCiclo"] = FormatearFechaCurso(fechaInicioCiclo),
+                ["fechaFinCiclo"] = FormatearFechaCurso(fechaFinCiclo),
                 ["cantidadMaterias"] = cantidadMaterias.ToString(CultureInfo.InvariantCulture),
                 ["cantidadMateriasLetras"] = ConvertirEnteroALetras(cantidadMaterias).ToLower(),
                 ["destinatario"] = destinatario,

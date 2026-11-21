@@ -559,6 +559,17 @@
                                 <input type="hidden" id="urlReporteDestinatario" />
                                 <label for="destinatarioReporte" class="form-label fw-bold">Presentar a</label>
                                 <input type="text" id="destinatarioReporte" class="form-control" maxlength="180" required />
+                                <div class="mt-3">
+                                    <label for="fechaExpedicionReporte" class="form-label fw-bold">Fecha de expedición</label>
+                                    <input type="date" id="fechaExpedicionReporte" class="form-control" required />
+                                </div>
+                                <div id="fechasCicloReporte" class="mt-3 d-none">
+                                    <label for="fechaInicioCicloReporte" class="form-label fw-bold">Fecha de inicio para la constancia</label>
+                                    <input type="date" id="fechaInicioCicloReporte" class="form-control mb-2" />
+                                    <label for="fechaFinCicloReporte" class="form-label fw-bold">Fecha de finalización para la constancia</label>
+                                    <input type="date" id="fechaFinCicloReporte" class="form-control" />
+                                    <small class="form-text text-muted">Estas fechas se imprimirán en la constancia y no modifican las fechas registradas en el ciclo.</small>
+                                </div>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -648,6 +659,12 @@
                 jQuery('#modalDestinatarioReporteLabel').text(button.attr('data-titulo') || 'Lugar a presentar');
                 jQuery('#urlReporteDestinatario').val(button.attr('data-url') || '');
                 jQuery('#destinatarioReporte').val(button.attr('data-destinatario') || '');
+                var hoy = new Date();
+                var fechaLocal = new Date(hoy.getTime() - hoy.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+                jQuery('#fechaExpedicionReporte').val(fechaLocal);
+                var esCiclo = (button.attr('data-url') || '').indexOf('cicloId=') >= 0;
+                jQuery('#fechasCicloReporte').toggleClass('d-none', !esCiclo);
+                jQuery('#fechaInicioCicloReporte, #fechaFinCicloReporte').prop('required', esCiclo).val('');
             });
 
             jQuery('#modalDestinatarioReporte').on('shown.bs.modal', function() {
@@ -659,13 +676,21 @@
 
                 var baseUrl = jQuery('#urlReporteDestinatario').val();
                 var destinatario = jQuery('#destinatarioReporte').val().trim();
+                var fechaExpedicion = jQuery('#fechaExpedicionReporte').val();
+                var fechaInicio = jQuery('#fechaInicioCicloReporte').val();
+                var fechaFin = jQuery('#fechaFinCicloReporte').val();
 
-                if (!baseUrl || !destinatario) {
+                if (!baseUrl || !destinatario || !fechaExpedicion || (baseUrl.indexOf('cicloId=') >= 0 && (!fechaInicio || !fechaFin))) {
                     return;
                 }
 
+                var params = new URLSearchParams({ destinatario: destinatario, fechaExpedicion: fechaExpedicion });
+                if (baseUrl.indexOf('cicloId=') >= 0) {
+                    params.set('fechaInicioCiclo', fechaInicio);
+                    params.set('fechaFinCiclo', fechaFin);
+                }
                 var separator = baseUrl.indexOf('?') >= 0 ? '&' : '?';
-                var finalUrl = baseUrl + separator + 'destinatario=' + encodeURIComponent(destinatario);
+                var finalUrl = baseUrl + separator + params.toString();
                 window.open(finalUrl, '_blank');
 
                 var modalElement = document.getElementById('modalDestinatarioReporte');

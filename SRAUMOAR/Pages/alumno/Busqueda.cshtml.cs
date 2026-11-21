@@ -42,6 +42,7 @@ namespace SRAUMOAR.Pages.alumno
 
             var query = _context.Alumno
                 .Include(a => a.Usuario)
+                .Include(a => a.Carrera)
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(busqueda))

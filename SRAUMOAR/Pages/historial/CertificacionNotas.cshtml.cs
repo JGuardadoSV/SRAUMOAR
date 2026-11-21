@@ -26,6 +26,9 @@ namespace SRAUMOAR.Pages.historial
         {
             try
             {
+                bool esCertificacionParcial = tituloReporte?.Contains("PARCIAL", StringComparison.OrdinalIgnoreCase) == true;
+                string tipoCertificacion = esCertificacionParcial ? "parcial" : "global";
+
                 // Obtener configuraciones de reportes de manera segura
                 var configs = new Dictionary<string, string>();
                 try
@@ -198,12 +201,19 @@ namespace SRAUMOAR.Pages.historial
                     .Replace("{facultad}", facultad, StringComparison.OrdinalIgnoreCase)
                     .Replace("{carrera}", carrera, StringComparison.OrdinalIgnoreCase);
 
+                intro = intro
+                    .Replace("certificación global de notas", $"certificación {tipoCertificacion} de notas", StringComparison.OrdinalIgnoreCase)
+                    .Replace("certificación parcial de notas", $"certificación {tipoCertificacion} de notas", StringComparison.OrdinalIgnoreCase);
+
                 // Nuevos parámetros con fallbacks seguros
                 string rectoraNombre = configs.TryGetValue("RectoraNombre", out var rNom) ? rNom : "LICDA. CARMEN NAVAS ESCOBAR DE MEJÍA";
                 string rectoraCargo = configs.TryGetValue("RectoraCargo", out var rCar) ? rCar : "RECTORA";
                 string confrontadoPor = configs.TryGetValue("ConfrontadoPor", out var conf) ? conf : "LIC. JOSE AUGUSTO HERNANDEZ GONZALEZ";
                 string lugarExpedicion = configs.TryGetValue("LugarExpedicion", out var lug) ? lug : "el distrito de Tejutla, municipio de Chalatenango Centro, departamento de Chalatenango";
                 string rectoraCertificacionTemplate = configs.TryGetValue("RectoraCertificacion", out var rCert) ? rCert : "La infrascrita, Rectora de la Universidad Monseñor Oscar Arnulfo Romero, certifica que la firma que aparece al pie de la certificación global de notas es auténtica y es la misma que usa el {SecretarioNombre}, {SecretarioCargo} de esta universidad.";
+                rectoraCertificacionTemplate = rectoraCertificacionTemplate
+                    .Replace("certificación global de notas", $"certificación {tipoCertificacion} de notas", StringComparison.OrdinalIgnoreCase)
+                    .Replace("certificación parcial de notas", $"certificación {tipoCertificacion} de notas", StringComparison.OrdinalIgnoreCase);
 
                 // Fecha actual en letras
                 string fechaTexto = ConvertirFechaALetras(DateTime.Now);
@@ -267,7 +277,7 @@ namespace SRAUMOAR.Pages.historial
                             // Linea horizontal de punta a punta
                             col.Item().PaddingTop(10).LineHorizontal(1.5f).LineColor(Colors.Black);
 
-                            if (!string.IsNullOrWhiteSpace(tituloReporte))
+                            if (!esCertificacionParcial && !string.IsNullOrWhiteSpace(tituloReporte))
                             {
                                 col.Item().PaddingTop(12).AlignCenter().Text(tituloReporte.Trim().ToUpper())
                                     .Bold()
@@ -492,7 +502,7 @@ namespace SRAUMOAR.Pages.historial
                             col.Item().PaddingTop(15).Text(t =>
                             {
                                 t.Justify();
-                                t.Span("Esta certificación global de notas ampara ").FontSize(9.5f);
+                                t.Span($"Esta certificación {tipoCertificacion} de notas ampara ").FontSize(9.5f);
                                 t.Span($"{totalMateriasAprobadasLetras} ({totalMateriasAprobadas})").Bold().FontSize(9.5f);
                                 t.Span(" asignaturas cursadas y aprobadas.").FontSize(9.5f);
                             });

@@ -162,6 +162,32 @@ namespace SRAUMOAR.Pages.reportes.notas
                 .OrderBy(a => a.FechaInicio)
                 .ToList();
 
+            var materiasConNotaFinal = materiasInscritas
+                .Select(mi =>
+                {
+                    var notasMateria = (mi.Notas ?? new List<Notas>())
+                        .Where(n => n.ActividadAcademica != null)
+                        .ToList();
+
+                    return new
+                    {
+                        Inscripcion = mi,
+                        Materia = mi.MateriasGrupo!.Materia!,
+                        NotaFinal = CalcularNotaFinal(mi, notasMateria, actividadesAcademicas)
+                    };
+                })
+                .OrderBy(x => x.Materia.CodigoMateria)
+                .ToList();
+
+            decimal totalUnidadesValorativasCiclo = materiasConNotaFinal
+                .Sum(x => (decimal)x.Materia.uv);
+            decimal cumCiclo = totalUnidadesValorativasCiclo > 0
+                ? Math.Round(
+                    materiasConNotaFinal.Sum(x => x.NotaFinal * x.Materia.uv) / totalUnidadesValorativasCiclo,
+                    1,
+                    MidpointRounding.AwayFromZero)
+                : 0;
+
             // Título del reporte histórico
             string tituloReporte = $"Informe de notas finales ciclo {ciclo.NCiclo} - {ciclo.anio}";
 
@@ -233,6 +259,17 @@ namespace SRAUMOAR.Pages.reportes.notas
                 datos.AddCell(CeldaValor(alumno.Carrera?.NombreCarrera ?? ""));
                 doc.Add(datos);
 
+                var cumCicloTable = new Table(1).UseAllAvailableWidth();
+                cumCicloTable.AddCell(new Cell()
+                    .Add(new Paragraph($"CUM DE CICLO: {cumCiclo.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)}")
+                        .SetFont(_fontBold)
+                        .SetFontSize(11)
+                        .SetTextAlignment(TextAlignment.RIGHT))
+                    .SetBorder(Border.NO_BORDER)
+                    .SetPaddingTop(4)
+                    .SetPaddingBottom(4));
+                doc.Add(cumCicloTable);
+
                 doc.Add(new Paragraph(" "));
 
                 // Tabla de notas histórico: COD, Materia, Nota Final, Nota Recuperación, Estado, Observación
@@ -246,15 +283,16 @@ namespace SRAUMOAR.Pages.reportes.notas
                 EstiloEncabezado(tabla, "Resultado");
                 EstiloEncabezado(tabla, "Observación");
 
-                foreach (var mi in materiasInscritas.OrderBy(x => x.MateriasGrupo!.Materia!.CodigoMateria))
+                foreach (var materiaCiclo in materiasConNotaFinal)
                 {
+                    var mi = materiaCiclo.Inscripcion;
                     var materia = mi.MateriasGrupo!.Materia!;
                     var notas = (mi.Notas ?? new List<Notas>())
                         .Where(n => n.ActividadAcademica != null)
                         .ToList();
 
                     // Calcular nota final usando porcentajes configurados y regla de reposición
-                    decimal notaFinal = CalcularNotaFinal(mi, notas, actividadesAcademicas);
+                    decimal notaFinal = materiaCiclo.NotaFinal;
                     
                     // Calcular nota de recuperación según reglas
                     decimal? notaRecuperacion = null;

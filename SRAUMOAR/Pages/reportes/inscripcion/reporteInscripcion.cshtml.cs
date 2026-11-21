@@ -40,13 +40,16 @@ namespace SRAUMOAR.Pages.reportes.inscripcion
             _fontBold = PdfFontFactory.CreateFont(StandardFonts.TIMES_BOLD);
         }
         
-        public IActionResult OnGet(int? id)
+        public IActionResult OnGet(int? id, int cicloelegido = 0)
         {
             try
             {
                 InitializeFonts();
 
-                var cicloactual = _context.Ciclos.Where(x => x.Activo == true).FirstOrDefault();
+                var cicloactual = cicloelegido > 0
+                    ? _context.Ciclos.FirstOrDefault(x => x.Id == cicloelegido)
+                    : null;
+                cicloactual ??= _context.Ciclos.Where(x => x.Activo == true).FirstOrDefault();
                 if (cicloactual == null)
                 {
                     return BadRequest("No hay un ciclo activo");

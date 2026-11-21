@@ -27,12 +27,19 @@ namespace SRAUMOAR.Pages.grupos
 
         public IList<Grupo> Grupo { get;set; } = default!;
         public IList<Carrera> Carreras { get; set; } = default!;
+        public IList<Ciclo> Ciclos { get; set; } = default!;
         [BindProperty(SupportsGet = true)]
         public int? CarreraId { get; set; }
+        [BindProperty(SupportsGet = true)]
+        public int? CicloId { get; set; }
 
         public async Task<IActionResult> OnGetAsync()
         {
             Carreras = await _context.Carreras.Where(c => c.Activa).ToListAsync();
+            Ciclos = await _context.Ciclos.AsNoTracking()
+                .OrderByDescending(c => c.anio)
+                .ThenByDescending(c => c.NCiclo)
+                .ToListAsync();
             var userId = User.FindFirstValue("UserId")??"0"; // Si lo guardaste con el nombre "UserId"
             if (!int.TryParse(userId, out int idusuario) || idusuario <= 0)
             {
@@ -50,7 +57,6 @@ namespace SRAUMOAR.Pages.grupos
             if (rol == 1 || rol == 2)
             {
                 query = _context.Grupo
-                   .Where(x => x.Ciclo.Activo == true)
                    .Include(g => g.Carrera)
                    .Include(g => g.Ciclo)
                    .Include(g => g.Docente);
@@ -79,7 +85,15 @@ namespace SRAUMOAR.Pages.grupos
             {
                 query = query.Where(g => g.CarreraId == CarreraId.Value);
             }
-            Grupo = await query.ToListAsync();
+            if (CicloId.HasValue && CicloId.Value > 0)
+            {
+                query = query.Where(g => g.CicloId == CicloId.Value);
+            }
+            Grupo = await query
+                .OrderByDescending(g => g.Ciclo!.anio)
+                .ThenByDescending(g => g.Ciclo!.NCiclo)
+                .ThenBy(g => g.Nombre)
+                .ToListAsync();
             return Page();
         }
     }
