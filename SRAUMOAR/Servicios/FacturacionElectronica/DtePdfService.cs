@@ -15,8 +15,9 @@ public interface IDtePdfService
 
 /// <summary>
 /// Renderizador institucional y oficial de Documentos Tributarios Electrónicos (DTE).
-/// Diseñado con estética académica de alto nivel, encabezado unificado con sello de recepción,
-/// y soporte integral adaptado según las normativas del Ministerio de Hacienda para:
+/// Diseñado con estética académica de alto nivel, encabezado unificado en una sola línea
+/// para la institución y el título del documento, y soporte integral adaptado según las normativas
+/// del Ministerio de Hacienda para:
 /// - Factura Electrónica (01)
 /// - Comprobante de Crédito Fiscal (03)
 /// - Nota de Crédito / Débito (05/06)
@@ -68,69 +69,72 @@ public sealed class DtePdfService : IDtePdfService
         return Document.Create(document => document.Page(page =>
         {
             page.Size(PageSizes.Letter);
-            page.Margin(28);
+            page.Margin(26);
             page.DefaultTextStyle(style => style.FontFamily("Helvetica").FontSize(8).FontColor(TextoOscuro));
 
-            // ENCABEZADO INSTITUCIONAL ELEGANTE
+            // ENCABEZADO INSTITUCIONAL ELEGANTE (Nombre de universidad y documento en 1 sola línea)
             page.Header().Column(header =>
             {
                 // Franja superior institucional
                 header.Item().Height(4).Background(VerdeInstitucional);
-                header.Item().PaddingTop(10).Row(row =>
+                header.Item().PaddingTop(8).Row(row =>
                 {
-                    // Lado Izquierdo: Marca Institucional y Emisor
-                    row.RelativeItem(1.3f).Row(left =>
+                    // Lado Izquierdo: Marca Institucional y Emisor en 1 sola línea
+                    row.RelativeItem().Row(left =>
                     {
                         var logo = ObtenerLogo();
                         if (logo != null)
                         {
-                            left.ConstantItem(48).Height(56).Image(logo).FitArea();
-                            left.ConstantItem(10);
+                            left.ConstantItem(44).Height(50).Image(logo).FitArea();
+                            left.ConstantItem(8);
                         }
                         left.RelativeItem().Column(col =>
                         {
-                            col.Item().Text(Valor(emisor, "nombre", "razonSocial", "nombreComercial"))
-                                .Bold().FontSize(10.5f).FontColor(VerdeInstitucional);
+                            var nombreEmisor = Valor(emisor, "nombre", "razonSocial", "nombreComercial");
+                            col.Item().Text(nombreEmisor)
+                                .Bold().FontSize(TamanioNombreEmisor(nombreEmisor)).FontColor(VerdeInstitucional);
                             col.Item().PaddingTop(1).Text("EDUCACIÓN SUPERIOR UNIVERSITARIA")
-                                .Bold().FontSize(7).FontColor(VerdeMedio);
-                            col.Item().PaddingTop(3).Text($"NIT: {Valor(emisor, "nit")}   ·   NRC: {Valor(emisor, "nrc")}")
-                                .Bold().FontSize(7.5f).FontColor(TextoOscuro);
+                                .Bold().FontSize(6.8f).FontColor(VerdeMedio);
+                            col.Item().PaddingTop(2).Text($"NIT: {Valor(emisor, "nit")}   ·   NRC: {Valor(emisor, "nrc")}")
+                                .Bold().FontSize(7.2f).FontColor(TextoOscuro);
                             col.Item().PaddingTop(1).Text(Direccion(emisor))
-                                .FontSize(7).FontColor(TextoMuted);
+                                .FontSize(6.8f).FontColor(TextoMuted);
                             var contacto = string.Join("   ·   ", new[] { Valor(emisor, "telefono"), Valor(emisor, "correo", "email") }.Where(x => x != "-"));
                             if (!string.IsNullOrWhiteSpace(contacto))
-                                col.Item().Text(contacto).FontSize(7).FontColor(TextoMuted);
+                                col.Item().Text(contacto).FontSize(6.8f).FontColor(TextoMuted);
                         });
                     });
 
-                    // Lado Derecho: Tarjeta Fiscal con Sello de Recepción
-                    row.ConstantItem(225).Border(1).BorderColor(BordeSuave).Background(FondoGris).Padding(8).Column(right =>
+                    row.ConstantItem(10);
+
+                    // Lado Derecho: Tarjeta Fiscal con Sello de Recepción (Título en 1 sola línea)
+                    row.ConstantItem(238).Border(1).BorderColor(BordeSuave).Background(FondoGris).Padding(7).Column(right =>
                     {
                         right.Item().Row(r =>
                         {
                             r.RelativeItem().Text(titulo)
-                                .Bold().FontSize(10.5f).FontColor(VerdeInstitucional);
-                            r.ConstantItem(46).Background(VerdeClaro).PaddingVertical(2).PaddingHorizontal(3)
+                                .Bold().FontSize(TamanioTitulo(titulo)).FontColor(VerdeInstitucional);
+                            r.ConstantItem(44).Background(VerdeClaro).PaddingVertical(2).PaddingHorizontal(2)
                                 .AlignCenter().Text(badgeTipo).Bold().FontSize(6.5f).FontColor(VerdeInstitucional);
                         });
 
-                        right.Item().PaddingTop(4).Text(t =>
+                        right.Item().PaddingTop(3).Text(t =>
                         {
                             t.Span("N° Control: ").FontSize(6.8f).FontColor(TextoMuted);
-                            t.Span(numControl).Bold().FontSize(7.2f).FontColor(TextoOscuro);
+                            t.Span(numControl).Bold().FontSize(7f).FontColor(TextoOscuro);
                         });
-                        right.Item().PaddingTop(1.5f).Text(t =>
+                        right.Item().PaddingTop(1).Text(t =>
                         {
                             t.Span("Cód. Gen: ").FontSize(6.8f).FontColor(TextoMuted);
-                            t.Span(codigo).FontSize(6.5f).FontColor(TextoOscuro);
+                            t.Span(codigo).FontSize(6.3f).FontColor(TextoOscuro);
                         });
-                        right.Item().PaddingTop(1.5f).Text(t =>
+                        right.Item().PaddingTop(1).Text(t =>
                         {
                             t.Span("Sello Recep: ").FontSize(6.8f).FontColor(TextoMuted);
                             t.Span(string.IsNullOrWhiteSpace(sello) ? "Pendiente" : sello)
-                                .FontSize(6.3f).FontColor(VerdeMedio).Bold();
+                                .FontSize(6f).FontColor(VerdeMedio).Bold();
                         });
-                        right.Item().PaddingTop(1.5f).Row(meta =>
+                        right.Item().PaddingTop(1).Row(meta =>
                         {
                             meta.RelativeItem().Text(t =>
                             {
@@ -143,13 +147,13 @@ public sealed class DtePdfService : IDtePdfService
                     });
                 });
 
-                header.Item().PaddingTop(10).LineHorizontal(1).LineColor(BordeSuave);
+                header.Item().PaddingTop(8).LineHorizontal(1).LineColor(BordeSuave);
             });
 
             // CONTENIDO
-            page.Content().PaddingTop(10).Column(column =>
+            page.Content().PaddingTop(9).Column(column =>
             {
-                column.Spacing(9);
+                column.Spacing(8);
 
                 // Sección Receptor
                 AgregarSeccionReceptor(column, receptor, tipo);
@@ -190,6 +194,21 @@ public sealed class DtePdfService : IDtePdfService
     public string ObtenerNombre(string tipoDte, string codigoGeneracion, bool anulacion = false)
         => $"{(anulacion ? "INVALIDACION" : "DTE-" + tipoDte.PadLeft(2, '0'))}-{codigoGeneracion}.pdf";
 
+    private static float TamanioNombreEmisor(string nombre) => nombre.Length switch
+    {
+        > 45 => 8.5f,
+        > 36 => 9.2f,
+        _ => 10f
+    };
+
+    private static float TamanioTitulo(string titulo) => titulo.Length switch
+    {
+        > 28 => 7.8f,
+        > 22 => 8.2f,
+        > 16 => 8.8f,
+        _ => 9.5f
+    };
+
     private static void AgregarSeccionReceptor(ColumnDescriptor column, JObject receptor, string tipo)
     {
         var tituloSeccion = tipo switch
@@ -197,7 +216,6 @@ public sealed class DtePdfService : IDtePdfService
             "03" => "DATOS DEL RECEPTOR / CONTRIBUYENTE (CRÉDITO FISCAL)",
             "14" => "DATOS DEL SUJETO EXCLUIDO (PROVEEDOR / VENDEDOR)",
             "15" => "DATOS DEL DONANTE",
-            "01" => "DATOS DEL ALUMNO / ALUMNA",
             "INVALIDACION" => "DATOS DEL RECEPTOR DE LA INVALIDACIÓN",
             _ => "DATOS DEL RECEPTOR / CLIENTE"
         };
@@ -289,15 +307,6 @@ public sealed class DtePdfService : IDtePdfService
                         });
                     }
 
-                    if (tipo == "01" && ObtenerCarnetInstitucional(correo) is string carnet)
-                    {
-                        right.Item().PaddingTop(2).Text(t =>
-                        {
-                            t.Span("Carnet: ").FontSize(7).FontColor(TextoMuted);
-                            t.Span(carnet).Bold().FontSize(7.2f).FontColor(TextoOscuro);
-                        });
-                    }
-
                     var tel = Valor(receptor, "telefono");
                     if (tel != "-")
                     {
@@ -310,22 +319,6 @@ public sealed class DtePdfService : IDtePdfService
                 });
             });
         });
-    }
-
-    private static string? ObtenerCarnetInstitucional(string correo)
-    {
-        const string dominio = "@umoar.edu.sv";
-        var correoNormalizado = correo.Trim();
-        var posicionArroba = correoNormalizado.LastIndexOf('@');
-
-        if (posicionArroba <= 0
-            || !correoNormalizado[(posicionArroba)..].Equals(dominio, StringComparison.OrdinalIgnoreCase))
-        {
-            return null;
-        }
-
-        var carnet = correoNormalizado[..posicionArroba].Trim();
-        return carnet.Length == 0 ? null : carnet;
     }
 
     private static void AgregarOtrosDocumentosDonacion(ColumnDescriptor column, JObject root)
@@ -602,9 +595,8 @@ public sealed class DtePdfService : IDtePdfService
                     else
                         Linea(right, "IVA (13% incluido):", Moneda(resumen["totalIva"]));
 
-                    // Mostrar siempre la retención para que el comprobante deje
-                    // explícito cuando no aplica (0.00) o cuando fue calculada.
-                    Linea(right, "(-) Retención IVA (gran contribuyente):", Moneda(resumen["ivaRete"]), true);
+                    if (TieneMonto(resumen["ivaRete"]))
+                        Linea(right, "(-) Retención IVA:", Moneda(resumen["ivaRete"]));
                     if (TieneMonto(resumen["ivaPerci"]))
                         Linea(right, "(+) Percepción IVA:", Moneda(resumen["ivaPerci"]));
 
@@ -779,61 +771,64 @@ public sealed class DtePdfService : IDtePdfService
         return Document.Create(document => document.Page(page =>
         {
             page.Size(PageSizes.Letter);
-            page.Margin(28);
+            page.Margin(26);
             page.DefaultTextStyle(style => style.FontFamily("Helvetica").FontSize(8).FontColor(TextoOscuro));
 
             page.Header().Column(header =>
             {
                 header.Item().Height(4).Background(VerdeInstitucional);
-                header.Item().PaddingTop(10).Row(row =>
+                header.Item().PaddingTop(8).Row(row =>
                 {
-                    row.RelativeItem(1.3f).Row(left =>
+                    row.RelativeItem().Row(left =>
                     {
                         var logo = ObtenerLogo();
                         if (logo != null)
                         {
-                            left.ConstantItem(48).Height(56).Image(logo).FitArea();
-                            left.ConstantItem(10);
+                            left.ConstantItem(44).Height(50).Image(logo).FitArea();
+                            left.ConstantItem(8);
                         }
                         left.RelativeItem().Column(col =>
                         {
-                            col.Item().Text(Valor(emisor, "nombre", "razonSocial", "nombreComercial"))
-                                .Bold().FontSize(10.5f).FontColor(VerdeInstitucional);
+                            var nombreEmisor = Valor(emisor, "nombre", "razonSocial", "nombreComercial");
+                            col.Item().Text(nombreEmisor)
+                                .Bold().FontSize(TamanioNombreEmisor(nombreEmisor)).FontColor(VerdeInstitucional);
                             col.Item().PaddingTop(1).Text("EDUCACIÓN SUPERIOR UNIVERSITARIA")
-                                .Bold().FontSize(7).FontColor(VerdeMedio);
-                            col.Item().PaddingTop(3).Text($"NIT: {Valor(emisor, "nit")}   ·   NRC: {Valor(emisor, "nrc")}")
-                                .Bold().FontSize(7.5f).FontColor(TextoOscuro);
-                            col.Item().PaddingTop(1).Text(Direccion(emisor)).FontSize(7).FontColor(TextoMuted);
+                                .Bold().FontSize(6.8f).FontColor(VerdeMedio);
+                            col.Item().PaddingTop(2).Text($"NIT: {Valor(emisor, "nit")}   ·   NRC: {Valor(emisor, "nrc")}")
+                                .Bold().FontSize(7.2f).FontColor(TextoOscuro);
+                            col.Item().PaddingTop(1).Text(Direccion(emisor)).FontSize(6.8f).FontColor(TextoMuted);
                         });
                     });
 
-                    row.ConstantItem(225).Border(1).BorderColor(BordeSuave).Background(FondoGris).Padding(8).Column(right =>
+                    row.ConstantItem(10);
+
+                    row.ConstantItem(238).Border(1).BorderColor(BordeSuave).Background(FondoGris).Padding(7).Column(right =>
                     {
                         right.Item().Row(r =>
                         {
                             r.RelativeItem().Text("EVENTO DE RETORNO")
-                                .Bold().FontSize(10.5f).FontColor(VerdeInstitucional);
-                            r.ConstantItem(46).Background(VerdeClaro).PaddingVertical(2).PaddingHorizontal(3)
+                                .Bold().FontSize(9.5f).FontColor(VerdeInstitucional);
+                            r.ConstantItem(44).Background(VerdeClaro).PaddingVertical(2).PaddingHorizontal(2)
                                 .AlignCenter().Text("DTE 18").Bold().FontSize(6.5f).FontColor(VerdeInstitucional);
                         });
 
-                        right.Item().PaddingTop(4).Text(t =>
+                        right.Item().PaddingTop(3).Text(t =>
                         {
                             t.Span("N° Control: ").FontSize(6.8f).FontColor(TextoMuted);
-                            t.Span(numControl).Bold().FontSize(7.2f).FontColor(TextoOscuro);
+                            t.Span(numControl).Bold().FontSize(7f).FontColor(TextoOscuro);
                         });
-                        right.Item().PaddingTop(1.5f).Text(t =>
+                        right.Item().PaddingTop(1).Text(t =>
                         {
                             t.Span("Cód. Gen: ").FontSize(6.8f).FontColor(TextoMuted);
-                            t.Span(codigo).FontSize(6.5f).FontColor(TextoOscuro);
+                            t.Span(codigo).FontSize(6.3f).FontColor(TextoOscuro);
                         });
-                        right.Item().PaddingTop(1.5f).Text(t =>
+                        right.Item().PaddingTop(1).Text(t =>
                         {
                             t.Span("Sello Recep: ").FontSize(6.8f).FontColor(TextoMuted);
                             t.Span(string.IsNullOrWhiteSpace(sello) ? "Pendiente" : sello)
-                                .FontSize(6.3f).FontColor(VerdeMedio).Bold();
+                                .FontSize(6f).FontColor(VerdeMedio).Bold();
                         });
-                        right.Item().PaddingTop(1.5f).Row(meta =>
+                        right.Item().PaddingTop(1).Row(meta =>
                         {
                             meta.RelativeItem().Text(t =>
                             {
@@ -846,12 +841,12 @@ public sealed class DtePdfService : IDtePdfService
                     });
                 });
 
-                header.Item().PaddingTop(10).LineHorizontal(1).LineColor(BordeSuave);
+                header.Item().PaddingTop(8).LineHorizontal(1).LineColor(BordeSuave);
             });
 
-            page.Content().PaddingTop(10).Column(column =>
+            page.Content().PaddingTop(9).Column(column =>
             {
-                column.Spacing(9);
+                column.Spacing(8);
                 AgregarSeccionReceptor(column, documento, "18");
 
                 var relacionados = root["documentoRelacionado"] as JArray;
